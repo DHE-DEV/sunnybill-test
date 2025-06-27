@@ -17,7 +17,7 @@ return new class extends Migration
                 $table->string('customer_number')->nullable()->after('name');
             }
             if (!Schema::hasColumn('customers', 'department')) {
-                $table->string('department')->nullable()->after('contact_person');
+                $table->string('department')->nullable()->after('name');
             }
             if (!Schema::hasColumn('customers', 'fax')) {
                 $table->string('fax')->nullable()->after('phone');
