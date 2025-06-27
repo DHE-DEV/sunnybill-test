@@ -9,4 +9,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateSolarPlant extends CreateRecord
 {
     protected static string $resource = SolarPlantResource::class;
+    
+    public function getTitle(): string
+    {
+        return 'Neue Solaranlage';
+    }
 }
