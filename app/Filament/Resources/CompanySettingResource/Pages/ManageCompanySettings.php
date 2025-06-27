@@ -37,21 +37,7 @@ class ManageCompanySettings extends ManageRecords
         }
 
         return [
-            Actions\EditAction::make()
-                ->label('Einstellungen bearbeiten')
-                ->icon('heroicon-o-pencil')
-                ->modalWidth('screen')
-                ->record($settings)
-                ->fillForm(function () use ($settings) {
-                    return $settings->toArray();
-                })
-                ->after(function () {
-                    Notification::make()
-                        ->title('Einstellungen gespeichert')
-                        ->body('Die Firmeneinstellungen wurden erfolgreich aktualisiert.')
-                        ->success()
-                        ->send();
-                }),
+            // Bearbeiten-Schaltfläche entfernt
         ];
     }
 

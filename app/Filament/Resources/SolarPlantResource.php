@@ -481,47 +481,7 @@ class SolarPlantResource extends Resource
                 ->tooltip('Aktionen')
             ])
             ->headerActions([
-                Tables\Actions\Action::make('sync_fusionsolar')
-                    ->label('Von FusionSolar synchronisieren')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('success')
-                    ->action(function () {
-                        $service = new \App\Services\FusionSolarService();
-                        $result = $service->syncAllPlants();
-                        
-                        if ($result['success']) {
-                            $created = 0;
-                            $updated = 0;
-                            
-                            foreach ($result['plants'] as $plantData) {
-                                $existingPlant = \App\Models\SolarPlant::where('fusion_solar_id', $plantData['fusion_solar_id'])->first();
-                                
-                                if ($existingPlant) {
-                                    $existingPlant->update(array_merge($plantData, ['last_sync_at' => now()]));
-                                    $updated++;
-                                } else {
-                                    \App\Models\SolarPlant::create(array_merge($plantData, ['last_sync_at' => now()]));
-                                    $created++;
-                                }
-                            }
-                            
-                            \Filament\Notifications\Notification::make()
-                                ->title('Synchronisation erfolgreich')
-                                ->body("$created neue Anlagen erstellt, $updated aktualisiert")
-                                ->success()
-                                ->send();
-                        } else {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Synchronisation fehlgeschlagen')
-                                ->body(implode(', ', $result['errors']))
-                                ->danger()
-                                ->send();
-                        }
-                    })
-                    ->requiresConfirmation()
-                    ->modalHeading('FusionSolar Synchronisation')
-                    ->modalDescription('Möchten Sie alle Anlagen von FusionSolar importieren? Bestehende Anlagen werden aktualisiert.')
-                    ->modalSubmitActionLabel('Synchronisieren'),
+                // FusionSolar Synchronisation entfernt
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
