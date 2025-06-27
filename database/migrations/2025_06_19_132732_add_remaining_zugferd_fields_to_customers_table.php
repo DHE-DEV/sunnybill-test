@@ -32,7 +32,7 @@ return new class extends Migration
                 $table->string('country_code', 2)->default('DE')->after('country');
             }
             if (!Schema::hasColumn('customers', 'payment_terms')) {
-                $table->string('payment_terms')->nullable()->after('vat_id');
+                $table->string('payment_terms')->nullable()->after('country_code');
             }
             if (!Schema::hasColumn('customers', 'payment_days')) {
                 $table->integer('payment_days')->default(14)->after('payment_terms');
