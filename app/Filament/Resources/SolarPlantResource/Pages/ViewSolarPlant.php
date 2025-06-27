@@ -1,0 +1,278 @@
+<?php
+
+namespace App\Filament\Resources\SolarPlantResource\Pages;
+
+use App\Filament\Resources\SolarPlantResource;
+use App\Filament\Resources\SolarPlantResource\RelationManagers;
+use Filament\Actions;
+use Filament\Resources\Pages\ViewRecord;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
+
+class ViewSolarPlant extends ViewRecord
+{
+    protected static string $resource = SolarPlantResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\EditAction::make()
+                ->label('Bearbeiten'),
+            Actions\DeleteAction::make()
+                ->label('Löschen'),
+        ];
+    }
+
+
+    public function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make()
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('name')
+                                    ->label('Anlagenname')
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color('primary'),
+                                Infolists\Components\TextEntry::make('status')
+                                    ->label('Status')
+                                    ->formatStateUsing(fn ($state) => match($state) {
+                                        'in_planning' => 'In Planung',
+                                        'planned' => 'Geplant',
+                                        'under_construction' => 'Im Bau',
+                                        'awaiting_commissioning' => 'Warte auf Inbetriebnahme',
+                                        'active' => 'Aktiv',
+                                        'maintenance' => 'Wartung',
+                                        'inactive' => 'Inaktiv',
+                                        default => $state,
+                                    })
+                                    ->badge()
+                                    ->size('lg')
+                                    ->color(fn ($state) => match($state) {
+                                        'in_planning' => 'gray',
+                                        'planned' => 'info',
+                                        'under_construction' => 'warning',
+                                        'awaiting_commissioning' => 'primary',
+                                        'active' => 'success',
+                                        'maintenance' => 'info',
+                                        'inactive' => 'danger',
+                                        default => 'gray',
+                                    }),
+                                Infolists\Components\TextEntry::make('total_capacity_kw')
+                                    ->label('Gesamtleistung')
+                                    ->formatStateUsing(fn ($state) => number_format($state, 3, ',', '.') . ' kW')
+                                    ->badge()
+                                    ->size('lg')
+                                    ->color('success'),
+                            ]),
+                    ])
+                    ->compact(),
+                Infolists\Components\Tabs::make('Tabs')
+                    ->extraAttributes(['class' => 'solar-plant-detail'])
+                    ->tabs([
+                        Infolists\Components\Tabs\Tab::make('Übersicht')
+                            ->icon('heroicon-o-information-circle')
+                            ->schema([
+                                Infolists\Components\Section::make('Standort & Status')
+                                    ->icon('heroicon-o-map-pin')
+                                    ->schema([
+                                        Infolists\Components\Grid::make(2)
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('location')
+                                                    ->label('Standort')
+                                                    ->icon('heroicon-o-map-pin')
+                                                    ->weight('medium')
+                                                    ->size('lg'),
+                                                Infolists\Components\IconEntry::make('is_active')
+                                                    ->label('Betriebsbereit')
+                                                    ->boolean()
+                                                    ->trueIcon('heroicon-o-check-circle')
+                                                    ->falseIcon('heroicon-o-x-circle')
+                                                    ->trueColor('success')
+                                                    ->falseColor('danger'),
+                                            ]),
+                                    ])
+                                    ->headerActions([
+                                        Infolists\Components\Actions\Action::make('show_map')
+                                            ->label('Karte anzeigen')
+                                            ->icon('heroicon-o-map-pin')
+                                            ->color('primary')
+                                            ->modalHeading(fn ($record) => 'Standort: ' . $record->name)
+                                            ->modalContent(fn ($record) => view('filament.infolists.components.openstreetmap-modal', [
+                                                'latitude' => $record->latitude,
+                                                'longitude' => $record->longitude,
+                                                'name' => $record->name,
+                                                'location' => $record->location,
+                                                'hasCoordinates' => $record->hasCoordinates(),
+                                            ]))
+                                            ->modalWidth('7xl')
+                                            ->modalSubmitAction(false)
+                                            ->modalCancelAction(false)
+                                    ])
+                                    ->compact()
+                                    ->collapsible()
+                                    ->collapsed(false),
+                                Infolists\Components\Section::make('Beschreibung')
+                                    ->icon('heroicon-o-document-text')
+                                    ->schema([
+                                        Infolists\Components\TextEntry::make('description')
+                                            ->label('')
+                                            ->placeholder('Keine Beschreibung vorhanden')
+                                            ->prose()
+                                            ->markdown(),
+                                    ])
+                                    ->compact()
+                                    ->collapsible()
+                                    ->collapsed(true),
+                            ]),
+                        Infolists\Components\Tabs\Tab::make('Technische Daten')
+                            ->icon('heroicon-o-cog-6-tooth')
+                            ->schema([
+                                Infolists\Components\Section::make('Anlagenkomponenten')
+                                    ->icon('heroicon-o-squares-2x2')
+                                    ->schema([
+                                        Infolists\Components\Grid::make(3)
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('panel_count')
+                                                    ->label('Solarmodule')
+                                                    ->placeholder('Nicht angegeben')
+                                                    ->badge()
+                                                    ->size('lg')
+                                                    ->color('info'),
+                                                Infolists\Components\TextEntry::make('inverter_count')
+                                                    ->label('Wechselrichter')
+                                                    ->placeholder('Nicht angegeben')
+                                                    ->badge()
+                                                    ->size('lg')
+                                                    ->color('info'),
+                                                Infolists\Components\TextEntry::make('battery_capacity_kwh')
+                                                    ->label('Batteriekapazität')
+                                                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 1, ',', '.') . ' kWh' : 'Keine Batterie')
+                                                    ->badge()
+                                                    ->size('lg')
+                                                    ->color(fn ($state) => $state ? 'warning' : 'gray'),
+                                            ]),
+                                    ])->compact(),
+                            ]),
+                        Infolists\Components\Tabs\Tab::make('Projekttermine')
+                            ->icon('heroicon-o-calendar')
+                            ->schema([
+                                Infolists\Components\Section::make('Wichtige Termine')
+                                    ->icon('heroicon-o-clock')
+                                    ->schema([
+                                        Infolists\Components\Grid::make(2)
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('installation_date')
+                                                    ->label('Installationsdatum')
+                                                    ->date('d.m.Y')
+                                                    ->icon('heroicon-o-wrench-screwdriver')
+                                                    ->color('primary')
+                                                    ->size('lg')
+                                                    ->weight('medium'),
+                                                Infolists\Components\TextEntry::make('commissioning_date')
+                                                    ->label('Inbetriebnahme')
+                                                    ->date('d.m.Y')
+                                                    ->icon('heroicon-o-bolt')
+                                                    ->placeholder('Noch nicht in Betrieb')
+                                                    ->color('success')
+                                                    ->size('lg')
+                                                    ->weight('medium'),
+                                            ]),
+                                    ])->compact(),
+                            ]),
+                        Infolists\Components\Tabs\Tab::make('Finanzen')
+                            ->icon('heroicon-o-currency-euro')
+                            ->schema([
+                                Infolists\Components\Grid::make(3)
+                                    ->schema([
+                                        Infolists\Components\Section::make('Investition')
+                                            ->icon('heroicon-o-banknotes')
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('total_investment')
+                                                    ->label('Gesamtinvestition')
+                                                    ->formatStateUsing(fn ($state) => $state ? '€ ' . number_format($state, 0, ',', '.') : 'Nicht angegeben')
+                                                    ->size('xl')
+                                                    ->weight('bold')
+                                                    ->color('primary'),
+                                                Infolists\Components\TextEntry::make('annual_operating_costs')
+                                                    ->label('Jährliche Betriebskosten')
+                                                    ->formatStateUsing(fn ($state) => $state ? '€ ' . number_format($state, 0, ',', '.') : 'Nicht angegeben')
+                                                    ->color('warning'),
+                                            ])->compact(),
+                                        Infolists\Components\Section::make('Tarife')
+                                            ->icon('heroicon-o-calculator')
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('feed_in_tariff_per_kwh')
+                                                    ->label('Einspeisevergütung')
+                                                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 4, ',', '.') . ' ct/kWh' : 'Nicht angegeben')
+                                                    ->badge()
+                                                    ->color('success'),
+                                                Infolists\Components\TextEntry::make('electricity_price_per_kwh')
+                                                    ->label('Strompreis')
+                                                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 4, ',', '.') . ' ct/kWh' : 'Nicht angegeben')
+                                                    ->badge()
+                                                    ->color('info'),
+                                            ])->compact(),
+                                        Infolists\Components\Section::make('Ertragsprognose')
+                                            ->icon('heroicon-o-chart-bar')
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('expected_annual_yield_kwh')
+                                                    ->label('Erwarteter Jahresertrag')
+                                                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, ',', '.') . ' kWh' : 'Nicht angegeben')
+                                                    ->size('xl')
+                                                    ->weight('bold')
+                                                    ->color('success'),
+                                            ])->compact(),
+                                    ]),
+                            ]),
+                        Infolists\Components\Tabs\Tab::make('Beteiligungen')
+                            ->icon('heroicon-o-users')
+                            ->schema([
+                                Infolists\Components\Section::make('Beteiligungsübersicht')
+                                    ->icon('heroicon-o-chart-pie')
+                                    ->schema([
+                                        Infolists\Components\Grid::make(3)
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('total_participation')
+                                                    ->label('Gesamtbeteiligung')
+                                                    ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . '%')
+                                                    ->badge()
+                                                    ->color(fn ($state) => $state >= 100 ? 'success' : 'warning')
+                                                    ->size('xl'),
+                                                Infolists\Components\TextEntry::make('available_participation')
+                                                    ->label('Verfügbar')
+                                                    ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . '%')
+                                                    ->badge()
+                                                    ->color(fn ($state) => $state > 0 ? 'info' : 'gray')
+                                                    ->size('xl'),
+                                                Infolists\Components\TextEntry::make('participations_count')
+                                                    ->label('Beteiligte Kunden')
+                                                    ->badge()
+                                                    ->color('primary')
+                                                    ->size('xl'),
+                                            ]),
+                                    ])->compact(),
+                            ]),
+                        Infolists\Components\Tabs\Tab::make('Notizen')
+                            ->icon('heroicon-o-document-text')
+                            ->schema([
+                                Infolists\Components\Section::make('Zusätzliche Informationen')
+                                    ->icon('heroicon-o-pencil-square')
+                                    ->schema([
+                                        Infolists\Components\TextEntry::make('notes')
+                                            ->label('')
+                                            ->placeholder('Keine zusätzlichen Notizen vorhanden')
+                                            ->prose()
+                                            ->markdown(),
+                                    ])
+                                    ->compact(),
+                            ]),
+                    ])
+                    ->columnSpanFull(),
+           ]);
+   }
+
+}

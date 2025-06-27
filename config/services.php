@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    'lexoffice' => [
+        'api_key' => env('LEXOFFICE_API_KEY'),
+        'base_url' => env('LEXOFFICE_BASE_URL', 'https://api.lexoffice.io/v1/'),
+    ],
+
+    'fusionsolar' => [
+        'base_url' => env('FUSIONSOLAR_BASE_URL', 'https://eu5.fusionsolar.huawei.com/thirdData'),
+        'username' => env('FUSIONSOLAR_USERNAME'),
+        'password' => env('FUSIONSOLAR_PASSWORD'),
+    ],
+
 ];

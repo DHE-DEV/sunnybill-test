@@ -1,0 +1,201 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\SupplierResource\Pages;
+use App\Filament\Resources\SupplierResource\RelationManagers;
+use App\Models\Supplier;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+class SupplierResource extends Resource
+{
+    protected static ?string $model = Supplier::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
+
+    protected static ?string $navigationLabel = 'Lieferanten';
+
+    protected static ?string $modelLabel = 'Lieferant';
+
+    protected static ?string $pluralModelLabel = 'Lieferanten';
+
+    protected static ?string $navigationGroup = 'Stammdaten';
+
+    protected static ?int $navigationSort = 3;
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make('Firmendaten')
+                    ->schema([
+                        Forms\Components\TextInput::make('company_name')
+                            ->label('Firmenname')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('contact_person')
+                            ->label('Ansprechpartner')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('email')
+                            ->label('E-Mail')
+                            ->email()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('website')
+                            ->label('Website')
+                            ->url()
+                            ->maxLength(255),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Adresse')
+                    ->schema([
+                        Forms\Components\Textarea::make('address')
+                            ->label('Adresse')
+                            ->rows(3)
+                            ->placeholder('Straße & Hausnummer, PLZ Ort'),
+                        Forms\Components\TextInput::make('postal_code')
+                            ->label('PLZ')
+                            ->maxLength(10),
+                        Forms\Components\TextInput::make('city')
+                            ->label('Stadt')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('country')
+                            ->label('Land')
+                            ->default('Deutschland')
+                            ->maxLength(255),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Steuerliche Daten')
+                    ->schema([
+                        Forms\Components\TextInput::make('tax_number')
+                            ->label('Steuernummer')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('vat_id')
+                            ->label('Umsatzsteuer-ID')
+                            ->maxLength(255),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Lexoffice-Synchronisation')
+                    ->schema([
+                        Forms\Components\TextInput::make('lexoffice_id')
+                            ->label('Lexoffice-ID')
+                            ->disabled()
+                            ->dehydrated(false),
+                        Forms\Components\DateTimePicker::make('lexoffice_synced_at')
+                            ->label('Zuletzt synchronisiert')
+                            ->disabled()
+                            ->dehydrated(false),
+                    ])->columns(2)
+                    ->visible(fn ($record) => $record?->lexoffice_id),
+
+                Forms\Components\Section::make('Sonstiges')
+                    ->schema([
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Notizen')
+                            ->rows(3),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Aktiv')
+                            ->default(true),
+                    ]),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('supplier_number')
+                    ->label('Lieferanten-Nr.')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('company_name')
+                    ->label('Firmenname')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('contact_person')
+                    ->label('Ansprechpartner')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('E-Mail')
+                    ->searchable()
+                    ->toggleable()
+                    ->url(fn ($record) => $record->email ? 'mailto:' . $record->email : null)
+                    ->openUrlInNewTab(false),
+                Tables\Columns\TextColumn::make('city')
+                    ->label('Stadt')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Aktiv')
+                    ->boolean()
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('lexoffice_synced')
+                    ->label('Lexoffice')
+                    ->boolean()
+                    ->getStateUsing(fn ($record) => $record->isSyncedWithLexoffice())
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('employees_count')
+                    ->label('Mitarbeiter')
+                    ->counts('employees')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Erstellt')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Aktiv'),
+                Tables\Filters\TernaryFilter::make('lexoffice_synced')
+                    ->label('Lexoffice synchronisiert')
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereNotNull('lexoffice_id'),
+                        false: fn (Builder $query) => $query->whereNull('lexoffice_id'),
+                    ),
+            ])
+            ->actions([
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ])
+                ->icon('heroicon-o-cog-6-tooth')
+                ->tooltip('Aktionen')
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('company_name');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            \App\Filament\Resources\CustomerResource\RelationManagers\AddressesRelationManager::class,
+            RelationManagers\PhoneNumbersRelationManager::class,
+            RelationManagers\EmployeesRelationManager::class,
+            RelationManagers\FavoriteNotesRelationManager::class,
+            RelationManagers\StandardNotesRelationManager::class,
+            RelationManagers\SolarPlantsRelationManager::class,
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListSuppliers::route('/'),
+            'create' => Pages\CreateSupplier::route('/create'),
+            'view' => Pages\ViewSupplier::route('/{record}'),
+            'edit' => Pages\EditSupplier::route('/{record}/edit'),
+        ];
+    }
+}

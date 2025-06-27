@@ -9,3 +9,115 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Custom Modal Styling für bessere Grid-Unterscheidung */
+.custom-modal-bg,
+.custom-modal-bg .fi-modal-content,
+.custom-modal-bg .fi-modal-window,
+.custom-modal-bg [data-modal-content] {
+    background-color: #f1f5f9 !important; /* Tailwind slate-100 */
+}
+
+.custom-modal-bg .fi-section,
+.custom-modal-bg .fi-in-section {
+    background-color: white !important;
+    border: 1px solid #cbd5e1 !important; /* Tailwind slate-300 */
+    border-radius: 0.75rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    margin-bottom: 1rem !important;
+}
+
+.custom-modal-bg .fi-section-header {
+    border-bottom: 1px solid #e2e8f0 !important;
+    background-color: #f8fafc !important;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    padding: 1rem !important;
+}
+
+.custom-modal-bg .fi-section-content {
+    background-color: white !important;
+    border-radius: 0 0 0.75rem 0.75rem !important;
+    padding: 1.5rem !important;
+}
+
+/* Zusätzliche Selektoren für bessere Abdeckung */
+.custom-modal-bg .fi-in-grid,
+.custom-modal-bg .fi-in-group {
+    gap: 1rem !important;
+}
+
+.custom-modal-bg .fi-in-repeatable-entry {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.5rem !important;
+    padding: 1rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Solaranlagen-Detailansicht Styling */
+.solar-plant-detail {
+    background-color: #f1f5f9 !important; /* Slate-100 */
+    min-height: 100vh !important;
+    padding: 1.5rem !important;
+}
+
+.solar-plant-detail .fi-section {
+    background-color: white !important;
+    border: 1px solid #cbd5e1 !important; /* Slate-300 */
+    border-radius: 0.75rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.solar-plant-detail .fi-section-header {
+    border-bottom: 1px solid #e2e8f0 !important;
+    background-color: #f8fafc !important;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    padding: 1.25rem !important;
+}
+
+.solar-plant-detail .fi-section-content {
+    background-color: white !important;
+    border-radius: 0 0 0.75rem 0.75rem !important;
+    padding: 1.5rem !important;
+}
+
+.solar-plant-detail .fi-tabs {
+    background-color: white !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    overflow: hidden !important;
+}
+
+.solar-plant-detail .fi-tabs-header {
+    background-color: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 0.5rem !important;
+}
+
+.solar-plant-detail .fi-tabs-content {
+    background-color: white !important;
+    padding: 2rem !important;
+}
+
+.solar-plant-detail .fi-in-grid {
+    gap: 1.5rem !important;
+}
+
+/* Verbesserte Badge-Darstellung */
+.solar-plant-detail .fi-badge {
+    font-weight: 600 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.5rem !important;
+}
+
+/* Verbesserte Text-Hierarchie */
+.solar-plant-detail .fi-in-text-entry-content {
+    line-height: 1.6 !important;
+}
+
+.solar-plant-detail .fi-in-text-entry-label {
+    font-weight: 600 !important;
+    color: #475569 !important; /* Slate-600 */
+    margin-bottom: 0.5rem !important;
+}

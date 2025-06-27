@@ -123,4 +123,25 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Company Information for ZUGFeRD
+    |--------------------------------------------------------------------------
+    |
+    | These values are used for generating ZUGFeRD-compliant invoices.
+    | You can override these values in your .env file.
+    |
+    */
+
+    'company_name' => env('COMPANY_NAME', 'SunnyBill GmbH'),
+    'company_id' => env('COMPANY_ID', 'DE123456789'),
+    'company_street' => env('COMPANY_STREET', 'Musterstraße 123'),
+    'company_zip' => env('COMPANY_ZIP', '12345'),
+    'company_city' => env('COMPANY_CITY', 'Musterstadt'),
+    'company_contact_person' => env('COMPANY_CONTACT_PERSON', 'Max Mustermann'),
+    'company_department' => env('COMPANY_DEPARTMENT', 'Vertrieb'),
+    'company_phone' => env('COMPANY_PHONE', '+49 123 456789'),
+    'company_email' => env('COMPANY_EMAIL', 'info@sunnybill.de'),
+    'company_fax' => env('COMPANY_FAX', ''),
+
 ];

@@ -1,0 +1,334 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class SolarPlant extends Model
+{
+    use HasFactory, HasUuids, SoftDeletes;
+
+    protected $fillable = [
+        'name',
+        'location',
+        'latitude',
+        'longitude',
+        'description',
+        'installation_date',
+        'planned_installation_date',
+        'commissioning_date',
+        'planned_commissioning_date',
+        'total_capacity_kw',
+        'panel_count',
+        'inverter_count',
+        'battery_capacity_kwh',
+        'expected_annual_yield_kwh',
+        'total_investment',
+        'annual_operating_costs',
+        'feed_in_tariff_per_kwh',
+        'electricity_price_per_kwh',
+        'status',
+        'is_active',
+        'notes',
+        'fusion_solar_id',
+        'last_sync_at',
+    ];
+
+    protected $casts = [
+        'installation_date' => 'date',
+        'planned_installation_date' => 'date',
+        'commissioning_date' => 'date',
+        'planned_commissioning_date' => 'date',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'total_capacity_kw' => 'decimal:6',
+        'battery_capacity_kwh' => 'decimal:6',
+        'expected_annual_yield_kwh' => 'decimal:6',
+        'total_investment' => 'decimal:2',
+        'annual_operating_costs' => 'decimal:2',
+        'feed_in_tariff_per_kwh' => 'decimal:6',
+        'electricity_price_per_kwh' => 'decimal:6',
+        'is_active' => 'boolean',
+        'panel_count' => 'integer',
+        'inverter_count' => 'integer',
+        'last_sync_at' => 'datetime',
+    ];
+
+    /**
+     * Beziehung zu Wechselrichtern
+     */
+    public function solarInverters(): HasMany
+    {
+        return $this->hasMany(SolarInverter::class);
+    }
+
+    /**
+     * Beziehung zu Modulen
+     */
+    public function solarModules(): HasMany
+    {
+        return $this->hasMany(SolarModule::class);
+    }
+
+    /**
+     * Beziehung zu Batterien
+     */
+    public function solarBatteries(): HasMany
+    {
+        return $this->hasMany(SolarBattery::class);
+    }
+
+    /**
+     * Legacy-Beziehungen für Rückwärtskompatibilität
+     */
+    public function inverters(): HasMany
+    {
+        return $this->solarInverters();
+    }
+
+    public function panels(): HasMany
+    {
+        return $this->solarModules();
+    }
+
+    public function batteries(): HasMany
+    {
+        return $this->solarBatteries();
+    }
+
+    /**
+     * Beziehung zu Kundenbeteiligungen
+     */
+    public function participations(): HasMany
+    {
+        return $this->hasMany(PlantParticipation::class);
+    }
+
+    /**
+     * Beziehung zu monatlichen Ergebnissen
+     */
+    public function monthlyResults(): HasMany
+    {
+        return $this->hasMany(PlantMonthlyResult::class);
+    }
+
+    /**
+     * Beziehung zu Notizen
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(SolarPlantNote::class);
+    }
+
+    /**
+     * Beziehung zu Meilensteinen/Projektterminen
+     */
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(SolarPlantMilestone::class);
+    }
+
+    /**
+     * Beziehung zu Lieferanten über Pivot-Tabelle
+     */
+    public function suppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(Supplier::class, 'solar_plant_suppliers')
+            ->withPivot(['supplier_employee_id', 'role', 'notes', 'start_date', 'end_date', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Aktive Lieferanten-Zuordnungen
+     */
+    public function activeSuppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(Supplier::class, 'solar_plant_suppliers')
+            ->wherePivot('is_active', true)
+            ->withPivot(['supplier_employee_id', 'role', 'notes', 'start_date', 'end_date', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Direkte Beziehung zu Lieferanten-Zuordnungen
+     */
+    public function supplierAssignments(): HasMany
+    {
+        return $this->hasMany(SolarPlantSupplier::class);
+    }
+
+    /**
+     * Aktive Lieferanten-Zuordnungen
+     */
+    public function activeSupplierAssignments(): HasMany
+    {
+        return $this->hasMany(SolarPlantSupplier::class)->where('is_active', true);
+    }
+
+    /**
+     * Gesamtbeteiligung aller Kunden berechnen
+     */
+    public function getTotalParticipationAttribute(): float
+    {
+        return $this->participations->sum('percentage');
+    }
+
+    /**
+     * Verfügbare Beteiligung berechnen
+     */
+    public function getAvailableParticipationAttribute(): float
+    {
+        return 100 - $this->total_participation;
+    }
+
+    /**
+     * Anzahl der Beteiligungen
+     */
+    public function getParticipationsCountAttribute(): int
+    {
+        return $this->participations()->count();
+    }
+
+    /**
+     * Prüft ob weitere Beteiligungen möglich sind
+     */
+    public function canAddParticipation(float $percentage): bool
+    {
+        return ($this->total_participation + $percentage) <= 100;
+    }
+
+    /**
+     * Anzahl der Komponenten
+     */
+    public function getComponentsCountAttribute(): array
+    {
+        return [
+            'inverters' => $this->solarInverters()->count(),
+            'modules' => $this->solarModules()->count(),
+            'batteries' => $this->solarBatteries()->count(),
+        ];
+    }
+
+    /**
+     * Gesamtleistung aller Wechselrichter
+     */
+    public function getTotalInverterPowerAttribute(): float
+    {
+        return $this->solarInverters()->sum('rated_power_kw') ?? 0;
+    }
+
+    /**
+     * Gesamtleistung aller Module
+     */
+    public function getTotalModulePowerAttribute(): float
+    {
+        return ($this->solarModules()->sum('rated_power_wp') ?? 0) / 1000; // Wp zu kW
+    }
+
+    /**
+     * Gesamtkapazität aller Batterien
+     */
+    public function getTotalBatteryCapacityAttribute(): float
+    {
+        return $this->solarBatteries()->sum('capacity_kwh') ?? 0;
+    }
+
+    /**
+     * Aktuelle Gesamtleistung
+     */
+    public function getCurrentTotalPowerAttribute(): float
+    {
+        return $this->solarInverters()->sum('current_power_kw') ?? 0;
+    }
+
+    /**
+     * Aktueller Batterieladezustand (Durchschnitt)
+     */
+    public function getCurrentBatterySocAttribute(): ?float
+    {
+        $batteries = $this->solarBatteries()->whereNotNull('current_soc_percent');
+        return $batteries->count() > 0 ? $batteries->avg('current_soc_percent') : null;
+    }
+
+    /**
+     * Formatierte Gesamtinvestition
+     */
+    public function getFormattedTotalInvestmentAttribute(): string
+    {
+        return $this->total_investment ? number_format($this->total_investment, 2, ',', '.') . ' €' : '-';
+    }
+
+    /**
+     * Formatierte jährliche Betriebskosten
+     */
+    public function getFormattedAnnualOperatingCostsAttribute(): string
+    {
+        return $this->annual_operating_costs ? number_format($this->annual_operating_costs, 2, ',', '.') . ' €' : '-';
+    }
+
+    /**
+     * Formatierte Einspeisevergütung
+     */
+    public function getFormattedFeedInTariffAttribute(): string
+    {
+        return $this->feed_in_tariff_per_kwh ? number_format($this->feed_in_tariff_per_kwh, 6, ',', '.') . ' €/kWh' : '-';
+    }
+
+    /**
+     * Formatierter Strompreis
+     */
+    public function getFormattedElectricityPriceAttribute(): string
+    {
+        return $this->electricity_price_per_kwh ? number_format($this->electricity_price_per_kwh, 6, ',', '.') . ' €/kWh' : '-';
+    }
+
+    /**
+     * Prüft ob Geokoordinaten vorhanden sind
+     */
+    public function hasCoordinates(): bool
+    {
+        return !is_null($this->latitude) && !is_null($this->longitude);
+    }
+
+    /**
+     * Formatierte Koordinaten für Anzeige
+     */
+    public function getFormattedCoordinatesAttribute(): string
+    {
+        if (!$this->hasCoordinates()) {
+            return 'Keine Koordinaten hinterlegt';
+        }
+        
+        return number_format($this->latitude, 6, ',', '.') . '°N, ' .
+               number_format($this->longitude, 6, ',', '.') . '°E';
+    }
+
+    /**
+     * Google Maps URL für die Koordinaten
+     */
+    public function getGoogleMapsUrlAttribute(): ?string
+    {
+        if (!$this->hasCoordinates()) {
+            return null;
+        }
+        
+        return "https://www.google.com/maps?q={$this->latitude},{$this->longitude}";
+    }
+
+    /**
+     * OpenStreetMap URL für die Koordinaten
+     */
+    public function getOpenStreetMapUrlAttribute(): ?string
+    {
+        if (!$this->hasCoordinates()) {
+            return null;
+        }
+        
+        return "https://www.openstreetmap.org/?mlat={$this->latitude}&mlon={$this->longitude}&zoom=15";
+    }
+}
