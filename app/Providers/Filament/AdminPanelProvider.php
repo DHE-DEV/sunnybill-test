@@ -25,8 +25,6 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        $settings = CompanySetting::current();
-        
         return $panel
             ->default()
             ->id('admin')
@@ -58,10 +56,24 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->brandName($settings->company_name)
-            ->brandLogo($settings->logo_path
-                ? asset('storage/' . $settings->logo_path)
-                : asset('images/sunnybill-logo.svg'))
+            ->brandName(function () {
+                try {
+                    $settings = CompanySetting::current();
+                    return $settings->company_name ?? 'SunnyBill';
+                } catch (\Exception $e) {
+                    return 'SunnyBill';
+                }
+            })
+            ->brandLogo(function () {
+                try {
+                    $settings = CompanySetting::current();
+                    return $settings->logo_path
+                        ? asset('storage/' . $settings->logo_path)
+                        : asset('images/sunnybill-logo.svg');
+                } catch (\Exception $e) {
+                    return asset('images/sunnybill-logo.svg');
+                }
+            })
             ->favicon(asset('images/favicon.svg'))
             ->navigationGroups([
                 'Stammdaten',

@@ -72,7 +72,21 @@ class CompanySetting extends Model
      */
     public static function current(): self
     {
-        return static::first() ?? static::create([]);
+        try {
+            return static::first() ?? static::create([]);
+        } catch (\Exception $e) {
+            // Fallback wenn Tabelle noch nicht existiert (z.B. während Migration)
+            return new static([
+                'company_name' => 'SunnyBill',
+                'default_payment_days' => 14,
+                'article_price_decimal_places' => 2,
+                'total_price_decimal_places' => 2,
+                'customer_number_prefix' => 'KD',
+                'supplier_number_prefix' => 'LF',
+                'invoice_number_prefix' => 'RE',
+                'invoice_number_include_year' => true,
+            ]);
+        }
     }
 
     /**

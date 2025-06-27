@@ -11,8 +11,12 @@ class PriceFormatter
      */
     public static function formatArticlePrice(float $price, bool $withCurrency = true): string
     {
-        $settings = CompanySetting::current();
-        $decimalPlaces = $settings->article_price_decimal_places ?? 2;
+        try {
+            $settings = CompanySetting::current();
+            $decimalPlaces = $settings->article_price_decimal_places ?? 2;
+        } catch (\Exception $e) {
+            $decimalPlaces = 2;
+        }
         
         $formatted = number_format($price, $decimalPlaces, ',', '.');
         
@@ -34,8 +38,12 @@ class PriceFormatter
      */
     public static function formatTotalPrice(float $price, bool $withCurrency = true): string
     {
-        $settings = CompanySetting::current();
-        $decimalPlaces = $settings->total_price_decimal_places ?? 2;
+        try {
+            $settings = CompanySetting::current();
+            $decimalPlaces = $settings->total_price_decimal_places ?? 2;
+        } catch (\Exception $e) {
+            $decimalPlaces = 2;
+        }
         
         $formatted = number_format($price, $decimalPlaces, ',', '.');
         
@@ -47,8 +55,12 @@ class PriceFormatter
      */
     public static function getArticlePriceDecimalPlaces(): int
     {
-        $settings = CompanySetting::current();
-        return $settings->article_price_decimal_places ?? 2;
+        try {
+            $settings = CompanySetting::current();
+            return $settings->article_price_decimal_places ?? 2;
+        } catch (\Exception $e) {
+            return 2;
+        }
     }
     
     /**
@@ -56,8 +68,12 @@ class PriceFormatter
      */
     public static function getTotalPriceDecimalPlaces(): int
     {
-        $settings = CompanySetting::current();
-        return $settings->total_price_decimal_places ?? 2;
+        try {
+            $settings = CompanySetting::current();
+            return $settings->total_price_decimal_places ?? 2;
+        } catch (\Exception $e) {
+            return 2;
+        }
     }
     
     /**
