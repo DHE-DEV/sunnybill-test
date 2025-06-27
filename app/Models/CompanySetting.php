@@ -48,6 +48,8 @@ class CompanySetting extends Model
         'supplier_number_prefix',
         'invoice_number_prefix',
         'invoice_number_include_year',
+        'solar_plant_number_prefix',
+        'project_number_prefix',
     ];
 
     protected $casts = [

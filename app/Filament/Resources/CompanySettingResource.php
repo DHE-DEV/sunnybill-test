@@ -345,6 +345,21 @@ class CompanySettingResource extends Resource
                                                    ->default(false)
                                                    ->reactive(),
                                            ]),
+                                       Forms\Components\Grid::make(2)
+                                           ->schema([
+                                               Forms\Components\TextInput::make('solar_plant_number_prefix')
+                                                   ->label('Solaranlagen-Präfix')
+                                                   ->placeholder('z.B. SA, SOLAR')
+                                                   ->maxLength(10)
+                                                   ->reactive()
+                                                   ->helperText('Optional: Präfix vor der Solaranlagen-Nummer (z.B. SA-0001)'),
+                                               Forms\Components\TextInput::make('project_number_prefix')
+                                                   ->label('Projekt-Präfix')
+                                                   ->placeholder('z.B. PRJ, PROJEKT')
+                                                   ->maxLength(10)
+                                                   ->reactive()
+                                                   ->helperText('Optional: Präfix vor der Projekt-Nummer (z.B. PRJ-0001)'),
+                                           ]),
                                    ])
                                    ->description('Konfigurieren Sie Präfixe für automatisch generierte Nummern. Alle Teile werden durch Bindestriche (-) getrennt.'),
                                
@@ -356,10 +371,14 @@ class CompanySettingResource extends Resource
                                                $customerPrefix = $get('customer_number_prefix') ?: '[Kein Präfix]';
                                                $supplierPrefix = $get('supplier_number_prefix') ?: '[Kein Präfix]';
                                                $invoicePrefix = $get('invoice_number_prefix') ?: '[Kein Präfix]';
+                                               $solarPlantPrefix = $get('solar_plant_number_prefix') ?: '[Kein Präfix]';
+                                               $projectPrefix = $get('project_number_prefix') ?: '[Kein Präfix]';
                                                $includeYear = $get('invoice_number_include_year');
                                                
                                                $customerExample = $customerPrefix === '[Kein Präfix]' ? '0001' : $customerPrefix . '-0001';
                                                $supplierExample = $supplierPrefix === '[Kein Präfix]' ? '0001' : $supplierPrefix . '-0001';
+                                               $solarPlantExample = $solarPlantPrefix === '[Kein Präfix]' ? '0001' : $solarPlantPrefix . '-0001';
+                                               $projectExample = $projectPrefix === '[Kein Präfix]' ? '0001' : $projectPrefix . '-0001';
                                                
                                                $invoiceExample = '';
                                                if ($invoicePrefix !== '[Kein Präfix]') {
@@ -383,6 +402,14 @@ class CompanySettingResource extends Resource
                                                        <div class='flex justify-between items-center'>
                                                            <span class='font-medium text-gray-700 dark:text-gray-300'>Rechnungsnummer:</span>
                                                            <span class='font-mono text-sm bg-white dark:bg-gray-700 px-2 py-1 rounded border'>{$invoiceExample}</span>
+                                                       </div>
+                                                       <div class='flex justify-between items-center'>
+                                                           <span class='font-medium text-gray-700 dark:text-gray-300'>Solaranlagen-Nr.:</span>
+                                                           <span class='font-mono text-sm bg-white dark:bg-gray-700 px-2 py-1 rounded border'>{$solarPlantExample}</span>
+                                                       </div>
+                                                       <div class='flex justify-between items-center'>
+                                                           <span class='font-medium text-gray-700 dark:text-gray-300'>Projekt-Nr.:</span>
+                                                           <span class='font-mono text-sm bg-white dark:bg-gray-700 px-2 py-1 rounded border'>{$projectExample}</span>
                                                        </div>
                                                    </div>
                                                ");
