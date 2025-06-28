@@ -15,7 +15,7 @@ class StandardNotesRelationManager extends RelationManager
 {
     protected static string $relationship = 'notes';
 
-    protected static ?string $title = 'Notizen - Standard';
+    protected static ?string $title = 'Notizen';
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {

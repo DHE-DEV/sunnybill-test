@@ -15,7 +15,7 @@ class MilestonesRelationManager extends RelationManager
 {
     protected static string $relationship = 'milestones';
 
-    protected static ?string $title = 'Projekttermine';
+    protected static ?string $title = 'Termine';
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {

@@ -16,7 +16,7 @@ class ParticipationsRelationManager extends RelationManager
 {
     protected static string $relationship = 'participations';
 
-    protected static ?string $title = 'Kundenbeteiligungen';
+    protected static ?string $title = 'Beteiligungen';
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {

@@ -16,7 +16,7 @@ class MonthlyResultsRelationManager extends RelationManager
 {
     protected static string $relationship = 'monthlyResults';
 
-    protected static ?string $title = 'Monatliche Ergebnisse';
+    protected static ?string $title = 'Ergebnisse';
     
     public function canCreate(): bool
     {
