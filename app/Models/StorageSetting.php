@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Aws\S3\S3Client;
 
 class StorageSetting extends Model
 {
@@ -250,7 +251,7 @@ class StorageSetting extends Model
     {
         try {
             // AWS S3 Client direkt verwenden
-            $s3Client = new \Aws\S3\S3Client([
+            $s3Client = new S3Client([
                 'version' => 'latest',
                 'region' => $this->storage_config['region'],
                 'endpoint' => $this->storage_config['endpoint'],
