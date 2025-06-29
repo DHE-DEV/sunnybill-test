@@ -191,68 +191,159 @@ class StorageSetting extends Model
                 return ['success' => false, 'message' => 'Verbindungstest fehlgeschlagen: ' . $listException->getMessage()];
             }
             
-            // Schritt 2: Test-Datei erstellen (ohne Unterordner für ersten Test)
-            $testContent = 'test-connection-' . time();
-            $testFile = 'test-connection-' . time() . '.txt';
+            // Schritt 2: Direkter Upload-Test mit AWS S3 Client (umgeht Laravel Storage)
+            return $this->testDirectS3Upload();
             
-            \Log::info('testConnection Upload Debug', [
-                'test_file' => $testFile,
-                'test_content' => $testContent
+        } catch (\Aws\S3\Exception\S3Exception $e) {
+            $errorCode = $e->getAwsErrorCode();
+            $errorMessage = $e->getAwsErrorMessage();
+            $statusCode = $e->getStatusCode();
+            
+            \Log::error('testConnection S3 Exception', [
+                'error_code' => $errorCode,
+                'error_message' => $errorMessage,
+                'status_code' => $statusCode,
+                'trace' => $e->getTraceAsString(),
+                'request_url' => $e->getRequest() ? $e->getRequest()->getUri() : 'unknown'
             ]);
             
-            // Schritt 3: Datei hochladen
-            try {
-                $uploadResult = $disk->put($testFile, $testContent);
-                \Log::info('testConnection Upload Result', ['result' => $uploadResult]);
+            // Spezifische Behandlung für 403 Forbidden
+            if ($statusCode === 403) {
+                $troubleshootingMessage = "403 Forbidden - Mögliche Ursachen:\n";
+                $troubleshootingMessage .= "• Falsche Access Key oder Secret Key\n";
+                $troubleshootingMessage .= "• Space existiert nicht oder falscher Name\n";
+                $troubleshootingMessage .= "• Keine Schreibberechtigung für den Space\n";
+                $troubleshootingMessage .= "• IP-Beschränkungen im DigitalOcean Space\n";
+                $troubleshootingMessage .= "• Falsche Region oder Endpoint-URL\n\n";
+                $troubleshootingMessage .= "Aktueller Fehler: {$errorMessage}";
                 
-                if (!$uploadResult) {
-                    return ['success' => false, 'message' => 'Datei konnte nicht hochgeladen werden - Upload-Operation fehlgeschlagen'];
-                }
-            } catch (\Exception $uploadException) {
-                \Log::error('testConnection Upload Exception', [
-                    'exception' => $uploadException->getMessage(),
-                    'trace' => $uploadException->getTraceAsString()
+                return ['success' => false, 'message' => $troubleshootingMessage];
+            }
+            
+            return ['success' => false, 'message' => "S3/Spaces Fehler ({$errorCode}): {$errorMessage}"];
+        } catch (\Exception $e) {
+            \Log::error('testConnection General Exception', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Spezielle Behandlung für 403 in der allgemeinen Exception
+            if (strpos($e->getMessage(), '403 Forbidden') !== false) {
+                $troubleshootingMessage = "403 Forbidden - Berechtigungsproblem erkannt:\n";
+                $troubleshootingMessage .= "• Überprüfen Sie Ihre DigitalOcean Spaces Credentials\n";
+                $troubleshootingMessage .= "• Stellen Sie sicher, dass der Space existiert\n";
+                $troubleshootingMessage .= "• Prüfen Sie die Berechtigungen des API-Keys\n";
+                $troubleshootingMessage .= "• Kontrollieren Sie eventuelle IP-Beschränkungen\n\n";
+                $troubleshootingMessage .= "Detaillierter Fehler: " . $e->getMessage();
+                
+                return ['success' => false, 'message' => $troubleshootingMessage];
+            }
+            
+            return ['success' => false, 'message' => 'Verbindungsfehler: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Direkter S3/Spaces Upload-Test ohne Laravel Storage Layer
+     */
+    private function testDirectS3Upload(): array
+    {
+        try {
+            // AWS S3 Client direkt verwenden
+            $s3Client = new \Aws\S3\S3Client([
+                'version' => 'latest',
+                'region' => $this->storage_config['region'],
+                'endpoint' => $this->storage_config['endpoint'],
+                'credentials' => [
+                    'key' => $this->storage_config['key'],
+                    'secret' => $this->storage_config['secret'],
+                ],
+                'use_path_style_endpoint' => false,
+            ]);
+
+            $bucket = $this->storage_config['bucket'];
+            $testKey = 'direct-test-' . time() . '.txt';
+            $testContent = 'Direct S3 test content - ' . time();
+
+            \Log::info('testDirectS3Upload Debug', [
+                'bucket' => $bucket,
+                'key' => $testKey,
+                'endpoint' => $this->storage_config['endpoint'],
+                'region' => $this->storage_config['region']
+            ]);
+
+            // 1. Upload-Test
+            $result = $s3Client->putObject([
+                'Bucket' => $bucket,
+                'Key' => $testKey,
+                'Body' => $testContent,
+                'ContentType' => 'text/plain',
+            ]);
+
+            \Log::info('testDirectS3Upload Upload Success', [
+                'etag' => $result['ETag'] ?? 'unknown',
+                'version_id' => $result['VersionId'] ?? 'none'
+            ]);
+
+            // 2. Download-Test
+            $getResult = $s3Client->getObject([
+                'Bucket' => $bucket,
+                'Key' => $testKey,
+            ]);
+
+            $downloadedContent = (string) $getResult['Body'];
+            
+            \Log::info('testDirectS3Upload Download Success', [
+                'content_length' => strlen($downloadedContent),
+                'content_matches' => $downloadedContent === $testContent
+            ]);
+
+            // 3. Cleanup
+            try {
+                $s3Client->deleteObject([
+                    'Bucket' => $bucket,
+                    'Key' => $testKey,
                 ]);
-                return ['success' => false, 'message' => 'Upload-Fehler: ' . $uploadException->getMessage()];
+                \Log::info('testDirectS3Upload Cleanup Success');
+            } catch (\Exception $cleanupException) {
+                \Log::warning('testDirectS3Upload Cleanup Failed', [
+                    'exception' => $cleanupException->getMessage()
+                ]);
             }
-            
-            // Schritt 2: Prüfen ob Datei existiert
-            try {
-                $exists = $disk->exists($testFile);
-                \Log::info('testConnection Exists Check', ['exists' => $exists]);
-                
-                if (!$exists) {
-                    return ['success' => false, 'message' => 'Hochgeladene Datei wurde nicht gefunden'];
-                }
-            } catch (\Exception $existsException) {
-                \Log::error('testConnection Exists Exception', ['exception' => $existsException->getMessage()]);
-                return ['success' => false, 'message' => 'Fehler beim Prüfen der Datei-Existenz: ' . $existsException->getMessage()];
-            }
-            
-            // Schritt 3: Datei lesen
-            try {
-                $content = $disk->get($testFile);
-                \Log::info('testConnection Read Result', ['content_length' => strlen($content)]);
-            } catch (\Exception $readException) {
-                \Log::error('testConnection Read Exception', ['exception' => $readException->getMessage()]);
-                return ['success' => false, 'message' => 'Fehler beim Lesen der Datei: ' . $readException->getMessage()];
-            }
-            
-            // Schritt 4: Test-Datei löschen
-            try {
-                $deleteResult = $disk->delete($testFile);
-                \Log::info('testConnection Delete Result', ['result' => $deleteResult]);
-            } catch (\Exception $deleteException) {
-                \Log::error('testConnection Delete Exception', ['exception' => $deleteException->getMessage()]);
-                // Löschfehler ist nicht kritisch für den Test
-            }
-            
-            // Schritt 5: Inhalt vergleichen
-            if ($content === $testContent) {
-                return ['success' => true, 'message' => 'Verbindung erfolgreich getestet - Upload, Download und Löschung funktionieren'];
+
+            // 4. Inhalt vergleichen
+            if ($downloadedContent === $testContent) {
+                return ['success' => true, 'message' => 'Direkter S3/Spaces Test erfolgreich - Upload, Download und Löschung funktionieren'];
             } else {
-                return ['success' => false, 'message' => 'Datei konnte nicht korrekt gelesen werden (Inhalt stimmt nicht überein)'];
+                return ['success' => false, 'message' => 'Inhalt stimmt nicht überein - Upload/Download Problem'];
             }
+
+        } catch (\Aws\S3\Exception\S3Exception $e) {
+            $errorCode = $e->getAwsErrorCode();
+            $errorMessage = $e->getAwsErrorMessage();
+            $statusCode = $e->getStatusCode();
+            
+            \Log::error('testDirectS3Upload S3 Exception', [
+                'error_code' => $errorCode,
+                'error_message' => $errorMessage,
+                'status_code' => $statusCode,
+                'request_url' => $e->getRequest() ? $e->getRequest()->getUri() : 'unknown'
+            ]);
+
+            if ($statusCode === 403) {
+                return ['success' => false, 'message' => "403 Forbidden beim direkten S3-Test:\n• Credentials: {$errorCode}\n• Nachricht: {$errorMessage}\n• Überprüfen Sie Access Key, Secret Key und Space-Berechtigungen"];
+            }
+
+            return ['success' => false, 'message' => "Direkter S3-Test fehlgeschlagen ({$errorCode}): {$errorMessage}"];
+        } catch (\Exception $e) {
+            \Log::error('testDirectS3Upload General Exception', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return ['success' => false, 'message' => 'Direkter S3-Test Fehler: ' . $e->getMessage()];
+        }
+    }
             
         } catch (\Aws\S3\Exception\S3Exception $e) {
             $errorCode = $e->getAwsErrorCode();
