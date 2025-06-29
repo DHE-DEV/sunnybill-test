@@ -14,7 +14,19 @@ class SolarPlant extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
 
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($solarPlant) {
+            if (empty($solarPlant->plant_number)) {
+                $solarPlant->plant_number = static::generatePlantNumber();
+            }
+        });
+    }
+
     protected $fillable = [
+        'plant_number',
         'name',
         'location',
         'latitude',
@@ -339,5 +351,34 @@ class SolarPlant extends Model
         }
         
         return "https://www.openstreetmap.org/?mlat={$this->latitude}&mlon={$this->longitude}&zoom=15";
+    }
+
+    /**
+     * Generiert eine eindeutige Solaranlagennummer
+     */
+    private static function generatePlantNumber(): string
+    {
+        try {
+            $companySettings = \App\Models\CompanySetting::current();
+            $prefix = $companySettings?->solar_plant_number_prefix ?? 'SA';
+            
+            // Finde die höchste Nummer für das Präfix
+            $lastPlant = static::where('plant_number', 'like', $prefix . '%')
+                ->orderBy('plant_number', 'desc')
+                ->first();
+            
+            if ($lastPlant && preg_match('/' . preg_quote($prefix) . '(\d+)$/', $lastPlant->plant_number, $matches)) {
+                $nextNumber = (int) $matches[1] + 1;
+            } else {
+                $nextNumber = 1;
+            }
+            
+            // Formatiere mit führenden Nullen (6 Stellen)
+            return $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        } catch (\Exception $e) {
+            // Fallback wenn alles fehlschlägt
+            $timestamp = time();
+            return 'SA' . substr($timestamp, -6);
+        }
     }
 }

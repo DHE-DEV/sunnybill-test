@@ -55,17 +55,21 @@ class DocumentResource extends Resource
                             ->label('Datei')
                             ->disk('documents')
                             ->directory(function (callable $get) {
-                                // Dynamische Verzeichnisstruktur basierend auf Dokumenttyp und Jahr
+                                // Dynamische Verzeichnisstruktur basierend auf Dokumenttyp und spezifischer ID/Nummer
                                 $type = $get('documentable_type');
-                                $year = date('Y');
+                                $documentableId = $get('documentable_id');
+                                
+                                if (!$type || !$documentableId) {
+                                    return 'allgemein/' . date('Y');
+                                }
                                 
                                 return match ($type) {
-                                    'App\Models\SolarPlant' => "solaranlagen/{$year}",
-                                    'App\Models\Customer' => "kunden/{$year}",
-                                    'App\Models\Task' => "aufgaben/{$year}",
-                                    'App\Models\Invoice' => "rechnungen/{$year}",
-                                    'App\Models\Supplier' => "lieferanten/{$year}",
-                                    default => "allgemein/{$year}",
+                                    'App\Models\SolarPlant' => static::getSolarPlantDirectory($documentableId),
+                                    'App\Models\Customer' => static::getCustomerDirectory($documentableId),
+                                    'App\Models\Task' => static::getTaskDirectory($documentableId),
+                                    'App\Models\Invoice' => static::getInvoiceDirectory($documentableId),
+                                    'App\Models\Supplier' => static::getSupplierDirectory($documentableId),
+                                    default => 'allgemein/' . date('Y'),
                                 };
                             })
                             ->storeFileNamesIn('original_name')
@@ -306,5 +310,69 @@ class DocumentResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+
+    /**
+     * Helper-Methoden für Verzeichnisstruktur basierend auf spezifischen Nummern/IDs
+     */
+    private static function getSolarPlantDirectory($solarPlantId): string
+    {
+        $solarPlant = \App\Models\SolarPlant::find($solarPlantId);
+        if (!$solarPlant) {
+            return 'solaranlagen/unbekannt';
+        }
+        
+        // Verwende plant_number falls vorhanden, sonst fallback auf name
+        if ($solarPlant->plant_number) {
+            return "solaranlagen/{$solarPlant->plant_number}";
+        }
+        
+        if ($solarPlant->name) {
+            // Bereinige den Namen für Dateisystem-Kompatibilität
+            $cleanName = preg_replace('/[^a-zA-Z0-9\-_]/', '_', $solarPlant->name);
+            return "solaranlagen/{$cleanName}";
+        }
+        
+        return 'solaranlagen/unbekannt';
+    }
+
+    private static function getCustomerDirectory($customerId): string
+    {
+        $customer = \App\Models\Customer::find($customerId);
+        if (!$customer || !$customer->customer_number) {
+            return 'kunden/unbekannt';
+        }
+        
+        return "kunden/{$customer->customer_number}";
+    }
+
+    private static function getTaskDirectory($taskId): string
+    {
+        $task = \App\Models\Task::find($taskId);
+        if (!$task || !$task->task_number) {
+            return 'aufgaben/unbekannt';
+        }
+        
+        return "aufgaben/{$task->task_number}";
+    }
+
+    private static function getInvoiceDirectory($invoiceId): string
+    {
+        $invoice = \App\Models\Invoice::find($invoiceId);
+        if (!$invoice || !$invoice->invoice_number) {
+            return 'rechnungen/unbekannt';
+        }
+        
+        return "rechnungen/{$invoice->invoice_number}";
+    }
+
+    private static function getSupplierDirectory($supplierId): string
+    {
+        $supplier = \App\Models\Supplier::find($supplierId);
+        if (!$supplier || !$supplier->supplier_number) {
+            return 'lieferanten/unbekannt';
+        }
+        
+        return "lieferanten/{$supplier->supplier_number}";
     }
 }
