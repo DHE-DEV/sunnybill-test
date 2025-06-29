@@ -35,33 +35,6 @@ class StorageSetting extends Model
         return static::where('is_active', true)->first();
     }
 
-    /**
-     * Aktuelle Disk für Dokumente abrufen
-     */
-    public static function getCurrentDisk(): string
-    {
-        $current = static::current();
-        
-        if (!$current || $current->storage_driver === 'local') {
-            return 'local';
-        }
-        
-        return 'documents'; // Dynamische Disk-Konfiguration
-    }
-
-    /**
-     * Aktuelle Storage-Disk-Instanz abrufen
-     */
-    public static function getCurrentDiskInstance(): \Illuminate\Contracts\Filesystem\Filesystem
-    {
-        $current = static::current();
-        
-        if (!$current) {
-            return Storage::disk('local');
-        }
-        
-        return $current->getDisk();
-    }
 
     /**
      * Speicher-Treiber-Optionen

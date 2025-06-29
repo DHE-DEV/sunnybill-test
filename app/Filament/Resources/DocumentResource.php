@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\DocumentResource\Pages;
 use App\Models\Document;
-use App\Models\StorageSetting;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -54,7 +53,7 @@ class DocumentResource extends Resource
 
                         Forms\Components\FileUpload::make('path')
                             ->label('Datei')
-                            ->disk(StorageSetting::getCurrentDisk())
+                            ->disk('documents')
                             ->directory('documents')
                             ->preserveFilenames()
                             ->acceptedFileTypes([

@@ -17,10 +17,10 @@ class CreateDocument extends CreateRecord
         // Wenn eine Datei hochgeladen wurde, extrahiere die Metadaten
         if (isset($data['path']) && $data['path']) {
             $filePath = $data['path'];
-            $disk = StorageSetting::getCurrentDisk(); // Dynamische Disk-Auswahl
+            $disk = 'documents'; // Verwende immer die 'documents' Disk (wird dynamisch konfiguriert)
             
             // Prüfe ob die Datei existiert
-            $diskInstance = StorageSetting::getCurrentDiskInstance();
+            $diskInstance = Storage::disk($disk);
             if ($diskInstance->exists($filePath)) {
                 // Extrahiere den ursprünglichen Dateinamen aus dem Pfad
                 $originalName = basename($filePath);
