@@ -173,16 +173,34 @@ class StorageSetting extends Model
             
             $disk = Storage::disk('test_storage');
             
-            // Test-Datei erstellen
+            // Schritt 1: Erst versuchen, den Space zu listen (weniger invasiv)
+            try {
+                $files = $disk->files();
+                \Log::info('testConnection List Files Success', ['file_count' => count($files)]);
+            } catch (\Exception $listException) {
+                \Log::error('testConnection List Files Exception', [
+                    'exception' => $listException->getMessage(),
+                    'trace' => $listException->getTraceAsString()
+                ]);
+                
+                // Wenn das Auflisten fehlschlägt, ist wahrscheinlich die Grundkonfiguration falsch
+                if (strpos($listException->getMessage(), '403 Forbidden') !== false) {
+                    return ['success' => false, 'message' => 'Grundlegende Verbindung fehlgeschlagen (403 Forbidden beim Auflisten). Überprüfen Sie Ihre Credentials und Space-Berechtigungen.'];
+                }
+                
+                return ['success' => false, 'message' => 'Verbindungstest fehlgeschlagen: ' . $listException->getMessage()];
+            }
+            
+            // Schritt 2: Test-Datei erstellen (ohne Unterordner für ersten Test)
             $testContent = 'test-connection-' . time();
-            $testFile = 'sunnybill-test/test-connection-' . time() . '.txt';
+            $testFile = 'test-connection-' . time() . '.txt';
             
             \Log::info('testConnection Upload Debug', [
                 'test_file' => $testFile,
                 'test_content' => $testContent
             ]);
             
-            // Schritt 1: Datei hochladen
+            // Schritt 3: Datei hochladen
             try {
                 $uploadResult = $disk->put($testFile, $testContent);
                 \Log::info('testConnection Upload Result', ['result' => $uploadResult]);
