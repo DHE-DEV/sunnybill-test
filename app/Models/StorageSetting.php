@@ -90,10 +90,13 @@ class StorageSetting extends Model
     {
         $errors = [];
 
-        // Debug: Konfiguration loggen
+        // Debug: Konfiguration loggen (ohne sensible Daten)
         \Log::info('StorageSetting validateConfig Debug', [
             'driver' => $this->storage_driver,
-            'config' => $this->storage_config
+            'config_keys' => array_keys($this->storage_config ?? []),
+            'environment' => app()->environment(),
+            'server_ip' => request()->server('SERVER_ADDR'),
+            'user_ip' => request()->ip(),
         ]);
 
         switch ($this->storage_driver) {
@@ -127,6 +130,17 @@ class StorageSetting extends Model
                 }
                 if (empty($this->storage_config['endpoint'])) {
                     $errors[] = 'DigitalOcean Endpoint ist erforderlich';
+                }
+                
+                // Zusätzliche Validierung für DigitalOcean
+                if (!empty($this->storage_config['endpoint'])) {
+                    $expectedEndpoint = "https://{$this->storage_config['region']}.digitaloceanspaces.com";
+                    if ($this->storage_config['endpoint'] !== $expectedEndpoint) {
+                        \Log::warning('DigitalOcean Endpoint Mismatch', [
+                            'provided' => $this->storage_config['endpoint'],
+                            'expected' => $expectedEndpoint
+                        ]);
+                    }
                 }
                 break;
         }
@@ -225,17 +239,48 @@ class StorageSetting extends Model
         } catch (\Aws\S3\Exception\S3Exception $e) {
             $errorCode = $e->getAwsErrorCode();
             $errorMessage = $e->getAwsErrorMessage();
+            $statusCode = $e->getStatusCode();
+            
             \Log::error('testConnection S3 Exception', [
                 'error_code' => $errorCode,
                 'error_message' => $errorMessage,
-                'trace' => $e->getTraceAsString()
+                'status_code' => $statusCode,
+                'trace' => $e->getTraceAsString(),
+                'request_url' => $e->getRequest() ? $e->getRequest()->getUri() : 'unknown'
             ]);
+            
+            // Spezifische Behandlung für 403 Forbidden
+            if ($statusCode === 403) {
+                $troubleshootingMessage = "403 Forbidden - Mögliche Ursachen:\n";
+                $troubleshootingMessage .= "• Falsche Access Key oder Secret Key\n";
+                $troubleshootingMessage .= "• Space existiert nicht oder falscher Name\n";
+                $troubleshootingMessage .= "• Keine Schreibberechtigung für den Space\n";
+                $troubleshootingMessage .= "• IP-Beschränkungen im DigitalOcean Space\n";
+                $troubleshootingMessage .= "• Falsche Region oder Endpoint-URL\n\n";
+                $troubleshootingMessage .= "Aktueller Fehler: {$errorMessage}";
+                
+                return ['success' => false, 'message' => $troubleshootingMessage];
+            }
+            
             return ['success' => false, 'message' => "S3/Spaces Fehler ({$errorCode}): {$errorMessage}"];
         } catch (\Exception $e) {
             \Log::error('testConnection General Exception', [
                 'exception' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            
+            // Spezielle Behandlung für 403 in der allgemeinen Exception
+            if (strpos($e->getMessage(), '403 Forbidden') !== false) {
+                $troubleshootingMessage = "403 Forbidden - Berechtigungsproblem erkannt:\n";
+                $troubleshootingMessage .= "• Überprüfen Sie Ihre DigitalOcean Spaces Credentials\n";
+                $troubleshootingMessage .= "• Stellen Sie sicher, dass der Space existiert\n";
+                $troubleshootingMessage .= "• Prüfen Sie die Berechtigungen des API-Keys\n";
+                $troubleshootingMessage .= "• Kontrollieren Sie eventuelle IP-Beschränkungen\n\n";
+                $troubleshootingMessage .= "Detaillierter Fehler: " . $e->getMessage();
+                
+                return ['success' => false, 'message' => $troubleshootingMessage];
+            }
+            
             return ['success' => false, 'message' => 'Verbindungsfehler: ' . $e->getMessage()];
         }
     }
