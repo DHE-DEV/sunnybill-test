@@ -54,8 +54,21 @@ class DocumentResource extends Resource
                         Forms\Components\FileUpload::make('path')
                             ->label('Datei')
                             ->disk('documents')
-                            ->directory('documents')
-                            ->preserveFilenames()
+                            ->directory(function (callable $get) {
+                                // Dynamische Verzeichnisstruktur basierend auf Dokumenttyp und Jahr
+                                $type = $get('documentable_type');
+                                $year = date('Y');
+                                
+                                return match ($type) {
+                                    'App\Models\SolarPlant' => "solaranlagen/{$year}",
+                                    'App\Models\Customer' => "kunden/{$year}",
+                                    'App\Models\Task' => "aufgaben/{$year}",
+                                    'App\Models\Invoice' => "rechnungen/{$year}",
+                                    'App\Models\Supplier' => "lieferanten/{$year}",
+                                    default => "allgemein/{$year}",
+                                };
+                            })
+                            ->storeFileNamesIn('original_name')
                             ->acceptedFileTypes([
                                 'application/pdf',
                                 'application/msword',
@@ -160,6 +173,14 @@ class DocumentResource extends Resource
                     ->sortable()
                     ->weight('bold')
                     ->limit(50),
+
+                TextColumn::make('path')
+                    ->label('Speicherort')
+                    ->formatStateUsing(fn (string $state): string => dirname($state))
+                    ->badge()
+                    ->color('gray')
+                    ->limit(30)
+                    ->toggleable(),
 
                 BadgeColumn::make('category')
                     ->label('Kategorie')

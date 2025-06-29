@@ -22,8 +22,11 @@ class CreateDocument extends CreateRecord
             // Prüfe ob die Datei existiert
             $diskInstance = Storage::disk($disk);
             if ($diskInstance->exists($filePath)) {
-                // Extrahiere den ursprünglichen Dateinamen aus dem Pfad
-                $originalName = basename($filePath);
+                // Der ursprüngliche Dateiname wird bereits durch storeFileNamesIn('original_name') gesetzt
+                // Falls nicht gesetzt, extrahiere aus dem Pfad
+                if (empty($data['original_name'])) {
+                    $data['original_name'] = basename($filePath);
+                }
                 
                 // Hole die Dateigröße
                 $size = $diskInstance->size($filePath);
@@ -32,18 +35,20 @@ class CreateDocument extends CreateRecord
                 $mimeType = $diskInstance->mimeType($filePath);
                 
                 // Füge die fehlenden Felder hinzu
-                $data['original_name'] = $originalName;
                 $data['disk'] = $disk;
                 $data['size'] = $size;
                 $data['mime_type'] = $mimeType;
                 $data['uploaded_by'] = auth()->id();
                 
-                // Debug-Log für Storage-Verwendung
+                // Debug-Log für Storage-Verwendung mit Verzeichnisstruktur
                 \Log::info('Document Upload Storage Info', [
                     'disk' => $disk,
                     'file_path' => $filePath,
+                    'original_name' => $data['original_name'],
                     'size' => $size,
-                    'storage_driver' => StorageSetting::current()?->storage_driver ?? 'none'
+                    'documentable_type' => $data['documentable_type'] ?? 'unknown',
+                    'storage_driver' => StorageSetting::current()?->storage_driver ?? 'none',
+                    'directory_structure' => dirname($filePath)
                 ]);
             }
         }
