@@ -86,11 +86,11 @@ class MilestonesRelationManager extends RelationManager
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Select::make('project_manager_id')
-                                    ->label('Projektleiter')
+                                    ->label('Inhaber')
                                     ->relationship('projectManager', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->placeholder('Projektleiter auswählen'),
+                                    ->placeholder('Inhaber auswählen'),
                                 Forms\Components\Select::make('last_responsible_user_id')
                                     ->label('Zuletzt zuständige Person')
                                     ->relationship('lastResponsibleUser', 'name')
@@ -121,7 +121,7 @@ class MilestonesRelationManager extends RelationManager
                     ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('projectManager.name')
-                    ->label('Projektleiter')
+                    ->label('Inhaber')
                     ->searchable()
                     ->sortable()
                     ->placeholder('Nicht zugewiesen')

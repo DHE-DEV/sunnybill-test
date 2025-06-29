@@ -138,7 +138,7 @@ class FilteredProjectMilestonesTableWidget extends BaseWidget
                     ->toggleable(),
 
                 TextColumn::make('projectManager.name')
-                    ->label('Projektleiter')
+                    ->label('Inhaber')
                     ->searchable()
                     ->sortable()
                     ->limit(20)
