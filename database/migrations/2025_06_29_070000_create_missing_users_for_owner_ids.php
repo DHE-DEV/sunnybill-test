@@ -6,8 +6,6 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Models\Task;
-use App\Models\SolarPlantMilestone;
 
 return new class extends Migration
 {
@@ -16,30 +14,28 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Sammle alle User-IDs aus Tasks und SolarPlantMilestones
+        // Sammle alle User-IDs aus der owner_id Spalte
         $userIds = collect();
         
-        // User-IDs aus Tasks sammeln (nur existierende Spalten)
-        $taskUserIds = DB::table('tasks')
-            ->select('assigned_to', 'created_by')
-            ->whereNotNull('assigned_to')
-            ->orWhereNotNull('created_by')
+        // User-IDs aus Tasks sammeln (owner_id Spalte)
+        $taskOwnerIds = DB::table('tasks')
+            ->select('owner_id')
+            ->whereNotNull('owner_id')
             ->get();
             
-        foreach ($taskUserIds as $task) {
-            if ($task->assigned_to) {
-                $userIds->push($task->assigned_to);
-            }
-            if ($task->created_by) {
-                $userIds->push($task->created_by);
+        foreach ($taskOwnerIds as $task) {
+            if ($task->owner_id) {
+                $userIds->push($task->owner_id);
             }
         }
         
-        // User-IDs aus SolarPlantMilestones sammeln werden später in einer separaten Migration behandelt
-        // da die entsprechenden Spalten noch nicht existieren
-        
         // Eindeutige User-IDs
         $uniqueUserIds = $userIds->unique()->filter();
+        
+        if ($uniqueUserIds->isEmpty()) {
+            echo "No owner_id references found in tasks table.\n";
+            return;
+        }
         
         // Prüfe welche User bereits existieren
         $existingUserIds = User::whereIn('id', $uniqueUserIds)->pluck('id');
@@ -57,13 +53,13 @@ return new class extends Migration
                 'updated_at' => now(),
             ]);
             
-            echo "Created missing user with ID: {$userId}\n";
+            echo "Created missing user with ID: {$userId} for owner_id references\n";
         }
         
         if ($missingUserIds->isEmpty()) {
-            echo "No missing users found. All referenced users already exist.\n";
+            echo "No missing users found for owner_id references. All referenced users already exist.\n";
         } else {
-            echo "Created " . $missingUserIds->count() . " missing users.\n";
+            echo "Created " . $missingUserIds->count() . " missing users for owner_id references.\n";
         }
     }
 

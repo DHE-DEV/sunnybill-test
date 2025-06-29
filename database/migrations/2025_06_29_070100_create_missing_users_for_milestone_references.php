@@ -6,8 +6,6 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Models\Task;
-use App\Models\SolarPlantMilestone;
 
 return new class extends Migration
 {
@@ -16,30 +14,32 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Sammle alle User-IDs aus Tasks und SolarPlantMilestones
+        // Sammle alle User-IDs aus SolarPlantMilestones
         $userIds = collect();
         
-        // User-IDs aus Tasks sammeln (nur existierende Spalten)
-        $taskUserIds = DB::table('tasks')
-            ->select('assigned_to', 'created_by')
-            ->whereNotNull('assigned_to')
-            ->orWhereNotNull('created_by')
+        // User-IDs aus SolarPlantMilestones sammeln
+        $milestoneUserIds = DB::table('solar_plant_milestones')
+            ->select('project_manager_id', 'last_responsible_user_id')
+            ->whereNotNull('project_manager_id')
+            ->orWhereNotNull('last_responsible_user_id')
             ->get();
             
-        foreach ($taskUserIds as $task) {
-            if ($task->assigned_to) {
-                $userIds->push($task->assigned_to);
+        foreach ($milestoneUserIds as $milestone) {
+            if ($milestone->project_manager_id) {
+                $userIds->push($milestone->project_manager_id);
             }
-            if ($task->created_by) {
-                $userIds->push($task->created_by);
+            if ($milestone->last_responsible_user_id) {
+                $userIds->push($milestone->last_responsible_user_id);
             }
         }
         
-        // User-IDs aus SolarPlantMilestones sammeln werden später in einer separaten Migration behandelt
-        // da die entsprechenden Spalten noch nicht existieren
-        
         // Eindeutige User-IDs
         $uniqueUserIds = $userIds->unique()->filter();
+        
+        if ($uniqueUserIds->isEmpty()) {
+            echo "No user references found in solar_plant_milestones table.\n";
+            return;
+        }
         
         // Prüfe welche User bereits existieren
         $existingUserIds = User::whereIn('id', $uniqueUserIds)->pluck('id');
@@ -57,13 +57,13 @@ return new class extends Migration
                 'updated_at' => now(),
             ]);
             
-            echo "Created missing user with ID: {$userId}\n";
+            echo "Created missing user with ID: {$userId} for milestone references\n";
         }
         
         if ($missingUserIds->isEmpty()) {
-            echo "No missing users found. All referenced users already exist.\n";
+            echo "No missing users found for milestone references. All referenced users already exist.\n";
         } else {
-            echo "Created " . $missingUserIds->count() . " missing users.\n";
+            echo "Created " . $missingUserIds->count() . " missing users for milestone references.\n";
         }
     }
 
