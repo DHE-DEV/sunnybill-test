@@ -174,7 +174,13 @@ class StorageSetting extends Model
             
             $disk = Storage::disk('test_storage');
             
-            // Schritt 1: Erst versuchen, den Space zu listen (weniger invasiv)
+            // Schritt 1: Detaillierte Credential-Validierung
+            $credentialTest = $this->validateDigitalOceanCredentials();
+            if (!$credentialTest['success']) {
+                return $credentialTest;
+            }
+            
+            // Schritt 2: Erst versuchen, den Space zu listen (weniger invasiv)
             try {
                 $files = $disk->files();
                 \Log::info('testConnection List Files Success', ['file_count' => count($files)]);
@@ -184,15 +190,32 @@ class StorageSetting extends Model
                     'trace' => $listException->getTraceAsString()
                 ]);
                 
-                // Wenn das Auflisten fehlschlägt, ist wahrscheinlich die Grundkonfiguration falsch
+                // Detaillierte Analyse des 403 Fehlers
                 if (strpos($listException->getMessage(), '403 Forbidden') !== false) {
-                    return ['success' => false, 'message' => 'Grundlegende Verbindung fehlgeschlagen (403 Forbidden beim Auflisten). Überprüfen Sie Ihre Credentials und Space-Berechtigungen.'];
+                    $troubleshootingMessage = "403 Forbidden beim Auflisten - Detaillierte Diagnose:\n\n";
+                    $troubleshootingMessage .= "**Konfiguration:**\n";
+                    $troubleshootingMessage .= "• Space: {$this->storage_config['bucket']}\n";
+                    $troubleshootingMessage .= "• Region: {$this->storage_config['region']}\n";
+                    $troubleshootingMessage .= "• Endpoint: {$this->storage_config['endpoint']}\n";
+                    $troubleshootingMessage .= "• Access Key: " . substr($this->storage_config['key'], 0, 8) . "...\n\n";
+                    $troubleshootingMessage .= "**Mögliche Ursachen:**\n";
+                    $troubleshootingMessage .= "1. API Key hat keine 'Spaces: Read and Write' Berechtigung\n";
+                    $troubleshootingMessage .= "2. Space Name '{$this->storage_config['bucket']}' existiert nicht\n";
+                    $troubleshootingMessage .= "3. Access Key gehört zu anderem DigitalOcean Account\n";
+                    $troubleshootingMessage .= "4. Space ist in anderer Region als '{$this->storage_config['region']}'\n";
+                    $troubleshootingMessage .= "5. IP-Beschränkungen im Space aktiviert\n\n";
+                    $troubleshootingMessage .= "**Nächste Schritte:**\n";
+                    $troubleshootingMessage .= "• Überprüfen Sie die API Key Berechtigungen in DigitalOcean\n";
+                    $troubleshootingMessage .= "• Stellen Sie sicher, dass der Space existiert und zugänglich ist\n";
+                    $troubleshootingMessage .= "• Prüfen Sie, ob Access Key und Space zum gleichen Account gehören";
+                    
+                    return ['success' => false, 'message' => $troubleshootingMessage];
                 }
                 
                 return ['success' => false, 'message' => 'Verbindungstest fehlgeschlagen: ' . $listException->getMessage()];
             }
             
-            // Schritt 2: Direkter Upload-Test mit AWS S3 Client (umgeht Laravel Storage)
+            // Schritt 3: Direkter Upload-Test mit AWS S3 Client (umgeht Laravel Storage)
             return $this->testDirectS3Upload();
             
         } catch (\Aws\S3\Exception\S3Exception $e) {
@@ -241,6 +264,66 @@ class StorageSetting extends Model
             }
             
             return ['success' => false, 'message' => 'Verbindungsfehler: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * DigitalOcean Credentials detailliert validieren
+     */
+    private function validateDigitalOceanCredentials(): array
+    {
+        try {
+            \Log::info('validateDigitalOceanCredentials Start', [
+                'driver' => $this->storage_driver,
+                'has_key' => !empty($this->storage_config['key']),
+                'has_secret' => !empty($this->storage_config['secret']),
+                'region' => $this->storage_config['region'] ?? 'not set',
+                'bucket' => $this->storage_config['bucket'] ?? 'not set',
+                'endpoint' => $this->storage_config['endpoint'] ?? 'not set'
+            ]);
+
+            // Basis-Validierung
+            if (empty($this->storage_config['key']) || empty($this->storage_config['secret'])) {
+                return ['success' => false, 'message' => 'Access Key oder Secret Key fehlt'];
+            }
+
+            // DigitalOcean Spaces spezifische Validierung
+            if ($this->storage_driver === 'digitalocean') {
+                // Erwarteter Endpoint für die Region
+                $expectedEndpoint = "https://{$this->storage_config['region']}.digitaloceanspaces.com";
+                if ($this->storage_config['endpoint'] !== $expectedEndpoint) {
+                    return [
+                        'success' => false,
+                        'message' => "Endpoint-Mismatch: Erwartet '{$expectedEndpoint}', erhalten '{$this->storage_config['endpoint']}'"
+                    ];
+                }
+
+                // Access Key Format prüfen (DigitalOcean Keys haben spezifisches Format)
+                if (strlen($this->storage_config['key']) !== 20) {
+                    return [
+                        'success' => false,
+                        'message' => "DigitalOcean Access Key sollte 20 Zeichen lang sein (aktuell: " . strlen($this->storage_config['key']) . ")"
+                    ];
+                }
+
+                // Secret Key Format prüfen
+                if (strlen($this->storage_config['secret']) !== 40) {
+                    return [
+                        'success' => false,
+                        'message' => "DigitalOcean Secret Key sollte 40 Zeichen lang sein (aktuell: " . strlen($this->storage_config['secret']) . ")"
+                    ];
+                }
+            }
+
+            return ['success' => true, 'message' => 'Credentials Format validiert'];
+
+        } catch (\Exception $e) {
+            \Log::error('validateDigitalOceanCredentials Exception', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return ['success' => false, 'message' => 'Credential-Validierung fehlgeschlagen: ' . $e->getMessage()];
         }
     }
 
