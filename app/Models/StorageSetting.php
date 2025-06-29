@@ -148,6 +148,12 @@ class StorageSetting extends Model
 
             $config = $this->buildFilesystemConfig();
             
+            // Debug: Konfiguration loggen
+            \Log::info('testConnection Config Debug', [
+                'driver' => $this->storage_driver,
+                'config' => $config
+            ]);
+            
             // Temporäre Disk-Konfiguration erstellen
             config(['filesystems.disks.test_storage' => $config]);
             
@@ -157,22 +163,57 @@ class StorageSetting extends Model
             $testContent = 'test-connection-' . time();
             $testFile = 'sunnybill-test/test-connection-' . time() . '.txt';
             
+            \Log::info('testConnection Upload Debug', [
+                'test_file' => $testFile,
+                'test_content' => $testContent
+            ]);
+            
             // Schritt 1: Datei hochladen
-            $uploadResult = $disk->put($testFile, $testContent);
-            if (!$uploadResult) {
-                return ['success' => false, 'message' => 'Datei konnte nicht hochgeladen werden'];
+            try {
+                $uploadResult = $disk->put($testFile, $testContent);
+                \Log::info('testConnection Upload Result', ['result' => $uploadResult]);
+                
+                if (!$uploadResult) {
+                    return ['success' => false, 'message' => 'Datei konnte nicht hochgeladen werden - Upload-Operation fehlgeschlagen'];
+                }
+            } catch (\Exception $uploadException) {
+                \Log::error('testConnection Upload Exception', [
+                    'exception' => $uploadException->getMessage(),
+                    'trace' => $uploadException->getTraceAsString()
+                ]);
+                return ['success' => false, 'message' => 'Upload-Fehler: ' . $uploadException->getMessage()];
             }
             
             // Schritt 2: Prüfen ob Datei existiert
-            if (!$disk->exists($testFile)) {
-                return ['success' => false, 'message' => 'Hochgeladene Datei wurde nicht gefunden'];
+            try {
+                $exists = $disk->exists($testFile);
+                \Log::info('testConnection Exists Check', ['exists' => $exists]);
+                
+                if (!$exists) {
+                    return ['success' => false, 'message' => 'Hochgeladene Datei wurde nicht gefunden'];
+                }
+            } catch (\Exception $existsException) {
+                \Log::error('testConnection Exists Exception', ['exception' => $existsException->getMessage()]);
+                return ['success' => false, 'message' => 'Fehler beim Prüfen der Datei-Existenz: ' . $existsException->getMessage()];
             }
             
             // Schritt 3: Datei lesen
-            $content = $disk->get($testFile);
+            try {
+                $content = $disk->get($testFile);
+                \Log::info('testConnection Read Result', ['content_length' => strlen($content)]);
+            } catch (\Exception $readException) {
+                \Log::error('testConnection Read Exception', ['exception' => $readException->getMessage()]);
+                return ['success' => false, 'message' => 'Fehler beim Lesen der Datei: ' . $readException->getMessage()];
+            }
             
             // Schritt 4: Test-Datei löschen
-            $disk->delete($testFile);
+            try {
+                $deleteResult = $disk->delete($testFile);
+                \Log::info('testConnection Delete Result', ['result' => $deleteResult]);
+            } catch (\Exception $deleteException) {
+                \Log::error('testConnection Delete Exception', ['exception' => $deleteException->getMessage()]);
+                // Löschfehler ist nicht kritisch für den Test
+            }
             
             // Schritt 5: Inhalt vergleichen
             if ($content === $testContent) {
@@ -184,8 +225,17 @@ class StorageSetting extends Model
         } catch (\Aws\S3\Exception\S3Exception $e) {
             $errorCode = $e->getAwsErrorCode();
             $errorMessage = $e->getAwsErrorMessage();
+            \Log::error('testConnection S3 Exception', [
+                'error_code' => $errorCode,
+                'error_message' => $errorMessage,
+                'trace' => $e->getTraceAsString()
+            ]);
             return ['success' => false, 'message' => "S3/Spaces Fehler ({$errorCode}): {$errorMessage}"];
         } catch (\Exception $e) {
+            \Log::error('testConnection General Exception', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return ['success' => false, 'message' => 'Verbindungsfehler: ' . $e->getMessage()];
         }
     }
@@ -221,7 +271,9 @@ class StorageSetting extends Model
                     'use_path_style_endpoint' => false,
                     'url' => $this->storage_config['url'] ?? null,
                     'visibility' => 'private',
-                    'throw' => false,
+                    'throw' => true, // Bessere Fehlermeldungen
+                    'version' => 'latest',
+                    'signature_version' => 'v4',
                 ];
 
             default:
