@@ -180,6 +180,12 @@ class StorageSetting extends Model
                 return $credentialTest;
             }
             
+            // Schritt 1.5: Netzwerk-Konnektivität zu DigitalOcean testen
+            $networkTest = $this->testNetworkConnectivity();
+            if (!$networkTest['success']) {
+                return $networkTest;
+            }
+            
             // Schritt 2: Erst versuchen, den Space zu listen (weniger invasiv)
             try {
                 $files = $disk->files();
@@ -190,24 +196,41 @@ class StorageSetting extends Model
                     'trace' => $listException->getTraceAsString()
                 ]);
                 
-                // Detaillierte Analyse des 403 Fehlers
+                // Detaillierte Analyse des 403 Fehlers mit Live-Server Diagnose
                 if (strpos($listException->getMessage(), '403 Forbidden') !== false) {
-                    $troubleshootingMessage = "403 Forbidden beim Auflisten - Detaillierte Diagnose:\n\n";
+                    $serverInfo = $this->getServerEnvironmentInfo();
+                    
+                    $troubleshootingMessage = "403 Forbidden beim Auflisten - Live-Server Diagnose:\n\n";
+                    $troubleshootingMessage .= "**Server-Umgebung:**\n";
+                    $troubleshootingMessage .= "• Server-IP: {$serverInfo['server_ip']}\n";
+                    $troubleshootingMessage .= "• Umgebung: {$serverInfo['environment']}\n";
+                    $troubleshootingMessage .= "• PHP Version: {$serverInfo['php_version']}\n";
+                    $troubleshootingMessage .= "• User Agent: {$serverInfo['user_agent']}\n\n";
+                    
                     $troubleshootingMessage .= "**Konfiguration:**\n";
                     $troubleshootingMessage .= "• Space: {$this->storage_config['bucket']}\n";
                     $troubleshootingMessage .= "• Region: {$this->storage_config['region']}\n";
                     $troubleshootingMessage .= "• Endpoint: {$this->storage_config['endpoint']}\n";
                     $troubleshootingMessage .= "• Access Key: " . substr($this->storage_config['key'], 0, 8) . "...\n\n";
-                    $troubleshootingMessage .= "**Mögliche Ursachen:**\n";
-                    $troubleshootingMessage .= "1. API Key hat keine 'Spaces: Read and Write' Berechtigung\n";
-                    $troubleshootingMessage .= "2. Space Name '{$this->storage_config['bucket']}' existiert nicht\n";
-                    $troubleshootingMessage .= "3. Access Key gehört zu anderem DigitalOcean Account\n";
-                    $troubleshootingMessage .= "4. Space ist in anderer Region als '{$this->storage_config['region']}'\n";
-                    $troubleshootingMessage .= "5. IP-Beschränkungen im Space aktiviert\n\n";
-                    $troubleshootingMessage .= "**Nächste Schritte:**\n";
-                    $troubleshootingMessage .= "• Überprüfen Sie die API Key Berechtigungen in DigitalOcean\n";
-                    $troubleshootingMessage .= "• Stellen Sie sicher, dass der Space existiert und zugänglich ist\n";
-                    $troubleshootingMessage .= "• Prüfen Sie, ob Access Key und Space zum gleichen Account gehören";
+                    
+                    $troubleshootingMessage .= "**Live-Server vs. Lokal Problem - Wahrscheinliche Ursachen:**\n";
+                    $troubleshootingMessage .= "1. 🔥 IP-Beschränkungen: Server-IP {$serverInfo['server_ip']} ist nicht in DigitalOcean Space erlaubt\n";
+                    $troubleshootingMessage .= "2. 🔥 CORS-Einstellungen: Space erlaubt nur localhost/lokale IPs\n";
+                    $troubleshootingMessage .= "3. Firewall-Regeln auf dem Live-Server blockieren DigitalOcean\n";
+                    $troubleshootingMessage .= "4. Unterschiedliche SSL/TLS-Konfiguration zwischen lokal und live\n";
+                    $troubleshootingMessage .= "5. API Rate Limiting für Server-IP aktiviert\n\n";
+                    
+                    $troubleshootingMessage .= "**Sofortige Lösungsschritte:**\n";
+                    $troubleshootingMessage .= "1. 🎯 DigitalOcean Space → Settings → CORS: Fügen Sie https://sunnybill-test.chargedata.eu hinzu\n";
+                    $troubleshootingMessage .= "2. 🎯 DigitalOcean Space → Settings → Restrict Access: Entfernen Sie IP-Beschränkungen oder fügen Sie {$serverInfo['server_ip']} hinzu\n";
+                    $troubleshootingMessage .= "3. Testen Sie die Verbindung mit curl vom Server: curl -I {$this->storage_config['endpoint']}\n";
+                    $troubleshootingMessage .= "4. Überprüfen Sie die API Key Berechtigungen (sollten 'Spaces: Read and Write' haben)\n\n";
+                    
+                    $troubleshootingMessage .= "**Debug-Informationen für DigitalOcean Support:**\n";
+                    $troubleshootingMessage .= "• Request von: {$serverInfo['server_ip']} ({$serverInfo['environment']})\n";
+                    $troubleshootingMessage .= "• Target: {$this->storage_config['endpoint']}/{$this->storage_config['bucket']}\n";
+                    $troubleshootingMessage .= "• Funktioniert lokal: ✅ Ja\n";
+                    $troubleshootingMessage .= "• Funktioniert live: ❌ Nein (403 Forbidden)";
                     
                     return ['success' => false, 'message' => $troubleshootingMessage];
                 }
@@ -264,6 +287,165 @@ class StorageSetting extends Model
             }
             
             return ['success' => false, 'message' => 'Verbindungsfehler: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Server-Umgebungsinformationen für Diagnose sammeln
+     */
+    private function getServerEnvironmentInfo(): array
+    {
+        return [
+            'server_ip' => $this->getServerIP(),
+            'environment' => app()->environment(),
+            'php_version' => PHP_VERSION,
+            'user_agent' => request()->header('User-Agent', 'Laravel/Unknown'),
+            'host' => request()->getHost(),
+            'scheme' => request()->getScheme(),
+            'server_name' => $_SERVER['SERVER_NAME'] ?? 'unknown',
+            'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'http_host' => $_SERVER['HTTP_HOST'] ?? 'unknown',
+        ];
+    }
+
+    /**
+     * Server-IP ermitteln (verschiedene Methoden für verschiedene Hosting-Umgebungen)
+     */
+    private function getServerIP(): string
+    {
+        // Verschiedene Methoden versuchen, um die echte Server-IP zu ermitteln
+        $ipSources = [
+            $_SERVER['SERVER_ADDR'] ?? null,
+            $_SERVER['LOCAL_ADDR'] ?? null,
+            gethostbyname(gethostname()),
+        ];
+
+        // Externe IP-Dienste als Fallback (nur wenn andere Methoden fehlschlagen)
+        foreach ($ipSources as $ip) {
+            if ($ip && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return $ip;
+            }
+        }
+
+        // Fallback: Versuche externe IP zu ermitteln
+        try {
+            $externalIP = @file_get_contents('https://api.ipify.org', false, stream_context_create([
+                'http' => [
+                    'timeout' => 5,
+                    'method' => 'GET'
+                ]
+            ]));
+            
+            if ($externalIP && filter_var(trim($externalIP), FILTER_VALIDATE_IP)) {
+                return trim($externalIP);
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Could not determine external IP', ['error' => $e->getMessage()]);
+        }
+
+        // Letzte Fallback-Option
+        return $ipSources[0] ?? 'unknown';
+    }
+
+    /**
+     * Netzwerk-Konnektivität zu DigitalOcean testen
+     */
+    private function testNetworkConnectivity(): array
+    {
+        try {
+            $endpoint = $this->storage_config['endpoint'];
+            $serverInfo = $this->getServerEnvironmentInfo();
+            
+            \Log::info('testNetworkConnectivity Start', [
+                'endpoint' => $endpoint,
+                'server_ip' => $serverInfo['server_ip'],
+                'environment' => $serverInfo['environment']
+            ]);
+
+            // 1. DNS-Auflösung testen
+            $host = parse_url($endpoint, PHP_URL_HOST);
+            $resolvedIPs = gethostbynamel($host);
+            
+            if (!$resolvedIPs) {
+                return [
+                    'success' => false,
+                    'message' => "DNS-Auflösung fehlgeschlagen für {$host}. Server kann DigitalOcean nicht erreichen."
+                ];
+            }
+
+            \Log::info('DNS Resolution Success', [
+                'host' => $host,
+                'resolved_ips' => $resolvedIPs
+            ]);
+
+            // 2. HTTP-Konnektivität testen (einfacher HEAD-Request)
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'HEAD',
+                    'timeout' => 10,
+                    'user_agent' => 'Laravel-SunnyBill-Test/1.0',
+                    'header' => [
+                        'Accept: */*',
+                        'Connection: close'
+                    ]
+                ]
+            ]);
+
+            $headers = @get_headers($endpoint, 1, $context);
+            
+            if (!$headers) {
+                return [
+                    'success' => false,
+                    'message' => "Netzwerk-Verbindung zu {$endpoint} fehlgeschlagen.\n\n" .
+                                "**Server-Info:**\n" .
+                                "• Server-IP: {$serverInfo['server_ip']}\n" .
+                                "• Umgebung: {$serverInfo['environment']}\n\n" .
+                                "**Mögliche Ursachen:**\n" .
+                                "• Firewall blockiert ausgehende Verbindungen zu DigitalOcean\n" .
+                                "• Server hat keine Internetverbindung\n" .
+                                "• DNS-Server kann DigitalOcean nicht auflösen\n" .
+                                "• Proxy-Konfiguration erforderlich"
+                ];
+            }
+
+            // 3. HTTP-Status prüfen
+            $statusLine = $headers[0] ?? '';
+            $statusCode = 0;
+            if (preg_match('/HTTP\/\d\.\d\s+(\d+)/', $statusLine, $matches)) {
+                $statusCode = (int)$matches[1];
+            }
+
+            \Log::info('HTTP Connectivity Test', [
+                'status_line' => $statusLine,
+                'status_code' => $statusCode,
+                'headers_count' => count($headers)
+            ]);
+
+            // Status 200-299 oder 400-499 sind OK (Server ist erreichbar)
+            // 500+ oder keine Antwort wären problematisch
+            if ($statusCode >= 200 && $statusCode < 500) {
+                return [
+                    'success' => true,
+                    'message' => "Netzwerk-Konnektivität zu DigitalOcean erfolgreich (HTTP {$statusCode})"
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => "DigitalOcean antwortet mit HTTP {$statusCode}. Möglicherweise Server-Problem bei DigitalOcean."
+                ];
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('testNetworkConnectivity Exception', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => "Netzwerk-Test fehlgeschlagen: {$e->getMessage()}\n\n" .
+                            "Dies deutet auf ein grundlegendes Netzwerk-Problem hin."
+            ];
         }
     }
 
