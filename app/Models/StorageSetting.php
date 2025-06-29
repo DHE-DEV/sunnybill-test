@@ -323,24 +323,32 @@ class StorageSetting extends Model
                     }
                 }
 
-                // Secret Key Format prüfen und bereinigen
-                if (strlen($cleanSecret) !== 40) {
+                // Secret Key Format prüfen und bereinigen (DigitalOcean verwendet jetzt 43 Zeichen)
+                $validSecretLengths = [40, 43]; // Unterstütze sowohl alte (40) als auch neue (43) Format
+                if (!in_array(strlen($cleanSecret), $validSecretLengths)) {
                     \Log::warning('DigitalOcean Secret Key Format Issue', [
                         'original_length' => strlen($this->storage_config['secret']),
                         'cleaned_length' => strlen($cleanSecret),
+                        'expected_lengths' => $validSecretLengths,
                         'has_leading_spaces' => $this->storage_config['secret'] !== ltrim($this->storage_config['secret']),
                         'has_trailing_spaces' => $this->storage_config['secret'] !== rtrim($this->storage_config['secret'])
                     ]);
                     
-                    if (strlen($cleanSecret) === 40) {
+                    if (in_array(strlen($cleanSecret), $validSecretLengths)) {
                         // Secret war nur mit Leerzeichen, automatisch bereinigen
                         $this->storage_config['secret'] = $cleanSecret;
-                        \Log::info('Secret Key automatisch bereinigt');
+                        \Log::info('Secret Key automatisch bereinigt', ['new_length' => strlen($cleanSecret)]);
                     } else {
                         return [
                             'success' => false,
-                            'message' => "DigitalOcean Secret Key sollte 40 Zeichen lang sein (aktuell: " . strlen($this->storage_config['secret']) . ", bereinigt: " . strlen($cleanSecret) . "). Überprüfen Sie den Key auf zusätzliche Zeichen oder kopieren Sie ihn erneut aus DigitalOcean."
+                            'message' => "DigitalOcean Secret Key sollte 40 oder 43 Zeichen lang sein (aktuell: " . strlen($this->storage_config['secret']) . ", bereinigt: " . strlen($cleanSecret) . "). Überprüfen Sie den Key auf zusätzliche Zeichen oder kopieren Sie ihn erneut aus DigitalOcean."
                         ];
+                    }
+                } else {
+                    // Key hat korrekte Länge, bereinigen falls nötig
+                    if ($this->storage_config['secret'] !== $cleanSecret) {
+                        $this->storage_config['secret'] = $cleanSecret;
+                        \Log::info('Secret Key Leerzeichen entfernt', ['length' => strlen($cleanSecret)]);
                     }
                 }
             }
