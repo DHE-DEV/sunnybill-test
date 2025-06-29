@@ -282,8 +282,12 @@ class StorageSetting extends Model
                 'endpoint' => $this->storage_config['endpoint'] ?? 'not set'
             ]);
 
+            // Keys bereinigen (Leerzeichen entfernen)
+            $cleanKey = trim($this->storage_config['key']);
+            $cleanSecret = trim($this->storage_config['secret']);
+            
             // Basis-Validierung
-            if (empty($this->storage_config['key']) || empty($this->storage_config['secret'])) {
+            if (empty($cleanKey) || empty($cleanSecret)) {
                 return ['success' => false, 'message' => 'Access Key oder Secret Key fehlt'];
             }
 
@@ -298,20 +302,46 @@ class StorageSetting extends Model
                     ];
                 }
 
-                // Access Key Format prüfen (DigitalOcean Keys haben spezifisches Format)
-                if (strlen($this->storage_config['key']) !== 20) {
-                    return [
-                        'success' => false,
-                        'message' => "DigitalOcean Access Key sollte 20 Zeichen lang sein (aktuell: " . strlen($this->storage_config['key']) . ")"
-                    ];
+                // Access Key Format prüfen und bereinigen
+                if (strlen($cleanKey) !== 20) {
+                    \Log::warning('DigitalOcean Access Key Format Issue', [
+                        'original_length' => strlen($this->storage_config['key']),
+                        'cleaned_length' => strlen($cleanKey),
+                        'original_key_preview' => substr($this->storage_config['key'], 0, 8) . '...',
+                        'cleaned_key_preview' => substr($cleanKey, 0, 8) . '...'
+                    ]);
+                    
+                    if (strlen($cleanKey) === 20) {
+                        // Key war nur mit Leerzeichen, automatisch bereinigen
+                        $this->storage_config['key'] = $cleanKey;
+                        \Log::info('Access Key automatisch bereinigt');
+                    } else {
+                        return [
+                            'success' => false,
+                            'message' => "DigitalOcean Access Key sollte 20 Zeichen lang sein (aktuell: " . strlen($this->storage_config['key']) . ", bereinigt: " . strlen($cleanKey) . "). Überprüfen Sie den Key auf zusätzliche Zeichen."
+                        ];
+                    }
                 }
 
-                // Secret Key Format prüfen
-                if (strlen($this->storage_config['secret']) !== 40) {
-                    return [
-                        'success' => false,
-                        'message' => "DigitalOcean Secret Key sollte 40 Zeichen lang sein (aktuell: " . strlen($this->storage_config['secret']) . ")"
-                    ];
+                // Secret Key Format prüfen und bereinigen
+                if (strlen($cleanSecret) !== 40) {
+                    \Log::warning('DigitalOcean Secret Key Format Issue', [
+                        'original_length' => strlen($this->storage_config['secret']),
+                        'cleaned_length' => strlen($cleanSecret),
+                        'has_leading_spaces' => $this->storage_config['secret'] !== ltrim($this->storage_config['secret']),
+                        'has_trailing_spaces' => $this->storage_config['secret'] !== rtrim($this->storage_config['secret'])
+                    ]);
+                    
+                    if (strlen($cleanSecret) === 40) {
+                        // Secret war nur mit Leerzeichen, automatisch bereinigen
+                        $this->storage_config['secret'] = $cleanSecret;
+                        \Log::info('Secret Key automatisch bereinigt');
+                    } else {
+                        return [
+                            'success' => false,
+                            'message' => "DigitalOcean Secret Key sollte 40 Zeichen lang sein (aktuell: " . strlen($this->storage_config['secret']) . ", bereinigt: " . strlen($cleanSecret) . "). Überprüfen Sie den Key auf zusätzliche Zeichen oder kopieren Sie ihn erneut aus DigitalOcean."
+                        ];
+                    }
                 }
             }
 
