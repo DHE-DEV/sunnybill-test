@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Task;
+use App\Models\User;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 class FilteredTasksTableWidget extends BaseWidget
 {
     public ?string $timeFilter = 'today';
+    public ?string $userFilter = 'all';
     
     protected static ?string $heading = 'Aufgaben';
     
@@ -21,11 +23,12 @@ class FilteredTasksTableWidget extends BaseWidget
     
     protected static ?string $pollingInterval = '30s';
 
-    protected $listeners = ['timeFilterChanged'];
+    protected $listeners = ['timeFilterChanged', 'userFilterChanged'];
 
-    public function mount(?string $timeFilter = null): void
+    public function mount(?string $timeFilter = null, ?string $userFilter = null): void
     {
         $this->timeFilter = $timeFilter ?? 'today';
+        $this->userFilter = $userFilter ?? 'all';
     }
 
     public function booted(): void
@@ -34,11 +37,23 @@ class FilteredTasksTableWidget extends BaseWidget
         if (!$this->timeFilter) {
             $this->timeFilter = 'today';
         }
+        if (!$this->userFilter) {
+            $this->userFilter = 'all';
+        }
     }
 
     public function timeFilterChanged($timeFilter): void
     {
         $this->timeFilter = $timeFilter;
+        // Trigger table refresh
+        $this->resetTable();
+        // Force re-render
+        $this->dispatch('$refresh');
+    }
+
+    public function userFilterChanged($userFilter): void
+    {
+        $this->userFilter = $userFilter;
         // Trigger table refresh
         $this->resetTable();
         // Force re-render
@@ -54,9 +69,25 @@ class FilteredTasksTableWidget extends BaseWidget
                 Task::query()
                     ->whereBetween('due_date', $dateRange)
                     ->whereNotIn('status', ['completed', 'cancelled'])
+                    ->when($this->userFilter !== 'all', function (Builder $query) {
+                        if ($this->userFilter === 'owner') {
+                            $query->whereNotNull('owner_id');
+                        } elseif ($this->userFilter === 'assigned') {
+                            $query->whereNotNull('assigned_user_id');
+                        } elseif ($this->userFilter === 'no_owner') {
+                            $query->whereNull('owner_id');
+                        } elseif ($this->userFilter === 'no_assigned') {
+                            $query->whereNull('assigned_user_id');
+                        } elseif (is_numeric($this->userFilter)) {
+                            $query->where(function (Builder $q) {
+                                $q->where('owner_id', $this->userFilter)
+                                  ->orWhere('assigned_user_id', $this->userFilter);
+                            });
+                        }
+                    })
                     ->with(['taskType', 'assignedUser', 'owner', 'customer'])
                     ->orderByRaw("
-                        CASE 
+                        CASE
                             WHEN priority = 'urgent' THEN 1
                             WHEN priority = 'high' THEN 2
                             WHEN due_date < CURDATE() THEN 3
@@ -185,6 +216,41 @@ class FilteredTasksTableWidget extends BaseWidget
                 ->size('sm')
                 ->color('gray')
                 ->button()
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('user_filter')
+                    ->label('Benutzer-Filter')
+                    ->options([
+                        'all' => 'Alle',
+                        'owner' => 'Mit Inhaber',
+                        'assigned' => 'Mit Zuständigem',
+                        'no_owner' => 'Ohne Inhaber',
+                        'no_assigned' => 'Ohne Zuständigen',
+                        ...User::all()->pluck('name', 'id')->toArray()
+                    ])
+                    ->default('all')
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = $data['value'] ?? 'all';
+                        
+                        if ($value === 'all') {
+                            return $query;
+                        } elseif ($value === 'owner') {
+                            return $query->whereNotNull('owner_id');
+                        } elseif ($value === 'assigned') {
+                            return $query->whereNotNull('assigned_user_id');
+                        } elseif ($value === 'no_owner') {
+                            return $query->whereNull('owner_id');
+                        } elseif ($value === 'no_assigned') {
+                            return $query->whereNull('assigned_user_id');
+                        } elseif (is_numeric($value)) {
+                            return $query->where(function (Builder $q) use ($value) {
+                                $q->where('owner_id', $value)
+                                  ->orWhere('assigned_user_id', $value);
+                            });
+                        }
+                        
+                        return $query;
+                    }),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('toggleColumns')

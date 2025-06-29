@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\SolarPlantMilestone;
+use App\Models\User;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 class FilteredProjectMilestonesTableWidget extends BaseWidget
 {
     public ?string $timeFilter = 'today';
+    public ?string $userFilter = 'all';
     
     protected static ?string $heading = 'Projekttermine';
     
@@ -21,11 +23,12 @@ class FilteredProjectMilestonesTableWidget extends BaseWidget
     
     protected static ?string $pollingInterval = '30s';
 
-    protected $listeners = ['timeFilterChanged'];
+    protected $listeners = ['timeFilterChanged', 'userFilterChanged'];
 
-    public function mount(?string $timeFilter = null): void
+    public function mount(?string $timeFilter = null, ?string $userFilter = null): void
     {
         $this->timeFilter = $timeFilter ?? 'today';
+        $this->userFilter = $userFilter ?? 'all';
     }
 
     public function booted(): void
@@ -34,11 +37,23 @@ class FilteredProjectMilestonesTableWidget extends BaseWidget
         if (!$this->timeFilter) {
             $this->timeFilter = 'today';
         }
+        if (!$this->userFilter) {
+            $this->userFilter = 'all';
+        }
     }
 
     public function timeFilterChanged($timeFilter): void
     {
         $this->timeFilter = $timeFilter;
+        // Trigger table refresh
+        $this->resetTable();
+        // Force re-render
+        $this->dispatch('$refresh');
+    }
+
+    public function userFilterChanged($userFilter): void
+    {
+        $this->userFilter = $userFilter;
         // Trigger table refresh
         $this->resetTable();
         // Force re-render
@@ -54,9 +69,25 @@ class FilteredProjectMilestonesTableWidget extends BaseWidget
                 SolarPlantMilestone::query()
                     ->whereBetween('planned_date', $dateRange)
                     ->whereNotIn('status', ['completed', 'cancelled'])
+                    ->when($this->userFilter !== 'all', function (Builder $query) {
+                        if ($this->userFilter === 'owner') {
+                            $query->whereNotNull('project_manager_id');
+                        } elseif ($this->userFilter === 'assigned') {
+                            $query->whereNotNull('last_responsible_user_id');
+                        } elseif ($this->userFilter === 'no_owner') {
+                            $query->whereNull('project_manager_id');
+                        } elseif ($this->userFilter === 'no_assigned') {
+                            $query->whereNull('last_responsible_user_id');
+                        } elseif (is_numeric($this->userFilter)) {
+                            $query->where(function (Builder $q) {
+                                $q->where('project_manager_id', $this->userFilter)
+                                  ->orWhere('last_responsible_user_id', $this->userFilter);
+                            });
+                        }
+                    })
                     ->with(['solarPlant', 'projectManager', 'lastResponsibleUser'])
                     ->orderByRaw("
-                        CASE 
+                        CASE
                             WHEN status = 'delayed' THEN 1
                             WHEN planned_date < CURDATE() THEN 2
                             WHEN planned_date = CURDATE() THEN 3
@@ -203,6 +234,41 @@ class FilteredProjectMilestonesTableWidget extends BaseWidget
                 ->size('sm')
                 ->color('gray')
                 ->button()
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('user_filter')
+                    ->label('Benutzer-Filter')
+                    ->options([
+                        'all' => 'Alle',
+                        'owner' => 'Mit Inhaber',
+                        'assigned' => 'Mit Zuständigem',
+                        'no_owner' => 'Ohne Inhaber',
+                        'no_assigned' => 'Ohne Zuständigen',
+                        ...User::all()->pluck('name', 'id')->toArray()
+                    ])
+                    ->default('all')
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = $data['value'] ?? 'all';
+                        
+                        if ($value === 'all') {
+                            return $query;
+                        } elseif ($value === 'owner') {
+                            return $query->whereNotNull('project_manager_id');
+                        } elseif ($value === 'assigned') {
+                            return $query->whereNotNull('last_responsible_user_id');
+                        } elseif ($value === 'no_owner') {
+                            return $query->whereNull('project_manager_id');
+                        } elseif ($value === 'no_assigned') {
+                            return $query->whereNull('last_responsible_user_id');
+                        } elseif (is_numeric($value)) {
+                            return $query->where(function (Builder $q) use ($value) {
+                                $q->where('project_manager_id', $value)
+                                  ->orWhere('last_responsible_user_id', $value);
+                            });
+                        }
+                        
+                        return $query;
+                    }),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('toggleColumns')
