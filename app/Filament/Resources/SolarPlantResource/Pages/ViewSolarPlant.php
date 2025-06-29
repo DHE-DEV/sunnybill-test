@@ -8,6 +8,9 @@ use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Forms;
+use Filament\Notifications\Notification;
+use App\Models\Customer;
 
 class ViewSolarPlant extends ViewRecord
 {
@@ -254,7 +257,123 @@ class ViewSolarPlant extends ViewRecord
                                                     ->color('primary')
                                                     ->size('xl'),
                                             ]),
-                                    ])->compact(),
+                                    ])
+                                    ->compact()
+                                    ->collapsible()
+                                    ->collapsed(false),
+                                Infolists\Components\Section::make('Beteiligte')
+                                    ->icon('heroicon-o-user-group')
+                                    ->schema([
+                                        Infolists\Components\RepeatableEntry::make('participations')
+                                            ->label('')
+                                            ->schema([
+                                                Infolists\Components\Grid::make(4)
+                                                    ->schema([
+                                                        Infolists\Components\TextEntry::make('customer.name')
+                                                            ->label('')
+                                                            ->weight('medium')
+                                                            ->size('lg')
+                                                            ->color('primary')
+                                                            ->url(fn ($record) => $record->customer ? route('filament.admin.resources.customers.view', $record->customer) : null)
+                                                            ->openUrlInNewTab(false),
+                                                        Infolists\Components\TextEntry::make('customer.email')
+                                                            ->label('')
+                                                            ->placeholder('Keine E-Mail')
+                                                            ->color('gray')
+                                                            ->url(fn ($record) => $record->customer?->email ? 'mailto:' . $record->customer->email : null)
+                                                            ->openUrlInNewTab(false),
+                                                        Infolists\Components\TextEntry::make('percentage')
+                                                            ->label('')
+                                                            ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
+                                                            ->badge()
+                                                            ->color('success')
+                                                            ->size('lg'),
+                                                        Infolists\Components\TextEntry::make('created_at')
+                                                            ->label('')
+                                                            ->date('d.m.Y')
+                                                            ->color('gray'),
+                                                    ]),
+                                            ])
+                                            ->contained(true)
+                                            ->grid(1),
+                                    ])
+                                    ->headerActions([
+                                        Infolists\Components\Actions\Action::make('create_participation')
+                                            ->label('Neue Beteiligung')
+                                            ->icon('heroicon-o-plus')
+                                            ->color('primary')
+                                            ->visible(fn ($record) => $record->total_participation < 100)
+                                            ->form([
+                                                Forms\Components\Select::make('customer_id')
+                                                    ->label('Kunde')
+                                                    ->options(Customer::all()->pluck('name', 'id'))
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->createOptionForm([
+                                                        Forms\Components\TextInput::make('name')
+                                                            ->label('Name')
+                                                            ->required(),
+                                                        Forms\Components\TextInput::make('email')
+                                                            ->label('E-Mail')
+                                                            ->email(),
+                                                        Forms\Components\TextInput::make('phone')
+                                                            ->label('Telefon'),
+                                                    ])
+                                                    ->createOptionUsing(function (array $data) {
+                                                        return Customer::create($data)->id;
+                                                    }),
+                                                Forms\Components\TextInput::make('percentage')
+                                                    ->label('Beteiligung (%)')
+                                                    ->required()
+                                                    ->numeric()
+                                                    ->step(0.01)
+                                                    ->suffix('%')
+                                                    ->minValue(0.01)
+                                                    ->maxValue(100)
+                                                    ->placeholder('z.B. 25,50')
+                                                    ->inputMode('decimal')
+                                                    ->extraInputAttributes(['pattern' => '[0-9]+([,\.][0-9]+)?'])
+                                                    ->helperText(function ($record) {
+                                                        $available = $record->available_participation;
+                                                        return "Verfügbar: {$available}% (Gesamt: {$record->total_participation}% von 100%)";
+                                                    })
+                                                    ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
+                                                    ->rules([
+                                                        function ($record) {
+                                                            return function (string $attribute, $value, \Closure $fail) use ($record) {
+                                                                // Komma durch Punkt ersetzen für Berechnung
+                                                                $numericValue = (float) str_replace(',', '.', $value);
+                                                                $existingParticipation = $record->participations()->sum('percentage');
+                                                                $totalParticipation = $existingParticipation + $numericValue;
+                                                                
+                                                                if ($totalParticipation > 100) {
+                                                                    $available = 100 - $existingParticipation;
+                                                                    $fail("Die Gesamtbeteiligung würde {$totalParticipation}% betragen. Maximal verfügbar: {$available}%");
+                                                                }
+                                                            };
+                                                        },
+                                                    ]),
+                                            ])
+                                            ->action(function (array $data, $record, $livewire) {
+                                                $record->participations()->create($data);
+                                                
+                                                Notification::make()
+                                                    ->title('Beteiligung hinzugefügt')
+                                                    ->body('Die Kundenbeteiligung wurde erfolgreich erstellt.')
+                                                    ->success()
+                                                    ->send();
+                                                    
+                                                // Livewire-Komponente aktualisieren
+                                                $livewire->dispatch('$refresh');
+                                            })
+                                            ->modalHeading('Neue Beteiligung hinzufügen')
+                                            ->modalSubmitActionLabel('Beteiligung erstellen')
+                                            ->modalWidth('lg'),
+                                    ])
+                                    ->compact()
+                                    ->collapsible()
+                                    ->collapsed(true),
                             ]),
                         Infolists\Components\Tabs\Tab::make('Notizen')
                             ->icon('heroicon-o-document-text')

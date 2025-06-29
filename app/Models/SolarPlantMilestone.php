@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SolarPlantMilestone extends Model
@@ -19,6 +20,8 @@ class SolarPlantMilestone extends Model
         'status',
         'sort_order',
         'is_active',
+        'project_manager_id',
+        'last_responsible_user_id',
     ];
 
     protected $casts = [
@@ -34,6 +37,22 @@ class SolarPlantMilestone extends Model
     public function solarPlant(): BelongsTo
     {
         return $this->belongsTo(SolarPlant::class);
+    }
+
+    /**
+     * Beziehung zum Projektleiter
+     */
+    public function projectManager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'project_manager_id');
+    }
+
+    /**
+     * Beziehung zur zuletzt zuständigen Person
+     */
+    public function lastResponsibleUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'last_responsible_user_id');
     }
 
     /**

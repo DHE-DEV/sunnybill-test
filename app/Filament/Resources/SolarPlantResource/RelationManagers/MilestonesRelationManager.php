@@ -60,7 +60,11 @@ class MilestonesRelationManager extends RelationManager
                                 Forms\Components\DatePicker::make('actual_date')
                                     ->label('Tatsächliches Datum')
                                     ->displayFormat('d.m.Y')
-                                    ->after('planned_date'),
+                                    ->rule('after_or_equal:planned_date')
+                                    ->validationMessages([
+                                        'after_or_equal' => 'Das tatsächliche Datum muss nach oder am geplanten Datum liegen.',
+                                    ])
+                                    ->helperText('Das tatsächliche Datum muss nach oder am geplanten Datum liegen'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -78,6 +82,21 @@ class MilestonesRelationManager extends RelationManager
                                 Forms\Components\Toggle::make('is_active')
                                     ->label('Aktiv')
                                     ->default(true),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('project_manager_id')
+                                    ->label('Projektleiter')
+                                    ->relationship('projectManager', 'name')
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Projektleiter auswählen'),
+                                Forms\Components\Select::make('last_responsible_user_id')
+                                    ->label('Zuletzt zuständige Person')
+                                    ->relationship('lastResponsibleUser', 'name')
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Zuständige Person auswählen'),
                             ]),
                     ]),
             ])
@@ -100,6 +119,18 @@ class MilestonesRelationManager extends RelationManager
                     ->label('Beschreibung')
                     ->limit(50)
                     ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('projectManager.name')
+                    ->label('Projektleiter')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('Nicht zugewiesen')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('lastResponsibleUser.name')
+                    ->label('Zuletzt zuständig')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('Nicht zugewiesen')
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('planned_date')
                     ->label('Geplant')

@@ -13,6 +13,14 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
+            // Aufgaben-Dashboards
+            \App\Filament\Widgets\TasksTodayWidget::class,
+            \App\Filament\Widgets\TasksThisWeekWidget::class,
+            \App\Filament\Widgets\TasksThisMonthWidget::class,
+            
+            // Aufgaben-Übersicht
+            \App\Filament\Widgets\TasksOverviewTableWidget::class,
+            
             // Übersichts-Statistiken
             \App\Filament\Widgets\CustomerStatsWidget::class,
             \App\Filament\Widgets\SupplierStatsWidget::class,

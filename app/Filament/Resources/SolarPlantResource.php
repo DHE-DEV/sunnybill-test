@@ -500,7 +500,7 @@ class SolarPlantResource extends Resource
     {
         return [
             RelationManagers\MonthlyResultsRelationManager::class,
-            RelationManagers\ParticipationsRelationManager::class,
+            //RelationManagers\ParticipationsRelationManager::class,
             RelationManagers\MilestonesRelationManager::class,
             RelationManagers\FavoriteNotesRelationManager::class,
             RelationManagers\StandardNotesRelationManager::class,
