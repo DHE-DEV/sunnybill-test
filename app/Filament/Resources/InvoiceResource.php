@@ -411,8 +411,11 @@ class InvoiceResource extends Resource
                     Tables\Actions\DeleteAction::make()
                         ->visible(fn (Invoice $record) => $record->status === 'draft'),
                 ])
-                ->icon('heroicon-o-cog-6-tooth')
-                ->tooltip('Aktionen')
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button()
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

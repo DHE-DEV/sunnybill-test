@@ -175,6 +175,14 @@ class Customer extends Model
     }
 
     /**
+     * Beziehung zu Dokumenten
+     */
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Document::class, 'documentable');
+    }
+
+    /**
      * Alias für plantParticipations (für bessere Lesbarkeit in der UI)
      */
     public function solarParticipations(): HasMany

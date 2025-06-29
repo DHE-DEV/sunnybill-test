@@ -199,7 +199,8 @@ class ArticleResource extends Resource
                         $record->taxRate ?
                         "{$record->taxRate->name} ({$record->taxRate->current_rate}%)" :
                         'Kein Steuersatz'
-                    ),
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('lexoffice_synced')
                     ->label('Lexoffice')
                     ->boolean()
@@ -207,7 +208,8 @@ class ArticleResource extends Resource
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
-                    ->falseColor('gray'),
+                    ->falseColor('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('used_in_invoices')
                     ->label('In Rechnungen')
                     ->boolean()
@@ -219,7 +221,8 @@ class ArticleResource extends Resource
                     ->tooltip(fn ($record) => $record->isUsedInInvoices()
                         ? 'Verwendet in ' . $record->getInvoiceUsageCount() . ' Rechnung(en) - Löschen nicht möglich'
                         : 'Nicht in Rechnungen verwendet - Löschen möglich'
-                    ),
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Erstellt')
                     ->dateTime('d.m.Y H:i')
@@ -284,42 +287,49 @@ class ArticleResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\Action::make('export_to_lexoffice')
-                    ->label('An Lexoffice senden')
-                    ->icon('heroicon-o-paper-airplane')
-                    ->color('success')
-                    ->action(function (Article $record) {
-                        $service = new LexofficeService();
-                        $result = $service->exportArticle($record);
-                        
-                        if ($result['success']) {
-                            $actionText = $result['action'] === 'create' ? 'erstellt' : 'aktualisiert';
-                            Notification::make()
-                                ->title('Export erfolgreich')
-                                ->body("Artikel wurde in Lexoffice {$actionText}")
-                                ->success()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Export fehlgeschlagen')
-                                ->body($result['error'])
-                                ->danger()
-                                ->send();
-                        }
-                    })
-                    ->requiresConfirmation()
-                    ->modalHeading('Artikel an Lexoffice senden')
-                    ->modalDescription(function (Article $record) {
-                        if ($record->lexoffice_id) {
-                            return 'Möchten Sie diesen Artikel in Lexoffice aktualisieren?';
-                        }
-                        return 'Möchten Sie diesen Artikel in Lexoffice erstellen?';
-                    })
-                    ->modalSubmitActionLabel('Senden'),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                    Tables\Actions\ForceDeleteAction::make(),
+                    Tables\Actions\Action::make('export_to_lexoffice')
+                        ->label('An Lexoffice senden')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('success')
+                        ->action(function (Article $record) {
+                            $service = new LexofficeService();
+                            $result = $service->exportArticle($record);
+                            
+                            if ($result['success']) {
+                                $actionText = $result['action'] === 'create' ? 'erstellt' : 'aktualisiert';
+                                Notification::make()
+                                    ->title('Export erfolgreich')
+                                    ->body("Artikel wurde in Lexoffice {$actionText}")
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Export fehlgeschlagen')
+                                    ->body($result['error'])
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Artikel an Lexoffice senden')
+                        ->modalDescription(function (Article $record) {
+                            if ($record->lexoffice_id) {
+                                return 'Möchten Sie diesen Artikel in Lexoffice aktualisieren?';
+                            }
+                            return 'Möchten Sie diesen Artikel in Lexoffice erstellen?';
+                        })
+                        ->modalSubmitActionLabel('Senden'),
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->color('gray')
+                ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

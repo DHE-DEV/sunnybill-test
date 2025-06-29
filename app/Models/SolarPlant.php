@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SolarPlant extends Model
@@ -168,6 +169,14 @@ class SolarPlant extends Model
     public function activeSupplierAssignments(): HasMany
     {
         return $this->hasMany(SolarPlantSupplier::class)->where('is_active', true);
+    }
+
+    /**
+     * Beziehung zu Dokumenten
+     */
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Document::class, 'documentable');
     }
 
     /**

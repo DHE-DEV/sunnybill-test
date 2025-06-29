@@ -21,9 +21,9 @@ class TasksAndProjectsDashboard extends Page implements HasForms
 
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $title = 'Aufgaben & Projekttermine';
+    protected static ?string $title = 'Termine';
 
-    protected static ?string $navigationLabel = 'Aufgaben & Projekttermine';
+    protected static ?string $navigationLabel = 'Termine';
 
     #[Url]
     public ?string $timeFilter = 'today';

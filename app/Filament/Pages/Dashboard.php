@@ -18,9 +18,6 @@ class Dashboard extends BaseDashboard
             \App\Filament\Widgets\TasksThisWeekWidget::class,
             \App\Filament\Widgets\TasksThisMonthWidget::class,
             
-            // Aufgaben-Übersicht
-            \App\Filament\Widgets\TasksOverviewTableWidget::class,
-            
             // Übersichts-Statistiken
             \App\Filament\Widgets\CustomerStatsWidget::class,
             \App\Filament\Widgets\SupplierStatsWidget::class,
@@ -32,6 +29,10 @@ class Dashboard extends BaseDashboard
             \App\Filament\Widgets\InvoiceRevenueChartWidget::class,
             \App\Filament\Widgets\SolarPlantCapacityChartWidget::class,
             \App\Filament\Widgets\CustomerGrowthChartWidget::class,
+            
+            // Explizit NICHT enthalten:
+            // \App\Filament\Widgets\FilteredProjectMilestonesTableWidget::class, // Projekttermine - entfernt
+            // \App\Filament\Widgets\TasksOverviewTableWidget::class, // Wichtige Aufgaben - entfernt
         ];
     }
 

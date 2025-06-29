@@ -730,6 +730,8 @@ class CustomerResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
                     Tables\Actions\Action::make('export_to_lexoffice')
                         ->label('An Lexoffice senden')
                         ->icon('heroicon-o-paper-airplane')
@@ -762,9 +764,6 @@ class CustomerResource extends Resource
                             return 'Möchten Sie diesen Kunden in Lexoffice erstellen?';
                         })
                         ->modalSubmitActionLabel('Senden'),
-                    Tables\Actions\ViewAction::make()
-                        ->url(fn (Customer $record): string => CustomerResource::getUrl('view', ['record' => $record])),
-                    Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make()
                         ->before(function (Customer $record) {
                             if ($record->hasInvoices()) {
@@ -786,8 +785,11 @@ class CustomerResource extends Resource
                         )
                         ->visible(fn (Customer $record) => $record->canBeDeleted()),
                 ])
-                ->icon('heroicon-o-cog-6-tooth')
-                ->tooltip('Aktionen')
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button()
             ])
             ->headerActions([
                 Tables\Actions\Action::make('import_from_lexoffice')
@@ -830,6 +832,7 @@ class CustomerResource extends Resource
             RelationManagers\InvoicesRelationManager::class,
             RelationManagers\SolarParticipationsRelationManager::class,
             RelationManagers\MonthlyCreditsRelationManager::class,
+            \App\Filament\Resources\DocumentResource\RelationManagers\DocumentsRelationManager::class,
         ];
     }
 

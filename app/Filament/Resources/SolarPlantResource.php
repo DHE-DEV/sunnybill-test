@@ -477,8 +477,11 @@ class SolarPlantResource extends Resource
                     Tables\Actions\RestoreAction::make(),
                     Tables\Actions\ForceDeleteAction::make(),
                 ])
-                ->icon('heroicon-o-cog-6-tooth')
-                ->tooltip('Aktionen')
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button()
             ])
             ->headerActions([
                 // FusionSolar Synchronisation entfernt

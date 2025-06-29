@@ -448,7 +448,14 @@ class CompanySettingResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->color('gray')
+                ->button(),
             ])
             ->bulkActions([
                 //

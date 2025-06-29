@@ -73,15 +73,15 @@ class FilteredTasksTableWidget extends BaseWidget
                         if ($this->userFilter === 'owner') {
                             $query->whereNotNull('owner_id');
                         } elseif ($this->userFilter === 'assigned') {
-                            $query->whereNotNull('assigned_user_id');
+                            $query->whereNotNull('assigned_to');
                         } elseif ($this->userFilter === 'no_owner') {
                             $query->whereNull('owner_id');
                         } elseif ($this->userFilter === 'no_assigned') {
-                            $query->whereNull('assigned_user_id');
+                            $query->whereNull('assigned_to');
                         } elseif (is_numeric($this->userFilter)) {
                             $query->where(function (Builder $q) {
                                 $q->where('owner_id', $this->userFilter)
-                                  ->orWhere('assigned_user_id', $this->userFilter);
+                                  ->orWhere('assigned_to', $this->userFilter);
                             });
                         }
                     })
@@ -237,15 +237,15 @@ class FilteredTasksTableWidget extends BaseWidget
                         } elseif ($value === 'owner') {
                             return $query->whereNotNull('owner_id');
                         } elseif ($value === 'assigned') {
-                            return $query->whereNotNull('assigned_user_id');
+                            return $query->whereNotNull('assigned_to');
                         } elseif ($value === 'no_owner') {
                             return $query->whereNull('owner_id');
                         } elseif ($value === 'no_assigned') {
-                            return $query->whereNull('assigned_user_id');
+                            return $query->whereNull('assigned_to');
                         } elseif (is_numeric($value)) {
                             return $query->where(function (Builder $q) use ($value) {
                                 $q->where('owner_id', $value)
-                                  ->orWhere('assigned_user_id', $value);
+                                  ->orWhere('assigned_to', $value);
                             });
                         }
                         

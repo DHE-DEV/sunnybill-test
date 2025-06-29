@@ -31,8 +31,8 @@ class TasksThisWeekWidget extends BaseWidget
         // Wartende Aufgaben
         $waitingTasks = Task::whereIn('status', ['waiting_external', 'waiting_internal'])->count();
         
-        // Überfällige Aufgaben (älter als diese Woche)
-        $overdueTasks = Task::where('due_date', '<', $startOfWeek->toDateString())
+        // Überfällige Aufgaben (vor heute fällig)
+        $overdueTasks = Task::where('due_date', '<', Carbon::today()->toDateString())
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->count();
         
@@ -66,7 +66,7 @@ class TasksThisWeekWidget extends BaseWidget
                 ->color($waitingTasks > 0 ? 'info' : 'success'),
                 
             Stat::make('Überfällig', $overdueTasks)
-                ->description('Vor dieser Woche fällig')
+                ->description('Vor heute fällig')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color($overdueTasks > 0 ? 'danger' : 'success'),
         ];

@@ -36,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
@@ -59,9 +59,9 @@ class AdminPanelProvider extends PanelProvider
             ->brandName(function () {
                 try {
                     $settings = CompanySetting::current();
-                    return $settings->company_name ?? 'SunnyBill';
+                    return $settings->company_name ?? 'VoltMaster';
                 } catch (\Exception $e) {
-                    return 'SunnyBill';
+                    return 'VoltMaster';
                 }
             })
             ->brandLogo(function () {
@@ -69,12 +69,12 @@ class AdminPanelProvider extends PanelProvider
                     $settings = CompanySetting::current();
                     return $settings->logo_path
                         ? asset('storage/' . $settings->logo_path)
-                        : asset('images/sunnybill-logo.svg');
+                        : asset('images/voltmaster-logo.svg');
                 } catch (\Exception $e) {
-                    return asset('images/sunnybill-logo.svg');
+                    return asset('images/voltmaster-logo.svg');
                 }
             })
-            ->favicon(asset('images/favicon.svg'))
+            ->favicon(asset('images/voltmaster-favicon.svg'))
             ->navigationGroups([
                 'Stammdaten',
                 'Fakturierung',

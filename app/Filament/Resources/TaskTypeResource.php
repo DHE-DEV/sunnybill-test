@@ -30,9 +30,9 @@ class TaskTypeResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static ?string $navigationGroup = 'Aufgaben';
+    protected static ?string $navigationGroup = 'System';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $modelLabel = 'Aufgabentyp';
 
@@ -187,14 +187,20 @@ class TaskTypeResource extends Resource
                     ->toggle(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
-                    ->before(function (TaskType $record) {
-                        if (!$record->canBeDeleted()) {
-                            throw new \Exception('Aufgabentyp kann nicht gelöscht werden, da noch Aufgaben zugeordnet sind.');
-                        }
-                    }),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make()
+                        ->before(function (TaskType $record) {
+                            if (!$record->canBeDeleted()) {
+                                throw new \Exception('Aufgabentyp kann nicht gelöscht werden, da noch Aufgaben zugeordnet sind.');
+                            }
+                        }),
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->color('gray')
+                ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

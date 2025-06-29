@@ -30,8 +30,8 @@ class Login extends BaseLogin
             ->autocomplete()
             ->autofocus()
             ->extraInputAttributes(['tabindex' => 1])
-            ->placeholder('admin@example.com')
-            ->helperText('Standard: admin@example.com');
+            ->default('admin@example.com')
+            ->helperText('Standard-E-Mail bereits eingetragen');
     }
 
     protected function getPasswordFormComponent(): Component
@@ -41,17 +41,17 @@ class Login extends BaseLogin
             ->password()
             ->required()
             ->extraInputAttributes(['tabindex' => 2])
-            ->placeholder('admin123')
-            ->helperText('Standard: admin123');
+            ->default('admin123')
+            ->helperText('Standard-Passwort bereits eingetragen');
     }
 
     public function getHeading(): string|Htmlable
     {
-        return 'SunnyBill Admin Login';
+        return 'VoltMaster Login';
     }
 
     public function getSubheading(): string|Htmlable|null
     {
-        return 'Verwenden Sie die Standard-Zugangsdaten für den ersten Login';
+        return 'Standard-Zugangsdaten sind bereits eingetragen - einfach auf "Anmelden" klicken';
     }
 }

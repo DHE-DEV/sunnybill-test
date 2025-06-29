@@ -196,8 +196,15 @@ class CustomerMonthlyCreditResource extends Resource
                     ->query(fn (Builder $query): Builder => $query->where('total_credit', '>=', 100)),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                // Keine Edit/Delete-Actions, da Gutschriften automatisch berechnet werden
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    // Keine Edit/Delete-Actions, da Gutschriften automatisch berechnet werden
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button()
             ])
             ->bulkActions([
                 // Keine Bulk-Actions für automatisch berechnete Daten

@@ -40,9 +40,7 @@ class TaskResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static ?string $navigationGroup = 'Aufgaben';
-
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $modelLabel = 'Aufgabe';
 
@@ -247,13 +245,25 @@ class TaskResource extends Resource
                     ->sortable()
                     ->width('120px')
                     ->weight('bold'),
+
+                TextColumn::make('parentTask.task_number')
+                    ->label('Gehört zu')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('Hauptaufgabe')
+                    ->width('120px')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->url(fn (Task $record): string => $record->parentTask ? route('filament.admin.resources.tasks.view', $record->parentTask) : '')
+                    ->color('primary')
+                    ->weight('medium'),
                     
                 TextColumn::make('taskType.name')
                     ->label('Typ')
                     ->badge()
                     ->color(fn (Task $record): string => $record->taskType->color ?? 'primary')
                     ->icon(fn (Task $record): string => $record->taskType->icon ?? 'heroicon-o-clipboard-document-list')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
 
                 TextColumn::make('title')
                     ->label('Titel')
@@ -277,7 +287,8 @@ class TaskResource extends Resource
                         'urgent' => 'Dringend',
                         default => $state,
                     })
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
 
                 BadgeColumn::make('status')
                     ->label('Status')
@@ -298,7 +309,8 @@ class TaskResource extends Resource
                         'cancelled' => 'Abgebrochen',
                         default => $state,
                     })
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
 
                 TextColumn::make('due_date')
                     ->label('Fällig am')
@@ -311,13 +323,15 @@ class TaskResource extends Resource
                     ->label('Inhaber')
                     ->searchable()
                     ->sortable()
-                    ->placeholder('Kein Inhaber'),
+                    ->placeholder('Kein Inhaber')
+                    ->toggleable(),
 
                 TextColumn::make('assignedUser.name')
                     ->label('Zuständig')
                     ->searchable()
                     ->sortable()
-                    ->placeholder('Nicht zuständig'),
+                    ->placeholder('Nicht zuständig')
+                    ->toggleable(),
 
                 TextColumn::make('customer.company_name')
                     ->label('Kunde')
@@ -439,34 +453,41 @@ class TaskResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Action::make('duplicate')
-                    ->label('Duplizieren')
-                    ->icon('heroicon-o-document-duplicate')
-                    ->color('info')
-                    ->action(function (Task $record) {
-                        $duplicatedTask = $record->duplicate();
-                        return redirect()->route('filament.admin.resources.tasks.edit', $duplicatedTask);
-                    })
-                    ->requiresConfirmation()
-                    ->modalHeading('Aufgabe duplizieren')
-                    ->modalDescription('Möchten Sie diese Aufgabe wirklich duplizieren? Alle Unteraufgaben werden ebenfalls kopiert.')
-                    ->modalSubmitActionLabel('Duplizieren'),
-                Action::make('complete')
-                    ->label('Abschließen')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->action(fn (Task $record) => $record->markAsCompleted())
-                    ->visible(fn (Task $record): bool => $record->status !== 'completed'),
-                Action::make('start')
-                    ->label('Starten')
-                    ->icon('heroicon-o-play')
-                    ->color('primary')
-                    ->action(fn (Task $record) => $record->markAsInProgress())
-                    ->visible(fn (Task $record): bool => $record->status === 'open'),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Action::make('duplicate')
+                        ->label('Duplizieren')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->color('info')
+                        ->action(function (Task $record) {
+                            $duplicatedTask = $record->duplicate();
+                            return redirect()->route('filament.admin.resources.tasks.edit', $duplicatedTask);
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Aufgabe duplizieren')
+                        ->modalDescription('Möchten Sie diese Aufgabe wirklich duplizieren? Alle Unteraufgaben werden ebenfalls kopiert.')
+                        ->modalSubmitActionLabel('Duplizieren'),
+                    Action::make('complete')
+                        ->label('Abschließen')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(fn (Task $record) => $record->markAsCompleted())
+                        ->visible(fn (Task $record): bool => $record->status !== 'completed'),
+                    Action::make('start')
+                        ->label('Starten')
+                        ->icon('heroicon-o-play')
+                        ->color('primary')
+                        ->action(fn (Task $record) => $record->markAsInProgress())
+                        ->visible(fn (Task $record): bool => $record->status === 'open'),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                ])
+                    ->label('Aktionen')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -499,6 +520,7 @@ class TaskResource extends Resource
     {
         return [
             RelationManagers\SubtasksRelationManager::class,
+            \App\Filament\Resources\DocumentResource\RelationManagers\DocumentsRelationManager::class,
         ];
     }
 
