@@ -144,6 +144,7 @@ class TaskResource extends Resource
                             ->searchable()
                             ->preload()
                             ->placeholder('Benutzer auswählen...')
+                            ->default(auth()->id())
                             ->nullable(),
 
                         Select::make('owner_id')
@@ -156,6 +157,7 @@ class TaskResource extends Resource
                             ->searchable()
                             ->preload()
                             ->placeholder('Inhaber auswählen...')
+                            ->default(auth()->id())
                             ->nullable(),
 
                         Select::make('customer_id')
