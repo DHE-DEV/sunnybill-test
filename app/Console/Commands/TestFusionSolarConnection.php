@@ -84,7 +84,7 @@ class TestFusionSolarConnection extends Command
                 
                 foreach ($result as $i => $plant) {
                     $name = $plant['stationName'] ?? 'Unbekannt';
-                    $capacity = isset($plant['capacity']) ? ($plant['capacity'] / 1000) . ' kW' : 'Unbekannt';
+                    $capacity = isset($plant['capacity']) ? ($plant['capacity'] / 1000) . ' kWp' : 'Unbekannt';
                     $this->line("      " . ($i + 1) . ". $name ($capacity)");
                 }
             }

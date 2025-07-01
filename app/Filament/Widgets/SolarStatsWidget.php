@@ -33,7 +33,7 @@ class SolarStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-bolt')
                 ->color('primary'),
                 
-            Stat::make('Gesamtleistung', number_format($totalCapacity, 2, ',', '.') . ' kW')
+            Stat::make('Gesamtleistung', number_format($totalCapacity, 2, ',', '.') . ' kWp')
                 ->description('Installierte Kapazität')
                 ->descriptionIcon('heroicon-m-bolt')
                 ->color('warning'),

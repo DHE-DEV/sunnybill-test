@@ -520,7 +520,7 @@ class TaskResource extends Resource
     {
         return [
             RelationManagers\SubtasksRelationManager::class,
-            \App\Filament\Resources\DocumentResource\RelationManagers\DocumentsRelationManager::class,
+            RelationManagers\DocumentsRelationManager::class,
         ];
     }
 

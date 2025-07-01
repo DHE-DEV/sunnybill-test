@@ -37,7 +37,7 @@ class SolarPlantCapacityChartWidget extends ChartWidget
                     'borderWidth' => 2,
                 ],
             ],
-            'labels' => ['Klein (≤10 kW)', 'Mittel (10-50 kW)', 'Groß (50-100 kW)', 'Sehr groß (>100 kW)'],
+            'labels' => ['Klein (≤10 kWp)', 'Mittel (10-50 kWp)', 'Groß (50-100 kWp)', 'Sehr groß (>100 kWp)'],
         ];
     }
 

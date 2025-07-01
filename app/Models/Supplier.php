@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -29,6 +30,7 @@ class Supplier extends Model
         'name',
         'supplier_number',
         'company_name',
+        'supplier_type_id',
         'contact_person',
         'department',
         'email',
@@ -145,6 +147,11 @@ class Supplier extends Model
      * Beziehungen
      */
 
+    public function supplierType(): BelongsTo
+    {
+        return $this->belongsTo(SupplierType::class);
+    }
+
     public function employees(): HasMany
     {
         return $this->hasMany(SupplierEmployee::class);
@@ -163,6 +170,24 @@ class Supplier extends Model
     public function solarPlants(): HasMany
     {
         return $this->hasMany(SolarPlantSupplier::class);
+    }
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(SupplierContract::class);
+    }
+
+    public function activeContracts(): HasMany
+    {
+        return $this->contracts()->active();
+    }
+
+    /**
+     * Polymorphe Beziehung zu Dokumenten
+     */
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Document::class, 'documentable');
     }
 
     /**

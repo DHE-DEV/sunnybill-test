@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
 class Document extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -24,10 +25,12 @@ class Document extends Model
         'documentable_type',
         'documentable_id',
         'uploaded_by',
+        'is_favorite',
     ];
 
     protected $casts = [
         'size' => 'integer',
+        'is_favorite' => 'boolean',
     ];
 
     public function documentable(): MorphTo

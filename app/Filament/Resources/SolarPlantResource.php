@@ -75,11 +75,11 @@ class SolarPlantResource extends Resource
                                 Forms\Components\Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('total_capacity_kw')
-                                            ->label('Gesamtleistung (kW)')
+                                            ->label('Gesamtleistung (kWp)')
                                             ->required()
                                             ->numeric()
                                             ->step(0.000001)
-                                            ->suffix('kW')
+                                            ->suffix('kWp')
                                             ->minValue(0)
                                             ->placeholder('z.B. 29.920000'),
                                         Forms\Components\DatePicker::make('planned_installation_date')
@@ -300,7 +300,7 @@ class SolarPlantResource extends Resource
                     ->schema([
                         \Filament\Infolists\Components\TextEntry::make('total_capacity_kw')
                             ->label('Gesamtleistung')
-                            ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') . ' kW' : '-'),
+                            ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') . ' kWp' : '-'),
                         \Filament\Infolists\Components\TextEntry::make('panel_count')
                             ->label('Anzahl Module')
                             ->placeholder('-'),
@@ -390,7 +390,7 @@ class SolarPlantResource extends Resource
                     ->limit(30),
                 Tables\Columns\TextColumn::make('total_capacity_kw')
                     ->label('Leistung')
-                    ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . ' kW')
+                    ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . ' kWp')
                     ->sortable()
                     ->badge()
                     ->color('success'),
@@ -502,6 +502,7 @@ class SolarPlantResource extends Resource
     public static function getRelations(): array
     {
         return [
+            RelationManagers\DocumentsRelationManager::class,
             RelationManagers\MonthlyResultsRelationManager::class,
             //RelationManagers\ParticipationsRelationManager::class,
             RelationManagers\MilestonesRelationManager::class,

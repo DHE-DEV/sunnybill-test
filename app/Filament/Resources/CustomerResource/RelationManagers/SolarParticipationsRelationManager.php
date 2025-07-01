@@ -61,7 +61,7 @@ class SolarParticipationsRelationManager extends RelationManager
                     ->color('success'),
                 Tables\Columns\TextColumn::make('solarPlant.total_capacity_kw')
                     ->label('Anlagenleistung')
-                    ->formatStateUsing(fn ($state) => number_format($state, 3, ',', '.') . ' kW')
+                    ->formatStateUsing(fn ($state) => number_format($state, 3, ',', '.') . ' kWp')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('solarPlant.status')
                     ->label('Status')

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\DocumentResource\Pages;
 use App\Models\Document;
+use App\Models\DocumentPathSetting;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -16,6 +17,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class DocumentResource extends Resource
 {
@@ -55,22 +57,34 @@ class DocumentResource extends Resource
                             ->label('Datei')
                             ->disk('documents')
                             ->directory(function (callable $get) {
-                                // Dynamische Verzeichnisstruktur basierend auf Dokumenttyp und spezifischer ID/Nummer
+                                // Neue konfigurierbare Verzeichnisstruktur
                                 $type = $get('documentable_type');
                                 $documentableId = $get('documentable_id');
+                                $category = $get('category');
                                 
                                 if (!$type || !$documentableId) {
                                     return 'allgemein/' . date('Y');
                                 }
                                 
-                                return match ($type) {
-                                    'App\Models\SolarPlant' => static::getSolarPlantDirectory($documentableId),
-                                    'App\Models\Customer' => static::getCustomerDirectory($documentableId),
-                                    'App\Models\Task' => static::getTaskDirectory($documentableId),
-                                    'App\Models\Invoice' => static::getInvoiceDirectory($documentableId),
-                                    'App\Models\Supplier' => static::getSupplierDirectory($documentableId),
-                                    default => 'allgemein/' . date('Y'),
-                                };
+                                return static::getConfigurableDirectory($type, $documentableId, $category);
+                            })
+                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file, callable $get): string {
+                                // Konfigurierbare Dateinamen-Generierung
+                                $type = $get('documentable_type');
+                                $documentableId = $get('documentable_id');
+                                $category = $get('category');
+                                
+                                if (!$type || !$documentableId) {
+                                    // Fallback für unvollständige Daten
+                                    return $file->getClientOriginalName();
+                                }
+                                
+                                return static::generateConfigurableFilename(
+                                    $file->getClientOriginalName(),
+                                    $type,
+                                    $documentableId,
+                                    $category
+                                );
                             })
                             ->storeFileNamesIn('original_name')
                             ->acceptedFileTypes([
@@ -313,66 +327,92 @@ class DocumentResource extends Resource
     }
 
     /**
-     * Helper-Methoden für Verzeichnisstruktur basierend auf spezifischen Nummern/IDs
+     * Konfigurierbare Verzeichnisstruktur basierend auf DocumentPathSetting
      */
-    private static function getSolarPlantDirectory($solarPlantId): string
+    public static function getConfigurableDirectory(string $documentableType, $documentableId, ?string $category = null): string
     {
-        $solarPlant = \App\Models\SolarPlant::find($solarPlantId);
-        if (!$solarPlant) {
-            return 'solaranlagen/unbekannt';
+        // Lade das Model
+        $model = $documentableType::find($documentableId);
+        if (!$model) {
+            return static::getFallbackDirectory($documentableType);
         }
+
+        // Suche nach passender Pfadkonfiguration
+        $pathSetting = DocumentPathSetting::getPathConfig($documentableType, $category);
         
-        // Verwende plant_number falls vorhanden, sonst fallback auf name
-        if ($solarPlant->plant_number) {
-            return "solaranlagen/{$solarPlant->plant_number}";
+        if (!$pathSetting) {
+            // Fallback auf Standard-Pfadkonfiguration ohne Kategorie
+            $pathSetting = DocumentPathSetting::getPathConfig($documentableType);
         }
-        
-        if ($solarPlant->name) {
-            // Bereinige den Namen für Dateisystem-Kompatibilität
-            $cleanName = preg_replace('/[^a-zA-Z0-9\-_]/', '_', $solarPlant->name);
-            return "solaranlagen/{$cleanName}";
+
+        if (!$pathSetting) {
+            // Letzter Fallback auf alte Logik
+            return static::getFallbackDirectory($documentableType, $model);
         }
-        
-        return 'solaranlagen/unbekannt';
+
+        // Generiere Pfad basierend auf Konfiguration
+        return $pathSetting->generatePath($model);
     }
 
-    private static function getCustomerDirectory($customerId): string
+    /**
+     * Fallback-Verzeichnis wenn keine Konfiguration gefunden wird
+     */
+    public static function getFallbackDirectory(string $documentableType, $model = null): string
     {
-        $customer = \App\Models\Customer::find($customerId);
-        if (!$customer || !$customer->customer_number) {
-            return 'kunden/unbekannt';
+        $basePath = match ($documentableType) {
+            'App\Models\SolarPlant' => 'solaranlagen',
+            'App\Models\Customer' => 'kunden',
+            'App\Models\Task' => 'aufgaben',
+            'App\Models\Invoice' => 'rechnungen',
+            'App\Models\Supplier' => 'lieferanten',
+            default => 'allgemein',
+        };
+
+        if (!$model) {
+            return $basePath . '/unbekannt';
         }
+
+        // Versuche eine sinnvolle Nummer/ID zu finden
+        $identifier = match ($documentableType) {
+            'App\Models\SolarPlant' => $model->plant_number ?? $model->name ?? 'unbekannt',
+            'App\Models\Customer' => $model->customer_number ?? 'unbekannt',
+            'App\Models\Task' => $model->task_number ?? 'unbekannt',
+            'App\Models\Invoice' => $model->invoice_number ?? 'unbekannt',
+            'App\Models\Supplier' => $model->supplier_number ?? 'unbekannt',
+            default => 'unbekannt',
+        };
+
+        // Bereinige den Identifier
+        $cleanIdentifier = preg_replace('/[^a-zA-Z0-9\-_.]/', '-', $identifier);
         
-        return "kunden/{$customer->customer_number}";
+        return $basePath . '/' . $cleanIdentifier;
     }
 
-    private static function getTaskDirectory($taskId): string
+    /**
+     * Generiert einen konfigurierbaren Dateinamen
+     */
+    public static function generateConfigurableFilename(string $originalFilename, string $documentableType, $documentableId, ?string $category = null): string
     {
-        $task = \App\Models\Task::find($taskId);
-        if (!$task || !$task->task_number) {
-            return 'aufgaben/unbekannt';
-        }
+        // Hole die Pfadkonfiguration
+        $pathConfig = DocumentPathSetting::getPathConfig($documentableType, $category);
         
-        return "aufgaben/{$task->task_number}";
-    }
+        if (!$pathConfig) {
+            // Fallback auf Standard-Pfadkonfiguration ohne Kategorie
+            $pathConfig = DocumentPathSetting::getPathConfig($documentableType);
+        }
 
-    private static function getInvoiceDirectory($invoiceId): string
-    {
-        $invoice = \App\Models\Invoice::find($invoiceId);
-        if (!$invoice || !$invoice->invoice_number) {
-            return 'rechnungen/unbekannt';
+        if (!$pathConfig) {
+            // Keine Konfiguration gefunden, verwende Original-Dateinamen
+            return $originalFilename;
         }
-        
-        return "rechnungen/{$invoice->invoice_number}";
-    }
 
-    private static function getSupplierDirectory($supplierId): string
-    {
-        $supplier = \App\Models\Supplier::find($supplierId);
-        if (!$supplier || !$supplier->supplier_number) {
-            return 'lieferanten/unbekannt';
+        // Lade das zugehörige Model für Template-Platzhalter
+        $model = null;
+        if ($pathConfig->filename_strategy === 'template') {
+            $model = $documentableType::find($documentableId);
         }
-        
-        return "lieferanten/{$supplier->supplier_number}";
+
+        // Generiere den Dateinamen
+        return $pathConfig->generateFilename($originalFilename, $model);
     }
 }

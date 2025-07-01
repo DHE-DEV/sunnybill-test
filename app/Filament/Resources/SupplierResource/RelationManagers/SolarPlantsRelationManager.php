@@ -110,7 +110,7 @@ class SolarPlantsRelationManager extends RelationManager
                     ->boolean()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_capacity_kw')
-                    ->label('Leistung (kW)')
+                    ->label('Leistung (kWp)')
                     ->numeric(2)
                     ->sortable()
                     ->toggleable(),

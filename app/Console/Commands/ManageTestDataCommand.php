@@ -673,9 +673,9 @@ class ManageTestDataCommand extends Command
         ];
 
         for ($i = 0; $i < 10; $i++) {
-            // Spezielle Anlagen mit hoher Leistung (250-2000 kW)
+            // Spezielle Anlagen mit hoher Leistung (250-2000 kWp)
             if (in_array($plantNames[$i], ['Sonnenkraft Nord', 'Photovoltaik Süd', 'Solarpark Ost', 'Energiefeld West', 'Öko-Solar Park'])) {
-                $capacity = rand(250, 2000); // 250-2000 kW für große Anlagen
+                $capacity = rand(250, 2000); // 250-2000 kWp für große Anlagen
                 
                 // Realistische technische Daten basierend auf Kapazität
                 $panelCount = round($capacity / 0.45); // 450W Module
@@ -688,10 +688,10 @@ class ManageTestDataCommand extends Command
                 // Betriebskosten: ca. 1-2% der Investition pro Jahr
                 $operatingCosts = $totalInvestment * (rand(10, 20) / 1000);
                 
-                $description = "Große Solaranlage mit {$capacity} kW Leistung, bestehend aus {$panelCount} Modulen und {$inverterCount} Wechselrichtern. Erwarteter Jahresertrag: " . number_format($expectedYield, 0, ',', '.') . " kWh.";
+                $description = "Große Solaranlage mit {$capacity} kWp Leistung, bestehend aus {$panelCount} Modulen und {$inverterCount} Wechselrichtern. Erwarteter Jahresertrag: " . number_format($expectedYield, 0, ',', '.') . " kWh.";
             } else {
-                // Kleinere Anlagen (5-50 kW)
-                $capacity = rand(50, 500) / 10; // 5.0 bis 50.0 kW
+                // Kleinere Anlagen (5-50 kWp)
+                $capacity = rand(50, 500) / 10; // 5.0 bis 50.0 kWp
                 
                 $panelCount = round($capacity / 0.45); // 450W Module
                 $inverterCount = max(1, round($capacity / 5)); // 5kW Wechselrichter
@@ -700,7 +700,7 @@ class ManageTestDataCommand extends Command
                 $totalInvestment = $capacity * rand(1200, 1800); // Höhere spezifische Kosten bei kleineren Anlagen
                 $operatingCosts = $totalInvestment * (rand(15, 25) / 1000);
                 
-                $description = "Solaranlage mit {$capacity} kW Leistung, bestehend aus {$panelCount} Modulen und {$inverterCount} Wechselrichtern. Erwarteter Jahresertrag: " . number_format($expectedYield, 0, ',', '.') . " kWh.";
+                $description = "Solaranlage mit {$capacity} kWp Leistung, bestehend aus {$panelCount} Modulen und {$inverterCount} Wechselrichtern. Erwarteter Jahresertrag: " . number_format($expectedYield, 0, ',', '.') . " kWh.";
             }
             
             // Realistische Termine
@@ -743,7 +743,7 @@ class ManageTestDataCommand extends Command
             $solarPlants[] = $solarPlant;
         }
 
-        $this->info('☀️ 10 Solaranlagen erstellt (5 große Anlagen 250-2000kW, 5 kleinere Anlagen 5-50kW) mit realistischen Koordinaten');
+        $this->info('☀️ 10 Solaranlagen erstellt (5 große Anlagen 250-2000kWp, 5 kleinere Anlagen 5-50kWp) mit realistischen Koordinaten');
         return $solarPlants;
     }
 

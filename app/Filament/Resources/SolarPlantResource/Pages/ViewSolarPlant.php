@@ -66,7 +66,7 @@ class ViewSolarPlant extends ViewRecord
                                     }),
                                 Infolists\Components\TextEntry::make('total_capacity_kw')
                                     ->label('Gesamtleistung')
-                                    ->formatStateUsing(fn ($state) => number_format($state, 3, ',', '.') . ' kW')
+                                    ->formatStateUsing(fn ($state) => number_format($state, 3, ',', '.') . ' kWp')
                                     ->badge()
                                     ->size('lg')
                                     ->color('success'),

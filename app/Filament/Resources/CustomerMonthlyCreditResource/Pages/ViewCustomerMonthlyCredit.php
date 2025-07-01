@@ -95,7 +95,7 @@ class ViewCustomerMonthlyCredit extends ViewRecord
                                     ->icon('heroicon-o-map-pin'),
                                 Infolists\Components\TextEntry::make('solarPlant.total_capacity_kw')
                                     ->label('Gesamtleistung')
-                                    ->formatStateUsing(fn ($state) => number_format($state, 3, ',', '.') . ' kW')
+                                    ->formatStateUsing(fn ($state) => number_format($state, 3, ',', '.') . ' kWp')
                                     ->badge()
                                     ->color('success'),
                             ]),

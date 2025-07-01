@@ -192,6 +192,43 @@ class SolarPlant extends Model
     }
 
     /**
+     * Beziehung zu Lieferantenverträgen über Pivot-Tabelle
+     */
+    public function supplierContracts(): BelongsToMany
+    {
+        return $this->belongsToMany(SupplierContract::class, 'supplier_contract_solar_plants')
+            ->withPivot(['percentage', 'notes', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Aktive Lieferantenverträge
+     */
+    public function activeSupplierContracts(): BelongsToMany
+    {
+        return $this->belongsToMany(SupplierContract::class, 'supplier_contract_solar_plants')
+            ->wherePivot('is_active', true)
+            ->withPivot(['percentage', 'notes', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Direkte Beziehung zu Lieferantenvertrag-Zuordnungen
+     */
+    public function supplierContractAssignments(): HasMany
+    {
+        return $this->hasMany(SupplierContractSolarPlant::class);
+    }
+
+    /**
+     * Aktive Lieferantenvertrag-Zuordnungen
+     */
+    public function activeSupplierContractAssignments(): HasMany
+    {
+        return $this->supplierContractAssignments()->active();
+    }
+
+    /**
      * Gesamtbeteiligung aller Kunden berechnen
      */
     public function getTotalParticipationAttribute(): float
@@ -221,6 +258,38 @@ class SolarPlant extends Model
     public function canAddParticipation(float $percentage): bool
     {
         return ($this->total_participation + $percentage) <= 100;
+    }
+
+    /**
+     * Gesamtprozentsatz aller Lieferantenvertrag-Zuordnungen
+     */
+    public function getTotalSupplierContractPercentageAttribute(): float
+    {
+        return $this->activeSupplierContractAssignments()->sum('percentage');
+    }
+
+    /**
+     * Verfügbarer Prozentsatz für weitere Lieferantenvertrag-Zuordnungen
+     */
+    public function getAvailableSupplierContractPercentageAttribute(): float
+    {
+        return max(0, 100.00 - $this->total_supplier_contract_percentage);
+    }
+
+    /**
+     * Prüft ob weitere Lieferantenvertrag-Zuordnungen möglich sind
+     */
+    public function canAddSupplierContractAssignment(float $percentage): bool
+    {
+        return ($this->total_supplier_contract_percentage + $percentage) <= 100.00;
+    }
+
+    /**
+     * Anzahl der Lieferantenvertrag-Zuordnungen
+     */
+    public function getSupplierContractAssignmentsCountAttribute(): int
+    {
+        return $this->activeSupplierContractAssignments()->count();
     }
 
     /**

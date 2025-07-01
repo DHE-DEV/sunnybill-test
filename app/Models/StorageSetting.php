@@ -15,6 +15,7 @@ class StorageSetting extends Model
     protected $fillable = [
         'storage_driver',
         'storage_config',
+        'storage_paths',
         'total_storage_used',
         'last_storage_calculation',
         'is_active',
@@ -22,6 +23,7 @@ class StorageSetting extends Model
 
     protected $casts = [
         'storage_config' => 'array',
+        'storage_paths' => 'array',
         'total_storage_used' => 'integer',
         'last_storage_calculation' => 'datetime',
         'is_active' => 'boolean',
@@ -707,5 +709,277 @@ class StorageSetting extends Model
         config(['filesystems.disks.documents' => $config]);
         
         return Storage::disk('documents');
+    }
+
+    /**
+     * Verfügbare Speicherpfade abrufen
+     */
+    public function getStoragePaths(): array
+    {
+        if (is_string($this->storage_paths)) {
+            return json_decode($this->storage_paths, true) ?? [];
+        }
+        
+        return $this->storage_paths ?? [];
+    }
+
+    /**
+     * Speicherpfad für einen bestimmten Typ abrufen
+     */
+    public function getStoragePath(string $type): ?array
+    {
+        $paths = $this->getStoragePaths();
+        return $paths[$type] ?? null;
+    }
+
+    /**
+     * Dynamischen Pfad basierend auf Platzhaltern generieren
+     */
+    public function resolvePath(string $type, $model = null, array $additionalData = []): string
+    {
+        $pathConfig = $this->getStoragePath($type);
+        
+        if (!$pathConfig) {
+            // Fallback auf Standard-Pfad
+            return $type . '-documents';
+        }
+
+        $template = $pathConfig['pattern'] ?? $pathConfig['path'] ?? $type . '-documents';
+        
+        // Platzhalter ersetzen
+        $replacements = $this->buildPlaceholderReplacements($model, $additionalData);
+        
+        $resolvedPath = $template;
+        foreach ($replacements as $placeholder => $value) {
+            $resolvedPath = str_replace($placeholder, $value, $resolvedPath);
+        }
+
+        // Pfad bereinigen (doppelte Slashes entfernen, etc.)
+        $resolvedPath = $this->sanitizePath($resolvedPath);
+
+        return $resolvedPath;
+    }
+
+    /**
+     * Platzhalter-Ersetzungen basierend auf Model und zusätzlichen Daten erstellen
+     */
+    private function buildPlaceholderReplacements($model = null, array $additionalData = []): array
+    {
+        $replacements = [];
+
+        // Standard-Platzhalter
+        $replacements['{timestamp}'] = now()->format('Y-m-d_H-i-s');
+        $replacements['{date}'] = now()->format('Y-m-d');
+        $replacements['{year}'] = now()->format('Y');
+        $replacements['{month}'] = now()->format('m');
+        $replacements['{day}'] = now()->format('d');
+
+        // Model-spezifische Platzhalter
+        if ($model) {
+            $this->addModelPlaceholders($replacements, $model);
+        }
+
+        // Zusätzliche Daten
+        foreach ($additionalData as $key => $value) {
+            $replacements['{' . $key . '}'] = $this->sanitizeValue($value);
+        }
+
+        return $replacements;
+    }
+
+    /**
+     * Model-spezifische Platzhalter hinzufügen
+     */
+    private function addModelPlaceholders(array &$replacements, $model): void
+    {
+        // Supplier-spezifische Platzhalter
+        if ($model instanceof \App\Models\Supplier) {
+            $replacements['{supplier_number}'] = $this->sanitizeValue($model->supplier_number ?? 'unknown');
+            $replacements['{supplier_name}'] = $this->sanitizeValue($model->name ?? 'unknown');
+            $replacements['{supplier_id}'] = $model->id ?? 'unknown';
+        }
+
+        // Customer-spezifische Platzhalter (Clients)
+        if ($model instanceof \App\Models\Customer) {
+            $replacements['{customer_number}'] = $this->sanitizeValue($model->customer_number ?? 'unknown');
+            $replacements['{customer_name}'] = $this->sanitizeValue($model->display_name ?? $model->name ?? 'unknown');
+            $replacements['{customer_id}'] = $model->id ?? 'unknown';
+            $replacements['{client_number}'] = $this->sanitizeValue($model->customer_number ?? 'unknown'); // Alias
+            $replacements['{client_name}'] = $this->sanitizeValue($model->display_name ?? $model->name ?? 'unknown'); // Alias
+            $replacements['{client_id}'] = $model->id ?? 'unknown'; // Alias
+        }
+
+        // SolarPlant-spezifische Platzhalter
+        if ($model instanceof \App\Models\SolarPlant) {
+            $replacements['{plant_number}'] = $this->sanitizeValue($model->plant_number ?? 'unknown');
+            $replacements['{plant_name}'] = $this->sanitizeValue($model->name ?? 'unknown');
+            $replacements['{plant_id}'] = $model->id ?? 'unknown';
+            $replacements['{solar_plant_number}'] = $this->sanitizeValue($model->plant_number ?? 'unknown'); // Alias
+            $replacements['{solar_plant_name}'] = $this->sanitizeValue($model->name ?? 'unknown'); // Alias
+            $replacements['{solar_plant_id}'] = $model->id ?? 'unknown'; // Alias
+        }
+
+        // Contract-spezifische Platzhalter
+        if ($model instanceof \App\Models\SupplierContract) {
+            $replacements['{contract_number}'] = $this->sanitizeValue($model->contract_number ?? 'unknown');
+            $replacements['{contract_name}'] = $this->sanitizeValue($model->title ?? $model->name ?? 'unknown');
+            $replacements['{contract_id}'] = $model->id ?? 'unknown';
+            $replacements['{contract_internal_number}'] = $this->sanitizeValue($model->contract_number ?? 'unknown');
+            
+            // Supplier-Daten falls verfügbar
+            if ($model->supplier) {
+                $replacements['{supplier_number}'] = $this->sanitizeValue($model->supplier->supplier_number ?? 'unknown');
+                $replacements['{supplier_name}'] = $this->sanitizeValue($model->supplier->name ?? 'unknown');
+                $replacements['{supplier_id}'] = $model->supplier->id ?? 'unknown';
+            }
+        }
+
+        // Document-spezifische Platzhalter
+        if (isset($model->document_number)) {
+            $replacements['{document_number}'] = $this->sanitizeValue($model->document_number);
+        }
+        if (isset($model->document_name)) {
+            $replacements['{document_name}'] = $this->sanitizeValue($model->document_name);
+        }
+
+        // Allgemeine Model-Platzhalter
+        $replacements['{model_id}'] = $model->id ?? 'unknown';
+        $replacements['{model_type}'] = class_basename($model);
+    }
+
+    /**
+     * Wert für Pfad-Verwendung bereinigen
+     */
+    private function sanitizeValue($value): string
+    {
+        if ($value === null) {
+            return 'unknown';
+        }
+
+        $value = (string) $value;
+        
+        // Gefährliche Zeichen entfernen/ersetzen
+        $value = preg_replace('/[^\w\-_.]/', '-', $value);
+        
+        // Mehrfache Bindestriche reduzieren
+        $value = preg_replace('/-+/', '-', $value);
+        
+        // Führende/nachfolgende Bindestriche entfernen
+        $value = trim($value, '-');
+        
+        // Leer-String vermeiden
+        if (empty($value)) {
+            return 'unknown';
+        }
+
+        return $value;
+    }
+
+    /**
+     * Pfad bereinigen und normalisieren
+     */
+    private function sanitizePath(string $path): string
+    {
+        // Backslashes zu Forward-Slashes
+        $path = str_replace('\\', '/', $path);
+        
+        // Doppelte Slashes entfernen
+        $path = preg_replace('/\/+/', '/', $path);
+        
+        // Führende/nachfolgende Slashes entfernen
+        $path = trim($path, '/');
+        
+        return $path;
+    }
+
+    /**
+     * Alle verfügbaren Platzhalter für einen Typ abrufen
+     */
+    public function getAvailablePlaceholders(string $type): array
+    {
+        $placeholders = [
+            // Standard-Platzhalter
+            'timestamp' => 'Aktueller Zeitstempel (Y-m-d_H-i-s)',
+            'date' => 'Aktuelles Datum (Y-m-d)',
+            'year' => 'Aktuelles Jahr',
+            'month' => 'Aktueller Monat',
+            'day' => 'Aktueller Tag',
+        ];
+
+        // Typ-spezifische Platzhalter
+        switch ($type) {
+            case 'suppliers':
+                $placeholders = array_merge($placeholders, [
+                    'supplier_number' => 'Lieferantennummer',
+                    'supplier_name' => 'Lieferantenname',
+                    'supplier_id' => 'Lieferanten-ID',
+                    'document_number' => 'Dokumentnummer',
+                    'document_name' => 'Dokumentname',
+                ]);
+                break;
+
+            case 'clients':
+                $placeholders = array_merge($placeholders, [
+                    'customer_number' => 'Kundennummer',
+                    'customer_name' => 'Kundenname',
+                    'customer_id' => 'Kunden-ID',
+                    'client_number' => 'Kundennummer (Alias)',
+                    'client_name' => 'Kundenname (Alias)',
+                    'client_id' => 'Kunden-ID (Alias)',
+                    'document_number' => 'Dokumentnummer',
+                    'document_name' => 'Dokumentname',
+                ]);
+                break;
+
+            case 'contracts':
+                $placeholders = array_merge($placeholders, [
+                    'contract_number' => 'Vertragsnummer',
+                    'contract_name' => 'Vertragsname',
+                    'contract_id' => 'Vertrags-ID',
+                    'supplier_number' => 'Lieferantennummer',
+                    'supplier_name' => 'Lieferantenname',
+                    'document_number' => 'Dokumentnummer',
+                    'document_name' => 'Dokumentname',
+                ]);
+                break;
+
+            case 'solar_plants':
+                $placeholders = array_merge($placeholders, [
+                    'plant_number' => 'Anlagennummer (z.B. SA-000001)',
+                    'plant_name' => 'Anlagenname',
+                    'plant_id' => 'Anlagen-ID',
+                    'solar_plant_number' => 'Anlagennummer (Alias)',
+                    'solar_plant_name' => 'Anlagenname (Alias)',
+                    'solar_plant_id' => 'Anlagen-ID (Alias)',
+                    'document_number' => 'Dokumentnummer',
+                    'document_name' => 'Dokumentname',
+                ]);
+                break;
+
+            case 'supplier_contracts':
+                $placeholders = array_merge($placeholders, [
+                    'contract_number' => 'Vertragsnummer',
+                    'contract_internal_number' => 'Interne Vertragsnummer',
+                    'contract_name' => 'Vertragsname',
+                    'contract_id' => 'Vertrags-ID',
+                    'supplier_number' => 'Lieferantennummer',
+                    'supplier_name' => 'Lieferantenname',
+                    'supplier_id' => 'Lieferanten-ID',
+                    'document_number' => 'Dokumentnummer',
+                    'document_name' => 'Dokumentname',
+                ]);
+                break;
+
+            case 'general':
+                $placeholders = array_merge($placeholders, [
+                    'document_number' => 'Dokumentnummer',
+                    'document_name' => 'Dokumentname',
+                    'model_id' => 'Model-ID',
+                    'model_type' => 'Model-Typ',
+                ]);
+                break;
+        }
+
+        return $placeholders;
     }
 }

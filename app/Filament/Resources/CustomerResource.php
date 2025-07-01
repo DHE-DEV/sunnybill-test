@@ -15,6 +15,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Database\Eloquent\Collection;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class CustomerResource extends Resource
 {
@@ -542,6 +543,8 @@ class CustomerResource extends Resource
                             ->label('Zuletzt geändert')
                             ->dateTime('d.m.Y H:i'),
                     ])->columns(2),
+
+                // Dokumente werden über das Widget angezeigt - siehe ViewCustomer Page
             ]);
     }
 
@@ -832,7 +835,6 @@ class CustomerResource extends Resource
             RelationManagers\InvoicesRelationManager::class,
             RelationManagers\SolarParticipationsRelationManager::class,
             RelationManagers\MonthlyCreditsRelationManager::class,
-            \App\Filament\Resources\DocumentResource\RelationManagers\DocumentsRelationManager::class,
         ];
     }
 
