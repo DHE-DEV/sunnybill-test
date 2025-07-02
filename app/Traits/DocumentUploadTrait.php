@@ -7,6 +7,9 @@ use App\Services\DocumentFormBuilder;
 use App\Services\DocumentTableBuilder;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\Action;
+use Illuminate\Support\Facades\Log;
+use Livewire\Component as Livewire;
 
 /**
  * Trait für wiederverwendbare Dokumenten-Upload-Funktionalität
@@ -77,6 +80,7 @@ trait DocumentUploadTrait
             'emptyStateHeading' => 'Keine Dokumente vorhanden',
             'emptyStateDescription' => 'Fügen Sie das erste Dokument hinzu.',
             'createButtonLabel' => 'Dokument hinzufügen',
+            'enableCreate' => true, // Explizit aktivieren
         ];
     }
 
@@ -85,7 +89,20 @@ trait DocumentUploadTrait
      */
     public function form(Form $form): Form
     {
+        Log::debug('DocumentUploadTrait: Erstelle Formular', [
+            'trait_class' => static::class,
+            'relationship' => property_exists($this, 'relationship') ? static::$relationship : 'unbekannt'
+        ]);
+
         $config = $this->getDocumentUploadConfig();
+        
+        Log::debug('DocumentUploadTrait: Konfiguration erhalten', [
+            'config_type' => is_object($config) ? get_class($config) : gettype($config),
+            'is_object' => is_object($config),
+            'has_toArray' => is_object($config) && method_exists($config, 'toArray'),
+            'has_getStorageDirectory' => is_object($config) && method_exists($config, 'getStorageDirectory'),
+            'has_getDiskName' => is_object($config) && method_exists($config, 'getDiskName')
+        ]);
         
         // Konvertiere DocumentUploadConfig zu Array falls nötig, aber behalte wichtige Properties
         if (is_object($config) && method_exists($config, 'toArray')) {
@@ -99,25 +116,71 @@ trait DocumentUploadTrait
                 $configArray['diskName'] = $config->getDiskName();
             }
             
+            Log::debug('DocumentUploadTrait: Konfiguration konvertiert', [
+                'original_config_keys' => is_object($config) ? array_keys($config->toArray()) : [],
+                'final_config_keys' => array_keys($configArray),
+                'storage_directory' => $configArray['storageDirectory'] ?? 'nicht gesetzt',
+                'disk_name' => $configArray['diskName'] ?? 'nicht gesetzt'
+            ]);
+            
             $config = $configArray;
         }
         
-        return DocumentFormBuilder::make($config)->build($form);
+        $formBuilder = DocumentFormBuilder::make($config);
+        Log::debug('DocumentUploadTrait: FormBuilder erstellt', [
+            'builder_class' => get_class($formBuilder)
+        ]);
+        
+        return $formBuilder->build($form);
     }
 
     /**
      * Erstellt die Tabelle mit der konfigurierten Einstellung
+     * Aktiviert automatisch headerActions auch im View-Modus
      */
     public function table(Table $table): Table
     {
+        Log::debug('DocumentUploadTrait: Erstelle Tabelle', [
+            'trait_class' => static::class,
+            'relationship' => property_exists($this, 'relationship') ? static::$relationship : 'unbekannt'
+        ]);
+
         $config = $this->getDocumentUploadConfig();
+        
+        Log::debug('DocumentUploadTrait: Tabellen-Konfiguration erhalten', [
+            'config_type' => is_object($config) ? get_class($config) : gettype($config),
+            'is_object' => is_object($config),
+            'has_toArray' => is_object($config) && method_exists($config, 'toArray')
+        ]);
         
         // Konvertiere DocumentUploadConfig zu Array falls nötig
         if (is_object($config) && method_exists($config, 'toArray')) {
+            $originalConfig = $config;
             $config = $config->toArray();
+            
+            Log::debug('DocumentUploadTrait: Tabellen-Konfiguration konvertiert', [
+                'config_keys' => array_keys($config),
+                'title' => $config['title'] ?? 'nicht gesetzt',
+                'show_icon' => $config['showIcon'] ?? false,
+                'show_category' => $config['showCategory'] ?? false,
+                'enable_create' => $config['enableCreate'] ?? false
+            ]);
         }
         
-        return DocumentTableBuilder::make($config)->build($table);
+        $tableBuilder = DocumentTableBuilder::make($config);
+        Log::debug('DocumentUploadTrait: TableBuilder erstellt', [
+            'builder_class' => get_class($tableBuilder)
+        ]);
+        
+        return $tableBuilder->build($table);
+    }
+
+    /**
+     * Stelle sicher, dass Create-Aktionen auch im View-Modus angezeigt werden
+     */
+    public function canCreate(): bool
+    {
+        return true;
     }
 
     /**
@@ -141,25 +204,64 @@ trait DocumentUploadTrait
      */
     protected function processDocumentUploadData(array $data): array
     {
+        Log::debug('DocumentUploadTrait: Verarbeite Upload-Daten', [
+            'data_keys' => array_keys($data),
+            'has_path' => isset($data['path']),
+            'path_type' => isset($data['path']) ? gettype($data['path']) : 'nicht gesetzt',
+            'path_value' => isset($data['path']) ? (is_array($data['path']) ? 'Array mit ' . count($data['path']) . ' Elementen' : $data['path']) : 'nicht gesetzt'
+        ]);
+
         if (isset($data['path']) && $data['path']) {
             // FileUpload gibt ein Array zurück, nimm die erste Datei
             $filePath = is_array($data['path']) ? $data['path'][0] ?? null : $data['path'];
             
+            Log::debug('DocumentUploadTrait: Dateipfad extrahiert', [
+                'original_path' => $data['path'],
+                'extracted_file_path' => $filePath,
+                'is_array' => is_array($data['path'])
+            ]);
+            
             if ($filePath) {
                 try {
+                    Log::debug('DocumentUploadTrait: Extrahiere Metadaten', [
+                        'file_path' => $filePath
+                    ]);
+
                     $metadata = DocumentStorageService::extractFileMetadata($filePath);
                     
+                    Log::debug('DocumentUploadTrait: Metadaten extrahiert', [
+                        'file_path' => $filePath,
+                        'metadata_keys' => array_keys($metadata),
+                        'size' => $metadata['size'] ?? 'unbekannt',
+                        'mime_type' => $metadata['mime_type'] ?? 'unbekannt',
+                        'disk' => $metadata['disk'] ?? 'unbekannt'
+                    ]);
+                    
                     // Merge Metadaten, aber behalte den ursprünglichen path
+                    $originalData = $data;
                     $data = array_merge($data, $metadata);
                     $data['path'] = $filePath; // Stelle sicher, dass path ein String ist
+                    
+                    Log::debug('DocumentUploadTrait: Daten zusammengeführt', [
+                        'original_data_keys' => array_keys($originalData),
+                        'final_data_keys' => array_keys($data),
+                        'final_path' => $data['path']
+                    ]);
                 } catch (\Exception $e) {
-                    \Log::error('Fehler beim Extrahieren der Metadaten in DocumentUploadTrait', [
+                    Log::error('DocumentUploadTrait: Fehler beim Extrahieren der Metadaten', [
                         'file_path' => $filePath,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
                 }
             }
         }
+
+        Log::debug('DocumentUploadTrait: Upload-Daten verarbeitet', [
+            'final_data_keys' => array_keys($data),
+            'has_final_path' => isset($data['path']),
+            'final_path' => $data['path'] ?? 'nicht gesetzt'
+        ]);
 
         return $data;
     }

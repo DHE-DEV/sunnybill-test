@@ -6,6 +6,7 @@ use App\Filament\Resources\SupplierContractResource\Pages;
 use App\Filament\Resources\SupplierContractResource\RelationManagers;
 use App\Models\Supplier;
 use App\Models\SupplierContract;
+use App\Models\SolarPlant;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -109,7 +110,61 @@ class SupplierContractResource extends Resource
                 Tables\Columns\TextColumn::make('supplier.company_name')
                     ->label('Lieferant')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->getStateUsing(function (SupplierContract $record): string {
+                        $supplierName = $record->supplier?->company_name ?? $record->supplier?->name ?? 'Unbekannter Lieferant';
+                        
+                        $assignments = $record->activeSolarPlantAssignments()
+                            ->with('solarPlant')
+                            ->get();
+                        
+                        if ($assignments->isEmpty()) {
+                            return '<div class="space-y-1"><div><strong>' . e($supplierName) . '</strong></div><div><span class="text-gray-500 text-sm">(Keine Kostenträger zugeordnet)</span></div></div>';
+                        }
+                        
+                        $plantList = $assignments->map(function ($assignment) {
+                            $plant = $assignment->solarPlant;
+                            if (!$plant) {
+                                return '<div class="text-gray-500 text-sm">• Unbekannte Anlage</div>';
+                            }
+                            
+                            $plantNumber = e($plant->plant_number ?? 'Keine Nr.');
+                            $plantName = e($plant->name ?? 'Kein Name');
+                            $percentage = $assignment->percentage ? ' (' . number_format($assignment->percentage, 2) . '%)' : '';
+                            
+                            return '<div class="text-gray-500 text-sm">• ' . $plantNumber . ' - ' . $plantName . $percentage . '</div>';
+                        })->toArray();
+                        
+                        return '<div class="space-y-1"><div><strong>' . e($supplierName) . '</strong></div>' . implode('', $plantList) . '</div>';
+                    })
+                    ->html()
+                    ->wrap()
+                    ->tooltip(function (SupplierContract $record): ?string {
+                        $supplierName = $record->supplier?->company_name ?? $record->supplier?->name ?? 'Unbekannter Lieferant';
+                        
+                        $assignments = $record->activeSolarPlantAssignments()
+                            ->with('solarPlant')
+                            ->get();
+                        
+                        if ($assignments->isEmpty()) {
+                            return $supplierName . "\n(Keine Kostenträger zugeordnet)";
+                        }
+                        
+                        $plantList = $assignments->map(function ($assignment) {
+                            $plant = $assignment->solarPlant;
+                            if (!$plant) {
+                                return '• Unbekannte Anlage';
+                            }
+                            
+                            $plantNumber = $plant->plant_number ?? 'Keine Nr.';
+                            $plantName = $plant->name ?? 'Kein Name';
+                            $percentage = $assignment->percentage ? number_format($assignment->percentage, 2) : '0.00';
+                            
+                            return "• {$plantNumber} - {$plantName} ({$percentage}%)";
+                        })->toArray();
+                        
+                        return $supplierName . "\nKostenträger:\n" . implode("\n", $plantList);
+                    }),
                 Tables\Columns\TextColumn::make('title')
                     ->label('Titel')
                     ->searchable()
@@ -137,40 +192,41 @@ class SupplierContractResource extends Resource
                     ->label('Start')
                     ->date()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('end_date')
                     ->label('Ende')
                     ->date()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('formatted_contract_value')
                     ->label('Wert')
                     ->sortable(query: function (Builder $query, string $direction): Builder {
                         return $query->orderBy('contract_value', $direction);
                     })
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('contractNotes_count')
                     ->label('Notizen')
                     ->counts('contractNotes')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('documents_count')
                     ->label('Dokumente')
                     ->counts('documents')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('solarPlantAssignments_count')
                     ->label('Solaranlagen')
                     ->counts('solarPlantAssignments')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('total_solar_plant_percentage')
                     ->label('Gesamt %')
                     ->suffix('%')
                     ->numeric(2)
                     ->alignRight()
-                    ->toggleable()
+                    ->toggleable(isToggledHiddenByDefault: false)
                     ->badge()
                     ->color(fn ($state) => $state >= 100 ? 'success' : ($state >= 50 ? 'warning' : 'gray')),
                 Tables\Columns\TextColumn::make('created_at')
@@ -185,6 +241,30 @@ class SupplierContractResource extends Resource
                     ->options(Supplier::active()->orderBy('company_name')->pluck('company_name', 'id'))
                     ->searchable()
                     ->preload(),
+                Tables\Filters\SelectFilter::make('solar_plant_id')
+                    ->label('Kostenträger')
+                    ->options(function () {
+                        return SolarPlant::whereHas('supplierContractAssignments', function ($query) {
+                            $query->where('is_active', true);
+                        })
+                        ->orderBy('plant_number')
+                        ->get()
+                        ->mapWithKeys(function ($plant) {
+                            $displayName = ($plant->plant_number ?? 'Keine Nr.') . ' - ' . ($plant->name ?? 'Kein Name');
+                            return [$plant->id => $displayName];
+                        });
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (filled($data['value'])) {
+                            return $query->whereHas('solarPlantAssignments', function ($q) use ($data) {
+                                $q->where('solar_plant_id', $data['value'])
+                                  ->where('is_active', true);
+                            });
+                        }
+                        return $query;
+                    })
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
                     ->options(SupplierContract::getStatusOptions()),
@@ -192,7 +272,7 @@ class SupplierContractResource extends Resource
                     ->label('Aktiv'),
                 Tables\Filters\Filter::make('expiring_soon')
                     ->label('Läuft bald ab')
-                    ->query(fn (Builder $query): Builder => 
+                    ->query(fn (Builder $query): Builder =>
                         $query->where('end_date', '<=', now()->addDays(30))
                               ->where('end_date', '>=', now())
                               ->where('status', 'active')

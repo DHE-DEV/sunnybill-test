@@ -131,6 +131,14 @@ class SolarPlant extends Model
     }
 
     /**
+     * Beziehung zu SOLL-Erträgen
+     */
+    public function targetYields(): HasMany
+    {
+        return $this->hasMany(SolarPlantTargetYield::class);
+    }
+
+    /**
      * Beziehung zu Notizen
      */
     public function notes(): HasMany

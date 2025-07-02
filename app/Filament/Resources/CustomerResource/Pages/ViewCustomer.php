@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\CustomerResource\Pages;
 
 use App\Filament\Resources\CustomerResource;
-use App\Filament\Widgets\CustomerDocumentsTableWidget;
+use App\Filament\Widgets\CustomerAddressesWidget;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -18,10 +18,19 @@ class ViewCustomer extends ViewRecord
         ];
     }
 
+    /**
+     * Erlaube Create-Aktionen in RelationManagern auch in der View-Ansicht
+     * Notwendig für DocumentsRelationManager und andere RelationManager
+     */
+    public function canCreateRelatedRecords(): bool
+    {
+        return true;
+    }
+
     protected function getFooterWidgets(): array
     {
         return [
-            CustomerDocumentsTableWidget::make(['customerId' => (int) $this->record->id]),
+            //CustomerAddressesWidget::make(['customerId' => (int) $this->record->id]),
         ];
     }
 

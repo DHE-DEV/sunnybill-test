@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\SupplierContractResource\RelationManagers;
+namespace App\Filament\Resources\SupplierResource\RelationManagers;
 
-use App\Models\SupplierContract;
+use App\Models\Supplier;
 use App\Services\DocumentUploadConfig;
 use App\Traits\DocumentUploadTrait;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -23,14 +23,14 @@ class DocumentsRelationManager extends RelationManager
 
     protected function getDocumentUploadConfig(): DocumentUploadConfig
     {
-        $contract = $this->getOwnerRecord();
+        $supplier = $this->getOwnerRecord();
         
-        return DocumentUploadConfig::forSupplierContracts()
-            ->setModel($contract)
+        return DocumentUploadConfig::forSuppliers()
+            ->setModel($supplier)
             ->setAdditionalData([
-                'supplier_contract_id' => $contract->id,
-                'contract_number' => $contract->contract_number,
-                'supplier_name' => $contract->supplier?->company_name,
+                'supplier_id' => $supplier->id,
+                'supplier_number' => $supplier->supplier_number,
+                'company_name' => $supplier->company_name,
             ]);
     }
 

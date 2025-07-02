@@ -140,6 +140,18 @@ class DocumentStorageService
      */
     public static function getUploadDirectoryForModel(string $type, $model = null, array $additionalData = []): string
     {
+        // Zuerst versuchen wir DocumentPathSetting zu verwenden
+        if ($model) {
+            $documentableType = get_class($model);
+            $category = $additionalData['category'] ?? null;
+            
+            $pathSetting = \App\Models\DocumentPathSetting::getPathConfig($documentableType, $category);
+            if ($pathSetting) {
+                return $pathSetting->generatePath($model, $additionalData);
+            }
+        }
+        
+        // Fallback auf StorageSetting
         $setting = StorageSetting::current();
         
         if ($setting) {

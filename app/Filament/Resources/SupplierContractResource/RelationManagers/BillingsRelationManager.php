@@ -244,8 +244,10 @@ class BillingsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('Neue Abrechnung')
-                    ->icon('heroicon-o-plus'),
+                    ->label('Abrechnung erfassen')
+                    ->icon('heroicon-o-plus')
+                    ->button()
+                    ->color('primary'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
@@ -272,5 +274,10 @@ class BillingsRelationManager extends RelationManager
             ->modifyQueryUsing(fn (Builder $query) => $query->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]));
+    }
+    
+    public function isReadOnly(): bool
+    {
+        return false; // Erlaubt Aktionen auch im View-Modus
     }
 }

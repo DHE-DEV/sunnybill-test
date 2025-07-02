@@ -104,6 +104,82 @@ class SupplierContractSolarPlant extends Model
     }
 
     /**
+     * Berechnet und aktualisiert die Prozentsätze aller Kostenträger eines Vertrags
+     * basierend auf deren Kapazität
+     */
+    public static function recalculatePercentagesBasedOnCapacity(string $contractId): void
+    {
+        // Hole alle aktiven Zuordnungen mit den zugehörigen Solaranlagen
+        $assignments = static::with('solarPlant')
+            ->where('supplier_contract_id', $contractId)
+            ->where('is_active', true)
+            ->get();
+        
+        // Berechne die Gesamtkapazität
+        $totalCapacity = $assignments->sum(function ($assignment) {
+            return $assignment->solarPlant->total_capacity_kw ?? 0;
+        });
+        
+        // Wenn keine Kapazität vorhanden ist, setze alle auf 0%
+        if ($totalCapacity == 0) {
+            $assignments->each(function ($assignment) {
+                $assignment->update(['percentage' => 0]);
+            });
+            return;
+        }
+        
+        // Berechne und aktualisiere die Prozentsätze
+        $assignments->each(function ($assignment) use ($totalCapacity) {
+            $plantCapacity = $assignment->solarPlant->total_capacity_kw ?? 0;
+            $percentage = ($plantCapacity / $totalCapacity) * 100;
+            
+            // Runde auf 2 Dezimalstellen
+            $percentage = round($percentage, 2);
+            
+            // Deaktiviere temporär die Validierung für diese Aktualisierung
+            $assignment->withoutEvents(function () use ($assignment, $percentage) {
+                $assignment->update(['percentage' => $percentage]);
+            });
+        });
+        
+        // Stelle sicher, dass die Summe genau 100% ergibt (Rundungsfehler korrigieren)
+        static::adjustPercentagesToTotal($contractId);
+    }
+    
+    /**
+     * Korrigiert Rundungsfehler, damit die Summe genau 100% ergibt
+     */
+    private static function adjustPercentagesToTotal(string $contractId): void
+    {
+        $assignments = static::where('supplier_contract_id', $contractId)
+            ->where('is_active', true)
+            ->orderBy('percentage', 'desc')
+            ->get();
+        
+        $currentTotal = $assignments->sum('percentage');
+        
+        if ($currentTotal == 100) {
+            return;
+        }
+        
+        // Berechne die Differenz
+        $difference = 100 - $currentTotal;
+        
+        // Wende die Differenz auf den größten Wert an
+        if ($assignments->isNotEmpty()) {
+            $largestAssignment = $assignments->first();
+            $newPercentage = $largestAssignment->percentage + $difference;
+            
+            // Stelle sicher, dass der Wert nicht negativ wird
+            if ($newPercentage >= 0) {
+                $largestAssignment->withoutEvents(function () use ($largestAssignment, $newPercentage) {
+                    $largestAssignment->update(['percentage' => round($newPercentage, 2)]);
+                });
+            }
+        }
+    }
+
+    /**
      * Boot-Methode für Model-Events
      */
     protected static function boot()
@@ -114,14 +190,14 @@ class SupplierContractSolarPlant extends Model
         static::saving(function ($model) {
             // Prüfe ob die Gesamtsumme 100% nicht überschreitet
             if (!static::validateTotalPercentage(
-                $model->supplier_contract_id, 
-                $model->percentage, 
+                $model->supplier_contract_id,
+                $model->percentage,
                 $model->exists ? $model->id : null
             )) {
                 throw new \InvalidArgumentException(
                     'Die Gesamtsumme aller Prozentsätze darf 100% nicht überschreiten. ' .
                     'Verfügbar: ' . static::getAvailablePercentage(
-                        $model->supplier_contract_id, 
+                        $model->supplier_contract_id,
                         $model->exists ? $model->id : null
                     ) . '%'
                 );

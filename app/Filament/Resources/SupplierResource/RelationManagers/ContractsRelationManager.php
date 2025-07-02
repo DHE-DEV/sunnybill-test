@@ -158,11 +158,29 @@ class ContractsRelationManager extends RelationManager
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('Vertrag anlegen')
+                    ->icon('heroicon-o-plus-circle')
+                    ->color('primary')
+                    ->size('md')
+                    ->button()
+                    ->modalHeading('Neuen Vertrag anlegen')
+                    ->modalDescription('Erstellen Sie einen neuen Vertrag für diesen Lieferanten.')
+                    ->modalSubmitActionLabel('Vertrag erstellen')
+                    ->modalCancelActionLabel('Abbrechen')
+                    ->successNotificationTitle('Vertrag erfolgreich erstellt')
+                    ->mutateFormDataUsing(function (array $data): array {
+                        // Automatisch die Supplier-ID setzen
+                        $data['supplier_id'] = $this->ownerRecord->getKey();
+                        return $data;
+                    }),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\ViewAction::make()
+                        ->url(fn ($record): string =>
+                            route('filament.admin.resources.supplier-contracts.view', ['record' => $record->id])
+                        ),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),

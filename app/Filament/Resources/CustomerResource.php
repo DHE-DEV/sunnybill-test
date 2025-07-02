@@ -5,7 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Models\Customer;
+use App\Models\Document;
 use App\Services\LexofficeService;
+use App\Services\DocumentUploadConfig;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +17,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class CustomerResource extends Resource
@@ -506,6 +509,8 @@ class CustomerResource extends Resource
                             ->copyable(),
                     ])->columns(2),
 
+
+
                 \Filament\Infolists\Components\Section::make('Lexoffice-Synchronisation')
                     ->schema([
                         \Filament\Infolists\Components\TextEntry::make('lexoffice_id')
@@ -543,9 +548,7 @@ class CustomerResource extends Resource
                             ->label('Zuletzt geändert')
                             ->dateTime('d.m.Y H:i'),
                     ])->columns(2),
-
-                // Dokumente werden über das Widget angezeigt - siehe ViewCustomer Page
-            ]);
+           ]);
     }
 
     public static function table(Table $table): Table
@@ -827,13 +830,11 @@ class CustomerResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\AddressesRelationManager::class,
-            RelationManagers\PhoneNumbersRelationManager::class,
+            RelationManagers\DocumentsRelationManager::class,
             RelationManagers\EmployeesRelationManager::class,
             RelationManagers\FavoriteNotesRelationManager::class,
             RelationManagers\StandardNotesRelationManager::class,
             RelationManagers\InvoicesRelationManager::class,
-            RelationManagers\SolarParticipationsRelationManager::class,
             RelationManagers\MonthlyCreditsRelationManager::class,
         ];
     }

@@ -132,7 +132,7 @@ class CustomerDocumentsTableWidget extends BaseWidget
                         ->label('Vorschau')
                         ->icon('heroicon-o-eye')
                         ->color('primary')
-                        ->url(fn (Document $record): string => $record->preview_url)
+                        ->url(fn (Document $record): ?string => $record->preview_url)
                         ->openUrlInNewTab()
                         ->visible(function (Document $record): bool {
                             $extension = strtolower(pathinfo($record->path, PATHINFO_EXTENSION));
@@ -143,7 +143,7 @@ class CustomerDocumentsTableWidget extends BaseWidget
                         ->label('Download')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->color('success')
-                        ->url(fn (Document $record): string => $record->download_url)
+                        ->url(fn (Document $record): ?string => $record->download_url)
                         ->openUrlInNewTab(),
                         
                     Tables\Actions\Action::make('edit')
@@ -234,7 +234,6 @@ class CustomerDocumentsTableWidget extends BaseWidget
                             ->maxLength(1000),
                     ])
                     ->action(function (array $data): void {
-                        $uploadConfig = new DocumentUploadConfig();
                         $customer = \App\Models\Customer::find($this->customerId);
                         
                         if (!$customer || !isset($data['file'])) {
@@ -245,12 +244,14 @@ class CustomerDocumentsTableWidget extends BaseWidget
                         $tempPath = $data['file'];
                         $originalName = basename($tempPath);
                         
-                        // Finalen Pfad und Namen generieren
-                        $finalPath = $uploadConfig->generatePath('customer', $customer);
-                        $finalName = $data['name'] ?: $uploadConfig->generateFilename($originalName, $customer);
+                        // Finalen Namen generieren
+                        $finalName = $data['name'] ?: $originalName;
+                        
+                        // Einfachen Pfad für Customer-Dokumente generieren
+                        $customerPath = 'customers/' . $customer->id;
+                        $fullFinalPath = $customerPath . '/' . $finalName;
                         
                         // Datei an finalen Ort verschieben
-                        $fullFinalPath = $finalPath . '/' . $finalName;
                         Storage::disk('documents')->move($tempPath, $fullFinalPath);
                         
                         // Dateigröße ermitteln

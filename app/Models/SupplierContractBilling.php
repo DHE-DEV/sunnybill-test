@@ -127,6 +127,49 @@ class SupplierContractBilling extends Model
                 $billing->billing_number = static::generateBillingNumber();
             }
         });
+
+        static::created(function ($billing) {
+            // Automatisch Allocations basierend auf den Kostenträgern des Vertrags erstellen
+            $billing->createAllocationsFromContract();
+        });
+    }
+
+    /**
+     * Erstellt automatisch Allocations basierend auf den Kostenträgern des Vertrags
+     */
+    public function createAllocationsFromContract(): void
+    {
+        if (!$this->supplierContract) {
+            return;
+        }
+
+        // Hole alle aktiven Solaranlagen-Zuordnungen des Vertrags
+        $solarPlantAssignments = $this->supplierContract->activeSolarPlantAssignments;
+
+        if ($solarPlantAssignments->isEmpty()) {
+            return;
+        }
+
+        foreach ($solarPlantAssignments as $assignment) {
+            $this->allocations()->create([
+                'solar_plant_id' => $assignment->solar_plant_id,
+                'percentage' => $assignment->percentage,
+                'amount' => ($this->total_amount * $assignment->percentage) / 100,
+                'notes' => 'Automatisch erstellt basierend auf Vertragszuordnung',
+                'is_active' => true,
+            ]);
+        }
+    }
+
+    /**
+     * Berechnet alle Allocations neu basierend auf den aktuellen Prozentsätzen
+     */
+    public function recalculateAllocations(): void
+    {
+        foreach ($this->allocations as $allocation) {
+            $allocation->calculateAmount();
+            $allocation->save();
+        }
     }
 
     public static function generateBillingNumber(): string

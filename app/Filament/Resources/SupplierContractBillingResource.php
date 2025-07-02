@@ -158,6 +158,7 @@ class SupplierContractBillingResource extends Resource
                     ])
                     ->columns(2),
 
+                /*    
                 Forms\Components\Section::make('Kostenträger-Aufteilungen')
                     ->schema([
                         Forms\Components\Repeater::make('allocations')
@@ -352,6 +353,7 @@ class SupplierContractBillingResource extends Resource
                     ])
                     ->collapsible()
                     ->collapsed(fn ($record) => $record === null), // Collapsed when creating new record
+                    */
             ]);
     }
 
@@ -364,7 +366,8 @@ class SupplierContractBillingResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->weight('medium'),
+                    ->weight('medium')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('supplier_invoice_number')
                     ->label('Anbieter-Rechnung')
@@ -379,7 +382,7 @@ class SupplierContractBillingResource extends Resource
                     ->formatStateUsing(fn (string $state): string => SupplierContractBilling::getBillingTypeOptions()[$state] ?? $state)
                     ->colors([
                         'primary' => 'invoice',
-                        'warning' => 'credit_note',
+                        'success' => 'credit_note',
                     ]),
 
                 Tables\Columns\TextColumn::make('billing_period')
@@ -400,29 +403,43 @@ class SupplierContractBillingResource extends Resource
                     )
                     ->color('primary'),
 
-                Tables\Columns\TextColumn::make('supplierContract.supplier.name')
+                Tables\Columns\TextColumn::make('supplierContract.supplier.display_name')
                     ->label('Lieferant')
                     ->searchable()
                     ->sortable()
-                    ->limit(30),
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->placeholder('Kein Lieferant')
+                    ->getStateUsing(function (SupplierContractBilling $record): ?string {
+                        $supplier = $record->supplierContract?->supplier;
+                        if (!$supplier) {
+                            return 'Kein Lieferant';
+                        }
+                        
+                        // Verwende display_name Attribut oder fallback zu company_name/name
+                        return $supplier->display_name ?? $supplier->company_name ?? $supplier->name ?? 'Unbekannt';
+                    }),
 
                 Tables\Columns\TextColumn::make('title')
                     ->label('Titel')
                     ->searchable()
                     ->sortable()
                     ->limit(30)
-                    ->weight('medium'),
+                    ->weight('medium')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('billing_date')
                     ->label('Abrechnungsdatum')
                     ->date('d.m.Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('due_date')
                     ->label('Fälligkeitsdatum')
                     ->date('d.m.Y')
                     ->sortable()
-                    ->color(fn ($state) => $state && $state->isPast() ? 'danger' : 'gray'),
+                    ->color(fn ($state) => $state && $state->isPast() ? 'danger' : 'gray')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Gesamtbetrag')
@@ -437,16 +454,18 @@ class SupplierContractBillingResource extends Resource
                     ->colors([
                         'secondary' => 'draft',
                         'warning' => 'pending',
-                        'success' => 'approved',
-                        'primary' => 'paid',
+                        'primary' => 'approved',
+                        'success' => 'paid',
                         'danger' => 'cancelled',
-                    ]),
+                    ])
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('allocations_count')
                     ->label('Aufteilungen')
                     ->counts('allocations')
                     ->badge()
-                    ->color('info'),
+                    ->color('info')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('allocated_percentage')
                     ->label('Verteilt (%)')
@@ -461,7 +480,8 @@ class SupplierContractBillingResource extends Resource
                         if ($percentage > 0) return 'warning';
                         return 'gray';
                     })
-                    ->alignEnd(),
+                    ->alignEnd()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Erstellt am')
@@ -526,18 +546,63 @@ class SupplierContractBillingResource extends Resource
                     ->query(fn (Builder $query): Builder => $query->where('due_date', '<', now())->where('status', '!=', 'paid'))
                     ->toggle(),
 
+                Tables\Filters\SelectFilter::make('created_period')
+                    ->label('Erfasst')
+                    ->options([
+                        'today' => 'Heute',
+                        'this_week' => 'Diese Woche',
+                        'this_month' => 'Dieser Monat',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (!isset($data['value']) || empty($data['value'])) {
+                            return $query;
+                        }
+
+                        return match ($data['value']) {
+                            'today' => $query->whereDate('created_at', now()->toDateString()),
+                            'this_week' => $query->whereBetween('created_at', [
+                                now()->startOfWeek()->toDateTimeString(),
+                                now()->endOfWeek()->toDateTimeString()
+                            ]),
+                            'this_month' => $query->whereBetween('created_at', [
+                                now()->startOfMonth()->toDateTimeString(),
+                                now()->endOfMonth()->toDateTimeString()
+                            ]),
+                            default => $query,
+                        };
+                    }),
+
+                Tables\Filters\SelectFilter::make('solar_plant')
+                    ->label('Kostenträger (Solaranlage)')
+                    ->relationship('allocations.solarPlant', 'name')
+                    ->getOptionLabelFromRecordUsing(function (\App\Models\SolarPlant $record): string {
+                        $plantNumber = $record->plant_number ?? 'Keine Nr.';
+                        $plantName = $record->name ?? 'Unbenannt';
+                        return "{$plantNumber} - {$plantName}";
+                    })
+                    ->searchable(['plant_number', 'name'])
+                    ->preload()
+                    ->multiple(),
+
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('Anzeigen')
-                    ->url(fn (SupplierContractBilling $record): string =>
-                        static::getUrl('view', ['record' => $record])
-                    ),
-                Tables\Actions\EditAction::make()
-                    ->label('Bearbeiten'),
-                Tables\Actions\DeleteAction::make()
-                    ->label('Löschen'),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->label('Anzeigen')
+                        ->url(fn (SupplierContractBilling $record): string =>
+                            static::getUrl('view', ['record' => $record])
+                        ),
+                    Tables\Actions\EditAction::make()
+                        ->label('Bearbeiten'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Löschen'),
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -576,7 +641,8 @@ class SupplierContractBillingResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['supplierContract.supplier', 'allocations']);
     }
 
     public static function getNavigationBadge(): ?string

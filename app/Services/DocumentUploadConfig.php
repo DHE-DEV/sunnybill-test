@@ -99,7 +99,7 @@ class DocumentUploadConfig
             'defaultSort' => ['created_at', 'desc'],
 
             // Aktionen
-            'enableCreate' => true,
+            'enableCreate' => true, // Standardmäßig aktiviert für "Dokument hinzufügen" Button
             'showPreview' => true,
             'showDownload' => true,
             'showView' => true,
@@ -348,17 +348,48 @@ class DocumentUploadConfig
      */
     public function getStorageDirectory(): string
     {
+        // Wenn ein Model gesetzt ist, verwende es direkt für die Pfadgenerierung
+        if ($this->config['model']) {
+            // Bestimme den pathType basierend auf dem Model-Typ
+            $modelClass = get_class($this->config['model']);
+            $pathType = $this->getPathTypeForModel($modelClass);
+            
+            return DocumentStorageService::getUploadDirectoryForModel(
+                $pathType,
+                $this->config['model'],
+                $this->config['additionalData']
+            );
+        }
+        
         // Wenn pathType gesetzt ist, verwende dynamische Pfad-Generierung
         if ($this->config['pathType']) {
             return DocumentStorageService::getUploadDirectoryForModel(
                 $this->config['pathType'],
-                $this->config['model'],
+                null,
                 $this->config['additionalData']
             );
         }
 
         // Fallback auf statisches directory
         return $this->config['directory'];
+    }
+    
+    /**
+     * Bestimmt den pathType basierend auf der Model-Klasse
+     */
+    protected function getPathTypeForModel(string $modelClass): string
+    {
+        // Diese Zuordnung sollte mit den DocumentPathSettings übereinstimmen
+        $mapping = [
+            'App\Models\Customer' => 'customers',
+            'App\Models\Supplier' => 'suppliers',
+            'App\Models\SupplierContract' => 'supplier_contracts',
+            'App\Models\SupplierContractBilling' => 'supplier_contract_billings',
+            'App\Models\SolarPlant' => 'solar_plants',
+            'App\Models\Task' => 'tasks',
+        ];
+        
+        return $mapping[$modelClass] ?? 'general';
     }
 
     /**
@@ -403,10 +434,22 @@ class DocumentUploadConfig
      */
     public function previewPath(): array
     {
+        // Wenn ein Model gesetzt ist, verwende es direkt für die Pfadvorschau
+        if ($this->config['model']) {
+            $modelClass = get_class($this->config['model']);
+            $pathType = $this->getPathTypeForModel($modelClass);
+            
+            return DocumentStorageService::previewPath(
+                $pathType,
+                $this->config['model'],
+                $this->config['additionalData']
+            );
+        }
+        
         if ($this->config['pathType']) {
             return DocumentStorageService::previewPath(
                 $this->config['pathType'],
-                $this->config['model'],
+                null,
                 $this->config['additionalData']
             );
         }
@@ -493,8 +536,8 @@ class DocumentUploadConfig
             'model' => $customer,
             'title' => 'Kunden-Dokumente',
             'sectionTitle' => 'Kunden-Dokumente',
-            'preserveFilenames' => false,
-            'timestampFilenames' => true,
+            'preserveFilenames' => true,
+            'timestampFilenames' => false,
             'categories' => [
                 'contract' => 'Vertrag',
                 'invoice' => 'Rechnung',

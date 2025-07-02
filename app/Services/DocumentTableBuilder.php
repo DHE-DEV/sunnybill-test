@@ -6,6 +6,7 @@ use App\Models\Document;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Notifications\Notification;
 
 /**
  * Service zum dynamischen Erstellen von Dokumenten-Tabellen
@@ -168,13 +169,37 @@ class DocumentTableBuilder
         $actions = [];
 
         if ($this->config('enableCreate', true)) {
-            $actions[] = Tables\Actions\CreateAction::make()
+            // Verwende eine benutzerdefinierte Action statt CreateAction
+            // Diese funktioniert auch im View-Modus
+            $actions[] = Tables\Actions\Action::make('create_document')
                 ->label($this->config('createButtonLabel', 'Dokument hinzufügen'))
                 ->icon($this->config('createButtonIcon', 'heroicon-o-plus'))
+                ->button()
+                ->color('primary')
                 ->modalWidth($this->config('modalWidth', '4xl'))
-                ->mutateFormDataUsing(function (array $data): array {
-                    return $this->processUploadData($data);
-                });
+                ->modalHeading('Dokument hinzufügen')
+                ->form(function () {
+                    // Verwende das Formular aus DocumentFormBuilder
+                    return DocumentFormBuilder::make($this->config)->getFormSchema();
+                })
+                ->action(function (array $data, $livewire): void {
+                    // Verarbeite die Upload-Daten
+                    $data = $this->processUploadData($data);
+                    
+                    // Erstelle das Dokument über die Relation
+                    $relationship = $livewire->getRelationship();
+                    $record = $relationship->create($data);
+                    
+                    // Benachrichtigung
+                    \Filament\Notifications\Notification::make()
+                        ->title('Dokument erfolgreich hochgeladen')
+                        ->success()
+                        ->send();
+                })
+                ->visible(fn ($livewire): bool =>
+                    // Zeige die Action immer an, auch im View-Modus
+                    true
+                );
         }
 
         // Custom Header Actions
