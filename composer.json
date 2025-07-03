@@ -5,15 +5,8 @@
     "description": "The skeleton application for the Laravel framework.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://filament-filter-sets.composer.sh"
-        }
-    ],
     "require": {
         "php": "^8.2",
-        "archilex/filament-filter-sets": "^4.0",
         "barryvdh/laravel-dompdf": "^3.0",
         "filament/filament": "^3.2",
         "guzzlehttp/guzzle": "^7.8",
