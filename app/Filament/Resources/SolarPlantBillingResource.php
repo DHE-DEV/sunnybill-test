@@ -72,36 +72,39 @@ class SolarPlantBillingResource extends Resource
                         Forms\Components\Select::make('customer_id')
                             ->label('Kunde')
                             ->options(Customer::all()->mapWithKeys(function ($customer) {
-                                $displayName = $customer->customer_type === 'business' && $customer->company_name 
-                                    ? $customer->company_name 
+                                $displayName = $customer->customer_type === 'business' && $customer->company_name
+                                    ? $customer->company_name
                                     : $customer->name;
                                 return [$customer->id => $displayName];
                             }))
                             ->searchable()
                             ->required(),
 
-                        Forms\Components\Select::make('billing_year')
-                            ->label('Abrechnungsjahr')
-                            ->options(function () {
-                                $currentYear = now()->year;
-                                $years = [];
-                                for ($i = $currentYear - 2; $i <= $currentYear + 1; $i++) {
-                                    $years[$i] = $i;
-                                }
-                                return $years;
-                            })
-                            ->default(now()->year)
-                            ->required(),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('billing_year')
+                                    ->label('Abrechnungsjahr')
+                                    ->options(function () {
+                                        $currentYear = now()->year;
+                                        $years = [];
+                                        for ($i = $currentYear - 2; $i <= $currentYear + 1; $i++) {
+                                            $years[$i] = $i;
+                                        }
+                                        return $years;
+                                    })
+                                    ->default(now()->year)
+                                    ->required(),
 
-                        Forms\Components\Select::make('billing_month')
-                            ->label('Abrechnungsmonat')
-                            ->options([
-                                1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
-                                5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
-                                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
-                            ])
-                            ->default(now()->month)
-                            ->required(),
+                                Forms\Components\Select::make('billing_month')
+                                    ->label('Abrechnungsmonat')
+                                    ->options([
+                                        1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
+                                        5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
+                                        9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
+                                    ])
+                                    ->default(now()->month)
+                                    ->required(),
+                            ]),
 
                         Forms\Components\TextInput::make('participation_percentage')
                             ->label('Beteiligungsprozentsatz')
@@ -111,7 +114,114 @@ class SolarPlantBillingResource extends Resource
                             ->minValue(0)
                             ->maxValue(100)
                             ->required(),
+
+                        Forms\Components\Select::make('status')
+                            ->label('Status')
+                            ->options(SolarPlantBilling::getStatusOptions())
+                            ->default('draft')
+                            ->required(),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Kostenaufschlüsselung')
+                    ->schema([
+                        Forms\Components\Placeholder::make('cost_breakdown_table')
+                            ->label('Kostenpositionen')
+                            ->content(function ($get, $record) {
+                                if (!$record || !$record->cost_breakdown || empty($record->cost_breakdown)) {
+                                    return 'Keine Kostenpositionen verfügbar';
+                                }
+                                
+                                $breakdown = $record->cost_breakdown;
+                                
+                                // HTML-Tabelle für Kostenpositionen
+                                $html = '<div style="overflow-x: auto;">';
+                                $html .= '<table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">';
+                                $html .= '<thead>';
+                                $html .= '<tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">';
+                                $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151;">Bezeichnung</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151;">Anteil</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151;">Gesamtbetrag</th>';
+                                $html .= '</tr>';
+                                $html .= '</thead>';
+                                $html .= '<tbody>';
+                                
+                                foreach ($breakdown as $item) {
+                                    $html .= '<tr style="border-bottom: 1px solid #e2e8f0;">';
+                                    $html .= '<td style="padding: 0.75rem; color: #374151;">';
+                                    $html .= '<div style="font-weight: 500;">' . htmlspecialchars($item['contract_title']) . '</div>';
+                                    $html .= '<div style="font-size: 0.875rem; color: #6b7280;">(' . htmlspecialchars($item['supplier_name']) . ')</div>';
+                                    $html .= '</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                    $html .= '</tr>';
+                                }
+                                
+                                $html .= '</tbody>';
+                                $html .= '</table>';
+                                
+                                // Gesamtbetrag für Kostenpositionen
+                                $totalCosts = array_sum(array_column($breakdown, 'customer_share'));
+                                $html .= '<div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; display: flex; justify-content: space-between; align-items: center;">';
+                                $html .= '<div style="font-weight: 600; color: #374151;">Gesamtkosten:</div>';
+                                $html .= '<div style="font-weight: 600; color: #374151;">' . number_format($totalCosts, 2, ',', '.') . ' €</div>';
+                                $html .= '</div>';
+                                $html .= '</div>';
+                                
+                                return new \Illuminate\Support\HtmlString($html);
+                            })
+                            ->visible(fn ($record) => $record && $record->cost_breakdown && !empty($record->cost_breakdown)),
+
+                        Forms\Components\Placeholder::make('credit_breakdown_table')
+                            ->label('Gutschriftenpositionen')
+                            ->content(function ($get, $record) {
+                                if (!$record || !$record->credit_breakdown || empty($record->credit_breakdown)) {
+                                    return 'Keine Gutschriftenpositionen verfügbar';
+                                }
+                                
+                                $breakdown = $record->credit_breakdown;
+                                
+                                // HTML-Tabelle für Gutschriftenpositionen
+                                $html = '<div style="overflow-x: auto;">';
+                                $html .= '<table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">';
+                                $html .= '<thead>';
+                                $html .= '<tr style="background-color: #f0fdf4; border-bottom: 2px solid #bbf7d0;">';
+                                $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #166534;">Bezeichnung</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534;">Anteil</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534;">Gesamtbetrag</th>';
+                                $html .= '</tr>';
+                                $html .= '</thead>';
+                                $html .= '<tbody>';
+                                
+                                foreach ($breakdown as $item) {
+                                    $html .= '<tr style="border-bottom: 1px solid #bbf7d0;">';
+                                    $html .= '<td style="padding: 0.75rem; color: #166534;">';
+                                    $html .= '<div style="font-weight: 500;">' . htmlspecialchars($item['contract_title']) . '</div>';
+                                    $html .= '<div style="font-size: 0.875rem; color: #16a34a;">(' . htmlspecialchars($item['supplier_name']) . ')</div>';
+                                    $html .= '</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #166534;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                    $html .= '</tr>';
+                                }
+                                
+                                $html .= '</tbody>';
+                                $html .= '</table>';
+                                
+                                // Gesamtbetrag für Gutschriftenpositionen
+                                $totalCredits = array_sum(array_column($breakdown, 'customer_share'));
+                                $html .= '<div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.375rem; display: flex; justify-content: space-between; align-items: center;">';
+                                $html .= '<div style="font-weight: 600; color: #166534;">Gesamtgutschriften:</div>';
+                                $html .= '<div style="font-weight: 600; color: #166534;">' . number_format($totalCredits, 2, ',', '.') . ' €</div>';
+                                $html .= '</div>';
+                                $html .= '</div>';
+                                
+                                return new \Illuminate\Support\HtmlString($html);
+                            })
+                            ->visible(fn ($record) => $record && $record->credit_breakdown && !empty($record->credit_breakdown)),
+                    ])
+                    ->visible(fn ($record) => $record && (
+                        ($record->cost_breakdown && !empty($record->cost_breakdown)) ||
+                        ($record->credit_breakdown && !empty($record->credit_breakdown))
+                    )),
 
                 Forms\Components\Section::make('Beträge')
                     ->schema([
@@ -130,19 +240,13 @@ class SolarPlantBillingResource extends Resource
                             ->default(0),
 
                         Forms\Components\TextInput::make('net_amount')
-                            ->label('Nettobetrag')
+                            ->label('Gesamtbetrag')
                             ->prefix('€')
                             ->numeric()
                             ->step(0.01)
                             ->default(0)
                             ->disabled()
                             ->dehydrated(false),
-
-                        Forms\Components\Select::make('status')
-                            ->label('Status')
-                            ->options(SolarPlantBilling::getStatusOptions())
-                            ->default('draft')
-                            ->required(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Zusätzliche Informationen')
@@ -198,9 +302,50 @@ class SolarPlantBillingResource extends Resource
                     ->alignRight(),
 
                 Tables\Columns\TextColumn::make('formatted_net_amount')
-                    ->label('Nettobetrag')
+                    ->label('Gesamtbetrag')
                     ->alignRight()
                     ->weight('bold'),
+
+                Tables\Columns\TextColumn::make('breakdown_summary')
+                    ->label('Aufschlüsselung')
+                    ->getStateUsing(function (SolarPlantBilling $record): string {
+                        $summary = '';
+                        
+                        if ($record->cost_breakdown && count($record->cost_breakdown) > 0) {
+                            $costCount = count($record->cost_breakdown);
+                            $summary .= "{$costCount} Kostenposition" . ($costCount > 1 ? 'en' : '');
+                        }
+                        
+                        if ($record->credit_breakdown && count($record->credit_breakdown) > 0) {
+                            $creditCount = count($record->credit_breakdown);
+                            if ($summary) $summary .= ', ';
+                            $summary .= "{$creditCount} Gutschrift" . ($creditCount > 1 ? 'en' : '');
+                        }
+                        
+                        return $summary ?: 'Keine Details';
+                    })
+                    ->limit(30)
+                    ->tooltip(function (SolarPlantBilling $record): ?string {
+                        $tooltip = '';
+                        
+                        if ($record->cost_breakdown) {
+                            $tooltip .= "Kosten:\n";
+                            foreach ($record->cost_breakdown as $item) {
+                                $tooltip .= "• {$item['contract_title']}: " . number_format($item['customer_share'], 2, ',', '.') . " €\n";
+                            }
+                        }
+                        
+                        if ($record->credit_breakdown) {
+                            if ($tooltip) $tooltip .= "\n";
+                            $tooltip .= "Gutschriften:\n";
+                            foreach ($record->credit_breakdown as $item) {
+                                $tooltip .= "• {$item['contract_title']}: " . number_format($item['customer_share'], 2, ',', '.') . " €\n";
+                            }
+                        }
+                        
+                        return $tooltip ?: null;
+                    })
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')

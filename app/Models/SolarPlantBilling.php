@@ -172,19 +172,26 @@ class SolarPlantBilling extends Model
         $createdBillings = [];
 
         foreach ($participations as $participation) {
-            // Prüfe ob bereits eine Abrechnung für diesen Kunden und Monat existiert
-            $existingBilling = self::where('solar_plant_id', $solarPlantId)
+            // Prüfe ob bereits eine Abrechnung für diesen Kunden und Monat existiert (auch gelöschte)
+            $existingBilling = self::withTrashed()
+                ->where('solar_plant_id', $solarPlantId)
                 ->where('customer_id', $participation->customer_id)
                 ->where('billing_year', $year)
                 ->where('billing_month', $month)
                 ->first();
 
             if ($existingBilling) {
-                continue; // Überspringe wenn bereits vorhanden
+                if ($existingBilling->trashed()) {
+                    // Wenn die Abrechnung gelöscht wurde, entferne sie permanent und erstelle eine neue
+                    $existingBilling->forceDelete();
+                } else {
+                    // Abrechnung existiert bereits und ist nicht gelöscht - überspringe
+                    continue;
+                }
             }
 
             // Berechne Kosten und Gutschriften für diesen Kunden
-            $costData = self::calculateCostsForCustomer($solarPlantId, $participation->customer_id, $participation->percentage, $year, $month);
+            $costData = self::calculateCostsForCustomer($solarPlantId, $participation->customer_id, $year, $month, $participation->percentage);
 
             // Erstelle die Abrechnung
             $billing = self::create([
@@ -209,12 +216,36 @@ class SolarPlantBilling extends Model
     }
 
     /**
+     * Bereinigt gelöschte Abrechnungen für eine Solaranlage und einen Monat
+     * Diese Methode entfernt permanent gelöschte Abrechnungen, um Unique Constraint Probleme zu vermeiden
+     */
+    public static function cleanupDeletedBillingsForMonth(string $solarPlantId, int $year, int $month): int
+    {
+        $deletedCount = self::onlyTrashed()
+            ->where('solar_plant_id', $solarPlantId)
+            ->where('billing_year', $year)
+            ->where('billing_month', $month)
+            ->forceDelete();
+            
+        return $deletedCount;
+    }
+
+    /**
      * Berechnet Kosten und Gutschriften für einen Kunden basierend auf seinem Beteiligungsprozentsatz
      */
-    private static function calculateCostsForCustomer(string $solarPlantId, string $customerId, float $percentage, int $year, int $month): array
+    public static function calculateCostsForCustomer(string $solarPlantId, string $customerId, int $year, int $month, float $percentage = null): array
     {
         $solarPlant = SolarPlant::find($solarPlantId);
         $activeContracts = $solarPlant->activeSupplierContracts()->get();
+
+        // Wenn kein Prozentsatz übergeben wurde, hole ihn aus der Beteiligung
+        if ($percentage === null) {
+            $participation = $solarPlant->participations()->where('customer_id', $customerId)->first();
+            if (!$participation) {
+                throw new \Exception('Keine Beteiligung für diesen Kunden gefunden');
+            }
+            $percentage = $participation->percentage;
+        }
 
         $totalCosts = 0;
         $totalCredits = 0;
@@ -231,34 +262,53 @@ class SolarPlantBilling extends Model
                 continue;
             }
 
-            // Berechne den Anteil basierend auf dem Beteiligungsprozentsatz
-            $customerShare = ($percentage / 100);
-            
-            if ($billing->amount > 0) {
-                // Kosten
-                $customerCost = $billing->amount * $customerShare;
-                $totalCosts += $customerCost;
+            // Hole den Solaranlagen-Anteil aus der Pivot-Tabelle
+            $solarPlantPivot = $contract->solarPlants()
+                ->where('solar_plant_id', $solarPlantId)
+                ->first();
                 
-                $costBreakdown[] = [
-                    'contract_id' => $contract->id,
-                    'contract_title' => $contract->title,
-                    'supplier_name' => $contract->supplier->company_name,
-                    'total_amount' => $billing->amount,
-                    'customer_share' => $customerCost,
-                    'percentage' => $percentage,
-                ];
-            } else {
-                // Gutschriften (negative Beträge)
-                $customerCredit = abs($billing->amount) * $customerShare;
+            if (!$solarPlantPivot) {
+                // Wenn diese Solaranlage nicht als Kostenträger für diesen Vertrag hinterlegt ist, überspringe
+                continue;
+            }
+            
+            $solarPlantPercentage = $solarPlantPivot->pivot->percentage ?? 100;
+
+            // Berechne den Anteil: Vertragsbetrag * Solaranlagen-Anteil * Kunden-Anteil
+            $solarPlantShare = ($solarPlantPercentage / 100);
+            $customerShare = ($percentage / 100);
+            $finalShare = $solarPlantShare * $customerShare;
+            
+            // Prüfe ob es sich um Kosten oder Gutschriften handelt basierend auf dem Vertragstitel
+            $isCredit = stripos($contract->title, 'gutschrift') !== false;
+            
+            if ($isCredit) {
+                // Gutschriften - positive Beträge werden als Gutschriften behandelt
+                $customerCredit = $billing->total_amount * $finalShare;
                 $totalCredits += $customerCredit;
                 
                 $creditBreakdown[] = [
                     'contract_id' => $contract->id,
                     'contract_title' => $contract->title,
-                    'supplier_name' => $contract->supplier->company_name,
-                    'total_amount' => abs($billing->amount),
+                    'supplier_name' => $contract->supplier->company_name ?? $contract->supplier->name ?? 'Unbekannt',
+                    'total_amount' => $billing->total_amount,
+                    'solar_plant_percentage' => $solarPlantPercentage,
+                    'customer_percentage' => $percentage,
                     'customer_share' => $customerCredit,
-                    'percentage' => $percentage,
+                ];
+            } else {
+                // Kosten - alle anderen Verträge
+                $customerCost = $billing->total_amount * $finalShare;
+                $totalCosts += $customerCost;
+                
+                $costBreakdown[] = [
+                    'contract_id' => $contract->id,
+                    'contract_title' => $contract->title,
+                    'supplier_name' => $contract->supplier->company_name ?? $contract->supplier->name ?? 'Unbekannt',
+                    'total_amount' => $billing->total_amount,
+                    'solar_plant_percentage' => $solarPlantPercentage,
+                    'customer_percentage' => $percentage,
+                    'customer_share' => $customerCost,
                 ];
             }
         }
@@ -266,6 +316,7 @@ class SolarPlantBilling extends Model
         return [
             'total_costs' => $totalCosts,
             'total_credits' => $totalCredits,
+            'net_amount' => $totalCosts - $totalCredits,
             'cost_breakdown' => $costBreakdown,
             'credit_breakdown' => $creditBreakdown,
         ];

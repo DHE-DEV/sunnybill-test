@@ -143,18 +143,18 @@ class SupplierContractBilling extends Model
             return;
         }
 
-        // Hole alle aktiven Solaranlagen-Zuordnungen des Vertrags
-        $solarPlantAssignments = $this->supplierContract->activeSolarPlantAssignments;
+        // Hole alle aktiven Solaranlagen-Zuordnungen des Vertrags über die Pivot-Tabelle
+        $activeSolarPlants = $this->supplierContract->activeSolarPlants()->get();
 
-        if ($solarPlantAssignments->isEmpty()) {
+        if ($activeSolarPlants->isEmpty()) {
             return;
         }
 
-        foreach ($solarPlantAssignments as $assignment) {
+        foreach ($activeSolarPlants as $solarPlant) {
             $this->allocations()->create([
-                'solar_plant_id' => $assignment->solar_plant_id,
-                'percentage' => $assignment->percentage,
-                'amount' => ($this->total_amount * $assignment->percentage) / 100,
+                'solar_plant_id' => $solarPlant->id,
+                'percentage' => $solarPlant->pivot->percentage,
+                'amount' => ($this->total_amount * $solarPlant->pivot->percentage) / 100,
                 'notes' => 'Automatisch erstellt basierend auf Vertragszuordnung',
                 'is_active' => true,
             ]);
