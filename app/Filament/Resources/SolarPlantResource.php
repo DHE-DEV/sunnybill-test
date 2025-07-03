@@ -390,7 +390,7 @@ class SolarPlantResource extends Resource
                     ->limit(30),
                 Tables\Columns\TextColumn::make('total_capacity_kw')
                     ->label('Leistung')
-                    ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . ' kWp')
+                    ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . ' kWp')
                     ->sortable()
                     ->badge()
                     ->color('success'),

@@ -283,6 +283,62 @@ class SupplierContractResource extends Resource
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('duplicate')
+                        ->label('Duplizieren')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalHeading('Vertrag duplizieren')
+                        ->modalDescription('Möchten Sie diesen Vertrag duplizieren? Es wird eine Kopie mit einer neuen Vertragsnummer erstellt.')
+                        ->modalSubmitActionLabel('Ja, duplizieren')
+                        ->action(function (SupplierContract $record) {
+                            // Erstelle eine Kopie des Vertrags mit expliziten Feldern
+                            $newContract = $record->replicate([
+                                'contract_notes_count',
+                                'documents_count',
+                                'solar_plant_assignments_count',
+                                'solarPlantAssignments_count',
+                                'contractNotes_count'
+                            ]);
+                            
+                            // Setze bestimmte Felder zurück
+                            $newContract->contract_number = 'COPY-' . $record->contract_number . '-' . now()->format('Ymd-His');
+                            $newContract->title = 'Kopie von ' . $record->title;
+                            $newContract->status = 'draft';
+                            $newContract->created_at = now();
+                            $newContract->updated_at = now();
+                            
+                            // Speichere den neuen Vertrag
+                            $newContract->save();
+                            
+                            // Kopiere nur die Solaranlagen-Zuordnungen
+                            foreach ($record->solarPlantAssignments as $assignment) {
+                                $newAssignment = $assignment->replicate();
+                                $newAssignment->supplier_contract_id = $newContract->id;
+                                $newAssignment->created_at = now();
+                                $newAssignment->updated_at = now();
+                                $newAssignment->save();
+                            }
+                            
+                            // Abrechnungen, Notizen und Dokumente werden NICHT kopiert
+                            
+                            // Benachrichtigung anzeigen
+                            \Filament\Notifications\Notification::make()
+                                ->title('Vertrag erfolgreich dupliziert')
+                                ->body("Der Vertrag wurde als '{$newContract->contract_number}' dupliziert.")
+                                ->success()
+                                ->actions([
+                                    \Filament\Notifications\Actions\Action::make('edit')
+                                        ->label('Bearbeiten')
+                                        ->url(static::getUrl('edit', ['record' => $newContract]))
+                                        ->button(),
+                                    \Filament\Notifications\Actions\Action::make('view')
+                                        ->label('Anzeigen')
+                                        ->url(static::getUrl('view', ['record' => $newContract]))
+                                        ->button(),
+                                ])
+                                ->send();
+                        }),
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
                 ])

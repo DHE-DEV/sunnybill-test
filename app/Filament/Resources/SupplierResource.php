@@ -131,11 +131,13 @@ class SupplierResource extends Resource
                 Tables\Columns\TextColumn::make('contact_person')
                     ->label('Ansprechpartner')
                     ->searchable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-Mail')
                     ->searchable()
                     ->toggleable()
+                    ->toggledHiddenByDefault()
                     ->url(fn ($record) => $record->email ? 'mailto:' . $record->email : null)
                     ->openUrlInNewTab(false),
                 Tables\Columns\TextColumn::make('city')
@@ -145,16 +147,20 @@ class SupplierResource extends Resource
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
                 Tables\Columns\IconColumn::make('lexoffice_synced')
                     ->label('Lexoffice')
                     ->boolean()
                     ->getStateUsing(fn ($record) => $record->isSyncedWithLexoffice())
-                    ->toggleable(),
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
                 Tables\Columns\TextColumn::make('employees_count')
                     ->label('Mitarbeiter')
                     ->counts('employees')
-                    ->toggleable(),
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Erstellt')
                     ->dateTime()

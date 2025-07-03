@@ -78,6 +78,12 @@ class Customer extends Model
         'payment_days' => 'integer',
     ];
 
+    protected $attributes = [
+        'country_code' => 'DE',
+        'country' => 'Deutschland',
+        'is_active' => true,
+    ];
+
     /**
      * Beziehung zu Rechnungen
      */

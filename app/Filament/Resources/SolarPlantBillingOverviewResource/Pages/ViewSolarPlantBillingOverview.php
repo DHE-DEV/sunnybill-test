@@ -48,7 +48,7 @@ class ViewSolarPlantBillingOverview extends ViewRecord
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Abrechnungsübersicht der letzten 12 Monate')
+                Infolists\Components\Section::make('Abrechnungsübersicht der letzten 24 Monate')
                     ->headerActions([
                         \Filament\Infolists\Components\Actions\Action::make('refresh')
                             ->label('Aktualisieren')
@@ -75,7 +75,7 @@ class ViewSolarPlantBillingOverview extends ViewRecord
                                 $html .= '</thead>';
                                 $html .= '<tbody>';
                                 
-                                for ($i = 1; $i <= 12; $i++) {
+                                for ($i = 1; $i <= 24; $i++) {
                                     $date = now()->subMonths($i);
                                     $month = $date->format('Y-m');
                                     $status = SolarPlantBillingOverviewResource::getBillingStatusForMonth($record, $month);

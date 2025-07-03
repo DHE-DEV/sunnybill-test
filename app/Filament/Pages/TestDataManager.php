@@ -12,6 +12,7 @@ use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\SupplierType;
 use App\Models\SupplierContract;
+use App\Models\SupplierContractSolarPlant;
 use App\Models\SupplierContractBilling;
 use App\Models\Article;
 use App\Models\TaxRate;
@@ -242,20 +243,20 @@ class TestDataManager extends Page
         
         return [
             Article::create([
-                'article_number' => 'STROM-001',
                 'name' => 'Stromlieferung',
                 'description' => 'Stromlieferung aus Solaranlage',
-                'unit_price' => 0.25,
-                'unit' => 'kWh',
+                'price' => 0.25,
+                'tax_rate' => $taxRate->rate,
                 'tax_rate_id' => $taxRate->id,
+                'unit' => 'kWh',
             ]),
             Article::create([
-                'article_number' => 'GRUND-001',
                 'name' => 'Grundgebühr',
                 'description' => 'Monatliche Grundgebühr',
-                'unit_price' => 15.00,
-                'unit' => 'Monat',
+                'price' => 15.00,
+                'tax_rate' => $taxRate->rate,
                 'tax_rate_id' => $taxRate->id,
+                'unit' => 'Monat',
             ]),
         ];
     }
@@ -297,14 +298,18 @@ class TestDataManager extends Page
     {
         return [
             DocumentPathSetting::create([
-                'name' => 'Kundenverträge',
+                'documentable_type' => 'App\Models\Customer',
+                'category' => 'contracts',
                 'path_template' => 'customers/{customer_id}/contracts',
                 'description' => 'Pfad für Kundenverträge',
+                'is_active' => true,
             ]),
             DocumentPathSetting::create([
-                'name' => 'Lieferantenrechnungen',
+                'documentable_type' => 'App\Models\Supplier',
+                'category' => 'invoices',
                 'path_template' => 'suppliers/{supplier_id}/invoices',
                 'description' => 'Pfad für Lieferantenrechnungen',
+                'is_active' => true,
             ]),
         ];
     }
@@ -330,18 +335,20 @@ class TestDataManager extends Page
                 'plant_number' => 'SA-001',
                 'name' => 'Aurich 1',
                 'location' => 'Aurich, Niedersachsen',
-                'capacity_kw' => 500.0,
+                'total_capacity_kw' => 500.0,
                 'installation_date' => '2023-01-15',
                 'status' => 'active',
+                'is_active' => true,
                 'notes' => 'Erste Testanlage in Aurich',
             ]),
             SolarPlant::create([
                 'plant_number' => 'SA-002',
                 'name' => 'Aurich 2',
                 'location' => 'Aurich, Niedersachsen',
-                'capacity_kw' => 750.0,
+                'total_capacity_kw' => 750.0,
                 'installation_date' => '2023-06-20',
                 'status' => 'active',
+                'is_active' => true,
                 'notes' => 'Zweite Testanlage in Aurich',
             ]),
         ];
@@ -351,26 +358,32 @@ class TestDataManager extends Page
     {
         return [
             Customer::create([
+                'name' => 'Max Mustermann',
                 'customer_number' => 'KD-001',
                 'company_name' => 'Stadtwerke Aurich',
                 'contact_person' => 'Max Mustermann',
                 'email' => 'max.mustermann@stadtwerke-aurich.de',
                 'phone' => '+49 4941 123456',
-                'address' => 'Hauptstraße 1',
+                'street' => 'Hauptstraße 1',
                 'postal_code' => '26603',
                 'city' => 'Aurich',
                 'country' => 'Deutschland',
+                'customer_type' => 'business',
+                'is_active' => true,
             ]),
             Customer::create([
+                'name' => 'Anna Schmidt',
                 'customer_number' => 'KD-002',
                 'company_name' => 'Energie Nord GmbH',
                 'contact_person' => 'Anna Schmidt',
                 'email' => 'anna.schmidt@energie-nord.de',
                 'phone' => '+49 4941 654321',
-                'address' => 'Industriestraße 15',
+                'street' => 'Industriestraße 15',
                 'postal_code' => '26603',
                 'city' => 'Aurich',
                 'country' => 'Deutschland',
+                'customer_type' => 'business',
+                'is_active' => true,
             ]),
         ];
     }
@@ -425,9 +438,20 @@ class TestDataManager extends Page
             'payment_terms' => 'Zahlung innerhalb 30 Tage',
         ]);
 
-        // Zuordnung zu beiden Solaranlagen
-        $contract1->solarPlants()->attach($solarPlants[0]->id, ['percentage' => 100.00]);
-        $contract1->solarPlants()->attach($solarPlants[1]->id, ['percentage' => 100.00]);
+        // Zuordnung zu beiden Solaranlagen über das Model
+        SupplierContractSolarPlant::create([
+            'supplier_contract_id' => $contract1->id,
+            'solar_plant_id' => $solarPlants[0]->id,
+            'percentage' => 100.00,
+            'is_active' => true,
+        ]);
+        
+        SupplierContractSolarPlant::create([
+            'supplier_contract_id' => $contract1->id,
+            'solar_plant_id' => $solarPlants[1]->id,
+            'percentage' => 100.00,
+            'is_active' => true,
+        ]);
 
         $contracts[] = $contract1;
 
@@ -444,8 +468,19 @@ class TestDataManager extends Page
             'payment_terms' => 'Zahlung innerhalb 14 Tage',
         ]);
 
-        $contract2->solarPlants()->attach($solarPlants[0]->id, ['percentage' => 50.00]);
-        $contract2->solarPlants()->attach($solarPlants[1]->id, ['percentage' => 50.00]);
+        SupplierContractSolarPlant::create([
+            'supplier_contract_id' => $contract2->id,
+            'solar_plant_id' => $solarPlants[0]->id,
+            'percentage' => 50.00,
+            'is_active' => true,
+        ]);
+        
+        SupplierContractSolarPlant::create([
+            'supplier_contract_id' => $contract2->id,
+            'solar_plant_id' => $solarPlants[1]->id,
+            'percentage' => 50.00,
+            'is_active' => true,
+        ]);
 
         $contracts[] = $contract2;
 

@@ -306,7 +306,12 @@ class ViewSolarPlant extends ViewRecord
                                             ->form([
                                                 Forms\Components\Select::make('customer_id')
                                                     ->label('Kunde')
-                                                    ->options(Customer::all()->pluck('name', 'id'))
+                                                    ->options(Customer::all()->mapWithKeys(function ($customer) {
+                                                        $displayName = $customer->customer_type === 'business' && $customer->company_name
+                                                            ? $customer->company_name
+                                                            : $customer->name;
+                                                        return [$customer->id => $displayName];
+                                                    }))
                                                     ->required()
                                                     ->searchable()
                                                     ->preload()

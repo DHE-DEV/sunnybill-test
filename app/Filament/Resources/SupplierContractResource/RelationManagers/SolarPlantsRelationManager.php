@@ -306,7 +306,7 @@ class SolarPlantsRelationManager extends RelationManager
                                     Forms\Components\TextInput::make('created_at')
                                         ->label('Erstellt am')
                                         ->disabled()
-                                        ->formatStateUsing(fn ($state) => $state?->format('d.m.Y H:i')),
+                                        ->formatStateUsing(fn ($state) => $state instanceof \Carbon\Carbon ? $state->format('d.m.Y H:i') : $state),
                                 ])->columns(2),
                         ]),
                     Tables\Actions\DeleteAction::make()

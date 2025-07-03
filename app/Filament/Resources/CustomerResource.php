@@ -231,7 +231,7 @@ class CustomerResource extends Resource
                                     'Island' => 'IS',
                                 ];
                                 
-                                $set('country_code', $countryCodes[$state] ?? '');
+                                $set('country_code', $countryCodes[$state] ?? 'DE');
                                 
                                 // Bundesland zurücksetzen wenn nicht Deutschland
                                 if ($state !== 'Deutschland') {
@@ -265,12 +265,8 @@ class CustomerResource extends Resource
                             })
                             ->visible(fn (Forms\Get $get) => $get('country') === 'Deutschland')
                             ->searchable(),
-                        Forms\Components\TextInput::make('country_code')
-                            ->label('Ländercode')
-                            ->maxLength(2)
-                            ->disabled()
-                            ->dehydrated()
-                            ->helperText('Wird automatisch basierend auf dem Land gesetzt'),
+                        Forms\Components\Hidden::make('country_code')
+                            ->default('DE'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Steuerliche Daten')
@@ -561,7 +557,13 @@ class CustomerResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
-                    ->searchable()
+                    ->getStateUsing(function ($record) {
+                        if ($record->customer_type === 'business' && $record->company_name) {
+                            return $record->company_name;
+                        }
+                        return $record->name;
+                    })
+                    ->searchable(['name', 'company_name'])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('customer_type')
                     ->label('Typ')

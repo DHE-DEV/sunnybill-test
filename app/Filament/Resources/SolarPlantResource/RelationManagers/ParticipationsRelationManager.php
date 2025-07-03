@@ -31,8 +31,13 @@ class ParticipationsRelationManager extends RelationManager
                 Forms\Components\Select::make('customer_id')
                     ->label('Kunde')
                     ->relationship('customer', 'name')
+                    ->getOptionLabelFromRecordUsing(fn ($record) =>
+                        $record->customer_type === 'business' && $record->company_name
+                            ? $record->company_name
+                            : $record->name
+                    )
                     ->required()
-                    ->searchable()
+                    ->searchable(['name', 'company_name'])
                     ->preload()
                     ->createOptionForm([
                         Forms\Components\TextInput::make('name')
