@@ -209,17 +209,29 @@ class TestDataManager extends Page
         return [
             TaxRate::create([
                 'name' => 'Standard (19%)',
-                'rate' => 19.00,
+                'description' => 'Regulärer Steuersatz',
+                'rate' => 0.1900,
+                'valid_from' => '2023-01-01',
+                'valid_until' => null,
+                'is_active' => true,
                 'is_default' => true,
             ]),
             TaxRate::create([
                 'name' => 'Ermäßigt (7%)',
-                'rate' => 7.00,
+                'description' => 'Ermäßigter Steuersatz',
+                'rate' => 0.0700,
+                'valid_from' => '2023-01-01',
+                'valid_until' => null,
+                'is_active' => true,
                 'is_default' => false,
             ]),
             TaxRate::create([
                 'name' => 'Steuerfrei (0%)',
-                'rate' => 0.00,
+                'description' => 'Steuerfreie Lieferung',
+                'rate' => 0.0000,
+                'valid_from' => '2023-01-01',
+                'valid_until' => null,
+                'is_active' => true,
                 'is_default' => false,
             ]),
         ];
