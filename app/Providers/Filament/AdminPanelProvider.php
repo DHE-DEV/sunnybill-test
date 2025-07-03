@@ -76,10 +76,15 @@ class AdminPanelProvider extends PanelProvider
             })
             ->favicon(asset('images/voltmaster-favicon.svg'))
             ->navigationGroups([
-                'Stammdaten',
-                'Fakturierung',
+                'Kunden',
+                'Lieferanten',
                 'Solar Management',
+                'Fakturierung',
+                'Rechnungen',
+                'Stammdaten',
                 \Filament\Navigation\NavigationGroup::make('System')
+                    ->collapsed(),
+                \Filament\Navigation\NavigationGroup::make('Debug')
                     ->collapsed(),
             ])
             ->sidebarCollapsibleOnDesktop()

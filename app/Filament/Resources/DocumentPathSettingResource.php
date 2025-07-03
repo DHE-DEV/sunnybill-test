@@ -23,7 +23,7 @@ class DocumentPathSettingResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Dokumentpfad-Einstellungen';
 
-    protected static ?string $navigationGroup = 'Einstellungen';
+    protected static ?string $navigationGroup = 'System';
 
     protected static ?int $navigationSort = 10;
 

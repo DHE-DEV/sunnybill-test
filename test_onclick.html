@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Onclick Test - Popup Modal für fehlende Abrechnungseinträge</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Onclick Test - Popup Modal für fehlende Abrechnungseinträge</h1>
+        
+        <div class="test-section info">
+            <h3>📋 Test-Beschreibung</h3>
+            <p>Diese Seite testet die korrigierte JavaScript-Funktionalität für klickbare fehlende Abrechnungseinträge in der SolarPlantBillingOverview.</p>
+            <p><strong>Erwartetes Verhalten:</strong> Beim Klick auf eine der rosa Boxen unten sollte ein Alert-Popup mit den korrekten Parametern erscheinen.</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 Test-Boxen (klickbar)</h3>
+            <p>Klicken Sie auf die folgenden Boxen, um die Funktionalität zu testen:</p>
+            
+            <!-- Test 1: Normale Abrechnung -->
+            <span onclick="openCreateBillingModal('018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8b', 2025, 7, 'Abrechnung 2025-07 - Energieversorgung E.ON')" 
+                  style="display: inline-block; margin: 5px; padding: 8px 12px; background-color: #f8d7da; color: #721c24; border-radius: 4px; font-size: 14px; cursor: pointer; transition: background-color 0.2s;" 
+                  onmouseover="this.style.backgroundColor='#f5c6cb'" 
+                  onmouseout="this.style.backgroundColor='#f8d7da'">
+                Energieversorgung E.ON (E.ON Energie Deutschland GmbH) - Juli 2025
+            </span>
+            
+            <!-- Test 2: Abrechnung mit Sonderzeichen -->
+            <span onclick="openCreateBillingModal('018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8c', 2025, 6, 'Abrechnung 2025-06 - Stadtwerke München GmbH und Co. KG')" 
+                  style="display: inline-block; margin: 5px; padding: 8px 12px; background-color: #f8d7da; color: #721c24; border-radius: 4px; font-size: 14px; cursor: pointer; transition: background-color 0.2s;" 
+                  onmouseover="this.style.backgroundColor='#f5c6cb'" 
+                  onmouseout="this.style.backgroundColor='#f8d7da'">
+                Stadtwerke München GmbH & Co. KG - Juni 2025
+            </span>
+            
+            <!-- Test 3: Abrechnung ohne Sonderzeichen -->
+            <span onclick="openCreateBillingModal('018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8d', 2025, 5, 'Abrechnung 2025-05 - O Reilly Energy Solutions')" 
+                  style="display: inline-block; margin: 5px; padding: 8px 12px; background-color: #f8d7da; color: #721c24; border-radius: 4px; font-size: 14px; cursor: pointer; transition: background-color 0.2s;" 
+                  onmouseover="this.style.backgroundColor='#f5c6cb'" 
+                  onmouseout="this.style.backgroundColor='#f8d7da'">
+                O Reilly Energy Solutions - Mai 2025
+            </span>
+        </div>
+        
+        <div class="test-section success">
+            <h3>✅ Erwartete Ergebnisse</h3>
+            <ul>
+                <li><strong>Test 1:</strong> Alert mit "Contract ID: 018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8b, Jahr: 2025, Monat: 7"</li>
+                <li><strong>Test 2:</strong> Alert mit korrekten Daten ohne Sonderzeichen-Probleme</li>
+                <li><strong>Test 3:</strong> Alert mit korrekten Daten</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 Debug-Informationen</h3>
+            <p>Öffnen Sie die Browser-Entwicklertools (F12) und schauen Sie in die Konsole für zusätzliche Debug-Ausgaben.</p>
+            <button onclick="testConsoleOutput()">Console Test ausführen</button>
+        </div>
+    </div>
+    
+    <script>
+    function openCreateBillingModal(contractId, year, month, title) {
+        console.log("🎯 openCreateBillingModal aufgerufen mit:");
+        console.log("  - Contract ID:", contractId);
+        console.log("  - Jahr:", year);
+        console.log("  - Monat:", month);
+        console.log("  - Titel:", title);
+        
+        // Zeige Alert mit den Parametern
+        alert("✅ Klick erkannt!\n\n" +
+              "Contract ID: " + contractId + "\n" +
+              "Jahr: " + year + "\n" +
+              "Monat: " + month + "\n" +
+              "Titel: " + title);
+        
+        // In der echten Anwendung würde hier das Filament Modal geöffnet werden
+        console.log("💡 In der echten Anwendung würde jetzt das Filament Modal geöffnet werden.");
+    }
+    
+    function testConsoleOutput() {
+        console.log("🧪 Console Test gestartet");
+        console.log("✅ JavaScript funktioniert korrekt");
+        alert("Console Test abgeschlossen - schauen Sie in die Entwicklertools!");
+    }
+    
+    // Beim Laden der Seite
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("📄 Test-Seite geladen");
+        console.log("🎯 Bereit zum Testen der onclick-Funktionalität");
+    });
+    </script>
+</body>
+</html>

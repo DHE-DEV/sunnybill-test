@@ -210,12 +210,13 @@ class SolarPlant extends Model
     }
 
     /**
-     * Aktive Lieferantenverträge
+     * Aktive Lieferantenverträge (ohne gelöschte)
      */
     public function activeSupplierContracts(): BelongsToMany
     {
         return $this->belongsToMany(SupplierContract::class, 'supplier_contract_solar_plants')
             ->wherePivot('is_active', true)
+            ->whereNull('supplier_contract_solar_plants.deleted_at')
             ->withPivot(['percentage', 'notes', 'is_active'])
             ->withTimestamps();
     }

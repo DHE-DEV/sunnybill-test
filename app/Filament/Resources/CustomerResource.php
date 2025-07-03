@@ -32,7 +32,7 @@ class CustomerResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Kunden';
 
-    protected static ?string $navigationGroup = 'Stammdaten';
+    protected static ?string $navigationGroup = 'Kunden';
 
     protected static ?int $navigationSort = 1;
 

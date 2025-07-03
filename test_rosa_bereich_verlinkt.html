@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test: Rosa Bereich verlinkt - Abrechnungsübersicht</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        
+        /* Tabellen-Styling wie in der echten Anwendung */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .status-vollstaendig {
+            background-color: #d4edda;
+        }
+        .status-unvollstaendig {
+            background-color: #fff3cd;
+        }
+        
+        /* Rosa Bereiche - klickbare fehlende Abrechnungen */
+        .missing-billing-item {
+            display: inline-block;
+            margin: 2px 5px 2px 0;
+            padding: 3px 8px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .missing-billing-item:hover {
+            background-color: #f5c6cb;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test: Rosa Bereich verlinkt - Abrechnungsübersicht</h1>
+        
+        <div class="section info">
+            <h3>📋 Demonstration</h3>
+            <p>Diese Seite demonstriert die Funktionalität der verlinkten rosa Bereiche in der Solaranlagen-Abrechnungsübersicht.</p>
+            <p><strong>Klicken Sie auf die rosa Boxen</strong> in der Tabelle unten, um das Abrechnungsmodal zu öffnen.</p>
+        </div>
+        
+        <div class="section">
+            <h3>📊 Abrechnungsübersicht der letzten 12 Monate</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Monat</th>
+                            <th style="text-align: center;">Status</th>
+                            <th style="text-align: center;">Fehlende Abrechnungen</th>
+                            <th>Fehlende Verträge (Lieferant)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="status-vollstaendig">
+                            <td>Januar 2025</td>
+                            <td style="text-align: center;">✅ Vollständig</td>
+                            <td style="text-align: center;"><span style="color: #28a745;">0</span></td>
+                            <td><span style="color: #6c757d; font-style: italic;">Alle Abrechnungen vollständig</span></td>
+                        </tr>
+                        <tr class="status-unvollstaendig">
+                            <td>Dezember 2024</td>
+                            <td style="text-align: center;">⚠️ Unvollständig</td>
+                            <td style="text-align: center;"><span style="color: #dc3545;">2</span></td>
+                            <td>
+                                <span class="missing-billing-item" 
+                                      data-contract='{"id":"018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8b","year":2024,"month":12,"title":"Abrechnung 2024-12 - Energieversorgung E.ON","contractTitle":"Energieversorgung E.ON","supplierName":"E.ON Energie Deutschland GmbH"}'>
+                                    Energieversorgung E.ON (E.ON Energie Deutschland GmbH)
+                                </span>
+                                <span class="missing-billing-item" 
+                                      data-contract='{"id":"018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8c","year":2024,"month":12,"title":"Abrechnung 2024-12 - Stadtwerke München","contractTitle":"Stadtwerke München","supplierName":"Stadtwerke München GmbH"}'>
+                                    Stadtwerke München (Stadtwerke München GmbH)
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="status-unvollstaendig">
+                            <td>November 2024</td>
+                            <td style="text-align: center;">⚠️ Unvollständig</td>
+                            <td style="text-align: center;"><span style="color: #dc3545;">1</span></td>
+                            <td>
+                                <span class="missing-billing-item" 
+                                      data-contract='{"id":"018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8d","year":2024,"month":11,"title":"Abrechnung 2024-11 - Premium Energy Solutions","contractTitle":"Premium Energy","supplierName":"Premium Energy Solutions GmbH"}'>
+                                    Premium Energy (Premium Energy Solutions GmbH)
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="status-vollstaendig">
+                            <td>Oktober 2024</td>
+                            <td style="text-align: center;">✅ Vollständig</td>
+                            <td style="text-align: center;"><span style="color: #28a745;">0</span></td>
+                            <td><span style="color: #6c757d; font-style: italic;">Alle Abrechnungen vollständig</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="section success">
+            <h3>✅ Erwartetes Verhalten</h3>
+            <ul>
+                <li>Klick auf rosa Box öffnet Modal mit vorausgefüllten Daten</li>
+                <li>Vertragsdaten werden automatisch geladen</li>
+                <li>Jahr und Monat werden korrekt gesetzt</li>
+                <li>Titel wird automatisch generiert</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Modal für neue Abrechnung -->
+    <div id="billingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Neue Abrechnung erstellen</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="billingForm">
+                <div class="form-group">
+                    <label for="supplier_contract_id">Lieferantenvertrag:</label>
+                    <select id="supplier_contract_id" name="supplier_contract_id">
+                        <option value="">Bitte wählen...</option>
+                        <option value="018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8b">Energieversorgung E.ON - E.ON Energie Deutschland GmbH</option>
+                        <option value="018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8c">Stadtwerke München - Stadtwerke München GmbH</option>
+                        <option value="018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8d">Premium Energy - Premium Energy Solutions GmbH</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="billing_year">Abrechnungsjahr:</label>
+                    <select id="billing_year" name="billing_year">
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="billing_month">Abrechnungsmonat:</label>
+                    <select id="billing_month" name="billing_month">
+                        <option value="1">Januar</option>
+                        <option value="2">Februar</option>
+                        <option value="3">März</option>
+                        <option value="4">April</option>
+                        <option value="5">Mai</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Dezember</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="title">Titel:</label>
+                    <input type="text" id="title" name="title" placeholder="Wird automatisch generiert...">
+                </div>
+                <div class="form-group">
+                    <label for="total_amount">Gesamtbetrag (€):</label>
+                    <input type="number" id="total_amount" name="total_amount" step="0.01" value="0.00">
+                </div>
+                <button type="submit" class="btn">Abrechnung erstellen</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+    // Event-Delegation für klickbare rosa Bereiche
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("📄 Test-Seite geladen");
+        
+        // Event-Listener für rosa Bereiche
+        document.addEventListener("click", handleMissingBillingClick);
+        
+        // Modal-Funktionalität
+        const modal = document.getElementById("billingModal");
+        const closeBtn = document.querySelector(".close");
+        const form = document.getElementById("billingForm");
+        
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+        }
+        
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            alert("✅ Abrechnung würde erstellt werden!\n\nIn der echten Anwendung würde jetzt die Abrechnung gespeichert.");
+            modal.style.display = "none";
+        }
+    });
+    
+    function handleMissingBillingClick(event) {
+        // Prüfe ob das geklickte Element eine fehlende Abrechnung ist
+        if (event.target.classList.contains("missing-billing-item")) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            console.log("🎯 Klick auf missing-billing-item erkannt");
+            
+            try {
+                const contractData = JSON.parse(event.target.getAttribute("data-contract"));
+                console.log("📊 Contract-Daten erfolgreich geparst:", contractData);
+                
+                openCreateBillingModal(
+                    contractData.id,
+                    contractData.year,
+                    contractData.month,
+                    contractData.title
+                );
+            } catch (error) {
+                console.error("❌ Fehler beim Parsen der Contract-Daten:", error);
+                alert("Fehler beim Laden der Vertragsdaten. Bitte versuchen Sie es erneut.");
+            }
+        }
+    }
+    
+    function openCreateBillingModal(contractId, year, month, title) {
+        console.log("🚀 openCreateBillingModal aufgerufen mit:");
+        console.log("  - Contract ID:", contractId);
+        console.log("  - Jahr:", year);
+        console.log("  - Monat:", month);
+        console.log("  - Titel:", title);
+        
+        // Modal öffnen
+        const modal = document.getElementById("billingModal");
+        modal.style.display = "block";
+        
+        // Formularfelder vorausfüllen
+        document.getElementById("supplier_contract_id").value = contractId;
+        document.getElementById("billing_year").value = year;
+        document.getElementById("billing_month").value = month;
+        document.getElementById("title").value = title;
+        
+        console.log("✅ Modal geöffnet und Formular vorausgefüllt");
+    }
+    </script>
+</body>
+</html>

@@ -21,13 +21,13 @@ class SupplierContractResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationLabel = 'Lieferantenverträge';
+    protected static ?string $navigationLabel = 'Verträge';
 
     protected static ?string $modelLabel = 'Lieferantenvertrag';
 
     protected static ?string $pluralModelLabel = 'Lieferantenverträge';
 
-    protected static ?string $navigationGroup = 'Stammdaten';
+    protected static ?string $navigationGroup = 'Lieferanten';
 
     protected static ?int $navigationSort = 4;
 

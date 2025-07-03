@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Onclick Test - Verbesserte Version für fehlende Abrechnungseinträge</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        .missing-billing-item {
+            display: inline-block;
+            margin: 2px 5px 2px 0;
+            padding: 3px 8px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .missing-billing-item:hover {
+            background-color: #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Onclick Test - Verbesserte Version für fehlende Abrechnungseinträge</h1>
+        
+        <div class="test-section info">
+            <h3>📋 Test-Beschreibung</h3>
+            <p>Diese Seite testet die verbesserte JavaScript-Funktionalität mit Event-Delegation für klickbare fehlende Abrechnungseinträge.</p>
+            <p><strong>Verbesserungen:</strong></p>
+            <ul>
+                <li>✅ Event-Delegation statt inline onclick</li>
+                <li>✅ JSON-basierte Datenübertragung</li>
+                <li>✅ Besseres Error-Handling</li>
+                <li>✅ Robustere Livewire-Integration</li>
+            </ul>
+        </div>
+        
+        <div class="test-section warning">
+            <h3>⚠️ Bekanntes Problem</h3>
+            <p>Das ursprüngliche Problem war, dass die onclick-Funktionalität auf der Live-Website nicht funktionierte. Die Ursachen waren:</p>
+            <ul>
+                <li>❌ Komplexes JavaScript-Escaping</li>
+                <li>❌ Inline onclick-Handler</li>
+                <li>❌ Fehleranfällige Livewire-Integration</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 Test-Boxen (neue Implementierung)</h3>
+            <p>Klicken Sie auf die folgenden Boxen, um die verbesserte Funktionalität zu testen:</p>
+            
+            <!-- Test 1: Normale Abrechnung -->
+            <span class="missing-billing-item" 
+                  data-contract='{"id":"018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8b","year":2025,"month":7,"title":"Abrechnung 2025-07 - Energieversorgung E.ON","contractTitle":"Energieversorgung E.ON","supplierName":"E.ON Energie Deutschland GmbH"}'>
+                Energieversorgung E.ON (E.ON Energie Deutschland GmbH) - Juli 2025
+            </span>
+            
+            <!-- Test 2: Abrechnung mit Sonderzeichen -->
+            <span class="missing-billing-item" 
+                  data-contract='{"id":"018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8c","year":2025,"month":6,"title":"Abrechnung 2025-06 - Stadtwerke München GmbH & Co. KG","contractTitle":"Stadtwerke München","supplierName":"Stadtwerke München GmbH & Co. KG"}'>
+                Stadtwerke München GmbH & Co. KG - Juni 2025
+            </span>
+            
+            <!-- Test 3: Abrechnung mit Anführungszeichen -->
+            <span class="missing-billing-item" 
+                  data-contract='{"id":"018e8b8b-b5b8-7b8b-8b8b-8b8b8b8b8b8d","year":2025,"month":5,"title":"Abrechnung 2025-05 - \"Premium\" Energy Solutions","contractTitle":"Premium Energy","supplierName":"\"Premium\" Energy Solutions"}'>
+                "Premium" Energy Solutions - Mai 2025
+            </span>
+        </div>
+        
+        <div class="test-section success">
+            <h3>✅ Erwartete Ergebnisse</h3>
+            <ul>
+                <li><strong>Test 1:</strong> Alert mit korrekten Daten für E.ON</li>
+                <li><strong>Test 2:</strong> Alert mit korrekten Daten trotz Sonderzeichen (&)</li>
+                <li><strong>Test 3:</strong> Alert mit korrekten Daten trotz Anführungszeichen</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 Debug-Informationen</h3>
+            <p>Öffnen Sie die Browser-Entwicklertools (F12) und schauen Sie in die Konsole für detaillierte Debug-Ausgaben.</p>
+            <button onclick="testConsoleOutput()">Console Test ausführen</button>
+            <button onclick="testEventDelegation()">Event-Delegation testen</button>
+        </div>
+    </div>
+    
+    <script>
+    // Event-Delegation für bessere Performance und Zuverlässigkeit
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("📄 Verbesserte Test-Seite geladen");
+        console.log("🎯 Event-Delegation wird initialisiert...");
+        
+        // Entferne vorherige Event-Listener falls vorhanden
+        document.removeEventListener("click", handleMissingBillingClick);
+        
+        // Füge Event-Listener hinzu
+        document.addEventListener("click", handleMissingBillingClick);
+        
+        console.log("✅ Event-Delegation erfolgreich initialisiert");
+    });
+    
+    function handleMissingBillingClick(event) {
+        // Prüfe ob das geklickte Element eine fehlende Abrechnung ist
+        if (event.target.classList.contains("missing-billing-item")) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            console.log("🎯 Klick auf missing-billing-item erkannt");
+            
+            try {
+                const contractData = JSON.parse(event.target.getAttribute("data-contract"));
+                console.log("📊 Contract-Daten erfolgreich geparst:", contractData);
+                
+                openCreateBillingModal(
+                    contractData.id,
+                    contractData.year,
+                    contractData.month,
+                    contractData.title
+                );
+            } catch (error) {
+                console.error("❌ Fehler beim Parsen der Contract-Daten:", error);
+                alert("Fehler beim Laden der Vertragsdaten. Bitte versuchen Sie es erneut.");
+            }
+        }
+    }
+    
+    function openCreateBillingModal(contractId, year, month, title) {
+        console.log("🚀 openCreateBillingModal aufgerufen mit:");
+        console.log("  - Contract ID:", contractId);
+        console.log("  - Jahr:", year);
+        console.log("  - Monat:", month);
+        console.log("  - Titel:", title);
+        
+        // Debug-Alert für Testzwecke
+        alert("✅ Klick erkannt!\n\nContract ID: " + contractId + "\nJahr: " + year + "\nMonat: " + month + "\nTitel: " + title);
+        
+        // Simuliere Livewire-Integration (in echter Anwendung)
+        console.log("📡 In der echten Anwendung würde hier Livewire verwendet werden");
+        console.log("🔄 Fallback: Öffne Create-Seite in neuem Tab");
+        
+        const url = "/admin/supplier-contract-billings/create" +
+            "?supplier_contract_id=" + encodeURIComponent(contractId) +
+            "&billing_year=" + encodeURIComponent(year) +
+            "&billing_month=" + encodeURIComponent(month) +
+            "&title=" + encodeURIComponent(title);
+        
+        console.log("🌐 URL würde geöffnet werden:", url);
+    }
+    
+    function testConsoleOutput() {
+        console.log("🧪 Console Test gestartet");
+        console.log("✅ JavaScript funktioniert korrekt");
+        console.log("📊 Event-Delegation ist aktiv");
+        alert("Console Test abgeschlossen - schauen Sie in die Entwicklertools!");
+    }
+    
+    function testEventDelegation() {
+        console.log("🧪 Event-Delegation Test");
+        
+        // Erstelle dynamisch ein neues Element
+        const newElement = document.createElement('span');
+        newElement.className = 'missing-billing-item';
+        newElement.setAttribute('data-contract', JSON.stringify({
+            id: 'test-id-123',
+            year: 2025,
+            month: 8,
+            title: 'Test Abrechnung 2025-08',
+            contractTitle: 'Test Contract',
+            supplierName: 'Test Supplier'
+        }));
+        newElement.textContent = 'Dynamisch erstelltes Test-Element - August 2025';
+        newElement.style.marginTop = '10px';
+        newElement.style.display = 'block';
+        
+        // Füge es zur Seite hinzu
+        document.querySelector('.test-section:last-of-type').appendChild(newElement);
+        
+        console.log("✅ Dynamisches Element erstellt - klicken Sie darauf um Event-Delegation zu testen");
+        alert("Dynamisches Element erstellt! Scrollen Sie nach unten und klicken Sie auf das neue rosa Element.");
+    }
+    </script>
+</body>
+</html>
