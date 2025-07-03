@@ -163,7 +163,7 @@ class SolarPlantBilling extends Model
         }
 
         // Hole alle Kundenbeteiligungen
-        $participations = $solarPlant->participations()->where('is_active', true)->get();
+        $participations = $solarPlant->participations()->get();
         
         if ($participations->isEmpty()) {
             throw new \Exception('Keine aktiven Kundenbeteiligungen gefunden');
