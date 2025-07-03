@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::table('supplier_contract_billings', function (Blueprint $table) {
             $table->enum('billing_type', ['invoice', 'credit_note'])
-                  ->default('invoice')
-                  ->after('supplier_invoice_number');
+                  ->default('invoice');
             $table->index('billing_type', 'scb_billing_type_idx');
         });
     }
