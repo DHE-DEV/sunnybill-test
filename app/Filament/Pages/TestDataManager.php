@@ -140,6 +140,9 @@ class TestDataManager extends Page
 
     private function clearAllTables(): void
     {
+        // Foreign Key Checks deaktivieren
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
         // Reihenfolge wichtig wegen Foreign Key Constraints
         $tables = [
             'supplier_contract_billing_allocations',
@@ -169,8 +172,14 @@ class TestDataManager extends Page
         ];
 
         foreach ($tables as $table) {
-            DB::table($table)->truncate();
+            // Prüfen ob Tabelle existiert
+            if (DB::getSchemaBuilder()->hasTable($table)) {
+                DB::table($table)->truncate();
+            }
         }
+
+        // Foreign Key Checks wieder aktivieren
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 
     private function createCompanySettings(): void
