@@ -53,15 +53,11 @@ class TestDataManager extends Page
     public function resetToTestData(): void
     {
         try {
-            DB::beginTransaction();
-
             // Alle Tabellen leeren (außer Migrationen und Admin-User)
             $this->clearAllTables();
 
-            // Testdaten erstellen
-            $this->createTestData();
-
-            DB::commit();
+            // Testdaten erstellen (createTestData hat bereits eigene Transaktion)
+            $this->createTestDataWithoutTransaction();
 
             Notification::make()
                 ->title('Testdaten erfolgreich zurückgesetzt')
@@ -69,8 +65,6 @@ class TestDataManager extends Page
                 ->send();
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            
             Notification::make()
                 ->title('Fehler beim Zurücksetzen der Testdaten')
                 ->body($e->getMessage())
@@ -84,41 +78,7 @@ class TestDataManager extends Page
         try {
             DB::beginTransaction();
 
-            // 1. Firmeneinstellungen
-            $this->createCompanySettings();
-
-            // 2. Steuersätze
-            $this->createTaxRates();
-
-            // 3. Artikel
-            $this->createArticles();
-
-            // 4. Aufgabentypen
-            $this->createTaskTypes();
-
-            // 5. Speichereinstellungen
-            $this->createStorageSettings();
-
-            // 6. Dokumentpfade
-            $this->createDocumentPathSettings();
-
-            // 7. Lieferantentypen
-            $this->createSupplierTypes();
-
-            // 8. Solaranlagen
-            $solarPlants = $this->createSolarPlants();
-
-            // 9. Kunden
-            $customers = $this->createCustomers();
-
-            // 10. Lieferanten
-            $suppliers = $this->createSuppliers();
-
-            // 11. Lieferantenverträge
-            $contracts = $this->createSupplierContracts($suppliers, $solarPlants);
-
-            // 12. Abrechnungen
-            $this->createSupplierContractBillings($contracts);
+            $this->createTestDataWithoutTransaction();
 
             DB::commit();
 
@@ -136,6 +96,45 @@ class TestDataManager extends Page
                 ->danger()
                 ->send();
         }
+    }
+
+    private function createTestDataWithoutTransaction(): void
+    {
+        // 1. Firmeneinstellungen
+        $this->createCompanySettings();
+
+        // 2. Steuersätze
+        $this->createTaxRates();
+
+        // 3. Artikel
+        $this->createArticles();
+
+        // 4. Aufgabentypen
+        $this->createTaskTypes();
+
+        // 5. Speichereinstellungen
+        $this->createStorageSettings();
+
+        // 6. Dokumentpfade
+        $this->createDocumentPathSettings();
+
+        // 7. Lieferantentypen
+        $this->createSupplierTypes();
+
+        // 8. Solaranlagen
+        $solarPlants = $this->createSolarPlants();
+
+        // 9. Kunden
+        $customers = $this->createCustomers();
+
+        // 10. Lieferanten
+        $suppliers = $this->createSuppliers();
+
+        // 11. Lieferantenverträge
+        $contracts = $this->createSupplierContracts($suppliers, $solarPlants);
+
+        // 12. Abrechnungen
+        $this->createSupplierContractBillings($contracts);
     }
 
     private function clearAllTables(): void
