@@ -238,6 +238,14 @@ class SolarPlant extends Model
     }
 
     /**
+     * Beziehung zu Solaranlagen-Abrechnungen
+     */
+    public function billings(): HasMany
+    {
+        return $this->hasMany(SolarPlantBilling::class);
+    }
+
+    /**
      * Gesamtbeteiligung aller Kunden berechnen
      */
     public function getTotalParticipationAttribute(): float

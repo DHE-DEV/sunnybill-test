@@ -189,6 +189,14 @@ class Customer extends Model
     }
 
     /**
+     * Beziehung zu Solaranlagen-Abrechnungen
+     */
+    public function solarPlantBillings(): HasMany
+    {
+        return $this->hasMany(SolarPlantBilling::class);
+    }
+
+    /**
      * Alias für plantParticipations (für bessere Lesbarkeit in der UI)
      */
     public function solarParticipations(): HasMany
