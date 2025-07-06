@@ -108,19 +108,33 @@ trait DocumentUploadTrait
         if (is_object($config) && method_exists($config, 'toArray')) {
             $configArray = $config->toArray();
             
-            // Füge dynamische Properties hinzu, die nicht im toArray() enthalten sind
-            if (method_exists($config, 'getStorageDirectory')) {
-                $configArray['storageDirectory'] = $config->getStorageDirectory();
-            }
+            // Füge statische Properties hinzu
             if (method_exists($config, 'getDiskName')) {
                 $configArray['diskName'] = $config->getDiskName();
+            }
+            
+            // WICHTIG: Füge alle wichtigen Properties für dynamische Pfade hinzu
+            // ABER löse storageDirectory NICHT statisch auf - das macht der FormBuilder dynamisch
+            if (method_exists($config, 'get')) {
+                if ($config->get('pathType')) {
+                    $configArray['pathType'] = $config->get('pathType');
+                }
+                if ($config->get('model')) {
+                    $configArray['model'] = $config->get('model');
+                }
+                if ($config->get('additionalData')) {
+                    $configArray['additionalData'] = $config->get('additionalData');
+                }
             }
             
             Log::debug('DocumentUploadTrait: Konfiguration konvertiert', [
                 'original_config_keys' => is_object($config) ? array_keys($config->toArray()) : [],
                 'final_config_keys' => array_keys($configArray),
-                'storage_directory' => $configArray['storageDirectory'] ?? 'nicht gesetzt',
-                'disk_name' => $configArray['diskName'] ?? 'nicht gesetzt'
+                'disk_name' => $configArray['diskName'] ?? 'nicht gesetzt',
+                'path_type' => $configArray['pathType'] ?? 'nicht gesetzt',
+                'has_model' => isset($configArray['model']) ? 'ja' : 'nein',
+                'model_class' => isset($configArray['model']) ? get_class($configArray['model']) : 'nicht gesetzt',
+                'note' => 'storageDirectory wird dynamisch vom FormBuilder aufgelöst'
             ]);
             
             $config = $configArray;

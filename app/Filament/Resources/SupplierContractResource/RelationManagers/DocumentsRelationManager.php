@@ -21,16 +21,24 @@ class DocumentsRelationManager extends RelationManager
 
     protected static ?string $icon = 'heroicon-o-document-text';
 
+    public static function getBadge(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): ?string
+    {
+        $count = $ownerRecord->documents()->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
     protected function getDocumentUploadConfig(): DocumentUploadConfig
     {
         $contract = $this->getOwnerRecord();
         
-        return DocumentUploadConfig::forSupplierContracts()
-            ->setModel($contract)
+        // Verwende die neue DocumentUploadConfig mit DocumentPathSetting-Integration
+        return DocumentUploadConfig::forSupplierContracts($contract)
             ->setAdditionalData([
                 'supplier_contract_id' => $contract->id,
                 'contract_number' => $contract->contract_number,
+                'contract_internal_number' => $contract->contract_internal_number,
                 'supplier_name' => $contract->supplier?->company_name,
+                'supplier_number' => $contract->supplier?->supplier_number,
             ]);
     }
 

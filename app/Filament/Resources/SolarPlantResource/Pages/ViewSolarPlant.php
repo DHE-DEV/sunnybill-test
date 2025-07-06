@@ -16,6 +16,13 @@ class ViewSolarPlant extends ViewRecord
 {
     protected static string $resource = SolarPlantResource::class;
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Lade die Beteiligungen mit den Kunden
+        $this->record->load('participations.customer');
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -269,8 +276,16 @@ class ViewSolarPlant extends ViewRecord
                                             ->schema([
                                                 Infolists\Components\Grid::make(4)
                                                     ->schema([
-                                                        Infolists\Components\TextEntry::make('customer.name')
+                                                        Infolists\Components\TextEntry::make('customer_name')
                                                             ->label('')
+                                                            ->state(function ($record) {
+                                                                $customer = $record->customer;
+                                                                if (!$customer) return 'Kunde nicht gefunden';
+                                                                
+                                                                return $customer->customer_type === 'business'
+                                                                    ? ($customer->company_name ?: $customer->name)
+                                                                    : $customer->name;
+                                                            })
                                                             ->weight('medium')
                                                             ->size('lg')
                                                             ->color('primary')
@@ -307,8 +322,8 @@ class ViewSolarPlant extends ViewRecord
                                                 Forms\Components\Select::make('customer_id')
                                                     ->label('Kunde')
                                                     ->options(Customer::all()->mapWithKeys(function ($customer) {
-                                                        $displayName = $customer->customer_type === 'business' && $customer->company_name
-                                                            ? $customer->company_name
+                                                        $displayName = $customer->customer_type === 'business'
+                                                            ? ($customer->company_name ?: $customer->name)
                                                             : $customer->name;
                                                         return [$customer->id => $displayName];
                                                     }))

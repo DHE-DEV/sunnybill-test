@@ -2,16 +2,36 @@
 
 namespace App\Models;
 
+use App\Services\DocumentStorageService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class Document extends Model
 {
     use HasFactory, SoftDeletes;
+
+    /**
+     * Boot-Methode für Model-Events
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Event-Listener für das Löschen von Dokumenten
+        static::deleting(function ($document) {
+            $document->deletePhysicalFile();
+        });
+
+        // Event-Listener für das endgültige Löschen (Force Delete)
+        static::forceDeleting(function ($document) {
+            $document->deletePhysicalFile();
+        });
+    }
 
     protected $fillable = [
         'name',
@@ -108,5 +128,164 @@ class Document extends Model
             'technical' => 'Technische Unterlagen',
             'photos' => 'Fotos',
         ];
+    }
+
+    /**
+     * Löscht die physische Datei vom Storage (DigitalOcean Spaces oder lokal)
+     */
+    public function deletePhysicalFile(): bool
+    {
+        if (!$this->path) {
+            Log::info('Document::deletePhysicalFile: Kein Pfad vorhanden', [
+                'document_id' => $this->id,
+                'document_name' => $this->name
+            ]);
+            return true; // Kein Pfad = nichts zu löschen
+        }
+
+        try {
+            // Bestimme die richtige Disk basierend auf dem Document
+            $disk = $this->getDiskInstance();
+            
+            if ($disk->exists($this->path)) {
+                $deleted = $disk->delete($this->path);
+                
+                Log::info('Document::deletePhysicalFile: Datei gelöscht', [
+                    'document_id' => $this->id,
+                    'document_name' => $this->name,
+                    'path' => $this->path,
+                    'disk' => $this->disk,
+                    'success' => $deleted
+                ]);
+                
+                return $deleted;
+            } else {
+                Log::warning('Document::deletePhysicalFile: Datei existiert nicht', [
+                    'document_id' => $this->id,
+                    'document_name' => $this->name,
+                    'path' => $this->path,
+                    'disk' => $this->disk
+                ]);
+                
+                return true; // Datei existiert nicht = erfolgreich "gelöscht"
+            }
+        } catch (\Exception $e) {
+            Log::error('Document::deletePhysicalFile: Fehler beim Löschen', [
+                'document_id' => $this->id,
+                'document_name' => $this->name,
+                'path' => $this->path,
+                'disk' => $this->disk,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return false;
+        }
+    }
+
+    /**
+     * Gibt die korrekte Disk-Instanz für dieses Dokument zurück
+     */
+    public function getDiskInstance()
+    {
+        // Wenn das Dokument eine spezifische Disk hat, verwende diese
+        if ($this->disk && $this->disk !== 'documents') {
+            return Storage::disk($this->disk);
+        }
+        
+        // Für 'documents' Disk oder wenn keine Disk angegeben ist, verwende DocumentStorageService
+        return DocumentStorageService::getDisk();
+    }
+
+    /**
+     * Prüft ob die physische Datei existiert
+     */
+    public function fileExists(): bool
+    {
+        if (!$this->path) {
+            return false;
+        }
+
+        try {
+            $disk = $this->getDiskInstance();
+            return $disk->exists($this->path);
+        } catch (\Exception $e) {
+            Log::error('Document::fileExists: Fehler beim Prüfen der Datei-Existenz', [
+                'document_id' => $this->id,
+                'path' => $this->path,
+                'disk' => $this->disk,
+                'error' => $e->getMessage()
+            ]);
+            
+            return false;
+        }
+    }
+
+    /**
+     * Gibt die Dateigröße der physischen Datei zurück
+     */
+    public function getActualFileSize(): ?int
+    {
+        if (!$this->path) {
+            return null;
+        }
+
+        try {
+            $disk = $this->getDiskInstance();
+            if ($disk->exists($this->path)) {
+                return $disk->size($this->path);
+            }
+        } catch (\Exception $e) {
+            Log::error('Document::getActualFileSize: Fehler beim Ermitteln der Dateigröße', [
+                'document_id' => $this->id,
+                'path' => $this->path,
+                'disk' => $this->disk,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return null;
+    }
+
+    /**
+     * Synchronisiert die Metadaten mit der physischen Datei
+     */
+    public function syncMetadata(): bool
+    {
+        if (!$this->path) {
+            return false;
+        }
+
+        try {
+            $disk = $this->getDiskInstance();
+            if (!$disk->exists($this->path)) {
+                return false;
+            }
+
+            $actualSize = $disk->size($this->path);
+            
+            // Aktualisiere nur wenn sich die Größe geändert hat
+            if ($this->size !== $actualSize) {
+                $this->size = $actualSize;
+                $this->save();
+                
+                Log::info('Document::syncMetadata: Metadaten synchronisiert', [
+                    'document_id' => $this->id,
+                    'old_size' => $this->getOriginal('size'),
+                    'new_size' => $actualSize
+                ]);
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Document::syncMetadata: Fehler beim Synchronisieren der Metadaten', [
+                'document_id' => $this->id,
+                'path' => $this->path,
+                'disk' => $this->disk,
+                'error' => $e->getMessage()
+            ]);
+            
+            return false;
+        }
     }
 }

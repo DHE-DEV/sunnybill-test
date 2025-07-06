@@ -32,8 +32,8 @@ class ParticipationsRelationManager extends RelationManager
                     ->label('Kunde')
                     ->relationship('customer', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) =>
-                        $record->customer_type === 'business' && $record->company_name
-                            ? $record->company_name
+                        $record->customer_type === 'business'
+                            ? ($record->company_name ?: $record->name)
                             : $record->name
                     )
                     ->required()
@@ -92,7 +92,15 @@ class ParticipationsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('customer.name')
                     ->label('Kunde')
-                    ->searchable()
+                    ->formatStateUsing(function ($record) {
+                        $customer = $record->customer;
+                        if (!$customer) return 'Kunde nicht gefunden';
+                        
+                        return $customer->customer_type === 'business'
+                            ? ($customer->company_name ?: $customer->name)
+                            : $customer->name;
+                    })
+                    ->searchable(['customer.name', 'customer.company_name'])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('customer.email')
                     ->label('E-Mail')

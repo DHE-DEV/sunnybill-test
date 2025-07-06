@@ -532,7 +532,7 @@ class DocumentUploadConfig
     public static function forClients($customer = null): self
     {
         return new self([
-            'pathType' => 'clients',
+            'pathType' => 'customers',
             'model' => $customer,
             'title' => 'Kunden-Dokumente',
             'sectionTitle' => 'Kunden-Dokumente',
@@ -672,6 +672,43 @@ class DocumentUploadConfig
                 'technical' => 'blue',
                 'legal' => 'purple',
                 'termination' => 'danger',
+                'other' => 'gray',
+            ],
+        ]);
+    }
+
+    /**
+     * Erstellt eine Konfiguration für Lieferanten-Abrechnungs-Dokumente
+     * Verwendet die DocumentPathSetting-Integration für SupplierContractBilling
+     * WICHTIG: Kategorie-Namen müssen mit DocumentPathSetting-Kategorien übereinstimmen!
+     */
+    public static function forSupplierContractBillings($supplierContractBilling = null): self
+    {
+        return new self([
+            'pathType' => 'supplier_contract_billings',
+            'model' => $supplierContractBilling,
+            'title' => 'Abrechnungs-Dokumente',
+            'sectionTitle' => 'Abrechnungs-Dokumente',
+            'preserveFilenames' => false,
+            'timestampFilenames' => true,
+            'categories' => [
+                'invoices' => 'Rechnung',           // Entspricht DocumentPathSetting 'invoices'
+                'credit_note' => 'Gutschrift',
+                'statement' => 'Abrechnung',
+                'correspondence' => 'Korrespondenz', // Entspricht DocumentPathSetting 'correspondence'
+                'technical' => 'Technische Unterlagen', // Entspricht DocumentPathSetting 'technical'
+                'certificates' => 'Nachweise',      // Entspricht DocumentPathSetting 'certificates'
+                'supporting_documents' => 'Belege',
+                'other' => 'Sonstiges',
+            ],
+            'categoryColors' => [
+                'invoices' => 'warning',
+                'credit_note' => 'info',
+                'statement' => 'success',
+                'correspondence' => 'green',
+                'technical' => 'blue',
+                'certificates' => 'purple',
+                'supporting_documents' => 'orange',
                 'other' => 'gray',
             ],
         ]);

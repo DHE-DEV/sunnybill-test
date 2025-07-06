@@ -151,6 +151,21 @@ class DocumentStorageService
             }
         }
         
+        // Auch ohne Model versuchen wir DocumentPathSetting für den Typ
+        if ($type === 'supplier_contract_billings' && !$model) {
+            // Fallback für SupplierContractBilling ohne Model
+            $pathSetting = \App\Models\DocumentPathSetting::getPathConfig('App\Models\SupplierContractBilling', $additionalData['category'] ?? null);
+            if ($pathSetting) {
+                // Verwende Dummy-Daten für Platzhalter wenn kein Model vorhanden
+                $dummyData = array_merge([
+                    'supplier_number' => 'SUPPLIER',
+                    'contract_number' => 'CONTRACT',
+                    'billing_period' => 'YYYY-MM',
+                ], $additionalData);
+                return $pathSetting->generatePath(null, $dummyData);
+            }
+        }
+        
         // Fallback auf StorageSetting
         $setting = StorageSetting::current();
         
@@ -171,6 +186,7 @@ class DocumentStorageService
             'suppliers' => 'supplier-documents',
             'contracts' => 'contract-documents',
             'supplier_contracts' => 'supplier-contract-documents',
+            'supplier_contract_billings' => 'supplier-contract-billing-documents',
             'solar_plants' => 'solar-plant-documents',
             'tasks' => 'task-documents',
             'general' => 'documents',
@@ -198,6 +214,78 @@ class DocumentStorageService
      */
     public static function previewPath(string $type, $model = null, array $additionalData = []): array
     {
+        // Zuerst versuchen wir DocumentPathSetting zu verwenden
+        if ($model) {
+            $documentableType = get_class($model);
+            $category = $additionalData['category'] ?? null;
+            
+            $pathSetting = \App\Models\DocumentPathSetting::getPathConfig($documentableType, $category);
+            if ($pathSetting) {
+                $resolvedPath = $pathSetting->generatePath($model, $additionalData);
+                $template = $pathSetting->path_template;
+                
+                // Verwendete Platzhalter ermitteln
+                $placeholdersUsed = [];
+                $availablePlaceholders = \App\Models\DocumentPathSetting::getAvailablePlaceholders($documentableType);
+                
+                foreach ($availablePlaceholders as $placeholder => $description) {
+                    if (strpos($template, '{' . $placeholder . '}') !== false) {
+                        $placeholdersUsed[$placeholder] = $description;
+                    }
+                }
+                
+                return [
+                    'resolved_path' => $resolvedPath,
+                    'template' => $template,
+                    'placeholders_used' => $placeholdersUsed,
+                    'is_fallback' => false,
+                    'path_config' => [
+                        'documentable_type' => $pathSetting->documentable_type,
+                        'category' => $pathSetting->category,
+                        'description' => $pathSetting->description,
+                    ]
+                ];
+            }
+        }
+        
+        // Auch ohne Model versuchen wir DocumentPathSetting für den Typ
+        if ($type === 'supplier_contract_billings') {
+            $pathSetting = \App\Models\DocumentPathSetting::getPathConfig('App\Models\SupplierContractBilling', $additionalData['category'] ?? null);
+            if ($pathSetting) {
+                $dummyData = array_merge([
+                    'supplier_number' => 'SUPPLIER',
+                    'contract_number' => 'CONTRACT',
+                    'billing_period' => 'YYYY-MM',
+                ], $additionalData);
+                
+                $resolvedPath = $pathSetting->generatePath(null, $dummyData);
+                $template = $pathSetting->path_template;
+                
+                // Verwendete Platzhalter ermitteln
+                $placeholdersUsed = [];
+                $availablePlaceholders = \App\Models\DocumentPathSetting::getAvailablePlaceholders('App\Models\SupplierContractBilling');
+                
+                foreach ($availablePlaceholders as $placeholder => $description) {
+                    if (strpos($template, '{' . $placeholder . '}') !== false) {
+                        $placeholdersUsed[$placeholder] = $description;
+                    }
+                }
+                
+                return [
+                    'resolved_path' => $resolvedPath,
+                    'template' => $template,
+                    'placeholders_used' => $placeholdersUsed,
+                    'is_fallback' => false,
+                    'path_config' => [
+                        'documentable_type' => $pathSetting->documentable_type,
+                        'category' => $pathSetting->category,
+                        'description' => $pathSetting->description,
+                    ]
+                ];
+            }
+        }
+        
+        // Fallback auf StorageSetting
         $setting = StorageSetting::current();
         
         if (!$setting) {

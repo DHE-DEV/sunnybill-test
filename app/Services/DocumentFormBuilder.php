@@ -85,18 +85,46 @@ class DocumentFormBuilder
     {
         // Bestimme Disk und Directory basierend auf Konfiguration
         $diskName = $this->config('diskName') ?? DocumentStorageService::getDiskName();
-        $directory = $this->getUploadDirectory();
         
         $field = Forms\Components\FileUpload::make('path')
             ->label($this->config('fileLabel', 'Datei'))
             ->required($this->config('required', true))
             ->disk($diskName)
-            ->directory($directory)
             ->maxSize($this->config('maxSize', 10240))
             ->acceptedFileTypes($this->config('acceptedFileTypes', ['application/pdf']))
             ->afterStateUpdated(function (Forms\Set $set, $state) {
                 $this->handleFileUpload($set, $state);
             });
+
+        // Dynamisches Directory basierend auf Kategorie-Auswahl
+        if ($this->config('pathType') && $this->config('model')) {
+            $field->directory(function (Forms\Get $get) {
+                $category = $get('category');
+                
+                // Wenn eine Kategorie ausgewählt ist, verwende kategorie-spezifischen Pfad
+                if ($category) {
+                    $pathType = $this->config('pathType');
+                    $model = $this->config('model');
+                    $additionalData = array_merge(
+                        $this->config('additionalData', []),
+                        ['category' => $category]
+                    );
+                    
+                    return DocumentStorageService::getUploadDirectoryForModel(
+                        $pathType,
+                        $model,
+                        $additionalData
+                    );
+                }
+                
+                // Fallback auf Standard-Pfad
+                return $this->getUploadDirectory();
+            });
+        } else {
+            // Statisches Directory für Rückwärtskompatibilität
+            $directory = $this->getUploadDirectory();
+            $field->directory($directory);
+        }
 
         // Optionale Konfigurationen
         if ($this->config('preserveFilenames', true)) {

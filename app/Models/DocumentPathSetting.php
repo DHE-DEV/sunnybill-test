@@ -40,6 +40,8 @@ class DocumentPathSetting extends Model
             'App\Models\Task' => 'Aufgabe',
             'App\Models\Invoice' => 'Rechnung',
             'App\Models\Supplier' => 'Lieferant',
+            'App\Models\SupplierContract' => 'Lieferantenvertrag',
+            'App\Models\SupplierContractBilling' => 'Lieferanten-Abrechnung',
         ];
     }
 
@@ -162,6 +164,66 @@ class DocumentPathSetting extends Model
             $replacements['{invoice_id}'] = $model->id ?? 'unknown';
         }
 
+        // SupplierContract-spezifische Platzhalter
+        if ($model instanceof \App\Models\SupplierContract) {
+            $replacements['{contract_number}'] = $this->sanitizeValue($model->contract_number ?? 'unknown');
+            $replacements['{contract_title}'] = $this->sanitizeValue($model->title ?? 'unknown');
+            $replacements['{contract_id}'] = $model->id ?? 'unknown';
+            $replacements['{contract_status}'] = $this->sanitizeValue($model->status ?? 'unknown');
+            
+            // Lieferanten-Informationen vom zugehörigen Lieferanten
+            if ($model->supplier) {
+                $replacements['{supplier_number}'] = $this->sanitizeValue($model->supplier->supplier_number ?? 'unknown');
+                $replacements['{supplier_name}'] = $this->sanitizeValue($model->supplier->company_name ?? 'unknown');
+                $replacements['{supplier_id}'] = $model->supplier->id ?? 'unknown';
+            }
+            
+            // Datum-basierte Platzhalter
+            if ($model->start_date) {
+                $replacements['{contract_start_year}'] = $model->start_date->format('Y');
+                $replacements['{contract_start_month}'] = $model->start_date->format('m');
+            }
+        }
+
+        // SupplierContractBilling-spezifische Platzhalter
+        if ($model instanceof \App\Models\SupplierContractBilling) {
+            $replacements['{billing_number}'] = $this->sanitizeValue($model->billing_number ?? 'unknown');
+            $replacements['{supplier_invoice_number}'] = $this->sanitizeValue($model->supplier_invoice_number ?? 'unknown');
+            $replacements['{billing_type}'] = $this->sanitizeValue($model->billing_type ?? 'unknown');
+            $replacements['{billing_year}'] = $this->sanitizeValue($model->billing_year ?? 'unknown');
+            $replacements['{billing_month}'] = $this->sanitizeValue($model->billing_month ?? 'unknown');
+            $replacements['{billing_status}'] = $this->sanitizeValue($model->status ?? 'unknown');
+            $replacements['{billing_id}'] = $model->id ?? 'unknown';
+            $replacements['{billing_title}'] = $this->sanitizeValue($model->title ?? 'unknown');
+            
+            // Vertrags- und Lieferanten-Informationen vom zugehörigen Vertrag
+            if ($model->supplierContract) {
+                $contract = $model->supplierContract;
+                $replacements['{contract_number}'] = $this->sanitizeValue($contract->contract_number ?? 'unknown');
+                $replacements['{contract_title}'] = $this->sanitizeValue($contract->title ?? 'unknown');
+                $replacements['{contract_id}'] = $contract->id ?? 'unknown';
+                
+                // Lieferanten-Informationen
+                if ($contract->supplier) {
+                    $replacements['{supplier_number}'] = $this->sanitizeValue($contract->supplier->supplier_number ?? 'unknown');
+                    $replacements['{supplier_name}'] = $this->sanitizeValue($contract->supplier->company_name ?? 'unknown');
+                    $replacements['{supplier_id}'] = $contract->supplier->id ?? 'unknown';
+                }
+            }
+            
+            // Datum-basierte Platzhalter
+            if ($model->billing_date) {
+                $replacements['{billing_date_year}'] = $model->billing_date->format('Y');
+                $replacements['{billing_date_month}'] = $model->billing_date->format('m');
+                $replacements['{billing_date_day}'] = $model->billing_date->format('d');
+            }
+            
+            // Formatierte Abrechnungsperiode
+            if ($model->billing_year && $model->billing_month) {
+                $replacements['{billing_period}'] = $this->sanitizeValue($model->billing_year . '-' . str_pad($model->billing_month, 2, '0', STR_PAD_LEFT));
+            }
+        }
+
         // Allgemeine Model-Platzhalter
         $replacements['{model_id}'] = $model->id ?? 'unknown';
         $replacements['{model_type}'] = class_basename($model);
@@ -266,6 +328,43 @@ class DocumentPathSetting extends Model
                     'invoice_id' => 'Rechnungs-ID',
                 ]);
                 break;
+
+            case 'App\Models\SupplierContract':
+                $placeholders = array_merge($placeholders, [
+                    'contract_number' => 'Vertragsnummer',
+                    'contract_title' => 'Vertragstitel',
+                    'contract_id' => 'Vertrags-ID',
+                    'contract_status' => 'Vertragsstatus',
+                    'supplier_number' => 'Lieferantennummer',
+                    'supplier_name' => 'Lieferantenname',
+                    'supplier_id' => 'Lieferanten-ID',
+                    'contract_start_year' => 'Vertragsbeginn Jahr',
+                    'contract_start_month' => 'Vertragsbeginn Monat',
+                ]);
+                break;
+
+            case 'App\Models\SupplierContractBilling':
+                $placeholders = array_merge($placeholders, [
+                    'billing_number' => 'Abrechnungsnummer',
+                    'supplier_invoice_number' => 'Lieferanten-Rechnungsnummer',
+                    'billing_type' => 'Abrechnungstyp',
+                    'billing_year' => 'Abrechnungsjahr',
+                    'billing_month' => 'Abrechnungsmonat',
+                    'billing_period' => 'Abrechnungsperiode (YYYY-MM)',
+                    'billing_status' => 'Abrechnungsstatus',
+                    'billing_id' => 'Abrechnungs-ID',
+                    'billing_title' => 'Abrechnungstitel',
+                    'billing_date_year' => 'Abrechnungsdatum Jahr',
+                    'billing_date_month' => 'Abrechnungsdatum Monat',
+                    'billing_date_day' => 'Abrechnungsdatum Tag',
+                    'contract_number' => 'Vertragsnummer (vom zugehörigen Vertrag)',
+                    'contract_title' => 'Vertragstitel (vom zugehörigen Vertrag)',
+                    'contract_id' => 'Vertrags-ID (vom zugehörigen Vertrag)',
+                    'supplier_number' => 'Lieferantennummer (vom zugehörigen Lieferanten)',
+                    'supplier_name' => 'Lieferantenname (vom zugehörigen Lieferanten)',
+                    'supplier_id' => 'Lieferanten-ID (vom zugehörigen Lieferanten)',
+                ]);
+                break;
         }
 
         return $placeholders;
@@ -318,6 +417,97 @@ class DocumentPathSetting extends Model
                 'path_template' => 'lieferanten/{supplier_number}/vertraege/{contract_internal_number}',
                 'description' => 'Pfad für Lieferanten-Verträge',
                 'placeholders' => ['supplier_number', 'supplier_name', 'supplier_id', 'contract_internal_number'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContract',
+                'category' => null,
+                'path_template' => 'vertraege/{supplier_number}/{contract_number}',
+                'description' => 'Standard-Pfad für Dokumente zu Vertragsdaten',
+                'placeholders' => ['contract_number', 'contract_title', 'contract_id', 'supplier_number', 'supplier_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContract',
+                'category' => 'contracts',
+                'path_template' => 'vertraege/{supplier_number}/{contract_number}/vertragsdokumente',
+                'description' => 'Pfad für Vertragsdokumente und Anhänge',
+                'placeholders' => ['contract_number', 'contract_title', 'contract_id', 'supplier_number', 'supplier_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContract',
+                'category' => 'correspondence',
+                'path_template' => 'vertraege/{supplier_number}/{contract_number}/korrespondenz',
+                'description' => 'Pfad für Korrespondenz zu Verträgen',
+                'placeholders' => ['contract_number', 'contract_title', 'contract_id', 'supplier_number', 'supplier_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContract',
+                'category' => 'invoices',
+                'path_template' => 'vertraege/{supplier_number}/{contract_number}/abrechnungen/{year}',
+                'description' => 'Pfad für Abrechnungen zu Verträgen',
+                'placeholders' => ['contract_number', 'contract_title', 'contract_id', 'supplier_number', 'supplier_name', 'year'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContractBilling',
+                'category' => null,
+                'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}',
+                'description' => 'Standard-Pfad für Lieferanten-Abrechnungsdokumente',
+                'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number', 'billing_year', 'billing_month'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContractBilling',
+                'category' => 'invoices',
+                'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}/rechnungen',
+                'description' => 'Pfad für Abrechnungs-Rechnungsdokumente',
+                'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number', 'supplier_invoice_number'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContractBilling',
+                'category' => 'correspondence',
+                'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}/korrespondenz',
+                'description' => 'Pfad für Korrespondenz zu Abrechnungen',
+                'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContractBilling',
+                'category' => 'technical',
+                'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}/unterlagen',
+                'description' => 'Pfad für technische Unterlagen zu Abrechnungen',
+                'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContractBilling',
+                'category' => 'certificates',
+                'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}/nachweise',
+                'description' => 'Pfad für Nachweise und Zertifikate zu Abrechnungen',
+                'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContractBilling',
+                'category' => 'credit_note',
+                'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}/gutschriften',
+                'description' => 'Pfad für Gutschriften zu Abrechnungen',
+                'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContractBilling',
+                'category' => 'statement',
+                'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}/abrechnungen',
+                'description' => 'Pfad für Abrechnungsunterlagen',
+                'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContractBilling',
+                'category' => 'supporting_documents',
+                'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}/belege',
+                'description' => 'Pfad für Belege zu Abrechnungen',
+                'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number'],
+            ],
+            [
+                'documentable_type' => 'App\Models\SupplierContractBilling',
+                'category' => 'other',
+                'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}/sonstiges',
+                'description' => 'Pfad für sonstige Dokumente zu Abrechnungen',
+                'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number'],
             ],
         ];
 

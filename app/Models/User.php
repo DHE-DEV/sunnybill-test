@@ -24,6 +24,12 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'role',
+        'is_active',
+        'last_login_at',
+        'phone',
+        'department',
+        'notes',
     ];
 
     /**
@@ -46,7 +52,78 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
+            'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Get available user roles
+     */
+    public static function getRoles(): array
+    {
+        return [
+            'admin' => 'Administrator',
+            'manager' => 'Manager',
+            'user' => 'Benutzer',
+            'viewer' => 'Betrachter',
+        ];
+    }
+
+    /**
+     * Get role label
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        return self::getRoles()[$this->role] ?? 'Unbekannt';
+    }
+
+    /**
+     * Check if user has specific role
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
+    /**
+     * Check if user is manager or admin
+     */
+    public function isManagerOrAdmin(): bool
+    {
+        return in_array($this->role, ['admin', 'manager']);
+    }
+
+    /**
+     * Scope for active users
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope for inactive users
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
+
+    /**
+     * Update last login timestamp
+     */
+    public function updateLastLogin(): void
+    {
+        $this->update(['last_login_at' => now()]);
     }
 
     /**

@@ -22,6 +22,12 @@ class DocumentsRelationManager extends RelationManager
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
+    public static function getBadge(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): ?string
+    {
+        $count = $ownerRecord->documents()->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
     /**
      * Konfiguration für Solaranlagen-Dokumente mit dynamischen Pfaden
      */
