@@ -428,9 +428,10 @@ class UserResource extends Resource
                         ->action(function ($record) {
                             $record->markEmailAsVerified();
                             
-                            // Sende Account-Aktivierungs-E-Mail
+                            // Sende Account-Aktivierungs-E-Mail mit temporärem Passwort
                             try {
-                                $record->notify(new \App\Notifications\AccountActivatedNotification());
+                                $temporaryPassword = $record->getTemporaryPasswordForEmail();
+                                $record->notify(new \App\Notifications\AccountActivatedNotification($temporaryPassword));
                                 
                                 Notification::make()
                                     ->title('E-Mail als verifiziert markiert')
@@ -456,7 +457,8 @@ class UserResource extends Resource
                         ->modalDescription(fn ($record) => "Möchten Sie eine Account-Aktivierungs-E-Mail an {$record->email} senden?")
                         ->action(function ($record) {
                             try {
-                                $record->notify(new \App\Notifications\AccountActivatedNotification());
+                                $temporaryPassword = $record->getTemporaryPasswordForEmail();
+                                $record->notify(new \App\Notifications\AccountActivatedNotification($temporaryPassword));
                                 
                                 Notification::make()
                                     ->title('Account-Aktivierungs-E-Mail gesendet')

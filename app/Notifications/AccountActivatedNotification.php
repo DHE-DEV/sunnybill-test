@@ -12,12 +12,14 @@ class AccountActivatedNotification extends Notification
 {
     use Queueable;
 
+    protected ?string $temporaryPassword;
+
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(?string $temporaryPassword = null)
     {
-        //
+        $this->temporaryPassword = $temporaryPassword;
     }
 
     /**
@@ -45,14 +47,25 @@ class AccountActivatedNotification extends Notification
             $portalName = config('app.name', 'SunnyBill');
         }
 
-        return (new MailMessage)
+        // Lade das temporäre Passwort aus der tmp_p Spalte oder verwende das übergebene
+        $temporaryPassword = $this->temporaryPassword ?? $notifiable->temporary_password ?? $notifiable->getTemporaryPasswordForEmail();
+        
+        $mailMessage = (new MailMessage)
             ->subject('Ihr Account wurde aktiviert - ' . $portalName)
             ->greeting('Hallo ' . $notifiable->name . '!')
             ->line('Herzlichen Glückwunsch! Ihr Account bei ' . $portalName . ' wurde erfolgreich aktiviert.')
             ->line('Ihre E-Mail-Adresse wurde bestätigt und Sie können sich nun in Ihr Konto einloggen.')
             ->line('**Ihre Anmeldedaten:**')
-            ->line('E-Mail: ' . $notifiable->email)
-            ->line('Passwort: Das temporäre Passwort aus der ersten E-Mail')
+            ->line('E-Mail: ' . $notifiable->email);
+
+        // Füge das temporäre Passwort hinzu, falls verfügbar
+        if ($temporaryPassword) {
+            $mailMessage->line('Temporäres Passwort: **' . $temporaryPassword . '**');
+        } else {
+            $mailMessage->line('Passwort: Das temporäre Passwort aus der ersten E-Mail');
+        }
+
+        return $mailMessage
             ->action('Jetzt anmelden', $portalUrl)
             ->line('⚠️ **Wichtiger Hinweis:** Bei Ihrer ersten Anmeldung müssen Sie aus Sicherheitsgründen ein neues Passwort festlegen.')
             ->line('Portal-URL: ' . $portalUrl)
