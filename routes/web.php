@@ -21,16 +21,28 @@ Route::get('/email/verify', function () {
     return view('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
 
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $user = $request->user();
+Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
+    // Finde den Benutzer basierend auf der ID
+    $user = \App\Models\User::findOrFail($id);
+    
+    // Prüfe die Signatur
+    if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        abort(403, 'Invalid verification link.');
+    }
+    
+    // Prüfe ob der Link noch gültig ist
+    if (! $request->hasValidSignature()) {
+        abort(403, 'Verification link expired.');
+    }
     
     // Prüfe ob E-Mail bereits verifiziert ist
     $wasAlreadyVerified = $user->hasVerifiedEmail();
     
-    $request->fulfill();
-    
-    // Sende Account-Aktivierungs-E-Mail nur wenn E-Mail vorher nicht verifiziert war
-    if (!$wasAlreadyVerified) {
+    // Markiere E-Mail als verifiziert
+    if (! $wasAlreadyVerified) {
+        $user->markEmailAsVerified();
+        
+        // Sende Account-Aktivierungs-E-Mail
         try {
             $user->notify(new \App\Notifications\AccountActivatedNotification());
         } catch (\Exception $e) {
@@ -39,8 +51,8 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
         }
     }
     
-    return redirect('/admin')->with('status', 'E-Mail-Adresse erfolgreich bestätigt! Sie haben eine Bestätigungs-E-Mail erhalten.');
-})->middleware(['auth', 'signed'])->name('verification.verify');
+    return redirect('/admin/login')->with('status', 'E-Mail-Adresse erfolgreich bestätigt! Sie können sich jetzt anmelden.');
+})->middleware(['signed'])->name('verification.verify');
 
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
