@@ -258,7 +258,7 @@
                 padding: 3rem 2rem;
                 border-radius: 20px;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-                text-align: left;
+                text-align: center;
                 transition: all 0.4s ease;
                 border: 1px solid rgba(0, 0, 0, 0.05);
                 position: relative;
@@ -290,6 +290,7 @@
                 font-size: 3.5rem;
                 margin-bottom: 1.5rem;
                 display: block;
+                color: #f53003;
             }
 
             .feature-title {
