@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>VoltMaster - Solarenergie Management</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/three-globe@2.27.3/dist/three-globe.min.js"></script>
         <style>
@@ -1118,7 +1119,7 @@
                 
                 <div class="features-grid">
                     <div class="feature-card scroll-animate">
-                        <span class="feature-icon">🏢</span>
+                        <i class="feature-icon fas fa-users"></i>
                         <h3 class="feature-title">Stakeholder-Management</h3>
                         <p class="feature-description">
                             Zentrale Verwaltung von Kunden, Lieferanten und Dienstleistern. 
@@ -1127,7 +1128,7 @@
                     </div>
                     
                     <div class="feature-card scroll-animate">
-                        <span class="feature-icon">🤖</span>
+                        <i class="feature-icon fas fa-brain"></i>
                         <h3 class="feature-title">KI-gestützte Abrechnung</h3>
                         <p class="feature-description">
                             Automatische Kostenaufteilung und Positionsgenerierung durch KI. 
@@ -1136,7 +1137,7 @@
                     </div>
                     
                     <div class="feature-card scroll-animate">
-                        <span class="feature-icon">⚖️</span>
+                        <i class="feature-icon fas fa-chart-pie"></i>
                         <h3 class="feature-title">Beteiligungsmanagement</h3>
                         <p class="feature-description">
                             Verwaltung von Firmen- und Privatkundenbeteiligungen an Solaranlagen. 
@@ -1145,7 +1146,7 @@
                     </div>
                     
                     <div class="feature-card scroll-animate">
-                        <span class="feature-icon">📋</span>
+                        <i class="feature-icon fas fa-folder-open"></i>
                         <h3 class="feature-title">Aufgaben & Dokumente</h3>
                         <p class="feature-description">
                             Integriertes Aufgabenmanagement mit umfassender Dokumentenverwaltung. 
@@ -1154,7 +1155,7 @@
                     </div>
                     
                     <div class="feature-card scroll-animate">
-                        <span class="feature-icon">💳</span>
+                        <i class="feature-icon fas fa-file-invoice-dollar"></i>
                         <h3 class="feature-title">Rechnungswesen</h3>
                         <p class="feature-description">
                             Vollständiges Rechnungsmanagement mit Gutschriften und ZUGFeRD-Integration. 
@@ -1163,7 +1164,7 @@
                     </div>
                     
                     <div class="feature-card scroll-animate">
-                        <span class="feature-icon">⚡</span>
+                        <i class="feature-icon fas fa-solar-panel"></i>
                         <h3 class="feature-title">Anlagenverwaltung</h3>
                         <p class="feature-description">
                             Komplette Solaranlagen-Administration mit Leistungsüberwachung. 
