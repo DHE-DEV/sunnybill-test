@@ -519,6 +519,151 @@
                 font-size: 1.2rem;
             }
 
+            /* Lexware Integration Section */
+            .lexware-integration {
+                padding: 6rem 2rem;
+                background: linear-gradient(rgba(226, 232, 240, 0.9), rgba(248, 250, 252, 0.9));
+                position: relative;
+            }
+
+            .lexware-content {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+                position: relative;
+                z-index: 2;
+            }
+
+            .lexware-visual {
+                position: relative;
+                height: 500px;
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 20px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+                padding: 2rem;
+            }
+
+            .integration-showcase {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                margin-bottom: 3rem;
+            }
+
+            .voltmaster-logo, .lexware-logo {
+                text-align: center;
+                padding: 1.5rem;
+                background: linear-gradient(135deg, #f53003, #ff6b35);
+                border-radius: 15px;
+                color: white;
+                box-shadow: 0 10px 30px rgba(245, 48, 3, 0.3);
+                min-width: 120px;
+            }
+
+            .lexware-logo {
+                background: linear-gradient(135deg, #0066cc, #004499);
+                box-shadow: 0 10px 30px rgba(0, 102, 204, 0.3);
+            }
+
+            .voltmaster-logo h3, .lexware-logo h3 {
+                font-size: 1.2rem;
+                font-weight: 700;
+                margin: 0;
+            }
+
+            .lexware-logo p {
+                font-size: 0.9rem;
+                margin: 0.2rem 0 0 0;
+                opacity: 0.9;
+            }
+
+            .sync-arrow {
+                font-size: 2rem;
+                color: #00ba88;
+                animation: rotate 2s linear infinite;
+            }
+
+            @keyframes rotate {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+
+            .data-flow {
+                display: flex;
+                justify-content: space-around;
+                width: 100%;
+                gap: 1rem;
+            }
+
+            .data-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 1rem;
+                background: rgba(245, 48, 3, 0.1);
+                border-radius: 10px;
+                border: 1px solid rgba(245, 48, 3, 0.2);
+                min-width: 80px;
+            }
+
+            .data-item i {
+                font-size: 1.5rem;
+                color: #f53003;
+                margin-bottom: 0.5rem;
+            }
+
+            .data-item span {
+                font-size: 0.8rem;
+                font-weight: 600;
+                color: #1a202c;
+                text-align: center;
+            }
+
+            .lexware-text h2 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 1.5rem;
+                line-height: 1.2;
+                color: #1a202c;
+            }
+
+            .lexware-text p {
+                font-size: 1.1rem;
+                margin-bottom: 2rem;
+                color: #4a5568;
+                line-height: 1.7;
+            }
+
+            .lexware-features {
+                list-style: none;
+                margin-bottom: 2rem;
+            }
+
+            .lexware-features li {
+                padding: 0.5rem 0;
+                display: flex;
+                align-items: center;
+                font-size: 1rem;
+                color: #4a5568;
+            }
+
+            .lexware-features li::before {
+                content: '✓';
+                color: #00ba88;
+                font-weight: bold;
+                margin-right: 1rem;
+                font-size: 1.2rem;
+            }
+
             /* Product Showcase Section */
             .product-showcase {
                 padding: 8rem 2rem;
@@ -1205,6 +1350,61 @@
                         <div class="dashboard-screenshot">
                             <img src="https://raw.githubusercontent.com/DHE-DEV/sunnybill-test/main/storage/app/public/customers/beteiligung_2.png" alt="Beteiligungsmanagement Screenshot">
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lexware Integration Section -->
+        <section class="lexware-integration">
+            <div class="container">
+                <div class="lexware-content">
+                    <div class="lexware-visual">
+                        <div class="integration-showcase">
+                            <div class="voltmaster-logo">
+                                <h3>VoltMaster</h3>
+                            </div>
+                            <div class="sync-arrow">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="lexware-logo">
+                                <h3>Lexware</h3>
+                                <p>Office</p>
+                            </div>
+                        </div>
+                        <div class="data-flow">
+                            <div class="data-item">
+                                <i class="fas fa-users"></i>
+                                <span>Kunden</span>
+                            </div>
+                            <div class="data-item">
+                                <i class="fas fa-building"></i>
+                                <span>Lieferanten</span>
+                            </div>
+                            <div class="data-item">
+                                <i class="fas fa-file-invoice"></i>
+                                <span>Rechnungen</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lexware-text">
+                        <h2>Nahtlose Lexware Office Integration</h2>
+                        <p>
+                            Automatisieren Sie Ihren Workflow mit der direkten Integration zu Lexware Office. 
+                            Exportieren Sie automatisch alle Stammdaten und Rechnungen ohne manuellen Aufwand 
+                            und sparen Sie wertvolle Zeit bei der Buchhaltung.
+                        </p>
+                        <ul class="lexware-features">
+                            <li>Automatischer Export von Privat- und Firmenkunden</li>
+                            <li>Nahtlose Übertragung von Lieferanten und Dienstleistern</li>
+                            <li>Direkte Rechnungsübermittlung an Lexware Office</li>
+                            <li>Bidirektionale Synchronisation der Stammdaten</li>
+                            <li>Echtzeit-Datenabgleich für konsistente Buchhaltung</li>
+                            <li>Automatische Kategorisierung nach Lexware-Standards</li>
+                        </ul>
+                        <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
+                            Integration konfigurieren
+                        </a>
                     </div>
                 </div>
             </div>
