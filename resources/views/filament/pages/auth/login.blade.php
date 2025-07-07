@@ -16,14 +16,13 @@
 
         /* VoltMaster Logo Styling */
         .fi-simple-header h1 {
-            background: linear-gradient(135deg, #ffd700, #ffed4e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 700;
-            font-size: 2.5rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            margin-bottom: 0.5rem;
+            color: #ffd700 !important;
+            font-weight: 800 !important;
+            font-size: 3rem !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255, 215, 0, 0.3) !important;
+            margin-bottom: 0.5rem !important;
+            letter-spacing: 1px !important;
+            text-align: center !important;
         }
 
         /* Subheading Styling */
