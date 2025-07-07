@@ -1049,62 +1049,6 @@
                 <p class="section-subtitle scroll-animate">
                     VoltMaster kombiniert bewährte Technologien mit innovativen KI-Algorithmen für maximale Effizienz
                 </p>
-                
-                <div class="tech-grid">
-                    <div class="tech-card scroll-animate">
-                        <div class="tech-icon">🔒</div>
-                        <h3>Enterprise Security</h3>
-                        <p>
-                            Bank-Level Verschlüsselung und mehrstufige Authentifizierung schützen Ihre sensiblen Daten. 
-                            DSGVO-konforme Datenhaltung in deutschen Rechenzentren.
-                        </p>
-                    </div>
-                    
-                    <div class="tech-card scroll-animate">
-                        <div class="tech-icon">⚡</div>
-                        <h3>High Performance</h3>
-                        <p>
-                            Cloud-native Architektur mit automatischer Skalierung. 99.9% Verfügbarkeit und 
-                            Antwortzeiten unter 200ms für optimale Benutzererfahrung.
-                        </p>
-                    </div>
-                    
-                    <div class="tech-card scroll-animate">
-                        <div class="tech-icon">🔄</div>
-                        <h3>Nahtlose Integration</h3>
-                        <p>
-                            REST-APIs und Webhooks für einfache Integration in bestehende Systeme. 
-                            Unterstützung für SAP, Lexoffice, DATEV und weitere ERP-Systeme.
-                        </p>
-                    </div>
-                    
-                    <div class="tech-card scroll-animate">
-                        <div class="tech-icon">📊</div>
-                        <h3>Real-time Analytics</h3>
-                        <p>
-                            Live-Dashboards mit Machine Learning-basierten Vorhersagen. 
-                            Automatische Anomalie-Erkennung und proaktive Wartungsempfehlungen.
-                        </p>
-                    </div>
-                    
-                    <div class="tech-card scroll-animate">
-                        <div class="tech-icon">🌍</div>
-                        <h3>Global verfügbar</h3>
-                        <p>
-                            Multi-Region Deployment mit lokaler Datenhaltung. 
-                            24/7 Support in deutscher Sprache und weltweite Verfügbarkeit.
-                        </p>
-                    </div>
-                    
-                    <div class="tech-card scroll-animate">
-                        <div class="tech-icon">🚀</div>
-                        <h3>Continuous Innovation</h3>
-                        <p>
-                            Regelmäßige Updates mit neuen Features. KI-Modelle werden kontinuierlich 
-                            mit Ihren Daten trainiert für bessere Vorhersagen.
-                        </p>
-                    </div>
-                </div>
             </div>
         </section>
 
