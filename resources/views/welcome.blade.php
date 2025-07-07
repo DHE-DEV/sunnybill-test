@@ -1817,25 +1817,25 @@
                     .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
                     .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
                     .arcsData([
-                        // Nordamerika - 3 interne Verbindungen
-                        { startLat: 40.7128, startLng: -74.0060, endLat: 34.0522, endLng: -118.2437, color: '#1e90ff', stroke: 0.8 }, // NY -> LA (Dodger Blue)
-                        { startLat: 41.8781, startLng: -87.6298, endLat: 47.6062, endLng: -122.3321, color: '#ffd700', stroke: 0.9 }, // Chicago -> Seattle (Gold)
-                        { startLat: 25.7617, startLng: -80.1918, endLat: 32.7767, endLng: -96.7970, color: '#4169e1', stroke: 0.7 }, // Miami -> Dallas (Royal Blue)
+                        // Nordamerika - 3 interne Verbindungen (50% transparent)
+                        { startLat: 40.7128, startLng: -74.0060, endLat: 34.0522, endLng: -118.2437, color: 'rgba(30, 144, 255, 0.5)', stroke: 0.8 }, // NY -> LA (Dodger Blue)
+                        { startLat: 41.8781, startLng: -87.6298, endLat: 47.6062, endLng: -122.3321, color: 'rgba(255, 215, 0, 0.5)', stroke: 0.9 }, // Chicago -> Seattle (Gold)
+                        { startLat: 25.7617, startLng: -80.1918, endLat: 32.7767, endLng: -96.7970, color: 'rgba(65, 105, 225, 0.5)', stroke: 0.7 }, // Miami -> Dallas (Royal Blue)
                         
-                        // Europa - 3 interne Verbindungen
-                        { startLat: 51.5074, startLng: -0.1278, endLat: 48.8566, endLng: 2.3522, color: '#fff700', stroke: 0.85 }, // London -> Paris (Bright Yellow)
-                        { startLat: 52.5200, startLng: 13.4050, endLat: 41.9028, endLng: 12.4964, color: '#87ceeb', stroke: 0.75 }, // Berlin -> Rome (Sky Blue)
-                        { startLat: 40.4168, startLng: -3.7038, endLat: 55.6761, endLng: 12.5683, color: '#0080ff', stroke: 0.9 }, // Madrid -> Copenhagen (Bright Blue)
+                        // Europa - 3 interne Verbindungen (50% transparent)
+                        { startLat: 51.5074, startLng: -0.1278, endLat: 48.8566, endLng: 2.3522, color: 'rgba(255, 247, 0, 0.5)', stroke: 0.85 }, // London -> Paris (Bright Yellow)
+                        { startLat: 52.5200, startLng: 13.4050, endLat: 41.9028, endLng: 12.4964, color: 'rgba(135, 206, 235, 0.5)', stroke: 0.75 }, // Berlin -> Rome (Sky Blue)
+                        { startLat: 40.4168, startLng: -3.7038, endLat: 55.6761, endLng: 12.5683, color: 'rgba(0, 128, 255, 0.5)', stroke: 0.9 }, // Madrid -> Copenhagen (Bright Blue)
                         
-                        // Asien - 3 interne Verbindungen
-                        { startLat: 35.6895, startLng: 139.6917, endLat: 37.5665, endLng: 126.9780, color: '#6495ed', stroke: 0.8 }, // Tokyo -> Seoul (Cornflower Blue)
-                        { startLat: 31.2304, startLng: 121.4737, endLat: 39.9042, endLng: 116.4074, color: '#ffeb3b', stroke: 0.85 }, // Shanghai -> Beijing (Light Yellow)
-                        { startLat: 1.3521, startLng: 103.8198, endLat: 13.7563, endLng: 100.5018, color: '#0066cc', stroke: 0.7 }, // Singapur -> Bangkok (Deep Blue)
+                        // Asien - 3 interne Verbindungen (50% transparent)
+                        { startLat: 35.6895, startLng: 139.6917, endLat: 37.5665, endLng: 126.9780, color: 'rgba(100, 149, 237, 0.5)', stroke: 0.8 }, // Tokyo -> Seoul (Cornflower Blue)
+                        { startLat: 31.2304, startLng: 121.4737, endLat: 39.9042, endLng: 116.4074, color: 'rgba(255, 235, 59, 0.5)', stroke: 0.85 }, // Shanghai -> Beijing (Light Yellow)
+                        { startLat: 1.3521, startLng: 103.8198, endLat: 13.7563, endLng: 100.5018, color: 'rgba(0, 102, 204, 0.5)', stroke: 0.7 }, // Singapur -> Bangkok (Deep Blue)
                         
-                        // Südamerika - 3 interne Verbindungen
-                        { startLat: -23.5505, startLng: -46.6333, endLat: -34.6037, endLng: -58.3816, color: '#ffd700', stroke: 0.9 }, // São Paulo -> Buenos Aires (Gold)
-                        { startLat: -12.0464, startLng: -77.0428, endLat: 4.7110, endLng: -74.0721, color: '#f0e68c', stroke: 0.75 }, // Lima -> Bogotá (Khaki)
-                        { startLat: -22.9068, startLng: -43.1729, endLat: -15.7942, endLng: -47.8822, color: '#4682b4', stroke: 0.8 }, // Rio -> Brasília (Steel Blue)
+                        // Südamerika - 3 interne Verbindungen (50% transparent)
+                        { startLat: -23.5505, startLng: -46.6333, endLat: -34.6037, endLng: -58.3816, color: 'rgba(255, 215, 0, 0.5)', stroke: 0.9 }, // São Paulo -> Buenos Aires (Gold)
+                        { startLat: -12.0464, startLng: -77.0428, endLat: 4.7110, endLng: -74.0721, color: 'rgba(240, 230, 140, 0.5)', stroke: 0.75 }, // Lima -> Bogotá (Khaki)
+                        { startLat: -22.9068, startLng: -43.1729, endLat: -15.7942, endLng: -47.8822, color: 'rgba(70, 130, 180, 0.5)', stroke: 0.8 }, // Rio -> Brasília (Steel Blue)
                     ])
                     .arcColor('color')
                     .arcAltitude((d) => Math.random() * 0.4 + 0.2) // Variable Höhen wie bei Stripe
