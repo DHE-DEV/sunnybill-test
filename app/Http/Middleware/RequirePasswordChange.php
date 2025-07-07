@@ -17,8 +17,8 @@ class RequirePasswordChange
     {
         $user = $request->user();
         
-        // Prüfe ob Benutzer angemeldet ist und Passwort-Wechsel erforderlich ist
-        if ($user && $user->needsPasswordChange()) {
+        // Prüfe ob Benutzer angemeldet ist und Passwort-Wechsel erforderlich ist oder temporäres Passwort hat
+        if ($user && ($user->needsPasswordChange() || $user->hasTemporaryPassword())) {
             // Erlaube Zugriff auf Passwort-Wechsel-Routen und Logout
             $allowedRoutes = [
                 'filament.admin.auth.password-reset.request',
@@ -26,6 +26,8 @@ class RequirePasswordChange
                 'filament.admin.auth.logout',
                 'password.change',
                 'password.update',
+                'password.change.temporary',
+                'password.update.temporary',
                 'logout',
             ];
             
@@ -38,8 +40,12 @@ class RequirePasswordChange
             
             // Wenn nicht auf erlaubter Route, leite zur Passwort-Änderung weiter
             if (!in_array($currentRoute, $allowedRoutes) && !str_contains($currentRoute ?? '', 'password')) {
+                $message = $user->hasTemporaryPassword() 
+                    ? 'Sie müssen Ihr temporäres Passwort ändern, bevor Sie fortfahren können.'
+                    : 'Sie müssen Ihr Passwort ändern, bevor Sie fortfahren können.';
+                    
                 return redirect()->route('password.change')
-                    ->with('warning', 'Sie müssen Ihr Passwort ändern, bevor Sie fortfahren können.');
+                    ->with('warning', $message);
             }
         }
         

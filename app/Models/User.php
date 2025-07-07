@@ -197,6 +197,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         $this->password_change_required = false;
         $this->password_changed_at = now();
         $this->temporary_password = null; // Lösche temporäres Passwort
+        $this->tmp_p = null; // Lösche auch die neue Spalte
         $this->save();
     }
 

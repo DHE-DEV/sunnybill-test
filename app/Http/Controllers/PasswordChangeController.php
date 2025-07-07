@@ -4,45 +4,133 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 
 class PasswordChangeController extends Controller
 {
     /**
-     * Show the password change form.
+     * Show the password change form
      */
-    public function show()
+    public function show(Request $request)
     {
-        return view('auth.change-password');
+        $user = Auth::user();
+        
+        // Prüfe ob der Benutzer ein temporäres Passwort hat oder eine Passwort-Änderung erforderlich ist
+        if (!$user->needsPasswordChange() && !$user->hasTemporaryPassword()) {
+            return redirect('/admin')->with('message', 'Keine Passwort-Änderung erforderlich.');
+        }
+
+        return view('auth.change-password', [
+            'user' => $user,
+            'hasTemporaryPassword' => $user->hasTemporaryPassword(),
+            'temporaryPassword' => $user->getTemporaryPasswordForEmail()
+        ]);
     }
 
     /**
-     * Handle the password change request.
+     * Update the user's password
      */
     public function update(Request $request)
     {
-        $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-        ], [
-            'current_password.required' => 'Das aktuelle Passwort ist erforderlich.',
-            'current_password.current_password' => 'Das aktuelle Passwort ist nicht korrekt.',
-            'password.required' => 'Das neue Passwort ist erforderlich.',
-            'password.confirmed' => 'Die Passwort-Bestätigung stimmt nicht überein.',
-            'password.min' => 'Das Passwort muss mindestens :min Zeichen lang sein.',
-        ]);
-
-        $user = $request->user();
+        $user = Auth::user();
         
-        // Update password
+        $rules = [
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ];
+
+        // Wenn der Benutzer ein temporäres Passwort hat, muss er es eingeben
+        if ($user->hasTemporaryPassword()) {
+            $rules['current_password'] = ['required'];
+        }
+
+        $request->validate($rules);
+
+        // Prüfe das aktuelle/temporäre Passwort
+        if ($user->hasTemporaryPassword()) {
+            if ($request->current_password !== $user->getTemporaryPasswordForEmail()) {
+                return back()->withErrors([
+                    'current_password' => 'Das eingegebene temporäre Passwort ist nicht korrekt.'
+                ]);
+            }
+        }
+
+        // Aktualisiere das Passwort
         $user->update([
             'password' => Hash::make($request->password),
         ]);
-        
-        // Mark password as changed
+
+        // Markiere Passwort als geändert und lösche temporäres Passwort
         $user->markPasswordAsChanged();
 
-        return redirect()->route('filament.admin.pages.dashboard')
-            ->with('success', 'Ihr Passwort wurde erfolgreich geändert.');
+        return redirect('/admin')->with('status', 'Passwort erfolgreich geändert! Sie können sich jetzt normal anmelden.');
+    }
+
+    /**
+     * Show password change form for users with temporary passwords (without authentication)
+     */
+    public function showForTemporaryPassword(Request $request, $userId, $token)
+    {
+        // Finde den Benutzer
+        $user = \App\Models\User::findOrFail($userId);
+        
+        // Prüfe ob der Token gültig ist (einfache Implementierung)
+        $expectedToken = hash('sha256', $user->id . $user->email . $user->created_at);
+        
+        if (!hash_equals($token, $expectedToken)) {
+            abort(403, 'Ungültiger Token.');
+        }
+
+        // Prüfe ob der Benutzer ein temporäres Passwort hat
+        if (!$user->hasTemporaryPassword()) {
+            return redirect('/admin/login')->with('message', 'Keine Passwort-Änderung erforderlich.');
+        }
+
+        return view('auth.change-password-temporary', [
+            'user' => $user,
+            'token' => $token,
+            'temporaryPassword' => $user->getTemporaryPasswordForEmail()
+        ]);
+    }
+
+    /**
+     * Update password for users with temporary passwords (without authentication)
+     */
+    public function updateTemporaryPassword(Request $request, $userId, $token)
+    {
+        // Finde den Benutzer
+        $user = \App\Models\User::findOrFail($userId);
+        
+        // Prüfe ob der Token gültig ist
+        $expectedToken = hash('sha256', $user->id . $user->email . $user->created_at);
+        
+        if (!hash_equals($token, $expectedToken)) {
+            abort(403, 'Ungültiger Token.');
+        }
+
+        $request->validate([
+            'current_password' => ['required'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        // Prüfe das temporäre Passwort
+        if ($request->current_password !== $user->getTemporaryPasswordForEmail()) {
+            return back()->withErrors([
+                'current_password' => 'Das eingegebene temporäre Passwort ist nicht korrekt.'
+            ]);
+        }
+
+        // Aktualisiere das Passwort
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        // Markiere Passwort als geändert und lösche temporäres Passwort
+        $user->markPasswordAsChanged();
+
+        // Logge den Benutzer automatisch ein
+        Auth::login($user);
+
+        return redirect('/admin')->with('status', 'Passwort erfolgreich geändert! Sie sind jetzt angemeldet.');
     }
 }

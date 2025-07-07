@@ -61,14 +61,22 @@ class AccountActivatedNotification extends Notification
         // Füge das temporäre Passwort hinzu, falls verfügbar
         if ($temporaryPassword) {
             $mailMessage->line('Temporäres Passwort: **' . $temporaryPassword . '**');
+            
+            // Erstelle einen sicheren Token für die direkte Passwort-Änderung
+            $token = hash('sha256', $notifiable->id . $notifiable->email . $notifiable->created_at);
+            $passwordChangeUrl = url('/password/change/' . $notifiable->id . '/' . $token);
+            
+            $mailMessage
+                ->line('⚠️ **Wichtiger Hinweis:** Sie müssen Ihr temporäres Passwort aus Sicherheitsgründen ändern.')
+                ->action('Passwort jetzt ändern', $passwordChangeUrl)
+                ->line('Alternativ können Sie sich auch direkt anmelden und werden zur Passwort-Änderung weitergeleitet:')
+                ->line('Portal-URL: ' . $portalUrl);
         } else {
             $mailMessage->line('Passwort: Das temporäre Passwort aus der ersten E-Mail');
+            $mailMessage->action('Jetzt anmelden', $portalUrl);
         }
 
         return $mailMessage
-            ->action('Jetzt anmelden', $portalUrl)
-            ->line('⚠️ **Wichtiger Hinweis:** Bei Ihrer ersten Anmeldung müssen Sie aus Sicherheitsgründen ein neues Passwort festlegen.')
-            ->line('Portal-URL: ' . $portalUrl)
             ->line('Falls Sie Ihr temporäres Passwort vergessen haben, wenden Sie sich bitte an Ihren Administrator.')
             ->line('Bei Fragen oder Problemen wenden Sie sich bitte an Ihren Administrator.')
             ->salutation('Mit freundlichen Grüßen,')

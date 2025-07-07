@@ -51,6 +51,17 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
         }
     }
     
+    // Prüfe ob der Benutzer ein temporäres Passwort hat
+    if ($user->hasTemporaryPassword()) {
+        // Generiere einen sicheren Token für die Passwort-Änderung
+        $token = hash('sha256', $user->id . $user->email . $user->created_at);
+        
+        return redirect()->route('password.change.temporary', [
+            'userId' => $user->id,
+            'token' => $token
+        ])->with('status', 'E-Mail-Adresse erfolgreich bestätigt! Bitte ändern Sie jetzt Ihr temporäres Passwort.');
+    }
+    
     return redirect('/admin/login')->with('status', 'E-Mail-Adresse erfolgreich bestätigt! Sie können sich jetzt anmelden.');
 })->middleware(['signed'])->name('verification.verify');
 
@@ -67,6 +78,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/password/change', [App\Http\Controllers\PasswordChangeController::class, 'update'])
         ->name('password.update');
 });
+
+// Password Change Routes for Temporary Passwords (without authentication)
+Route::get('/password/change/{userId}/{token}', [App\Http\Controllers\PasswordChangeController::class, 'showForTemporaryPassword'])
+    ->name('password.change.temporary');
+Route::post('/password/change/{userId}/{token}', [App\Http\Controllers\PasswordChangeController::class, 'updateTemporaryPassword'])
+    ->name('password.update.temporary');
 
 // Document download route
 Route::get('/documents/{document}/download', function (Document $document) {
