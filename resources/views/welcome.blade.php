@@ -1838,7 +1838,7 @@
                         { startLat: -22.9068, startLng: -43.1729, endLat: -15.7942, endLng: -47.8822, color: 'rgba(70, 130, 180, 0.5)', stroke: 0.8 }, // Rio -> Brasília (Steel Blue)
                     ])
                     .arcColor('color')
-                    .arcAltitude((d) => Math.random() * 0.4 + 0.2) // Variable Höhen wie bei Stripe
+                    .arcAltitude((d) => Math.random() * 0.2 + 0.1) // 50% niedrigere Arcs
                     .arcStroke((d) => d.stroke || 0.5) // Variable Strichstärken
                     .arcDashLength(0.8) // Längere Dash-Segmente für fließendere Linien
                     .arcDashGap(0.2) // Kleinere Gaps für kontinuierlichere Linien
