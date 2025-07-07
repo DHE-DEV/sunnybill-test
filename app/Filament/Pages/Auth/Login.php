@@ -29,9 +29,7 @@ class Login extends BaseLogin
             ->required()
             ->autocomplete()
             ->autofocus()
-            ->extraInputAttributes(['tabindex' => 1])
-            ->default('admin@example.com')
-            ->helperText('Standard-E-Mail bereits eingetragen');
+            ->extraInputAttributes(['tabindex' => 1]);
     }
 
     protected function getPasswordFormComponent(): Component
@@ -40,9 +38,7 @@ class Login extends BaseLogin
             ->label(__('filament-panels::pages/auth/login.form.password.label'))
             ->password()
             ->required()
-            ->extraInputAttributes(['tabindex' => 2])
-            ->default('admin123')
-            ->helperText('Standard-Passwort bereits eingetragen');
+            ->extraInputAttributes(['tabindex' => 2]);
     }
 
     public function getHeading(): string|Htmlable
@@ -52,6 +48,6 @@ class Login extends BaseLogin
 
     public function getSubheading(): string|Htmlable|null
     {
-        return 'Standard-Zugangsdaten sind bereits eingetragen - einfach auf "Anmelden" klicken';
+        return 'Bitte geben Sie Ihre Zugangsdaten ein';
     }
 }
