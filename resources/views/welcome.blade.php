@@ -57,12 +57,12 @@
     </head>
     <body>
         <div class="container">
-            <div class="logo">☀️ SunnyBill</div>
+            <div class="logo">VoltMaster</div>
             <a href="https://sunnybill-test.chargedata.eu/admin" class="login-btn">
-                SunnyBill Login
+                VoltMaster Login
             </a>
             <p class="description">
-                Klicken Sie hier, um sich in das SunnyBill Admin-Panel einzuloggen
+                Klicken Sie hier, um sich in das VoltMaster Admin-Panel einzuloggen
             </p>
         </div>
     </body>
