@@ -415,12 +415,12 @@
                 });
             });
 
-            // Add scroll effect to hero
-            window.addEventListener('scroll', () => {
-                const scrolled = window.pageYOffset;
-                const hero = document.querySelector('.hero');
-                hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-            });
+            // Add scroll effect to hero (disabled to prevent content overlap)
+            // window.addEventListener('scroll', () => {
+            //     const scrolled = window.pageYOffset;
+            //     const hero = document.querySelector('.hero');
+            //     hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+            // });
 
             // Cool Mouse Animation - Interactive Cursor with Particles
             class InteractiveCursor {
