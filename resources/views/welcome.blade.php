@@ -181,7 +181,7 @@
             /* Features Section - Stripe Style */
             .features {
                 padding: 8rem 2rem;
-                background: #5e67ab;
+                background: linear-gradient(to right, #1a202c, rgba(26, 32, 44, 0.3));
                 position: relative;
                 overflow: hidden;
             }
