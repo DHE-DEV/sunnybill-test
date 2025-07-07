@@ -112,6 +112,72 @@
                 transform: translateY(-3px);
             }
 
+            /* Technology Overview Section */
+            .technology-overview {
+                padding: 8rem 2rem;
+                background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+                position: relative;
+            }
+
+            .tech-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 3rem;
+                margin-top: 4rem;
+            }
+
+            .tech-card {
+                background: white;
+                padding: 3rem 2rem;
+                border-radius: 20px;
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+                text-align: center;
+                transition: all 0.4s ease;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .tech-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 4px;
+                background: linear-gradient(135deg, #64748b, #94a3b8);
+                transform: scaleX(0);
+                transition: transform 0.4s ease;
+            }
+
+            .tech-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12);
+            }
+
+            .tech-card:hover::before {
+                transform: scaleX(1);
+            }
+
+            .tech-icon {
+                font-size: 3.5rem;
+                margin-bottom: 1.5rem;
+                display: block;
+            }
+
+            .tech-card h3 {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin-bottom: 1rem;
+                color: #1a202c;
+            }
+
+            .tech-card p {
+                color: #4a5568;
+                line-height: 1.7;
+                font-size: 1rem;
+            }
+
             /* Features Section - Stripe Style */
             .features {
                 padding: 8rem 2rem;
@@ -962,6 +1028,72 @@
                     <a href="#features" class="btn btn-secondary">
                         Mehr erfahren
                     </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technology Overview Section -->
+        <section class="technology-overview">
+            <div class="container">
+                <h2 class="section-title scroll-animate">Modernste Technologie für Ihr Business</h2>
+                <p class="section-subtitle scroll-animate">
+                    VoltMaster kombiniert bewährte Technologien mit innovativen KI-Algorithmen für maximale Effizienz
+                </p>
+                
+                <div class="tech-grid">
+                    <div class="tech-card scroll-animate">
+                        <div class="tech-icon">🔒</div>
+                        <h3>Enterprise Security</h3>
+                        <p>
+                            Bank-Level Verschlüsselung und mehrstufige Authentifizierung schützen Ihre sensiblen Daten. 
+                            DSGVO-konforme Datenhaltung in deutschen Rechenzentren.
+                        </p>
+                    </div>
+                    
+                    <div class="tech-card scroll-animate">
+                        <div class="tech-icon">⚡</div>
+                        <h3>High Performance</h3>
+                        <p>
+                            Cloud-native Architektur mit automatischer Skalierung. 99.9% Verfügbarkeit und 
+                            Antwortzeiten unter 200ms für optimale Benutzererfahrung.
+                        </p>
+                    </div>
+                    
+                    <div class="tech-card scroll-animate">
+                        <div class="tech-icon">🔄</div>
+                        <h3>Nahtlose Integration</h3>
+                        <p>
+                            REST-APIs und Webhooks für einfache Integration in bestehende Systeme. 
+                            Unterstützung für SAP, Lexoffice, DATEV und weitere ERP-Systeme.
+                        </p>
+                    </div>
+                    
+                    <div class="tech-card scroll-animate">
+                        <div class="tech-icon">📊</div>
+                        <h3>Real-time Analytics</h3>
+                        <p>
+                            Live-Dashboards mit Machine Learning-basierten Vorhersagen. 
+                            Automatische Anomalie-Erkennung und proaktive Wartungsempfehlungen.
+                        </p>
+                    </div>
+                    
+                    <div class="tech-card scroll-animate">
+                        <div class="tech-icon">🌍</div>
+                        <h3>Global verfügbar</h3>
+                        <p>
+                            Multi-Region Deployment mit lokaler Datenhaltung. 
+                            24/7 Support in deutscher Sprache und weltweite Verfügbarkeit.
+                        </p>
+                    </div>
+                    
+                    <div class="tech-card scroll-animate">
+                        <div class="tech-icon">🚀</div>
+                        <h3>Continuous Innovation</h3>
+                        <p>
+                            Regelmäßige Updates mit neuen Features. KI-Modelle werden kontinuierlich 
+                            mit Ihren Daten trainiert für bessere Vorhersagen.
+                        </p>
+                    </div>
                 </div>
             </div>
         </section>
