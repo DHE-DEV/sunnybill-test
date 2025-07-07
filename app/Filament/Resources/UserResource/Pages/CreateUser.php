@@ -37,12 +37,10 @@ class CreateUser extends CreateRecord
         // Generiere automatisch ein zufälliges Passwort falls keines angegeben
         if (empty($data['password'])) {
             $this->temporaryPassword = User::generateRandomPassword(12);
-            $data['temporary_password'] = $this->temporaryPassword; // Speichere im Klartext BEVOR das Hashing
             $data['password'] = $this->temporaryPassword; // Wird später durch Filament gehashed
         } else {
             // Falls ein Passwort eingegeben wurde, verwende es als temporäres Passwort
             $this->temporaryPassword = $data['password'];
-            $data['temporary_password'] = $this->temporaryPassword; // Speichere im Klartext BEVOR das Hashing
             // $data['password'] bleibt unverändert und wird durch Filament gehashed
         }
         
@@ -57,11 +55,9 @@ class CreateUser extends CreateRecord
         $user = $this->record;
         
         if ($user && $user->email && $this->temporaryPassword) {
-            // Korrigiere das temporäre Passwort falls es gehashed wurde
-            if ($user->temporary_password && str_starts_with($user->temporary_password, '$2y$')) {
-                // Das temporäre Passwort wurde gehashed - korrigiere es
-                $user->update(['temporary_password' => $this->temporaryPassword]);
-            }
+            // Setze das temporäre Passwort direkt (unverschlüsselt)
+            $user->temporary_password = $this->temporaryPassword;
+            $user->save();
             
             try {
                 // Sende E-Mail-Verifikation mit temporärem Passwort

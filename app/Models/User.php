@@ -25,7 +25,6 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'name',
         'email',
         'password',
-        'temporary_password',
         'role',
         'is_active',
         'last_login_at',
@@ -175,11 +174,10 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function markPasswordAsChanged(): void
     {
-        $this->update([
-            'password_change_required' => false,
-            'password_changed_at' => now(),
-            'temporary_password' => null, // Lösche temporäres Passwort
-        ]);
+        $this->password_change_required = false;
+        $this->password_changed_at = now();
+        $this->temporary_password = null; // Lösche temporäres Passwort
+        $this->save();
     }
 
     /**
@@ -187,7 +185,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function requirePasswordChange(): void
     {
-        $this->update(['password_change_required' => true]);
+        $this->password_change_required = true;
+        $this->save();
     }
 
     /**
@@ -195,10 +194,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function setTemporaryPassword(string $password): void
     {
-        $this->update([
-            'temporary_password' => $password,
-            'password_change_required' => true,
-        ]);
+        $this->temporary_password = $password;
+        $this->password_change_required = true;
+        $this->save();
     }
 
     /**
@@ -206,7 +204,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function clearTemporaryPassword(): void
     {
-        $this->update(['temporary_password' => null]);
+        $this->temporary_password = null;
+        $this->save();
     }
 
     /**
