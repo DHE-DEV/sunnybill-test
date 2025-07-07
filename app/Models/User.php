@@ -167,7 +167,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function needsPasswordChange(): bool
     {
-        return $this->password_change_required;
+        return (bool) $this->password_change_required;
     }
 
     /**
