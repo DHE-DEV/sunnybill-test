@@ -1350,16 +1350,16 @@
                     <div class="footer-section">
                         <h3>VoltMaster</h3>
                         <p>
-                            Die führende Plattform für intelligentes Solarenergie-Management. 
+                            Die Plattform für intelligentes Solarenergie-Management. 
                             Maximieren Sie Ihre Effizienz und minimieren Sie Ihre Kosten.
                         </p>
                     </div>
                     <div class="footer-section">
                         <h3>Funktionen</h3>
-                        <p><a href="#features">Echtzeit-Monitoring</a></p>
-                        <p><a href="#features">Intelligente Analytik</a></p>
-                        <p><a href="#features">Automatisierte Abrechnung</a></p>
-                        <p><a href="#features">Projektmanagement</a></p>
+                        <p><a href="#features">Stakeholder-Management</a></p>
+                        <p><a href="#features">KI-gestützte Abrechnung</a></p>
+                        <p><a href="#features">Beteiligungsmanagement</a></p>
+                        <p><a href="#features">Aufgaben & Dokumente</a></p>
                     </div>
                     <div class="footer-section">
                         <h3>Unternehmen</h3>
