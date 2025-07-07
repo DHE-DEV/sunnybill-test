@@ -69,7 +69,7 @@ class UserResource extends Resource
                             ->dehydrated(fn ($state) => filled($state))
                             ->required(false)
                             ->minLength(8)
-                            ->default(fn (string $context): string => $context === 'create' ? User::generateRandomPassword() : '')
+                            ->default(fn (string $context): string => $context === 'create' ? User::generateRandomPassword(12) : '')
                             ->helperText('Mindestens 8 Zeichen. Bei neuen Benutzern wird automatisch ein sicheres Passwort generiert. Bei der Bearbeitung leer lassen, um das aktuelle Passwort beizubehalten.'),
 
                         Forms\Components\Select::make('role')
@@ -300,7 +300,7 @@ class UserResource extends Resource
                         ->modalDescription(fn ($record) => "Möchten Sie ein neues zufälliges Passwort für {$record->name} generieren und per E-Mail versenden?")
                         ->action(function ($record) {
                             try {
-                                $temporaryPassword = \App\Models\User::generateRandomPassword();
+                                $temporaryPassword = \App\Models\User::generateRandomPassword(12);
                                 
                                 $record->update([
                                     'password' => Hash::make($temporaryPassword),

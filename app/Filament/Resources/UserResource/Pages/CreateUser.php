@@ -36,7 +36,7 @@ class CreateUser extends CreateRecord
         
         // Generiere automatisch ein zufälliges Passwort falls keines angegeben
         if (empty($data['password'])) {
-            $this->temporaryPassword = User::generateRandomPassword();
+            $this->temporaryPassword = User::generateRandomPassword(12);
             $data['password'] = Hash::make($this->temporaryPassword);
             $data['temporary_password'] = $this->temporaryPassword; // Speichere im Klartext
         } else {
