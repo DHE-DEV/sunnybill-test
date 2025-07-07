@@ -17,10 +17,9 @@
         /* VoltMaster Logo Styling */
         .fi-simple-header h1 {
             color: #ffd700 !important;
-            font-weight: 800 !important;
+            font-weight: 500 !important;
             font-size: 3rem !important;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255, 215, 0, 0.3) !important;
-            margin-bottom: 0.5rem !important;
+            margin-bottom: 2.5rem !important;
             letter-spacing: 1px !important;
             text-align: center !important;
         }

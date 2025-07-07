@@ -232,7 +232,7 @@
 
             /* Customer Management Section */
             .customer-management {
-                padding: 8rem 2rem;
+                padding: 6rem 2rem;
                 background: linear-gradient(rgba(248, 250, 252, 0.9), rgba(226, 232, 240, 0.9)), 
                            url('') center/cover no-repeat;
                 position: relative;
@@ -314,7 +314,7 @@
 
             /* Billing System Section */
             .billing-system {
-                padding: 8rem 2rem;
+                padding: 6rem 2rem;
                 background: linear-gradient(rgba(226, 232, 240, 0.9), rgba(248, 250, 252, 0.9));
                 position: relative;
             }
@@ -371,6 +371,72 @@
             }
 
             .billing-features li::before {
+                content: '✓';
+                color: #00ba88;
+                font-weight: bold;
+                margin-right: 1rem;
+                font-size: 1.2rem;
+            }
+
+            /* Participation Management Section */
+            .participation-management {
+                padding: 6rem 2rem;
+                background: linear-gradient(rgba(248, 250, 252, 0.9), rgba(226, 232, 240, 0.9));
+                position: relative;
+            }
+
+            .participation-content {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+                position: relative;
+                z-index: 2;
+            }
+
+            .participation-visual {
+                position: relative;
+                height: 500px;
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 20px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            }
+
+            .participation-text h2 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 1.5rem;
+                line-height: 1.2;
+                color: #1a202c;
+            }
+
+            .participation-text p {
+                font-size: 1.1rem;
+                margin-bottom: 2rem;
+                color: #4a5568;
+                line-height: 1.7;
+            }
+
+            .participation-features {
+                list-style: none;
+                margin-bottom: 2rem;
+            }
+
+            .participation-features li {
+                padding: 0.5rem 0;
+                display: flex;
+                align-items: center;
+                font-size: 1rem;
+                color: #4a5568;
+            }
+
+            .participation-features li::before {
                 content: '✓';
                 color: #00ba88;
                 font-weight: bold;
@@ -1023,6 +1089,37 @@
                         <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
                             Abrechnungssystem testen
                         </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Participation Management Section -->
+        <section class="participation-management">
+            <div class="container">
+                <div class="participation-content">
+                    <div class="participation-text">
+                        <h2>Intelligentes Beteiligungsmanagement</h2>
+                        <p>
+                            Verwalten Sie mühelos alle Beteiligungen an Ihren Solaranlagen. Automatische Ertragsverteilung, 
+                            transparente Abrechnungen und präzise Verwaltung von Firmen- und Privatkundenbeteiligungen 
+                            in einem zentralen System.
+                        </p>
+                        <ul class="participation-features">
+                            <li>Automatische Ertragsverteilung nach Beteiligungsquoten</li>
+                            <li>Separate Verwaltung von Firmen- und Privatkundenbeteiligungen</li>
+                            <li>Transparente Abrechnungsübersichten für alle Beteiligten</li>
+                            <li>Flexible Beteiligungsstrukturen und Anpassungen</li>
+                            <li>Integrierte Dokumentenverwaltung für Beteiligungsverträge</li>
+                        </ul>
+                        <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
+                            Beteiligungsmanagement erkunden
+                        </a>
+                    </div>
+                    <div class="participation-visual">
+                        <div class="dashboard-screenshot">
+                            <img src="/storage/customers/customer_stat_1.png" alt="Beteiligungsmanagement Screenshot">
+                        </div>
                     </div>
                 </div>
             </div>
