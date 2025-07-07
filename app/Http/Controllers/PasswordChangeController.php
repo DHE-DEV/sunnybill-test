@@ -131,6 +131,20 @@ class PasswordChangeController extends Controller
         // Logge den Benutzer automatisch ein
         Auth::login($user);
 
-        return redirect('/admin')->with('status', 'Passwort erfolgreich geändert! Sie sind jetzt angemeldet.');
+        // Prüfe ob der Benutzer Zugriff auf das Admin-Panel hat
+        try {
+            $panel = \Filament\Facades\Filament::getCurrentPanel();
+            if ($user->canAccessPanel($panel)) {
+                return redirect('/admin')->with('status', 'Passwort erfolgreich geändert! Sie sind jetzt angemeldet.');
+            }
+        } catch (\Exception $e) {
+            // Fallback falls Panel-Check fehlschlägt
+        }
+
+        // Für Benutzer ohne Admin-Zugriff: Erfolgsseite anzeigen
+        return view('auth.password-changed-success', [
+            'user' => $user,
+            'message' => 'Passwort erfolgreich geändert! Sie sind jetzt angemeldet.'
+        ]);
     }
 }
