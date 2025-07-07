@@ -141,7 +141,7 @@ class PasswordChangeController extends Controller
             // Fallback: Prüfe manuell basierend auf Rolle und E-Mail-Domain
             $hasAdminAccess = $user->is_active && (
                 $user->email === 'admin@example.com' ||
-                in_array($user->role, ['admin', 'manager']) ||
+                in_array($user->role, ['admin', 'manager', 'user']) ||
                 str_ends_with($user->email, '@chargedata.eu') ||
                 (app()->environment('local') && str_contains(config('app.url'), '.test'))
             );

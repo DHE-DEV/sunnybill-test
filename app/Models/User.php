@@ -269,8 +269,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             return true;
         }
 
-        // Rollenbasierte Zugriffskontrolle: Admin und Manager haben immer Zugriff
-        if (in_array($this->role, ['admin', 'manager'])) {
+        // Rollenbasierte Zugriffskontrolle: Admin, Manager und User haben immer Zugriff
+        if (in_array($this->role, ['admin', 'manager', 'user'])) {
             return true;
         }
 
