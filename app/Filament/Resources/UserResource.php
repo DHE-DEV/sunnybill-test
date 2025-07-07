@@ -394,11 +394,17 @@ class UserResource extends Resource
                         ->modalDescription(fn ($record) => "Möchten Sie eine neue E-Mail-Verifikation an {$record->email} senden?")
                         ->action(function ($record) {
                             try {
-                                $record->sendEmailVerificationNotification();
+                                // Sende E-Mail-Verifikation mit temporärem Passwort (falls vorhanden)
+                                $temporaryPassword = $record->hasTemporaryPassword() ? $record->getTemporaryPasswordForEmail() : null;
+                                $record->sendEmailVerificationNotification($temporaryPassword);
+                                
+                                $message = $temporaryPassword 
+                                    ? "Eine E-Mail-Bestätigung mit den Anmeldedaten wurde an {$record->email} gesendet."
+                                    : "Eine E-Mail-Bestätigung wurde an {$record->email} gesendet.";
                                 
                                 Notification::make()
                                     ->title('E-Mail-Verifikation gesendet')
-                                    ->body("Eine E-Mail-Bestätigung wurde an {$record->email} gesendet.")
+                                    ->body($message)
                                     ->success()
                                     ->send();
                             } catch (\Exception $e) {
