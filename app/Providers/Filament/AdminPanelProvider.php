@@ -74,6 +74,7 @@ class AdminPanelProvider extends PanelProvider
                     return asset('images/voltmaster-logo.svg');
                 }
             })
+            ->brandLogoHeight('3rem')
             ->favicon(asset('images/voltmaster-favicon.svg'))
             ->navigationGroups([
                 'Kunden',
