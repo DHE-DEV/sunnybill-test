@@ -132,13 +132,23 @@ class PasswordChangeController extends Controller
         Auth::login($user);
 
         // Prüfe ob der Benutzer Zugriff auf das Admin-Panel hat
+        $hasAdminAccess = false;
+        
         try {
-            $panel = \Filament\Facades\Filament::getCurrentPanel();
-            if ($user->canAccessPanel($panel)) {
-                return redirect('/admin')->with('status', 'Passwort erfolgreich geändert! Sie sind jetzt angemeldet.');
-            }
+            $panel = \Filament\Facades\Filament::getDefaultPanel();
+            $hasAdminAccess = $user->canAccessPanel($panel);
         } catch (\Exception $e) {
-            // Fallback falls Panel-Check fehlschlägt
+            // Fallback: Prüfe manuell basierend auf Rolle und E-Mail-Domain
+            $hasAdminAccess = $user->is_active && (
+                $user->email === 'admin@example.com' ||
+                in_array($user->role, ['admin', 'manager']) ||
+                str_ends_with($user->email, '@chargedata.eu') ||
+                (app()->environment('local') && str_contains(config('app.url'), '.test'))
+            );
+        }
+
+        if ($hasAdminAccess) {
+            return redirect('/admin')->with('status', 'Passwort erfolgreich geändert! Sie sind jetzt angemeldet.');
         }
 
         // Für Benutzer ohne Admin-Zugriff: Erfolgsseite anzeigen

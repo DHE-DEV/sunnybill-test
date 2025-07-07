@@ -250,10 +250,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      *
      * Allows access for:
      * - Local development: any user
-     * - Production: admin@example.com or users with @yourdomain.com
+     * - Production: users with admin/manager role OR specific email domains
      */
     public function canAccessPanel(Panel $panel): bool
     {
+        // Benutzer muss aktiv sein
+        if (!$this->is_active) {
+            return false;
+        }
+
         // Allow access for the admin user created by migration
         if ($this->email === 'admin@example.com') {
             return true;
@@ -264,8 +269,12 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             return true;
         }
 
-        // For production, require specific domain or admin email
-        return str_ends_with($this->email, '@yourdomain.com') ||
-               str_ends_with($this->email, '@chargedata.eu');
+        // Rollenbasierte Zugriffskontrolle: Admin und Manager haben immer Zugriff
+        if (in_array($this->role, ['admin', 'manager'])) {
+            return true;
+        }
+
+        // Zusätzlich: Bestimmte E-Mail-Domains haben Zugriff
+        return str_ends_with($this->email, '@chargedata.eu');
     }
 }
