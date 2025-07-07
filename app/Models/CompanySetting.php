@@ -316,8 +316,12 @@ class CompanySetting extends Model
      */
     public function getPortalUrl(): string
     {
-        if ($this->portal_enabled && $this->portal_url) {
-            return rtrim($this->portal_url, '/');
+        try {
+            if ($this->portal_enabled && $this->portal_url) {
+                return rtrim($this->portal_url, '/');
+            }
+        } catch (\Exception $e) {
+            // Spalte existiert noch nicht
         }
         
         // Fallback zur Admin-URL
@@ -329,7 +333,12 @@ class CompanySetting extends Model
      */
     public function getPortalName(): string
     {
-        return $this->portal_name ?: config('app.name', 'SunnyBill');
+        try {
+            return $this->portal_name ?: config('app.name', 'SunnyBill');
+        } catch (\Exception $e) {
+            // Spalte existiert noch nicht
+            return config('app.name', 'SunnyBill');
+        }
     }
 
     /**
@@ -337,6 +346,11 @@ class CompanySetting extends Model
      */
     public function isPortalEnabled(): bool
     {
-        return (bool) $this->portal_enabled;
+        try {
+            return (bool) $this->portal_enabled;
+        } catch (\Exception $e) {
+            // Spalte existiert noch nicht
+            return false;
+        }
     }
 }

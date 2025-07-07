@@ -35,9 +35,15 @@ class AccountActivatedNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $companySettings = CompanySetting::current();
-        $portalUrl = $companySettings->getPortalUrl();
-        $portalName = $companySettings->getPortalName();
+        try {
+            $companySettings = CompanySetting::current();
+            $portalUrl = $companySettings->getPortalUrl();
+            $portalName = $companySettings->getPortalName();
+        } catch (\Exception $e) {
+            // Fallback falls Portal-Spalten noch nicht existieren
+            $portalUrl = rtrim(config('app.url'), '/') . '/admin';
+            $portalName = config('app.name', 'SunnyBill');
+        }
 
         return (new MailMessage)
             ->subject('Ihr Account wurde aktiviert - ' . $portalName)
