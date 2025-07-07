@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>VoltMaster - Solarenergie Management</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three-globe@2.27.3/dist/three-globe.min.js"></script>
         <style>
             * {
                 margin: 0;
@@ -115,6 +117,21 @@
                 padding: 8rem 2rem;
                 background: #fafbfc;
                 position: relative;
+                overflow: hidden;
+            }
+
+            .features .globe-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+                opacity: 0.2;
+            }
+
+            .features .globe-loading {
+                color: rgba(26, 32, 44, 0.6);
             }
 
             .container {
@@ -138,6 +155,16 @@
                 text-align: center;
                 font-size: 1.2rem;
                 color: #718096;
+                margin-bottom: 4rem;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .section-subtitle-white {
+                text-align: center;
+                font-size: 1.2rem;
+                color:rgb(255, 255, 255);
                 margin-bottom: 4rem;
                 max-width: 600px;
                 margin-left: auto;
@@ -206,7 +233,8 @@
             /* Customer Management Section */
             .customer-management {
                 padding: 8rem 2rem;
-                background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+                background: linear-gradient(rgba(248, 250, 252, 0.9), rgba(226, 232, 240, 0.9)), 
+                           url('') center/cover no-repeat;
                 position: relative;
             }
 
@@ -287,7 +315,8 @@
             /* Product Showcase Section */
             .product-showcase {
                 padding: 8rem 2rem;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(to right, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.6), rgba(118, 75, 162, 0.1)), 
+                           url('https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') center/cover no-repeat;
                 color: white;
                 position: relative;
                 overflow: hidden;
@@ -394,6 +423,72 @@
                 color: white;
                 font-size: 1.5rem;
                 font-weight: 700;
+            }
+
+            /* Globe Container */
+            .globe-container {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                border-radius: 20px;
+                overflow: hidden;
+            }
+
+            #globe-canvas {
+                width: 100%;
+                height: 100%;
+                display: block;
+                border-radius: 20px;
+            }
+
+            /* Globe Loading Animation */
+            .globe-loading {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 1.1rem;
+                font-weight: 500;
+                z-index: 10;
+            }
+
+            .globe-loading::after {
+                content: '';
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                border-top-color: #ffd700;
+                animation: spin 1s ease-in-out infinite;
+                margin-left: 10px;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
+            /* Globe Points Animation */
+            .globe-point {
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                background: #ffd700;
+                border-radius: 50%;
+                box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+                animation: pulse 2s ease-in-out infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% { 
+                    opacity: 0.6;
+                    transform: scale(1);
+                }
+                50% { 
+                    opacity: 1;
+                    transform: scale(1.5);
+                }
             }
 
             /* Stats Section */
@@ -741,7 +836,11 @@
 
         <!-- Features Section -->
         <section id="features" class="features">
-            <div class="container">
+            <div class="globe-container">
+                <div class="globe-loading">Lade Weltkugel...</div>
+                <canvas id="globe-canvas"></canvas>
+            </div>
+            <div class="container" style="position: relative; z-index: 2;">
                 <h2 class="section-title scroll-animate">Kernfunktionen</h2>
                 <p class="section-subtitle scroll-animate">Professionelle Lösungen für Ihr Solarenergie-Management</p>
                 
@@ -826,8 +925,7 @@
                     </div>
                     <div class="customer-visual">
                         <div class="dashboard-screenshot">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI4MDAiIHZpZXdCb3g9IjAgMCAxMjAwIDgwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjRkFGQkZDIi8+CjxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSI3NjAiIGZpbGw9IiNGRkZGRkYiIHJ4PSIxMCIvPgo8cmVjdCB4PSIyNDAiIHk9IjIwIiB3aWR0aD0iOTQwIiBoZWlnaHQ9Ijc2MCIgZmlsbD0iI0ZGRkZGRiIgcng9IjEwIi8+Cjx0ZXh0IHg9IjI2MCIgeT0iNzAiIGZpbGw9IiMxQTIwMkMiIGZvbnQtZmFtaWx5PSJJbnRlciIgZm9udC1zaXplPSIzMiIgZm9udC13ZWlnaHQ9IjcwMCI+S3VuZGVuPC90ZXh0Pgo8cmVjdCB4PSIyNjAiIHk9IjEyMCIgd2lkdGg9IjI4MCIgaGVpZ2h0PSIxNDAiIGZpbGw9IiNGOEZBRkMiIHJ4PSIxMCIvPgo8dGV4dCB4PSIyODAiIHk9IjE1MCIgZmlsbD0iIzcxODA5NiIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjE0Ij5HZXNhbXQgS3VuZGVuPC90ZXh0Pgo8dGV4dCB4PSIyODAiIHk9IjE5MCIgZmlsbD0iIzFBMjAyQyIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iNzAwIj4zPC90ZXh0Pgo8dGV4dCB4PSIyODAiIHk9IjIyMCIgZmlsbD0iI0Y1OTAwMyIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjEyIj5BbGxlIHJlZ2lzdHJpZXJ0ZW4gS3VuZGVuPC90ZXh0Pgo8cmVjdCB4PSI1NjAiIHk9IjEyMCIgd2lkdGg9IjI4MCIgaGVpZ2h0PSIxNDAiIGZpbGw9IiNGOEZBRkMiIHJ4PSIxMCIvPgo8dGV4dCB4PSI1ODAiIHk9IjE1MCIgZmlsbD0iIzcxODA5NiIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjE0Ij5Qcml2YXRrdW5kZW48L3RleHQ+Cjx0ZXh0IHg9IjU4MCIgeT0iMTkwIiBmaWxsPSIjMUEyMDJDIiBmb250LWZhbWlseT0iSW50ZXIiIGZvbnQtc2l6ZT0iNDgiIGZvbnQtd2VpZ2h0PSI3MDAiPjI8L3RleHQ+Cjx0ZXh0IHg9IjU4MCIgeT0iMjIwIiBmaWxsPSIjMzMzM0ZGIiBmb250LWZhbWlseT0iSW50ZXIiIGZvbnQtc2l6ZT0iMTIiPjY2LjclIGFsbGVyIEt1bmRlbjwvdGV4dD4KPHJlY3QgeD0iODYwIiB5PSIxMjAiIHdpZHRoPSIyODAiIGhlaWdodD0iMTQwIiBmaWxsPSIjRjhGQUZDIiByeD0iMTAiLz4KPHRleHQgeD0iODgwIiB5PSIxNTAiIGZpbGw9IiM3MTgwOTYiIGZvbnQtZmFtaWx5PSJJbnRlciIgZm9udC1zaXplPSIxNCI+RmlybWVua3VuZGVuPC90ZXh0Pgo8dGV4dCB4PSI4ODAiIHk9IjE5MCIgZmlsbD0iIzFBMjAyQyIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iNzAwIj4xPC90ZXh0Pgo8dGV4dCB4PSI4ODAiIHk9IjIyMCIgZmlsbD0iIzAwQkE4OCIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjEyIj4zMy4zJSBhbGxlciBLdW5kZW48L3RleHQ+CjxyZWN0IHg9IjI2MCIgeT0iMzAwIiB3aWR0aD0iNDQwIiBoZWlnaHQ9IjI2MCIgZmlsbD0iI0Y4RkFGQyIgcng9IjEwIi8+Cjx0ZXh0IHg9IjI4MCIgeT0iMzMwIiBmaWxsPSIjMUEyMDJDIiBmb250LWZhbWlseT0iSW50ZXIiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSI2MDAiPkt1bmRlbndhaHNzdHVtIC0gQWt0aXYgdnMuIEluYWt0aXY8L3RleHQ+CjxsaW5lIHgxPSIzMDAiIHkxPSI1MDAiIHgyPSI2NjAiIHkyPSI0MDAiIHN0cm9rZT0iIzAwQkE4OCIgc3Ryb2tlLXdpZHRoPSIzIi8+CjxyZWN0IHg9IjcyMCIgeT0iMzAwIiB3aWR0aD0iNDIwIiBoZWlnaHQ9IjI2MCIgZmlsbD0iI0Y4RkFGQyIgcng9IjEwIi8+Cjx0ZXh0IHg9Ijc0MCIgeT0iMzMwIiBmaWxsPSIjMUEyMDJDIiBmb250LWZhbWlseT0iSW50ZXIiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSI2MDAiPkt1bmRlbnZlcnRlaWx1bmcgbmFjaCBNb25hdGVuPC90ZXh0Pgo8cmVjdCB4PSI5NDAiIHk9IjQ2MCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMDBCQTg4Ii8+CjxyZWN0IHg9IjEwMDAiIHk9IjQ4MCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRjU5MDAzIi8+CjwvZz4KPC9zdmc+" alt="VoltMaster Kundenverwaltung Dashboard" style="width: 100%; height: auto; border-radius: 15px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);" />
-                        </div>
+                            <img src="/storage/customers/customer_stat_4.png" alt="Kundenstatistik Screenshot">
                     </div>
                 </div>
             </div>
@@ -844,40 +942,18 @@
                             Übersichtliche Darstellung aller wichtigen Kennzahlen und Funktionen.
                         </p>
                         <ul class="showcase-features">
-                            <li>Echtzeit-Überwachung aller Anlagen</li>
-                            <li>Automatisierte Berichte und Analysen</li>
-                            <li>Integrierte Kommunikationstools</li>
-                            <li>Mobile App für unterwegs</li>
-                            <li>API-Integration für Drittsysteme</li>
+                            <li>KI-gestützte Kostenaufteilung und Positionsgenerierung</li>
+                            <li>Automatisches Abrechnungsmanagement mit KI-Unterstützung</li>
+                            <li>Beteiligungsverwaltung für Firmen und Privatkunden</li>
+                            <li>Integriertes Aufgaben- und Dokumentenmanagement</li>
+                            <li>Präzise Artikelverwaltung bis zu 6 Nachkommastellen</li>
                         </ul>
                         <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
                             Dashboard erkunden
                         </a>
                     </div>
-                    <div class="showcase-visual">
-                        <div class="dashboard-preview">
-                            <div class="dashboard-header">
-                                VoltMaster Dashboard
-                            </div>
-                            <div class="dashboard-content">
-                                <div class="dashboard-card">
-                                    <h4>Gesamtleistung</h4>
-                                    <div class="value">2.4 MW</div>
-                                </div>
-                                <div class="dashboard-card">
-                                    <h4>Aktive Anlagen</h4>
-                                    <div class="value">127</div>
-                                </div>
-                                <div class="dashboard-card">
-                                    <h4>Heute erzeugt</h4>
-                                    <div class="value">18.5 MWh</div>
-                                </div>
-                                <div class="dashboard-card">
-                                    <h4>Effizienz</h4>
-                                    <div class="value">94.2%</div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="_showcase-visual">
+                        
                     </div>
                 </div>
             </div>
@@ -886,7 +962,13 @@
         <!-- Stats Section -->
         <section class="stats">
             <div class="container">
-                <h2 class="section-title" style="color: white; margin-bottom: 4rem;">Vertrauen Sie auf Erfahrung</h2>
+                <div class="cta-content">
+                    <h2 class="section-title">Warum VoltMaster?</h2>
+                    <p class="section-subtitle-white">
+                        Über 50 Unternehmen vertrauen auf unsere Plattform für professionelles Solarenergie-Management.
+                    </p>
+                </div>
+
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-number">500+</div>
@@ -1096,8 +1178,8 @@
                     this.mouseY = e.clientY;
                     this.isMoving = true;
 
-                    // Create particle trail
-                    if (Math.random() < 0.3) {
+                    // Create particle trail - öfter und mit mehr Bewegung
+                    if (Math.random() < 0.7) {
                         this.createParticle(this.mouseX, this.mouseY);
                     }
 
@@ -1137,10 +1219,12 @@
                     const particle = document.createElement('div');
                     particle.className = 'cursor-particle';
                     
-                    const size = Math.random() * 4 + 2;
-                    const angle = burst ? (Math.random() * 360) : (Math.random() * 60 - 30);
-                    const velocity = burst ? (Math.random() * 3 + 2) : (Math.random() * 1 + 0.5);
-                    const life = burst ? 60 : 30;
+                    const size = Math.random() * 6 + 3;
+                    // Deutlich weiter von links nach rechts - größerer Winkelbereich
+                    const angle = burst ? (Math.random() * 360) : (Math.random() * 120 - 60);
+                    // Höhere Geschwindigkeit für weitere Bewegung
+                    const velocity = burst ? (Math.random() * 5 + 3) : (Math.random() * 3 + 1.5);
+                    const life = burst ? 80 : 50;
 
                     particle.style.cssText = `
                         position: fixed;
@@ -1148,11 +1232,11 @@
                         top: ${y}px;
                         width: ${size}px;
                         height: ${size}px;
-                        background: radial-gradient(circle, #ffd700, #ffed4e);
+                        background: radial-gradient(circle, #ffff00, #fff700);
                         border-radius: 50%;
                         pointer-events: none;
                         z-index: 9999;
-                        box-shadow: 0 0 ${size * 2}px rgba(255, 215, 0, 0.6);
+                        box-shadow: 0 0 ${size * 3}px rgba(255, 255, 0, 0.8);
                     `;
 
                     document.body.appendChild(particle);
@@ -1204,7 +1288,146 @@
             // Initialize cursor when page loads
             window.addEventListener('load', () => {
                 new InteractiveCursor();
+                initGlobe();
             });
+
+            // 3D Globe Animation - Professional Three-Globe Implementation
+            function initGlobe() {
+                const canvas = document.getElementById('globe-canvas');
+                const loadingElement = document.querySelector('.globe-loading');
+                
+                if (!canvas) {
+                    console.error('Globe canvas not found');
+                    return;
+                }
+
+                if (!window.THREE) {
+                    console.error('Three.js not loaded');
+                    if (loadingElement) loadingElement.textContent = 'Fehler: Three.js nicht geladen';
+                    return;
+                }
+
+                if (!window.ThreeGlobe) {
+                    console.error('ThreeGlobe not loaded');
+                    if (loadingElement) loadingElement.textContent = 'Fehler: ThreeGlobe nicht geladen';
+                    return;
+                }
+
+
+                // Scene setup
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(60, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
+                camera.position.set(-100, -30, 200);
+
+                const renderer = new THREE.WebGLRenderer({ 
+                    canvas: canvas, 
+                    antialias: true, 
+                    alpha: true 
+                });
+                renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+                scene.add(ambientLight);
+
+                // Globe with Earth texture and many animated arcs in bright yellow
+                const Globe = new ThreeGlobe()
+                    .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+                    .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+                    .arcsData([
+                        // Viele Arcs von links nach rechts - Amerika nach Europa/Afrika
+                        { startLat: 40.7128, startLng: -74.0060, endLat: 52.5200, endLng: 13.4050, color: ['#ffff00'] }, // NY -> Berlin
+                        { startLat: 34.0522, startLng: -118.2437, endLat: 48.8566, endLng: 2.3522, color: ['#ffff00'] }, // LA -> Paris
+                        { startLat: 41.8781, startLng: -87.6298, endLat: 51.5074, endLng: -0.1278, color: ['#ffff00'] }, // Chicago -> London
+                        { startLat: 25.7617, startLng: -80.1918, endLat: 41.9028, endLng: 12.4964, color: ['#ffff00'] }, // Miami -> Rome
+                        { startLat: 37.7749, startLng: -122.4194, endLat: 40.4168, endLng: -3.7038, color: ['#ffff00'] }, // SF -> Madrid
+                        { startLat: 45.5017, startLng: -73.5673, endLat: 52.3676, endLng: 4.9041, color: ['#ffff00'] }, // Montreal -> Amsterdam
+                        { startLat: 43.6532, startLng: -79.3832, endLat: 50.1109, endLng: 8.6821, color: ['#ffff00'] }, // Toronto -> Frankfurt
+                        { startLat: 39.2904, startLng: -76.6122, endLat: 47.3769, endLng: 8.5417, color: ['#ffff00'] }, // Baltimore -> Zurich
+                        
+                        // Weitere Arcs von Westamerika nach Europa
+                        { startLat: 47.6062, startLng: -122.3321, endLat: 59.9139, endLng: 10.7522, color: ['#ffff00'] }, // Seattle -> Oslo
+                        { startLat: 36.1627, startLng: -86.7816, endLat: 55.6761, endLng: 12.5683, color: ['#ffff00'] }, // Nashville -> Copenhagen
+                        { startLat: 32.7767, startLng: -96.7970, endLat: 52.2297, endLng: 21.0122, color: ['#ffff00'] }, // Dallas -> Warsaw
+                        { startLat: 29.7604, startLng: -95.3698, endLat: 50.0755, endLng: 14.4378, color: ['#ffff00'] }, // Houston -> Prague
+                        { startLat: 33.4484, startLng: -112.0740, endLat: 47.4979, endLng: 19.0402, color: ['#ffff00'] }, // Phoenix -> Budapest
+                        { startLat: 39.7392, startLng: -104.9903, endLat: 44.4268, endLng: 26.1025, color: ['#ffff00'] }, // Denver -> Bucharest
+                        
+                        // Südamerika nach Afrika/Europa
+                        { startLat: -23.5505, startLng: -46.6333, endLat: -26.2041, endLng: 28.0473, color: ['#ffff00'] }, // São Paulo -> Johannesburg
+                        { startLat: -34.6037, startLng: -58.3816, endLat: -33.9249, endLng: 18.4241, color: ['#ffff00'] }, // Buenos Aires -> Cape Town
+                        { startLat: -12.0464, startLng: -77.0428, endLat: 6.5244, endLng: 3.3792, color: ['#ffff00'] }, // Lima -> Lagos
+                        { startLat: 4.7110, startLng: -74.0721, endLat: 30.0444, endLng: 31.2357, color: ['#ffff00'] }, // Bogotá -> Cairo
+                        
+                        // Pazifik nach Asien
+                        { startLat: 21.3099, startLng: -157.8581, endLat: 35.6895, endLng: 139.6917, color: ['#ffff00'] }, // Honolulu -> Tokyo
+                        { startLat: 37.7749, startLng: -122.4194, endLat: 37.5665, endLng: 126.9780, color: ['#ffff00'] }, // SF -> Seoul
+                        { startLat: 34.0522, startLng: -118.2437, endLat: 31.2304, endLng: 121.4737, color: ['#ffff00'] }, // LA -> Shanghai
+                        { startLat: 47.6062, startLng: -122.3321, endLat: 39.9042, endLng: 116.4074, color: ['#ffff00'] }, // Seattle -> Beijing
+                        
+                        // Atlantik-Überquerungen
+                        { startLat: 40.7128, startLng: -74.0060, endLat: 38.7223, endLng: -9.1393, color: ['#ffff00'] }, // NY -> Lisbon
+                        { startLat: 42.3601, startLng: -71.0589, endLat: 53.3498, endLng: -6.2603, color: ['#ffff00'] }, // Boston -> Dublin
+                        { startLat: 25.7617, startLng: -80.1918, endLat: 28.0339, endLng: -15.4151, color: ['#ffff00'] }, // Miami -> Tenerife
+                    ])
+                    .arcColor('color')
+                    .arcAltitude(0.3)
+                    .arcStroke(2)
+                    .arcDashLength(0.2)
+                    .arcDashGap(1)
+                    .arcDashInitialGap(() => Math.random() * 3)
+                    .arcDashAnimateTime(800);
+
+                scene.add(Globe);
+
+                // Manual rotation without OrbitControls
+                let rotationSpeed = 0.0005;
+
+                // Animation loop
+                function animate() {
+                    requestAnimationFrame(animate);
+                    
+                    // Rotate the globe
+                    Globe.rotation.y += rotationSpeed;
+                    
+                    renderer.render(scene, camera);
+                }
+
+                // Handle resize
+                function handleResize() {
+                    const width = canvas.offsetWidth;
+                    const height = canvas.offsetHeight;
+                    
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(width, height);
+                }
+
+                window.addEventListener('resize', handleResize);
+
+                // Hide loading and start animation
+                setTimeout(() => {
+                    if (loadingElement) {
+                        loadingElement.style.opacity = '0';
+                        setTimeout(() => {
+                            loadingElement.style.display = 'none';
+                        }, 500);
+                    }
+                    animate();
+                }, 1000);
+
+                // Intersection Observer for performance
+                const globeObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            animate();
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                globeObserver.observe(canvas);
+            }
         </script>
     </body>
 </html>
