@@ -34,20 +34,19 @@ class CreateUser extends CreateRecord
         $data['is_active'] = $data['is_active'] ?? true;
         $data['role'] = $data['role'] ?? 'user';
         
-        // Generiere automatisch ein zufälliges Passwort falls keines angegeben
+        // Speichere das ursprüngliche Passwort für das temporäre Passwort
+        $this->temporaryPassword = $data['tmp_p'] ?? User::generateRandomPassword(12);
+
+        // Falls kein Passwort eingegeben wurde, verwende das generierte
         if (empty($data['password'])) {
-            $this->temporaryPassword = User::generateRandomPassword(12);
-            $data['password'] = $this->temporaryPassword; // Wird später durch Filament gehashed
-            $data['temporary_password'] = $this->temporaryPassword; // Wird durch Mutator unverschlüsselt gespeichert
-        } else {
-            // Falls ein Passwort eingegeben wurde, verwende es als temporäres Passwort
-            $this->temporaryPassword = $data['password'];
-            $data['temporary_password'] = $this->temporaryPassword; // Wird durch Mutator unverschlüsselt gespeichert
-            // $data['password'] bleibt unverändert und wird durch Filament gehashed
+            $data['password'] = $this->temporaryPassword;
         }
         
         // Setze password_change_required auf true für neue Benutzer
         $data['password_change_required'] = true;
+        
+        // Entferne temporary_password aus den Daten, um automatisches Hashing zu vermeiden
+        unset($data['temporary_password']);
         
         return $data;
     }
@@ -57,7 +56,7 @@ class CreateUser extends CreateRecord
         $user = $this->record;
         
         if ($user && $user->email && $this->temporaryPassword) {
-            // Setze das temporäre Passwort direkt (unverschlüsselt)
+            // Setze das temporäre Passwort in die neue tmp_p Spalte (unverschlüsselt)
             $user->temporary_password = $this->temporaryPassword;
             $user->save();
             

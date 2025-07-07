@@ -26,6 +26,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'email',
         'password',
         'temporary_password',
+        'tmp_p',
         'role',
         'is_active',
         'last_login_at',
@@ -66,10 +67,19 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     /**
      * Mutator for temporary_password - prevents automatic hashing
      */
-    protected function setTemporaryPasswordAttribute($value): void
+    public function setTemporaryPasswordAttribute($value): void
     {
         // Store temporary password as plain text (no hashing)
         $this->attributes['temporary_password'] = $value;
+    }
+
+    /**
+     * Accessor for temporary_password - returns plain text
+     */
+    public function getTemporaryPasswordAttribute($value): ?string
+    {
+        // Return temporary password as plain text (no decryption needed)
+        return $value;
     }
 
     /**
@@ -166,7 +176,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         for ($i = 3; $i < $length; $i++) {
             $password .= $characters[rand(0, strlen($characters) - 1)];
         }
-        
+
         // Shuffle the password
         return str_shuffle($password);
     }
@@ -204,7 +214,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function setTemporaryPassword(string $password): void
     {
-        $this->temporary_password = $password;
+        $this->tmp_p = $password; // Verwende die neue Spalte
         $this->password_change_required = true;
         $this->save();
     }
@@ -214,7 +224,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function clearTemporaryPassword(): void
     {
-        $this->temporary_password = null;
+        $this->tmp_p = null; // Verwende die neue Spalte
         $this->save();
     }
 
@@ -223,7 +233,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function hasTemporaryPassword(): bool
     {
-        return !empty($this->temporary_password);
+        return !empty($this->tmp_p); // Verwende die neue Spalte
     }
 
     /**
@@ -231,7 +241,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function getTemporaryPasswordForEmail(): ?string
     {
-        return $this->temporary_password;
+        return $this->tmp_p; // Verwende die neue Spalte
     }
 
     /**
