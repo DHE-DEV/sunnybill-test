@@ -304,7 +304,7 @@ class UserResource extends Resource
                                 
                                 $record->update([
                                     'password' => Hash::make($temporaryPassword),
-                                    'temporary_password' => $temporaryPassword,
+                                    'temporary_password' => $temporaryPassword, // Unverschlüsselt speichern
                                     'password_change_required' => true,
                                     'password_changed_at' => now(),
                                 ]);
