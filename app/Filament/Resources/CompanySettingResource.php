@@ -418,6 +418,81 @@ class CompanySettingResource extends Resource
                                    ])
                                    ->collapsible(),
                            ]),
+
+                       Forms\Components\Tabs\Tab::make('Portal-Einstellungen')
+                           ->schema([
+                               Forms\Components\Section::make('Portal-Konfiguration')
+                                   ->schema([
+                                       Forms\Components\Toggle::make('portal_enabled')
+                                           ->label('Portal aktiviert')
+                                           ->helperText('Aktiviert oder deaktiviert das Kundenportal')
+                                           ->default(true)
+                                           ->reactive(),
+                                       Forms\Components\TextInput::make('portal_name')
+                                           ->label('Portal-Name')
+                                           ->placeholder('z.B. Kundenportal, Mein SunnyBill')
+                                           ->maxLength(255)
+                                           ->helperText('Name des Portals, der in E-Mails und auf der Login-Seite angezeigt wird'),
+                                       Forms\Components\TextInput::make('portal_url')
+                                           ->label('Portal-URL')
+                                           ->url()
+                                           ->placeholder('https://portal.ihrefirma.de')
+                                           ->maxLength(255)
+                                           ->helperText('Vollständige URL zum Kundenportal (wird in E-Mails verwendet)')
+                                           ->required(fn ($get) => $get('portal_enabled')),
+                                       Forms\Components\Textarea::make('portal_description')
+                                           ->label('Portal-Beschreibung')
+                                           ->rows(3)
+                                           ->placeholder('Beschreibung des Portals für E-Mails und Dokumentation')
+                                           ->maxLength(1000)
+                                           ->helperText('Optional: Beschreibung des Portals für interne Zwecke'),
+                                   ])
+                                   ->description('Konfigurieren Sie die Einstellungen für das Kundenportal. Die Portal-URL wird in E-Mail-Benachrichtigungen verwendet.'),
+                               
+                               Forms\Components\Section::make('Vorschau')
+                                   ->schema([
+                                       Forms\Components\Placeholder::make('portal_preview')
+                                           ->label('')
+                                           ->content(function ($get) {
+                                               $enabled = $get('portal_enabled');
+                                               $name = $get('portal_name') ?: 'SunnyBill Portal';
+                                               $url = $get('portal_url') ?: 'https://portal.ihrefirma.de';
+                                               $description = $get('portal_description') ?: 'Keine Beschreibung';
+                                               
+                                               $status = $enabled ?
+                                                   '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">Aktiviert</span>' :
+                                                   '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">Deaktiviert</span>';
+                                               
+                                               return new \Illuminate\Support\HtmlString("
+                                                   <div class='space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border'>
+                                                       <div class='flex justify-between items-center'>
+                                                           <span class='font-medium text-gray-700 dark:text-gray-300'>Status:</span>
+                                                           {$status}
+                                                       </div>
+                                                       <div class='flex justify-between items-start'>
+                                                           <span class='font-medium text-gray-700 dark:text-gray-300'>Portal-Name:</span>
+                                                           <span class='text-sm text-gray-600 dark:text-gray-400 text-right'>{$name}</span>
+                                                       </div>
+                                                       <div class='flex justify-between items-start'>
+                                                           <span class='font-medium text-gray-700 dark:text-gray-300'>Portal-URL:</span>
+                                                           <span class='text-sm text-blue-600 dark:text-blue-400 text-right break-all'>{$url}</span>
+                                                       </div>
+                                                       <div class='flex justify-between items-start'>
+                                                           <span class='font-medium text-gray-700 dark:text-gray-300'>Beschreibung:</span>
+                                                           <span class='text-sm text-gray-600 dark:text-gray-400 text-right max-w-xs'>{$description}</span>
+                                                       </div>
+                                                       <div class='mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800'>
+                                                           <p class='text-sm text-blue-800 dark:text-blue-200'>
+                                                               <strong>Hinweis:</strong> Diese URL wird in E-Mail-Benachrichtigungen für die Benutzeraktivierung und E-Mail-Bestätigung verwendet.
+                                                           </p>
+                                                       </div>
+                                                   </div>
+                                               ");
+                                           })
+                                           ->reactive(),
+                                   ])
+                                   ->collapsible(),
+                           ]),
                     ])
                     ->columnSpanFull(),
             ])

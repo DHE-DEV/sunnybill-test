@@ -50,6 +50,10 @@ class CompanySetting extends Model
         'invoice_number_include_year',
         'solar_plant_number_prefix',
         'project_number_prefix',
+        'portal_url',
+        'portal_name',
+        'portal_description',
+        'portal_enabled',
     ];
 
     protected $casts = [
@@ -67,6 +71,7 @@ class CompanySetting extends Model
         'article_price_decimal_places' => 'integer',
         'total_price_decimal_places' => 'integer',
         'invoice_number_include_year' => 'boolean',
+        'portal_enabled' => 'boolean',
     ];
 
     /**
@@ -304,5 +309,34 @@ class CompanySetting extends Model
     {
         $parts = explode('-', $invoiceNumber);
         return (int) end($parts);
+    }
+
+    /**
+     * Gibt die Portal-URL zurück oder einen Fallback
+     */
+    public function getPortalUrl(): string
+    {
+        if ($this->portal_enabled && $this->portal_url) {
+            return rtrim($this->portal_url, '/');
+        }
+        
+        // Fallback zur Admin-URL
+        return rtrim(config('app.url'), '/') . '/admin';
+    }
+
+    /**
+     * Gibt den Portal-Namen zurück oder einen Fallback
+     */
+    public function getPortalName(): string
+    {
+        return $this->portal_name ?: config('app.name', 'SunnyBill');
+    }
+
+    /**
+     * Prüft ob das Portal aktiviert ist
+     */
+    public function isPortalEnabled(): bool
+    {
+        return (bool) $this->portal_enabled;
     }
 }

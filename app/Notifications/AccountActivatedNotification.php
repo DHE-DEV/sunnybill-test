@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\CompanySetting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -34,22 +35,25 @@ class AccountActivatedNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $loginUrl = config('app.url') . '/admin';
+        $companySettings = CompanySetting::current();
+        $portalUrl = $companySettings->getPortalUrl();
+        $portalName = $companySettings->getPortalName();
 
         return (new MailMessage)
-            ->subject('Ihr Account wurde aktiviert - ' . config('app.name'))
+            ->subject('Ihr Account wurde aktiviert - ' . $portalName)
             ->greeting('Hallo ' . $notifiable->name . '!')
-            ->line('Herzlichen Glückwunsch! Ihr Account bei ' . config('app.name') . ' wurde erfolgreich aktiviert.')
+            ->line('Herzlichen Glückwunsch! Ihr Account bei ' . $portalName . ' wurde erfolgreich aktiviert.')
             ->line('Ihre E-Mail-Adresse wurde bestätigt und Sie können sich nun in Ihr Konto einloggen.')
             ->line('**Ihre Anmeldedaten:**')
             ->line('E-Mail: ' . $notifiable->email)
             ->line('Passwort: Das temporäre Passwort aus der ersten E-Mail')
-            ->action('Jetzt anmelden', $loginUrl)
+            ->action('Jetzt anmelden', $portalUrl)
             ->line('⚠️ **Wichtiger Hinweis:** Bei Ihrer ersten Anmeldung müssen Sie aus Sicherheitsgründen ein neues Passwort festlegen.')
+            ->line('Portal-URL: ' . $portalUrl)
             ->line('Falls Sie Ihr temporäres Passwort vergessen haben, wenden Sie sich bitte an Ihren Administrator.')
             ->line('Bei Fragen oder Problemen wenden Sie sich bitte an Ihren Administrator.')
             ->salutation('Mit freundlichen Grüßen,')
-            ->salutation('Das ' . config('app.name') . ' Team');
+            ->salutation('Das ' . $portalName . ' Team');
     }
 
     /**
