@@ -181,7 +181,7 @@
             /* Features Section - Stripe Style */
             .features {
                 padding: 8rem 2rem;
-                background: #fafbfc;
+                background: #5e67ab;
                 position: relative;
                 overflow: hidden;
             }
@@ -1105,8 +1105,8 @@
                 <canvas id="globe-canvas"></canvas>
             </div>
             <div class="container" style="position: relative; z-index: 2;">
-                <h2 class="section-title scroll-animate">Kernfunktionen</h2>
-                <p class="section-subtitle scroll-animate">Professionelle Lösungen für Ihr Solarenergie-Management</p>
+                <h2 class="section-title scroll-animate" style="color: white;">Kernfunktionen</h2>
+                <p class="section-subtitle scroll-animate" style="color: white;">Professionelle Lösungen für Ihr Solarenergie-Management</p>
                 
                 <div class="features-grid">
                     <div class="feature-card scroll-animate">
