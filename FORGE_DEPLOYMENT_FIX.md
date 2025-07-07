@@ -43,6 +43,9 @@ git reset --hard origin/main
 php artisan config:clear
 php artisan cache:clear
 php artisan view:clear
+
+# Symbolischen Link für Storage erstellen (wichtig für Bilder)
+php artisan storage:link
 ```
 
 ### Option 3: Komplettes Forge Deployment Script
@@ -50,40 +53,8 @@ php artisan view:clear
 Hier ist das vollständige, aktualisierte Deployment Script für Forge:
 
 ```bash
-cd /home/forge/sunnybill-test.chargedata.eu
 
-# Git für Merge-Strategie konfigurieren (einmalig)
-git config pull.rebase false
 
-# Sicherer Pull mit Fallback
-git pull origin $FORGE_SITE_BRANCH --no-rebase || {
-    echo "Pull failed, performing hard reset..."
-    git fetch origin
-    git reset --hard origin/$FORGE_SITE_BRANCH
-}
-
-$FORGE_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
-
-# Laravel Caches leeren für neue Features
-if [ -f artisan ]; then
-    $FORGE_PHP artisan config:clear
-    $FORGE_PHP artisan cache:clear
-    $FORGE_PHP artisan view:clear
-fi
-
-# Prevent concurrent php-fpm reloads
-touch /tmp/fpmlock 2>/dev/null || true
-( flock -w 10 9 || exit 1
-    echo 'Reloading PHP FPM...'; sudo -S service $FORGE_PHP_FPM reload ) 9</tmp/fpmlock
-
-if [ -f artisan ]; then
-    $FORGE_PHP artisan migrate --force
-    
-    # Production Optimierungen
-    $FORGE_PHP artisan config:cache
-    $FORGE_PHP artisan route:cache
-    $FORGE_PHP artisan view:cache
-fi
 ```
 
 ## Sofortige Lösung (Jetzt ausführen)

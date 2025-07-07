@@ -1143,8 +1143,8 @@
                     </div>
                     <div class="customer-visual">
                         <div class="dashboard-screenshot">
-                            <img src="/storage/customers/customer_stat_4.png" alt="Kundenstatistik Screenshot">
-                    </div>
+                            <img src="{{ asset('storage/customers/customer_stat_4.png') }}" alt="Kundenstatistik Screenshot">
+                        </div>
                 </div>
             </div>
         </section>
@@ -1155,7 +1155,7 @@
                 <div class="billing-content">
                     <div class="billing-visual">
                         <div class="dashboard-screenshot">
-                            <img src="/storage/customers/ki_billing_1.png" alt="Abrechnungssystem Screenshot">
+                            <img src="{{ asset('storage/customers/ki_billing_1.png') }}" alt="Abrechnungssystem Screenshot">
                         </div>
                     </div>
                     <div class="billing-text">
@@ -1204,7 +1204,7 @@
                     </div>
                     <div class="participation-visual">
                         <div class="dashboard-screenshot">
-                            <img src="/storage/customers/beteiligung_2.png" alt="Beteiligungsmanagement Screenshot">
+                            <img src="{{ asset('storage/customers/beteiligung_2.png') }}" alt="Beteiligungsmanagement Screenshot">
                         </div>
                     </div>
                 </div>
