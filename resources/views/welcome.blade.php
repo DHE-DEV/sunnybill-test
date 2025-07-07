@@ -637,17 +637,17 @@
         <section class="hero">
             <div class="hero-content">
                 <h1 class="logo">VoltMaster</h1>
-                <p class="tagline">Die Zukunft der Solarenergie-Verwaltung</p>
+                <p class="tagline">Professionelles Solarenergie-Management</p>
                 <p class="description">
-                    Revolutionieren Sie Ihr Solarenergie-Management mit unserer KI-gestützten Plattform. 
-                    Maximieren Sie Effizienz, minimieren Sie Kosten und optimieren Sie Ihre Energieausbeute.
+                    Intelligente Plattform für die Verwaltung und Optimierung 
+                    Ihrer Solarenergie-Infrastruktur.
                 </p>
                 <div class="cta-buttons">
                     <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
-                        🚀 Jetzt starten
+                        Jetzt starten
                     </a>
                     <a href="#features" class="btn btn-secondary">
-                        📋 Funktionen entdecken
+                        Mehr erfahren
                     </a>
                 </div>
             </div>
@@ -656,8 +656,8 @@
         <!-- Features Section -->
         <section id="features" class="features">
             <div class="container">
-                <h2 class="section-title scroll-animate">Leistungsstarke Funktionen</h2>
-                <p class="section-subtitle scroll-animate">Alles was Sie für professionelles Solarenergie-Management benötigen</p>
+                <h2 class="section-title scroll-animate">Kernfunktionen</h2>
+                <p class="section-subtitle scroll-animate">Professionelle Lösungen für Ihr Solarenergie-Management</p>
                 
                 <div class="features-grid">
                     <div class="feature-card scroll-animate">
@@ -855,10 +855,10 @@
                     </p>
                     <div class="cta-buttons">
                         <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
-                            🚀 Kostenlos testen
+                            Kostenlos testen
                         </a>
                         <a href="mailto:info@voltmaster.de" class="btn btn-secondary">
-                            📞 Demo vereinbaren
+                            Demo vereinbaren
                         </a>
                     </div>
                 </div>
