@@ -1798,7 +1798,7 @@
                 // Scene setup
                 const scene = new THREE.Scene();
                 const camera = new THREE.PerspectiveCamera(60, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
-                camera.position.set(-100, -30, 200);
+                camera.position.set(-50, 50, 180); // Optimale Position für Atlantik-Arcs
 
                 const renderer = new THREE.WebGLRenderer({ 
                     canvas: canvas, 
