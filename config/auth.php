@@ -112,4 +112,19 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email Verification
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the default settings for email verification.
+    | You may specify the number of minutes that the verification link
+    | should be considered valid.
+    |
+    */
+
+    'verification' => [
+        'expire' => 60, // minutes
+    ],
+
 ];

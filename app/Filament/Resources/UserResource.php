@@ -67,9 +67,9 @@ class UserResource extends Resource
                             ->password()
                             ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                             ->dehydrated(fn ($state) => filled($state))
-                            ->required(fn (string $context): bool => $context === 'create')
+                            ->required(false)
                             ->minLength(8)
-                            ->helperText('Mindestens 8 Zeichen. Leer lassen, um das aktuelle Passwort beizubehalten.'),
+                            ->helperText('Mindestens 8 Zeichen. Leer lassen für automatisches zufälliges Passwort (bei neuen Benutzern) oder um das aktuelle Passwort beizubehalten (bei Bearbeitung).'),
 
                         Forms\Components\Select::make('role')
                             ->label('Rolle')
@@ -87,6 +87,17 @@ class UserResource extends Resource
                             ->label('E-Mail verifiziert am')
                             ->displayFormat('d.m.Y H:i')
                             ->helperText('Zeitpunkt der E-Mail-Verifizierung'),
+
+                        Forms\Components\Toggle::make('password_change_required')
+                            ->label('Passwort-Wechsel erforderlich')
+                            ->helperText('Benutzer muss bei der nächsten Anmeldung das Passwort ändern')
+                            ->visible(fn (string $context): bool => $context === 'edit'),
+
+                        Forms\Components\DateTimePicker::make('password_changed_at')
+                            ->label('Passwort geändert am')
+                            ->displayFormat('d.m.Y H:i')
+                            ->helperText('Zeitpunkt der letzten Passwort-Änderung')
+                            ->visible(fn (string $context): bool => $context === 'edit'),
                     ])
                     ->columns(2),
 
@@ -167,6 +178,16 @@ class UserResource extends Resource
                     ->label('Verifiziert')
                     ->boolean()
                     ->getStateUsing(fn ($record) => $record->email_verified_at !== null)
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\IconColumn::make('password_change_required')
+                    ->label('Passwort-Wechsel')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-exclamation-triangle')
+                    ->falseIcon('heroicon-o-check-circle')
+                    ->trueColor('warning')
+                    ->falseColor('success')
                     ->sortable()
                     ->toggleable(),
 
@@ -251,13 +272,131 @@ class UserResource extends Resource
                         ])
                         ->action(function ($record, array $data) {
                             $record->update([
-                                'password' => Hash::make($data['new_password'])
+                                'password' => Hash::make($data['new_password']),
+                                'password_change_required' => true,
+                                'password_changed_at' => now(),
                             ]);
                             
                             Notification::make()
                                 ->title('Passwort erfolgreich zurückgesetzt')
+                                ->body('Der Benutzer muss das Passwort bei der nächsten Anmeldung ändern.')
                                 ->success()
                                 ->send();
+                        }),
+
+                    Tables\Actions\Action::make('generate_random_password')
+                        ->label('Zufälliges Passwort generieren')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalHeading('Zufälliges Passwort generieren')
+                        ->modalDescription(fn ($record) => "Möchten Sie ein neues zufälliges Passwort für {$record->name} generieren und per E-Mail versenden?")
+                        ->action(function ($record) {
+                            try {
+                                $temporaryPassword = \App\Models\User::generateRandomPassword();
+                                
+                                $record->update([
+                                    'password' => Hash::make($temporaryPassword),
+                                    'password_change_required' => true,
+                                    'password_changed_at' => now(),
+                                ]);
+                                
+                                // Sende E-Mail mit neuem Passwort
+                                $record->notify(new \App\Notifications\NewUserPasswordNotification($temporaryPassword));
+                                
+                                Notification::make()
+                                    ->title('Zufälliges Passwort generiert')
+                                    ->body("Ein neues zufälliges Passwort wurde generiert und an {$record->email} gesendet.")
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Fehler beim Generieren des Passworts')
+                                    ->body("Das Passwort konnte nicht generiert werden: " . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+
+                    Tables\Actions\Action::make('resend_verification')
+                        ->label('E-Mail-Verifikation senden')
+                        ->icon('heroicon-o-envelope')
+                        ->color('info')
+                        ->visible(fn ($record) => !$record->hasVerifiedEmail())
+                        ->requiresConfirmation()
+                        ->modalHeading('E-Mail-Verifikation erneut senden')
+                        ->modalDescription(fn ($record) => "Möchten Sie eine neue E-Mail-Verifikation an {$record->email} senden?")
+                        ->action(function ($record) {
+                            try {
+                                $record->sendEmailVerificationNotification();
+                                
+                                Notification::make()
+                                    ->title('E-Mail-Verifikation gesendet')
+                                    ->body("Eine E-Mail-Bestätigung wurde an {$record->email} gesendet.")
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Fehler beim Senden der E-Mail-Verifikation')
+                                    ->body("Die E-Mail konnte nicht gesendet werden: " . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+
+                    Tables\Actions\Action::make('mark_verified')
+                        ->label('Als verifiziert markieren')
+                        ->icon('heroicon-o-check-badge')
+                        ->color('success')
+                        ->visible(fn ($record) => !$record->hasVerifiedEmail())
+                        ->requiresConfirmation()
+                        ->modalHeading('E-Mail als verifiziert markieren')
+                        ->modalDescription(fn ($record) => "Möchten Sie die E-Mail-Adresse {$record->email} manuell als verifiziert markieren?")
+                        ->action(function ($record) {
+                            $record->markEmailAsVerified();
+                            
+                            // Sende Account-Aktivierungs-E-Mail
+                            try {
+                                $record->notify(new \App\Notifications\AccountActivatedNotification());
+                                
+                                Notification::make()
+                                    ->title('E-Mail als verifiziert markiert')
+                                    ->body("Die E-Mail-Adresse {$record->email} wurde als verifiziert markiert und eine Account-Aktivierungs-E-Mail wurde gesendet.")
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('E-Mail als verifiziert markiert')
+                                    ->body("Die E-Mail-Adresse wurde als verifiziert markiert, aber die Account-Aktivierungs-E-Mail konnte nicht gesendet werden: " . $e->getMessage())
+                                    ->warning()
+                                    ->send();
+                            }
+                        }),
+
+                    Tables\Actions\Action::make('send_activation')
+                        ->label('Account-Aktivierungs-E-Mail senden')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('info')
+                        ->visible(fn ($record) => $record->hasVerifiedEmail())
+                        ->requiresConfirmation()
+                        ->modalHeading('Account-Aktivierungs-E-Mail senden')
+                        ->modalDescription(fn ($record) => "Möchten Sie eine Account-Aktivierungs-E-Mail an {$record->email} senden?")
+                        ->action(function ($record) {
+                            try {
+                                $record->notify(new \App\Notifications\AccountActivatedNotification());
+                                
+                                Notification::make()
+                                    ->title('Account-Aktivierungs-E-Mail gesendet')
+                                    ->body("Eine Account-Aktivierungs-E-Mail wurde an {$record->email} gesendet.")
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Fehler beim Senden der Account-Aktivierungs-E-Mail')
+                                    ->body("Die E-Mail konnte nicht gesendet werden: " . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
                         }),
 
                     Tables\Actions\DeleteAction::make()

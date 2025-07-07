@@ -5,6 +5,9 @@ namespace App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Notifications\Notification;
+use App\Notifications\NewUserPasswordNotification;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class CreateUser extends CreateRecord
 {
@@ -20,7 +23,7 @@ class CreateUser extends CreateRecord
         return Notification::make()
             ->success()
             ->title('Benutzer erstellt')
-            ->body('Der neue Benutzer wurde erfolgreich erstellt.');
+            ->body('Der neue Benutzer wurde erfolgreich erstellt und eine E-Mail-Bestätigung wurde gesendet.');
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array
@@ -29,6 +32,56 @@ class CreateUser extends CreateRecord
         $data['is_active'] = $data['is_active'] ?? true;
         $data['role'] = $data['role'] ?? 'user';
         
+        // Generiere automatisch ein zufälliges Passwort falls keines angegeben
+        if (empty($data['password'])) {
+            $data['temporary_password'] = User::generateRandomPassword();
+            $data['password'] = Hash::make($data['temporary_password']);
+        }
+        
+        // Setze password_change_required auf true für neue Benutzer
+        $data['password_change_required'] = true;
+        
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        $user = $this->record;
+        $formData = $this->form->getState();
+        $temporaryPassword = $formData['temporary_password'] ?? null;
+        
+        if ($user && $user->email) {
+            try {
+                // Sende Passwort-E-Mail mit temporärem Passwort
+                if ($temporaryPassword) {
+                    $user->notify(new NewUserPasswordNotification($temporaryPassword));
+                    
+                    Notification::make()
+                        ->success()
+                        ->title('Benutzer erstellt und Passwort gesendet')
+                        ->body("Der Benutzer wurde erstellt und das temporäre Passwort wurde an {$user->email} gesendet.")
+                        ->send();
+                }
+                
+                // Sende E-Mail-Verifikation
+                if (!$user->hasVerifiedEmail()) {
+                    $user->sendEmailVerificationNotification();
+                    
+                    Notification::make()
+                        ->info()
+                        ->title('E-Mail-Verifikation gesendet')
+                        ->body("Eine E-Mail-Bestätigung wurde zusätzlich an {$user->email} gesendet.")
+                        ->send();
+                }
+                    
+            } catch (\Exception $e) {
+                // Fehlerbehandlung falls E-Mail nicht gesendet werden kann
+                Notification::make()
+                    ->warning()
+                    ->title('E-Mail-Versand fehlgeschlagen')
+                    ->body("Der Benutzer wurde erstellt, aber die E-Mails konnten nicht gesendet werden. Fehler: " . $e->getMessage())
+                    ->send();
+            }
+        }
     }
 }

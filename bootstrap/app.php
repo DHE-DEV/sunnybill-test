@@ -12,7 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'require.password.change' => \App\Http\Middleware\RequirePasswordChange::class,
+        ]);
+        
+        // Apply password change middleware to web routes
+        $middleware->web(append: [
+            \App\Http\Middleware\RequirePasswordChange::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use App\Notifications\CustomVerifyEmail;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
@@ -30,6 +31,8 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'department',
         'notes',
+        'password_change_required',
+        'password_changed_at',
     ];
 
     /**
@@ -54,6 +57,8 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'last_login_at' => 'datetime',
             'is_active' => 'boolean',
+            'password_change_required' => 'boolean',
+            'password_changed_at' => 'datetime',
         ];
     }
 
@@ -124,6 +129,64 @@ class User extends Authenticatable implements FilamentUser
     public function updateLastLogin(): void
     {
         $this->update(['last_login_at' => now()]);
+    }
+
+    /**
+     * Send the email verification notification.
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new CustomVerifyEmail);
+    }
+
+    /**
+     * Generate a random password
+     */
+    public static function generateRandomPassword(int $length = 12): string
+    {
+        $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+        $password = '';
+        
+        // Ensure at least one character from each type
+        $password .= chr(rand(97, 122)); // lowercase
+        $password .= chr(rand(65, 90));  // uppercase
+        $password .= chr(rand(48, 57));  // number
+        $password .= '!@#$%^&*'[rand(0, 7)]; // special char
+        
+        // Fill the rest randomly
+        for ($i = 4; $i < $length; $i++) {
+            $password .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        
+        // Shuffle the password
+        return str_shuffle($password);
+    }
+
+    /**
+     * Check if user needs to change password
+     */
+    public function needsPasswordChange(): bool
+    {
+        return $this->password_change_required;
+    }
+
+    /**
+     * Mark password as changed
+     */
+    public function markPasswordAsChanged(): void
+    {
+        $this->update([
+            'password_change_required' => false,
+            'password_changed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Require password change
+     */
+    public function requirePasswordChange(): void
+    {
+        $this->update(['password_change_required' => true]);
     }
 
     /**

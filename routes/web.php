@@ -4,9 +4,51 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Document;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+// Email Verification Routes
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $user = $request->user();
+    
+    // Prüfe ob E-Mail bereits verifiziert ist
+    $wasAlreadyVerified = $user->hasVerifiedEmail();
+    
+    $request->fulfill();
+    
+    // Sende Account-Aktivierungs-E-Mail nur wenn E-Mail vorher nicht verifiziert war
+    if (!$wasAlreadyVerified) {
+        try {
+            $user->notify(new \App\Notifications\AccountActivatedNotification());
+        } catch (\Exception $e) {
+            // Log error but don't break the verification process
+            \Log::error('Failed to send account activation notification: ' . $e->getMessage());
+        }
+    }
+    
+    return redirect('/admin')->with('status', 'E-Mail-Adresse erfolgreich bestätigt! Sie haben eine Bestätigungs-E-Mail erhalten.');
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+    
+    return back()->with('message', 'Bestätigungslink wurde erneut gesendet!');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
+// Password Change Routes
+Route::middleware('auth')->group(function () {
+    Route::get('/password/change', [App\Http\Controllers\PasswordChangeController::class, 'show'])
+        ->name('password.change');
+    Route::post('/password/change', [App\Http\Controllers\PasswordChangeController::class, 'update'])
+        ->name('password.update');
 });
 
 // Document download route
