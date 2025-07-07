@@ -1457,8 +1457,8 @@
                     this.mouseY = e.clientY;
                     this.isMoving = true;
 
-                    // Create particle trail - öfter und mit mehr Bewegung
-                    if (Math.random() < 0.7) {
+                    // Create particle trail - reduced frequency for performance
+                    if (Math.random() < 0.3) {
                         this.createParticle(this.mouseX, this.mouseY);
                     }
 
@@ -1495,15 +1495,16 @@
                 }
 
                 createParticle(x, y, burst = false) {
+                    // Limit total particles for performance
+                    if (this.particles.length > 15) return;
+                    
                     const particle = document.createElement('div');
                     particle.className = 'cursor-particle';
                     
-                    const size = Math.random() * 6 + 3;
-                    // Deutlich weiter von links nach rechts - größerer Winkelbereich
+                    const size = Math.random() * 4 + 2; // Smaller particles
                     const angle = burst ? (Math.random() * 360) : (Math.random() * 120 - 60);
-                    // Höhere Geschwindigkeit für weitere Bewegung
-                    const velocity = burst ? (Math.random() * 5 + 3) : (Math.random() * 3 + 1.5);
-                    const life = burst ? 80 : 50;
+                    const velocity = burst ? (Math.random() * 4 + 2) : (Math.random() * 2 + 1); // Reduced velocity
+                    const life = burst ? 60 : 40; // Shorter life
 
                     particle.style.cssText = `
                         position: fixed;
@@ -1515,7 +1516,8 @@
                         border-radius: 50%;
                         pointer-events: none;
                         z-index: 9999;
-                        box-shadow: 0 0 ${size * 3}px rgba(255, 255, 0, 0.8);
+                        box-shadow: 0 0 ${size * 2}px rgba(255, 255, 0, 0.6);
+                        will-change: transform, opacity;
                     `;
 
                     document.body.appendChild(particle);
@@ -1663,14 +1665,33 @@
                 // Manual rotation without OrbitControls
                 let rotationSpeed = 0.00025; // 50% langsamer
 
-                // Animation loop
+                let animationId;
+                let isVisible = false;
+
+                // Animation loop with performance optimization
                 function animate() {
-                    requestAnimationFrame(animate);
+                    if (!isVisible) return;
+                    
+                    animationId = requestAnimationFrame(animate);
                     
                     // Rotate the globe
                     Globe.rotation.y += rotationSpeed;
                     
                     renderer.render(scene, camera);
+                }
+
+                function startAnimation() {
+                    if (!isVisible) {
+                        isVisible = true;
+                        animate();
+                    }
+                }
+
+                function stopAnimation() {
+                    isVisible = false;
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
                 }
 
                 // Handle resize
@@ -1693,19 +1714,30 @@
                             loadingElement.style.display = 'none';
                         }, 500);
                     }
-                    animate();
+                    startAnimation();
                 }, 1000);
 
-                // Intersection Observer for performance
+                // Intersection Observer for performance - pause when not visible
                 const globeObserver = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            animate();
+                            startAnimation();
+                        } else {
+                            stopAnimation();
                         }
                     });
                 }, { threshold: 0.1 });
 
                 globeObserver.observe(canvas);
+
+                // Pause animation when tab is not visible
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        stopAnimation();
+                    } else if (canvas.getBoundingClientRect().top < window.innerHeight) {
+                        startAnimation();
+                    }
+                });
             }
         </script>
     </body>
