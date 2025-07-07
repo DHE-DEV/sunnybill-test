@@ -203,6 +203,87 @@
                 font-size: 1rem;
             }
 
+            /* Customer Management Section */
+            .customer-management {
+                padding: 8rem 2rem;
+                background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+                position: relative;
+            }
+
+            .customer-content {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+                position: relative;
+                z-index: 2;
+            }
+
+            .customer-text h2 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 1.5rem;
+                line-height: 1.2;
+                color: #1a202c;
+            }
+
+            .customer-text p {
+                font-size: 1.1rem;
+                margin-bottom: 2rem;
+                color: #4a5568;
+                line-height: 1.7;
+            }
+
+            .customer-features {
+                list-style: none;
+                margin-bottom: 2rem;
+            }
+
+            .customer-features li {
+                padding: 0.5rem 0;
+                display: flex;
+                align-items: center;
+                font-size: 1rem;
+                color: #4a5568;
+            }
+
+            .customer-features li::before {
+                content: '✓';
+                color: #00ba88;
+                font-weight: bold;
+                margin-right: 1rem;
+                font-size: 1.2rem;
+            }
+
+            .customer-visual {
+                position: relative;
+                height: 500px;
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 20px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            }
+
+            .dashboard-screenshot {
+                width: 95%;
+                height: 95%;
+                border-radius: 15px;
+                overflow: hidden;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            }
+
+            .dashboard-screenshot img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 15px;
+            }
+
             /* Product Showcase Section */
             .product-showcase {
                 padding: 8rem 2rem;
@@ -509,9 +590,14 @@
                     grid-template-columns: 1fr;
                 }
 
-                .showcase-content {
+                .showcase-content,
+                .customer-content {
                     grid-template-columns: 1fr;
                     text-align: center;
+                }
+
+                .customer-visual {
+                    height: 300px;
                 }
 
                 .section-title {
@@ -712,6 +798,36 @@
                             Komplette Solaranlagen-Administration mit Leistungsüberwachung. 
                             Detaillierte Anlagendokumentation und Performance-Tracking für maximale Effizienz.
                         </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Customer Management Section -->
+        <section class="customer-management">
+            <div class="container">
+                <div class="customer-content">
+                    <div class="customer-text">
+                        <h2>Intelligente Kundenverwaltung</h2>
+                        <p>
+                            Behalten Sie den Überblick über alle Ihre Kunden mit detaillierten Analysen und Statistiken. 
+                            Unterscheiden Sie zwischen Privat- und Firmenkunden und verfolgen Sie deren Aktivitäten in Echtzeit.
+                        </p>
+                        <ul class="customer-features">
+                            <li>Automatische Kategorisierung von Privat- und Firmenkunden</li>
+                            <li>Detaillierte Kundenstatistiken und Wachstumsanalysen</li>
+                            <li>Solar-Beteiligungen und Rechnungsübersicht</li>
+                            <li>Aktivitätstracking und Kundenverteilung nach Monaten</li>
+                            <li>Umfassende Dokumentenverwaltung pro Kunde</li>
+                        </ul>
+                        <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
+                            Kundenverwaltung erkunden
+                        </a>
+                    </div>
+                    <div class="customer-visual">
+                        <div class="dashboard-screenshot">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI4MDAiIHZpZXdCb3g9IjAgMCAxMjAwIDgwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjRkFGQkZDIi8+CjxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSI3NjAiIGZpbGw9IiNGRkZGRkYiIHJ4PSIxMCIvPgo8cmVjdCB4PSIyNDAiIHk9IjIwIiB3aWR0aD0iOTQwIiBoZWlnaHQ9Ijc2MCIgZmlsbD0iI0ZGRkZGRiIgcng9IjEwIi8+Cjx0ZXh0IHg9IjI2MCIgeT0iNzAiIGZpbGw9IiMxQTIwMkMiIGZvbnQtZmFtaWx5PSJJbnRlciIgZm9udC1zaXplPSIzMiIgZm9udC13ZWlnaHQ9IjcwMCI+S3VuZGVuPC90ZXh0Pgo8cmVjdCB4PSIyNjAiIHk9IjEyMCIgd2lkdGg9IjI4MCIgaGVpZ2h0PSIxNDAiIGZpbGw9IiNGOEZBRkMiIHJ4PSIxMCIvPgo8dGV4dCB4PSIyODAiIHk9IjE1MCIgZmlsbD0iIzcxODA5NiIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjE0Ij5HZXNhbXQgS3VuZGVuPC90ZXh0Pgo8dGV4dCB4PSIyODAiIHk9IjE5MCIgZmlsbD0iIzFBMjAyQyIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iNzAwIj4zPC90ZXh0Pgo8dGV4dCB4PSIyODAiIHk9IjIyMCIgZmlsbD0iI0Y1OTAwMyIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjEyIj5BbGxlIHJlZ2lzdHJpZXJ0ZW4gS3VuZGVuPC90ZXh0Pgo8cmVjdCB4PSI1NjAiIHk9IjEyMCIgd2lkdGg9IjI4MCIgaGVpZ2h0PSIxNDAiIGZpbGw9IiNGOEZBRkMiIHJ4PSIxMCIvPgo8dGV4dCB4PSI1ODAiIHk9IjE1MCIgZmlsbD0iIzcxODA5NiIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjE0Ij5Qcml2YXRrdW5kZW48L3RleHQ+Cjx0ZXh0IHg9IjU4MCIgeT0iMTkwIiBmaWxsPSIjMUEyMDJDIiBmb250LWZhbWlseT0iSW50ZXIiIGZvbnQtc2l6ZT0iNDgiIGZvbnQtd2VpZ2h0PSI3MDAiPjI8L3RleHQ+Cjx0ZXh0IHg9IjU4MCIgeT0iMjIwIiBmaWxsPSIjMzMzM0ZGIiBmb250LWZhbWlseT0iSW50ZXIiIGZvbnQtc2l6ZT0iMTIiPjY2LjclIGFsbGVyIEt1bmRlbjwvdGV4dD4KPHJlY3QgeD0iODYwIiB5PSIxMjAiIHdpZHRoPSIyODAiIGhlaWdodD0iMTQwIiBmaWxsPSIjRjhGQUZDIiByeD0iMTAiLz4KPHRleHQgeD0iODgwIiB5PSIxNTAiIGZpbGw9IiM3MTgwOTYiIGZvbnQtZmFtaWx5PSJJbnRlciIgZm9udC1zaXplPSIxNCI+RmlybWVua3VuZGVuPC90ZXh0Pgo8dGV4dCB4PSI4ODAiIHk9IjE5MCIgZmlsbD0iIzFBMjAyQyIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iNzAwIj4xPC90ZXh0Pgo8dGV4dCB4PSI4ODAiIHk9IjIyMCIgZmlsbD0iIzAwQkE4OCIgZm9udC1mYW1pbHk9IkludGVyIiBmb250LXNpemU9IjEyIj4zMy4zJSBhbGxlciBLdW5kZW48L3RleHQ+CjxyZWN0IHg9IjI2MCIgeT0iMzAwIiB3aWR0aD0iNDQwIiBoZWlnaHQ9IjI2MCIgZmlsbD0iI0Y4RkFGQyIgcng9IjEwIi8+Cjx0ZXh0IHg9IjI4MCIgeT0iMzMwIiBmaWxsPSIjMUEyMDJDIiBmb250LWZhbWlseT0iSW50ZXIiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSI2MDAiPkt1bmRlbndhaHNzdHVtIC0gQWt0aXYgdnMuIEluYWt0aXY8L3RleHQ+CjxsaW5lIHgxPSIzMDAiIHkxPSI1MDAiIHgyPSI2NjAiIHkyPSI0MDAiIHN0cm9rZT0iIzAwQkE4OCIgc3Ryb2tlLXdpZHRoPSIzIi8+CjxyZWN0IHg9IjcyMCIgeT0iMzAwIiB3aWR0aD0iNDIwIiBoZWlnaHQ9IjI2MCIgZmlsbD0iI0Y4RkFGQyIgcng9IjEwIi8+Cjx0ZXh0IHg9Ijc0MCIgeT0iMzMwIiBmaWxsPSIjMUEyMDJDIiBmb250LWZhbWlseT0iSW50ZXIiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSI2MDAiPkt1bmRlbnZlcnRlaWx1bmcgbmFjaCBNb25hdGVuPC90ZXh0Pgo8cmVjdCB4PSI5NDAiIHk9IjQ2MCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMDBCQTg4Ii8+CjxyZWN0IHg9IjEwMDAiIHk9IjQ4MCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRjU5MDAzIi8+CjwvZz4KPC9zdmc+" alt="VoltMaster Kundenverwaltung Dashboard" style="width: 100%; height: auto; border-radius: 15px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);" />
+                        </div>
                     </div>
                 </div>
             </div>
