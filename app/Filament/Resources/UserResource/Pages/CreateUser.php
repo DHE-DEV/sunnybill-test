@@ -12,6 +12,8 @@ use App\Models\User;
 class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
+    
+    protected ?string $temporaryPassword = null;
 
     protected function getRedirectUrl(): string
     {
@@ -34,8 +36,11 @@ class CreateUser extends CreateRecord
         
         // Generiere automatisch ein zufälliges Passwort falls keines angegeben
         if (empty($data['password'])) {
-            $data['temporary_password'] = User::generateRandomPassword();
-            $data['password'] = Hash::make($data['temporary_password']);
+            $this->temporaryPassword = User::generateRandomPassword();
+            $data['password'] = Hash::make($this->temporaryPassword);
+        } else {
+            // Falls ein Passwort eingegeben wurde, verwende es als temporäres Passwort
+            $this->temporaryPassword = $data['password'];
         }
         
         // Setze password_change_required auf true für neue Benutzer
@@ -47,14 +52,12 @@ class CreateUser extends CreateRecord
     protected function afterCreate(): void
     {
         $user = $this->record;
-        $formData = $this->form->getState();
-        $temporaryPassword = $formData['temporary_password'] ?? null;
         
         if ($user && $user->email) {
             try {
                 // Sende E-Mail-Verifikation mit temporärem Passwort
                 if (!$user->hasVerifiedEmail()) {
-                    $user->sendEmailVerificationNotification($temporaryPassword);
+                    $user->sendEmailVerificationNotification($this->temporaryPassword);
                     
                     Notification::make()
                         ->success()
