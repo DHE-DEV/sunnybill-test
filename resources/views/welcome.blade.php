@@ -396,7 +396,7 @@
 
             .participation-visual {
                 position: relative;
-                height: 500px;
+                height: 550px;
                 background: rgba(255, 255, 255, 0.8);
                 border-radius: 20px;
                 backdrop-filter: blur(10px);
@@ -1118,7 +1118,7 @@
                     </div>
                     <div class="participation-visual">
                         <div class="dashboard-screenshot">
-                            <img src="/storage/customers/customer_stat_1.png" alt="Beteiligungsmanagement Screenshot">
+                            <img src="/storage/customers/beteiligung_2.png" alt="Beteiligungsmanagement Screenshot">
                         </div>
                     </div>
                 </div>
@@ -1165,7 +1165,7 @@
 
                 <div class="stats-grid">
                     <div class="stat-item">
-                        <div class="stat-number">500+</div>
+                        <div class="stat-number">65+</div>
                         <div class="stat-label">Verwaltete Anlagen</div>
                     </div>
                     <div class="stat-item">
@@ -1576,7 +1576,7 @@
                 scene.add(Globe);
 
                 // Manual rotation without OrbitControls
-                let rotationSpeed = 0.0005;
+                let rotationSpeed = 0.00025; // 50% langsamer
 
                 // Animation loop
                 function animate() {
