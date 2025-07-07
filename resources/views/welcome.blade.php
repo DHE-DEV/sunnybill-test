@@ -312,6 +312,72 @@
                 border-radius: 15px;
             }
 
+            /* Billing System Section */
+            .billing-system {
+                padding: 8rem 2rem;
+                background: linear-gradient(rgba(226, 232, 240, 0.9), rgba(248, 250, 252, 0.9));
+                position: relative;
+            }
+
+            .billing-content {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+                position: relative;
+                z-index: 2;
+            }
+
+            .billing-visual {
+                position: relative;
+                height: 500px;
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 20px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            }
+
+            .billing-text h2 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 1.5rem;
+                line-height: 1.2;
+                color: #1a202c;
+            }
+
+            .billing-text p {
+                font-size: 1.1rem;
+                margin-bottom: 2rem;
+                color: #4a5568;
+                line-height: 1.7;
+            }
+
+            .billing-features {
+                list-style: none;
+                margin-bottom: 2rem;
+            }
+
+            .billing-features li {
+                padding: 0.5rem 0;
+                display: flex;
+                align-items: center;
+                font-size: 1rem;
+                color: #4a5568;
+            }
+
+            .billing-features li::before {
+                content: '✓';
+                color: #f53003;
+                font-weight: bold;
+                margin-right: 1rem;
+                font-size: 1.2rem;
+            }
+
             /* Product Showcase Section */
             .product-showcase {
                 padding: 8rem 2rem;
@@ -926,6 +992,37 @@
                     <div class="customer-visual">
                         <div class="dashboard-screenshot">
                             <img src="/storage/customers/customer_stat_4.png" alt="Kundenstatistik Screenshot">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Billing System Section -->
+        <section class="billing-system">
+            <div class="container">
+                <div class="billing-content">
+                    <div class="billing-visual">
+                        <div class="dashboard-screenshot">
+                            <img src="/storage/customers/customer_stat_1.png" alt="Abrechnungssystem Screenshot">
+                        </div>
+                    </div>
+                    <div class="billing-text">
+                        <h2>KI-gestütztes Abrechnungssystem</h2>
+                        <p>
+                            Revolutionieren Sie Ihre Abrechnungsprozesse mit unserem intelligenten System. 
+                            Automatische Kostenaufteilung, präzise Positionsgenerierung und nahtlose Integration 
+                            in Ihre bestehenden Workflows.
+                        </p>
+                        <ul class="billing-features">
+                            <li>Automatische Kostenaufteilung durch KI-Algorithmen</li>
+                            <li>Intelligente Positionsgenerierung mit bis zu 6 Nachkommastellen</li>
+                            <li>ZUGFeRD-konforme Rechnungsstellung</li>
+                            <li>Automatische Gutschriftenerstellung</li>
+                            <li>Echtzeit-Abrechnungsübersichten und Analysen</li>
+                        </ul>
+                        <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
+                            Abrechnungssystem testen
+                        </a>
                     </div>
                 </div>
             </div>
