@@ -11,6 +11,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Login Route (redirect to Filament)
+Route::get('/login', function () {
+    return redirect('/admin/login');
+})->name('login');
+
 // Email Verification Routes
 Route::get('/email/verify', function () {
     return view('auth.verify-email');
