@@ -56,9 +56,8 @@ class CreateUser extends CreateRecord
         $user = $this->record;
         
         if ($user && $user->email && $this->temporaryPassword) {
-            // Setze das temporäre Passwort in die neue tmp_p Spalte (unverschlüsselt)
-            $user->temporary_password = $this->temporaryPassword;
-            $user->save();
+            // Setze das temporäre Passwort korrekt mit der setTemporaryPassword() Methode
+            $user->setTemporaryPassword($this->temporaryPassword);
             
             try {
                 // Sende E-Mail-Verifikation mit temporärem Passwort
