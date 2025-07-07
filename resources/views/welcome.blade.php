@@ -661,56 +661,56 @@
                 
                 <div class="features-grid">
                     <div class="feature-card scroll-animate">
+                        <span class="feature-icon">🏢</span>
+                        <h3 class="feature-title">Stakeholder-Management</h3>
+                        <p class="feature-description">
+                            Zentrale Verwaltung von Kunden, Lieferanten und Dienstleistern. 
+                            Komplette Stammdatenverwaltung mit Vertragsmanagement und Kommunikationshistorie.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">🤖</span>
+                        <h3 class="feature-title">KI-gestützte Abrechnung</h3>
+                        <p class="feature-description">
+                            Automatische Kostenaufteilung und Positionsgenerierung durch KI. 
+                            Intelligente Abrechnungsprozesse mit präziser Artikelverwaltung bis zu 6 Nachkommastellen.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">⚖️</span>
+                        <h3 class="feature-title">Beteiligungsmanagement</h3>
+                        <p class="feature-description">
+                            Verwaltung von Firmen- und Privatkundenbeteiligungen an Solaranlagen. 
+                            Automatische Ertragsverteilung und transparente Abrechnungsübersichten.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">📋</span>
+                        <h3 class="feature-title">Aufgaben & Dokumente</h3>
+                        <p class="feature-description">
+                            Integriertes Aufgabenmanagement mit umfassender Dokumentenverwaltung. 
+                            Zentrale Ablage für alle Dokumente zu Kunden, Anlagen, Verträgen und Abrechnungen.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">💳</span>
+                        <h3 class="feature-title">Rechnungswesen</h3>
+                        <p class="feature-description">
+                            Vollständiges Rechnungsmanagement mit Gutschriften und ZUGFeRD-Integration. 
+                            Automatisierte Rechnungsstellung mit KI-Unterstützung für optimale Effizienz.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card scroll-animate">
                         <span class="feature-icon">⚡</span>
-                        <h3 class="feature-title">Echtzeit-Monitoring</h3>
+                        <h3 class="feature-title">Anlagenverwaltung</h3>
                         <p class="feature-description">
-                            Überwachen Sie Ihre Solaranlagen in Echtzeit mit fortschrittlichen IoT-Sensoren. 
-                            Erhalten Sie sofortige Benachrichtigungen bei Anomalien und optimieren Sie die Leistung kontinuierlich.
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card scroll-animate">
-                        <span class="feature-icon">📊</span>
-                        <h3 class="feature-title">Intelligente Analytik</h3>
-                        <p class="feature-description">
-                            KI-gestützte Datenanalyse zur Vorhersage von Energieerträgen und Optimierung der Anlagenleistung. 
-                            Detaillierte Reports und Dashboards für fundierte Geschäftsentscheidungen.
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card scroll-animate">
-                        <span class="feature-icon">💰</span>
-                        <h3 class="feature-title">Automatisierte Abrechnung</h3>
-                        <p class="feature-description">
-                            Vollautomatische Rechnungsstellung und Abrechnungsmanagement für Kunden und Lieferanten. 
-                            Integration mit Buchhaltungssystemen und ZUGFeRD-konforme Rechnungen.
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card scroll-animate">
-                        <span class="feature-icon">🏗️</span>
-                        <h3 class="feature-title">Projektmanagement</h3>
-                        <p class="feature-description">
-                            Komplette Verwaltung von Solarprojekten von der Planung bis zur Inbetriebnahme. 
-                            Aufgabenverfolgung, Meilensteine und Teamkoordination in einer Plattform.
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card scroll-animate">
-                        <span class="feature-icon">👥</span>
-                        <h3 class="feature-title">Kundenverwaltung</h3>
-                        <p class="feature-description">
-                            Zentrale Verwaltung aller Kundendaten, Verträge und Kommunikation. 
-                            Automatische Benachrichtigungen und personalisierte Kundenportale.
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card scroll-animate">
-                        <span class="feature-icon">🔧</span>
-                        <h3 class="feature-title">Wartungsmanagement</h3>
-                        <p class="feature-description">
-                            Proaktive Wartungsplanung und -verfolgung für optimale Anlagenperformance. 
-                            Automatische Erinnerungen und Dokumentation aller Servicearbeiten.
+                            Komplette Solaranlagen-Administration mit Leistungsüberwachung. 
+                            Detaillierte Anlagendokumentation und Performance-Tracking für maximale Effizienz.
                         </p>
                     </div>
                 </div>
