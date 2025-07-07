@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>VoltMaster - Solarenergie Management</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
             * {
                 margin: 0;
@@ -19,7 +19,7 @@
                 overflow-x: hidden;
             }
 
-            /* Hero Section mit Solarpanel Hintergrund */
+            /* Hero Section */
             .hero {
                 min-height: 100vh;
                 background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), 
@@ -110,10 +110,11 @@
                 transform: translateY(-3px);
             }
 
-            /* Features Section */
+            /* Features Section - Stripe Style */
             .features {
-                padding: 5rem 2rem;
-                background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+                padding: 8rem 2rem;
+                background: #fafbfc;
+                position: relative;
             }
 
             .container {
@@ -123,80 +124,364 @@
 
             .section-title {
                 text-align: center;
-                font-size: 2.5rem;
+                font-size: 3rem;
                 font-weight: 700;
-                margin-bottom: 3rem;
+                margin-bottom: 1rem;
                 color: #1a202c;
+                background: linear-gradient(135deg, #1a202c, #4a5568);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .section-subtitle {
+                text-align: center;
+                font-size: 1.2rem;
+                color: #718096;
+                margin-bottom: 4rem;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
             }
 
             .features-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 2rem;
-                margin-top: 3rem;
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 3rem;
+                margin-top: 4rem;
             }
 
             .feature-card {
                 background: white;
-                padding: 2rem;
-                border-radius: 15px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-                text-align: center;
-                transition: transform 0.3s ease;
+                padding: 3rem 2rem;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+                text-align: left;
+                transition: all 0.4s ease;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .feature-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 4px;
+                background: linear-gradient(135deg, #f53003, #ff6b35);
+                transform: scaleX(0);
+                transition: transform 0.4s ease;
             }
 
             .feature-card:hover {
-                transform: translateY(-5px);
+                transform: translateY(-10px);
+                box-shadow: 0 30px 80px rgba(0, 0, 0, 0.12);
+            }
+
+            .feature-card:hover::before {
+                transform: scaleX(1);
             }
 
             .feature-icon {
-                font-size: 3rem;
-                margin-bottom: 1rem;
+                font-size: 3.5rem;
+                margin-bottom: 1.5rem;
+                display: block;
             }
 
             .feature-title {
-                font-size: 1.3rem;
-                font-weight: 600;
+                font-size: 1.5rem;
+                font-weight: 700;
                 margin-bottom: 1rem;
-                color: #2d3748;
+                color: #1a202c;
             }
 
             .feature-description {
-                color: #718096;
-                line-height: 1.6;
+                color: #4a5568;
+                line-height: 1.7;
+                font-size: 1rem;
+            }
+
+            /* Product Showcase Section */
+            .product-showcase {
+                padding: 8rem 2rem;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .showcase-content {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+                position: relative;
+                z-index: 2;
+            }
+
+            .showcase-text h2 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 1.5rem;
+                line-height: 1.2;
+            }
+
+            .showcase-text p {
+                font-size: 1.1rem;
+                margin-bottom: 2rem;
+                opacity: 0.9;
+                line-height: 1.7;
+            }
+
+            .showcase-features {
+                list-style: none;
+                margin-bottom: 2rem;
+            }
+
+            .showcase-features li {
+                padding: 0.5rem 0;
+                display: flex;
+                align-items: center;
+                font-size: 1rem;
+            }
+
+            .showcase-features li::before {
+                content: '✓';
+                color: #ffd700;
+                font-weight: bold;
+                margin-right: 1rem;
+                font-size: 1.2rem;
+            }
+
+            .showcase-visual {
+                position: relative;
+                height: 400px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 20px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            .dashboard-preview {
+                width: 90%;
+                height: 90%;
+                background: linear-gradient(135deg, #1a202c, #2d3748);
+                border-radius: 15px;
+                position: relative;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            }
+
+            .dashboard-header {
+                height: 60px;
+                background: linear-gradient(135deg, #f53003, #ff6b35);
+                border-radius: 15px 15px 0 0;
+                display: flex;
+                align-items: center;
+                padding: 0 1.5rem;
+                color: white;
+                font-weight: 600;
+            }
+
+            .dashboard-content {
+                padding: 1.5rem;
+                height: calc(100% - 60px);
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+
+            .dashboard-card {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                padding: 1rem;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .dashboard-card h4 {
+                color: #ffd700;
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .dashboard-card .value {
+                color: white;
+                font-size: 1.5rem;
+                font-weight: 700;
             }
 
             /* Stats Section */
             .stats {
-                background: linear-gradient(135deg, #667eea, #764ba2);
-                padding: 4rem 2rem;
+                background: #1a202c;
+                padding: 6rem 2rem;
                 color: white;
             }
 
             .stats-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 2rem;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 3rem;
                 text-align: center;
             }
 
+            .stat-item {
+                padding: 2rem;
+                border-radius: 15px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                transition: all 0.3s ease;
+            }
+
+            .stat-item:hover {
+                transform: translateY(-5px);
+                background: rgba(255, 255, 255, 0.08);
+            }
+
             .stat-number {
-                font-size: 3rem;
-                font-weight: 700;
+                font-size: 3.5rem;
+                font-weight: 800;
                 margin-bottom: 0.5rem;
+                background: linear-gradient(135deg, #ffd700, #ffed4e);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }
 
             .stat-label {
                 font-size: 1.1rem;
                 opacity: 0.9;
+                font-weight: 500;
+            }
+
+            /* Testimonials Section */
+            .testimonials {
+                padding: 8rem 2rem;
+                background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            }
+
+            .testimonials-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 2rem;
+                margin-top: 4rem;
+            }
+
+            .testimonial-card {
+                background: white;
+                padding: 2.5rem;
+                border-radius: 20px;
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+                position: relative;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+            }
+
+            .testimonial-quote {
+                font-size: 1.1rem;
+                line-height: 1.7;
+                color: #4a5568;
+                margin-bottom: 2rem;
+                font-style: italic;
+            }
+
+            .testimonial-author {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .author-avatar {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #f53003, #ff6b35);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: 700;
+                font-size: 1.2rem;
+            }
+
+            .author-info h4 {
+                font-weight: 600;
+                color: #1a202c;
+                margin-bottom: 0.2rem;
+            }
+
+            .author-info p {
+                color: #718096;
+                font-size: 0.9rem;
+            }
+
+            /* CTA Section */
+            .cta-section {
+                padding: 8rem 2rem;
+                background: linear-gradient(135deg, #1a202c, #2d3748);
+                color: white;
+                text-align: center;
+            }
+
+            .cta-content h2 {
+                font-size: 3rem;
+                font-weight: 700;
+                margin-bottom: 1.5rem;
+                background: linear-gradient(135deg, #ffd700, #ffed4e);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .cta-content p {
+                font-size: 1.2rem;
+                margin-bottom: 3rem;
+                opacity: 0.9;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
             }
 
             /* Footer */
             .footer {
-                background: #1a202c;
+                background: #0d1117;
                 color: white;
-                padding: 2rem;
+                padding: 4rem 2rem 2rem;
+            }
+
+            .footer-content {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 3rem;
+                margin-bottom: 2rem;
+            }
+
+            .footer-section h3 {
+                font-size: 1.2rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                color: #ffd700;
+            }
+
+            .footer-section p,
+            .footer-section a {
+                color: #8b949e;
+                text-decoration: none;
+                line-height: 1.6;
+            }
+
+            .footer-section a:hover {
+                color: #ffd700;
+            }
+
+            .footer-bottom {
                 text-align: center;
+                padding-top: 2rem;
+                border-top: 1px solid #21262d;
+                color: #8b949e;
             }
 
             /* Responsive Design */
@@ -219,8 +504,22 @@
                     max-width: 300px;
                 }
 
-                .features-grid {
+                .features-grid,
+                .testimonials-grid {
                     grid-template-columns: 1fr;
+                }
+
+                .showcase-content {
+                    grid-template-columns: 1fr;
+                    text-align: center;
+                }
+
+                .section-title {
+                    font-size: 2rem;
+                }
+
+                .cta-content h2 {
+                    font-size: 2rem;
                 }
             }
 
@@ -250,6 +549,18 @@
 
             .hero-content > *:nth-child(4) {
                 animation-delay: 0.6s;
+            }
+
+            /* Scroll Animations */
+            .scroll-animate {
+                opacity: 0;
+                transform: translateY(30px);
+                transition: all 0.6s ease;
+            }
+
+            .scroll-animate.animate {
+                opacity: 1;
+                transform: translateY(0);
             }
 
             /* Custom Cursor Styles */
@@ -326,17 +637,17 @@
         <section class="hero">
             <div class="hero-content">
                 <h1 class="logo">VoltMaster</h1>
-                <p class="tagline">Intelligente Solarenergie-Verwaltung</p>
+                <p class="tagline">Die Zukunft der Solarenergie-Verwaltung</p>
                 <p class="description">
-                    Optimieren Sie Ihre Solaranlagen mit unserer fortschrittlichen Management-Plattform. 
-                    Überwachen Sie Leistung, verwalten Sie Abrechnungen und maximieren Sie Ihre Energieeffizienz.
+                    Revolutionieren Sie Ihr Solarenergie-Management mit unserer KI-gestützten Plattform. 
+                    Maximieren Sie Effizienz, minimieren Sie Kosten und optimieren Sie Ihre Energieausbeute.
                 </p>
                 <div class="cta-buttons">
                     <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
-                        🔐 Admin Login
+                        🚀 Jetzt starten
                     </a>
                     <a href="#features" class="btn btn-secondary">
-                        📋 Mehr erfahren
+                        📋 Funktionen entdecken
                     </a>
                 </div>
             </div>
@@ -345,28 +656,112 @@
         <!-- Features Section -->
         <section id="features" class="features">
             <div class="container">
-                <h2 class="section-title">Unsere Leistungen</h2>
+                <h2 class="section-title scroll-animate">Leistungsstarke Funktionen</h2>
+                <p class="section-subtitle scroll-animate">Alles was Sie für professionelles Solarenergie-Management benötigen</p>
+                
                 <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">☀️</div>
-                        <h3 class="feature-title">Anlagen-Monitoring</h3>
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">⚡</span>
+                        <h3 class="feature-title">Echtzeit-Monitoring</h3>
                         <p class="feature-description">
-                            Überwachen Sie Ihre Solaranlagen in Echtzeit und optimieren Sie die Energieproduktion.
+                            Überwachen Sie Ihre Solaranlagen in Echtzeit mit fortschrittlichen IoT-Sensoren. 
+                            Erhalten Sie sofortige Benachrichtigungen bei Anomalien und optimieren Sie die Leistung kontinuierlich.
                         </p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h3 class="feature-title">Abrechnungsmanagement</h3>
+                    
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">📊</span>
+                        <h3 class="feature-title">Intelligente Analytik</h3>
                         <p class="feature-description">
-                            Automatisierte Abrechnung und detaillierte Berichte für maximale Transparenz.
+                            KI-gestützte Datenanalyse zur Vorhersage von Energieerträgen und Optimierung der Anlagenleistung. 
+                            Detaillierte Reports und Dashboards für fundierte Geschäftsentscheidungen.
                         </p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">⚡</div>
-                        <h3 class="feature-title">Effizienz-Optimierung</h3>
+                    
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">💰</span>
+                        <h3 class="feature-title">Automatisierte Abrechnung</h3>
                         <p class="feature-description">
-                            Intelligente Algorithmen zur Maximierung Ihrer Solarenergie-Ausbeute.
+                            Vollautomatische Rechnungsstellung und Abrechnungsmanagement für Kunden und Lieferanten. 
+                            Integration mit Buchhaltungssystemen und ZUGFeRD-konforme Rechnungen.
                         </p>
+                    </div>
+                    
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">🏗️</span>
+                        <h3 class="feature-title">Projektmanagement</h3>
+                        <p class="feature-description">
+                            Komplette Verwaltung von Solarprojekten von der Planung bis zur Inbetriebnahme. 
+                            Aufgabenverfolgung, Meilensteine und Teamkoordination in einer Plattform.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">👥</span>
+                        <h3 class="feature-title">Kundenverwaltung</h3>
+                        <p class="feature-description">
+                            Zentrale Verwaltung aller Kundendaten, Verträge und Kommunikation. 
+                            Automatische Benachrichtigungen und personalisierte Kundenportale.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card scroll-animate">
+                        <span class="feature-icon">🔧</span>
+                        <h3 class="feature-title">Wartungsmanagement</h3>
+                        <p class="feature-description">
+                            Proaktive Wartungsplanung und -verfolgung für optimale Anlagenperformance. 
+                            Automatische Erinnerungen und Dokumentation aller Servicearbeiten.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Product Showcase Section -->
+        <section class="product-showcase">
+            <div class="container">
+                <div class="showcase-content">
+                    <div class="showcase-text">
+                        <h2>Alles in einem Dashboard</h2>
+                        <p>
+                            Verwalten Sie Ihre gesamte Solarenergie-Infrastruktur von einem zentralen Dashboard aus. 
+                            Übersichtliche Darstellung aller wichtigen Kennzahlen und Funktionen.
+                        </p>
+                        <ul class="showcase-features">
+                            <li>Echtzeit-Überwachung aller Anlagen</li>
+                            <li>Automatisierte Berichte und Analysen</li>
+                            <li>Integrierte Kommunikationstools</li>
+                            <li>Mobile App für unterwegs</li>
+                            <li>API-Integration für Drittsysteme</li>
+                        </ul>
+                        <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
+                            Dashboard erkunden
+                        </a>
+                    </div>
+                    <div class="showcase-visual">
+                        <div class="dashboard-preview">
+                            <div class="dashboard-header">
+                                VoltMaster Dashboard
+                            </div>
+                            <div class="dashboard-content">
+                                <div class="dashboard-card">
+                                    <h4>Gesamtleistung</h4>
+                                    <div class="value">2.4 MW</div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h4>Aktive Anlagen</h4>
+                                    <div class="value">127</div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h4>Heute erzeugt</h4>
+                                    <div class="value">18.5 MWh</div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h4>Effizienz</h4>
+                                    <div class="value">94.2%</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -375,6 +770,7 @@
         <!-- Stats Section -->
         <section class="stats">
             <div class="container">
+                <h2 class="section-title" style="color: white; margin-bottom: 4rem;">Vertrauen Sie auf Erfahrung</h2>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-number">500+</div>
@@ -396,11 +792,116 @@
             </div>
         </section>
 
+        <!-- Testimonials Section -->
+        <section class="testimonials">
+            <div class="container">
+                <h2 class="section-title scroll-animate">Was unsere Kunden sagen</h2>
+                <p class="section-subtitle scroll-animate">Erfahrungen von Unternehmen, die bereits auf VoltMaster vertrauen</p>
+                
+                <div class="testimonials-grid">
+                    <div class="testimonial-card scroll-animate">
+                        <p class="testimonial-quote">
+                            "VoltMaster hat unsere Solarenergie-Verwaltung revolutioniert. Die Effizienzsteigerung von 25% 
+                            hat sich bereits nach wenigen Monaten bezahlt gemacht."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">MS</div>
+                            <div class="author-info">
+                                <h4>Michael Schmidt</h4>
+                                <p>Geschäftsführer, SolarTech GmbH</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card scroll-animate">
+                        <p class="testimonial-quote">
+                            "Die automatisierte Abrechnung spart uns wöchentlich 20 Stunden Arbeitszeit. 
+                            Das Dashboard ist intuitiv und bietet alle Informationen auf einen Blick."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">AK</div>
+                            <div class="author-info">
+                                <h4>Anna Krüger</h4>
+                                <p>Projektleiterin, GreenEnergy Solutions</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card scroll-animate">
+                        <p class="testimonial-quote">
+                            "Dank der präzisen Vorhersagen können wir unsere Wartungszyklen optimal planen 
+                            und ungeplante Ausfälle um 90% reduzieren."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">TW</div>
+                            <div class="author-info">
+                                <h4>Thomas Weber</h4>
+                                <p>Technischer Leiter, Renewable Power AG</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="container">
+                <div class="cta-content">
+                    <h2>Bereit für die Zukunft?</h2>
+                    <p>
+                        Starten Sie noch heute mit VoltMaster und revolutionieren Sie Ihr Solarenergie-Management. 
+                        Kostenlose Demo verfügbar.
+                    </p>
+                    <div class="cta-buttons">
+                        <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
+                            🚀 Kostenlos testen
+                        </a>
+                        <a href="mailto:info@voltmaster.de" class="btn btn-secondary">
+                            📞 Demo vereinbaren
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
             <div class="container">
-                <p>&copy; {{ date('Y') }} VoltMaster. Alle Rechte vorbehalten.</p>
-                <p>Professionelle Solarenergie-Verwaltung für eine nachhaltige Zukunft.</p>
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h3>VoltMaster</h3>
+                        <p>
+                            Die führende Plattform für intelligentes Solarenergie-Management. 
+                            Maximieren Sie Ihre Effizienz und minimieren Sie Ihre Kosten.
+                        </p>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Funktionen</h3>
+                        <p><a href="#features">Echtzeit-Monitoring</a></p>
+                        <p><a href="#features">Intelligente Analytik</a></p>
+                        <p><a href="#features">Automatisierte Abrechnung</a></p>
+                        <p><a href="#features">Projektmanagement</a></p>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Unternehmen</h3>
+                        <p><a href="#">Über uns</a></p>
+                        <p><a href="#">Karriere</a></p>
+                        <p><a href="#">Presse</a></p>
+                        <p><a href="#">Partner</a></p>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Support</h3>
+                        <p><a href="#">Dokumentation</a></p>
+                        <p><a href="#">API</a></p>
+                        <p><a href="#">Status</a></p>
+                        <p><a href="mailto:support@voltmaster.de">Kontakt</a></p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; {{ date('Y') }} VoltMaster. Alle Rechte vorbehalten. | 
+                    <a href="#">Datenschutz</a> | <a href="#">Impressum</a> | <a href="#">AGB</a></p>
+                </div>
             </div>
         </footer>
 
@@ -415,12 +916,23 @@
                 });
             });
 
-            // Add scroll effect to hero (disabled to prevent content overlap)
-            // window.addEventListener('scroll', () => {
-            //     const scrolled = window.pageYOffset;
-            //     const hero = document.querySelector('.hero');
-            //     hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-            // });
+            // Scroll animations
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.scroll-animate').forEach(el => {
+                observer.observe(el);
+            });
 
             // Cool Mouse Animation - Interactive Cursor with Particles
             class InteractiveCursor {
