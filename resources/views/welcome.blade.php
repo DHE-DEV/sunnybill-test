@@ -1817,26 +1817,25 @@
                     .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
                     .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
                     .arcsData([
-                        // Reduzierte Anzahl eleganter Arcs - 50% weniger für klarere Darstellung
-                        { startLat: 40.7128, startLng: -74.0060, endLat: 52.5200, endLng: 13.4050, color: '#1e90ff', stroke: 0.75 }, // NY -> Berlin (Dodger Blue)
-                        { startLat: 34.0522, startLng: -118.2437, endLat: 48.8566, endLng: 2.3522, color: '#ffd700', stroke: 1.0 }, // LA -> Paris (Gold)
-                        { startLat: 41.8781, startLng: -87.6298, endLat: 51.5074, endLng: -0.1278, color: '#4169e1', stroke: 0.9 }, // Chicago -> London (Royal Blue)
-                        { startLat: 37.7749, startLng: -122.4194, endLat: 40.4168, endLng: -3.7038, color: '#0066ff', stroke: 1.1 }, // SF -> Madrid (Blue)
-                        { startLat: 45.5017, startLng: -73.5673, endLat: 52.3676, endLng: 4.9041, color: '#fff700', stroke: 0.8 }, // Montreal -> Amsterdam (Bright Yellow)
-                        { startLat: 43.6532, startLng: -79.3832, endLat: 50.1109, endLng: 8.6821, color: '#4682b4', stroke: 0.7 }, // Toronto -> Frankfurt (Steel Blue)
+                        // Nordamerika - 3 interne Verbindungen
+                        { startLat: 40.7128, startLng: -74.0060, endLat: 34.0522, endLng: -118.2437, color: '#1e90ff', stroke: 0.8 }, // NY -> LA (Dodger Blue)
+                        { startLat: 41.8781, startLng: -87.6298, endLat: 47.6062, endLng: -122.3321, color: '#ffd700', stroke: 0.9 }, // Chicago -> Seattle (Gold)
+                        { startLat: 25.7617, startLng: -80.1918, endLat: 32.7767, endLng: -96.7970, color: '#4169e1', stroke: 0.7 }, // Miami -> Dallas (Royal Blue)
                         
-                        // Wichtige Atlantik-Verbindungen
-                        { startLat: 47.6062, startLng: -122.3321, endLat: 59.9139, endLng: 10.7522, color: '#87ceeb', stroke: 0.85 }, // Seattle -> Oslo (Sky Blue)
-                        { startLat: 32.7767, startLng: -96.7970, endLat: 52.2297, endLng: 21.0122, color: '#0080ff', stroke: 0.95 }, // Dallas -> Warsaw (Bright Blue)
-                        { startLat: 33.4484, startLng: -112.0740, endLat: 47.4979, endLng: 19.0402, color: '#6495ed', stroke: 0.9 }, // Phoenix -> Budapest (Cornflower Blue)
+                        // Europa - 3 interne Verbindungen
+                        { startLat: 51.5074, startLng: -0.1278, endLat: 48.8566, endLng: 2.3522, color: '#fff700', stroke: 0.85 }, // London -> Paris (Bright Yellow)
+                        { startLat: 52.5200, startLng: 13.4050, endLat: 41.9028, endLng: 12.4964, color: '#87ceeb', stroke: 0.75 }, // Berlin -> Rome (Sky Blue)
+                        { startLat: 40.4168, startLng: -3.7038, endLat: 55.6761, endLng: 12.5683, color: '#0080ff', stroke: 0.9 }, // Madrid -> Copenhagen (Bright Blue)
                         
-                        // Südamerika-Europa Hauptverbindungen
-                        { startLat: -23.5505, startLng: -46.6333, endLat: -26.2041, endLng: 28.0473, color: '#ffd700', stroke: 1.05 }, // São Paulo -> Johannesburg (Gold)
-                        { startLat: -34.6037, startLng: -58.3816, endLat: -33.9249, endLng: 18.4241, color: '#4169e1', stroke: 0.85 }, // Buenos Aires -> Cape Town (Royal Blue)
+                        // Asien - 3 interne Verbindungen
+                        { startLat: 35.6895, startLng: 139.6917, endLat: 37.5665, endLng: 126.9780, color: '#6495ed', stroke: 0.8 }, // Tokyo -> Seoul (Cornflower Blue)
+                        { startLat: 31.2304, startLng: 121.4737, endLat: 39.9042, endLng: 116.4074, color: '#ffeb3b', stroke: 0.85 }, // Shanghai -> Beijing (Light Yellow)
+                        { startLat: 1.3521, startLng: 103.8198, endLat: 13.7563, endLng: 100.5018, color: '#0066cc', stroke: 0.7 }, // Singapur -> Bangkok (Deep Blue)
                         
-                        // Pazifik-Asien Hauptrouten
-                        { startLat: 21.3099, startLng: -157.8581, endLat: 35.6895, endLng: 139.6917, color: '#0066cc', stroke: 1.15 }, // Honolulu -> Tokyo (Deep Blue)
-                        { startLat: 37.7749, startLng: -122.4194, endLat: 37.5665, endLng: 126.9780, color: '#fff700', stroke: 1.0 }, // SF -> Seoul (Bright Yellow)
+                        // Südamerika - 3 interne Verbindungen
+                        { startLat: -23.5505, startLng: -46.6333, endLat: -34.6037, endLng: -58.3816, color: '#ffd700', stroke: 0.9 }, // São Paulo -> Buenos Aires (Gold)
+                        { startLat: -12.0464, startLng: -77.0428, endLat: 4.7110, endLng: -74.0721, color: '#f0e68c', stroke: 0.75 }, // Lima -> Bogotá (Khaki)
+                        { startLat: -22.9068, startLng: -43.1729, endLat: -15.7942, endLng: -47.8822, color: '#4682b4', stroke: 0.8 }, // Rio -> Brasília (Steel Blue)
                     ])
                     .arcColor('color')
                     .arcAltitude((d) => Math.random() * 0.4 + 0.2) // Variable Höhen wie bei Stripe
