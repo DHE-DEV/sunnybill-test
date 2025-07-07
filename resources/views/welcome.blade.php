@@ -818,10 +818,10 @@
         <section class="hero">
             <div class="hero-content">
                 <h1 class="logo">VoltMaster</h1>
-                <p class="tagline">Professionelles Solarenergie-Management</p>
+                <p class="tagline">KI-gestütztes Solarenergie-Management</p>
                 <p class="description">
-                    Intelligente Plattform für die Verwaltung und Optimierung 
-                    Ihrer Solarenergie-Infrastruktur.
+                    Revolutionäre Plattform mit automatischer Abrechnung, intelligenter Dokumentenverwaltung 
+                    und KI-gestützter Kostenaufteilung für maximale Effizienz in Ihrem Solarenergie-Business.
                 </p>
                 <div class="cta-buttons">
                     <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
