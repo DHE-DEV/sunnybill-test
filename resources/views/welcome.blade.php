@@ -1812,53 +1812,53 @@
                 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
                 scene.add(ambientLight);
 
-                // Globe with Earth texture and many animated arcs in bright yellow
+                // Globe with Earth texture and elegant flowing arcs like Stripe
                 const Globe = new ThreeGlobe()
                     .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
                     .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
                     .arcsData([
-                        // Viele Arcs von links nach rechts - Amerika nach Europa/Afrika
-                        { startLat: 40.7128, startLng: -74.0060, endLat: 52.5200, endLng: 13.4050, color: '#ffd700' }, // NY -> Berlin
-                        { startLat: 34.0522, startLng: -118.2437, endLat: 48.8566, endLng: 2.3522, color: '#ffd700' }, // LA -> Paris
-                        { startLat: 41.8781, startLng: -87.6298, endLat: 51.5074, endLng: -0.1278, color: '#ffd700' }, // Chicago -> London
-                        { startLat: 25.7617, startLng: -80.1918, endLat: 41.9028, endLng: 12.4964, color: '#ffd700' }, // Miami -> Rome
-                        { startLat: 37.7749, startLng: -122.4194, endLat: 40.4168, endLng: -3.7038, color: '#ffd700' }, // SF -> Madrid
-                        { startLat: 45.5017, startLng: -73.5673, endLat: 52.3676, endLng: 4.9041, color: '#ffd700' }, // Montreal -> Amsterdam
-                        { startLat: 43.6532, startLng: -79.3832, endLat: 50.1109, endLng: 8.6821, color: '#ffd700' }, // Toronto -> Frankfurt
-                        { startLat: 39.2904, startLng: -76.6122, endLat: 47.3769, endLng: 8.5417, color: '#ffd700' }, // Baltimore -> Zurich
+                        // Elegante Arcs mit verschiedenen Farben und Stärken wie bei Stripe
+                        { startLat: 40.7128, startLng: -74.0060, endLat: 52.5200, endLng: 13.4050, color: '#00d4ff', stroke: 1.5 }, // NY -> Berlin (Cyan)
+                        { startLat: 34.0522, startLng: -118.2437, endLat: 48.8566, endLng: 2.3522, color: '#ffd700', stroke: 2 }, // LA -> Paris (Gold)
+                        { startLat: 41.8781, startLng: -87.6298, endLat: 51.5074, endLng: -0.1278, color: '#ff6b6b', stroke: 1.8 }, // Chicago -> London (Red)
+                        { startLat: 25.7617, startLng: -80.1918, endLat: 41.9028, endLng: 12.4964, color: '#4ecdc4', stroke: 1.2 }, // Miami -> Rome (Teal)
+                        { startLat: 37.7749, startLng: -122.4194, endLat: 40.4168, endLng: -3.7038, color: '#45b7d1', stroke: 2.2 }, // SF -> Madrid (Blue)
+                        { startLat: 45.5017, startLng: -73.5673, endLat: 52.3676, endLng: 4.9041, color: '#f9ca24', stroke: 1.6 }, // Montreal -> Amsterdam (Yellow)
+                        { startLat: 43.6532, startLng: -79.3832, endLat: 50.1109, endLng: 8.6821, color: '#6c5ce7', stroke: 1.4 }, // Toronto -> Frankfurt (Purple)
+                        { startLat: 39.2904, startLng: -76.6122, endLat: 47.3769, endLng: 8.5417, color: '#a29bfe', stroke: 1.3 }, // Baltimore -> Zurich (Light Purple)
                         
-                        // Weitere Arcs von Westamerika nach Europa
-                        { startLat: 47.6062, startLng: -122.3321, endLat: 59.9139, endLng: 10.7522, color: '#ffd700' }, // Seattle -> Oslo
-                        { startLat: 36.1627, startLng: -86.7816, endLat: 55.6761, endLng: 12.5683, color: '#ffd700' }, // Nashville -> Copenhagen
-                        { startLat: 32.7767, startLng: -96.7970, endLat: 52.2297, endLng: 21.0122, color: '#ffd700' }, // Dallas -> Warsaw
-                        { startLat: 29.7604, startLng: -95.3698, endLat: 50.0755, endLng: 14.4378, color: '#ffd700' }, // Houston -> Prague
-                        { startLat: 33.4484, startLng: -112.0740, endLat: 47.4979, endLng: 19.0402, color: '#ffd700' }, // Phoenix -> Budapest
-                        { startLat: 39.7392, startLng: -104.9903, endLat: 44.4268, endLng: 26.1025, color: '#ffd700' }, // Denver -> Bucharest
+                        // Weitere elegante Verbindungen
+                        { startLat: 47.6062, startLng: -122.3321, endLat: 59.9139, endLng: 10.7522, color: '#fd79a8', stroke: 1.7 }, // Seattle -> Oslo (Pink)
+                        { startLat: 36.1627, startLng: -86.7816, endLat: 55.6761, endLng: 12.5683, color: '#00b894', stroke: 1.5 }, // Nashville -> Copenhagen (Green)
+                        { startLat: 32.7767, startLng: -96.7970, endLat: 52.2297, endLng: 21.0122, color: '#e17055', stroke: 1.9 }, // Dallas -> Warsaw (Orange)
+                        { startLat: 29.7604, startLng: -95.3698, endLat: 50.0755, endLng: 14.4378, color: '#81ecec', stroke: 1.1 }, // Houston -> Prague (Light Blue)
+                        { startLat: 33.4484, startLng: -112.0740, endLat: 47.4979, endLng: 19.0402, color: '#fab1a0', stroke: 1.8 }, // Phoenix -> Budapest (Peach)
+                        { startLat: 39.7392, startLng: -104.9903, endLat: 44.4268, endLng: 26.1025, color: '#00cec9', stroke: 1.6 }, // Denver -> Bucharest (Turquoise)
                         
-                        // Südamerika nach Afrika/Europa
-                        { startLat: -23.5505, startLng: -46.6333, endLat: -26.2041, endLng: 28.0473, color: '#ffd700' }, // São Paulo -> Johannesburg
-                        { startLat: -34.6037, startLng: -58.3816, endLat: -33.9249, endLng: 18.4241, color: '#ffd700' }, // Buenos Aires -> Cape Town
-                        { startLat: -12.0464, startLng: -77.0428, endLat: 6.5244, endLng: 3.3792, color: '#ffd700' }, // Lima -> Lagos
-                        { startLat: 4.7110, startLng: -74.0721, endLat: 30.0444, endLng: 31.2357, color: '#ffd700' }, // Bogotá -> Cairo
+                        // Südamerika nach Afrika/Europa mit warmen Farben
+                        { startLat: -23.5505, startLng: -46.6333, endLat: -26.2041, endLng: 28.0473, color: '#fdcb6e', stroke: 2.1 }, // São Paulo -> Johannesburg (Warm Yellow)
+                        { startLat: -34.6037, startLng: -58.3816, endLat: -33.9249, endLng: 18.4241, color: '#e84393', stroke: 1.7 }, // Buenos Aires -> Cape Town (Magenta)
+                        { startLat: -12.0464, startLng: -77.0428, endLat: 6.5244, endLng: 3.3792, color: '#00b894', stroke: 1.4 }, // Lima -> Lagos (Emerald)
+                        { startLat: 4.7110, startLng: -74.0721, endLat: 30.0444, endLng: 31.2357, color: '#74b9ff', stroke: 1.9 }, // Bogotá -> Cairo (Sky Blue)
                         
-                        // Pazifik nach Asien
-                        { startLat: 21.3099, startLng: -157.8581, endLat: 35.6895, endLng: 139.6917, color: '#ffd700' }, // Honolulu -> Tokyo
-                        { startLat: 37.7749, startLng: -122.4194, endLat: 37.5665, endLng: 126.9780, color: '#ffd700' }, // SF -> Seoul
-                        { startLat: 34.0522, startLng: -118.2437, endLat: 31.2304, endLng: 121.4737, color: '#ffd700' }, // LA -> Shanghai
-                        { startLat: 47.6062, startLng: -122.3321, endLat: 39.9042, endLng: 116.4074, color: '#ffd700' }, // Seattle -> Beijing
+                        // Pazifik nach Asien mit kühlen Farben
+                        { startLat: 21.3099, startLng: -157.8581, endLat: 35.6895, endLng: 139.6917, color: '#55a3ff', stroke: 2.3 }, // Honolulu -> Tokyo (Bright Blue)
+                        { startLat: 37.7749, startLng: -122.4194, endLat: 37.5665, endLng: 126.9780, color: '#fd79a8', stroke: 2.0 }, // SF -> Seoul (Rose)
+                        { startLat: 34.0522, startLng: -118.2437, endLat: 31.2304, endLng: 121.4737, color: '#00cec9', stroke: 1.8 }, // LA -> Shanghai (Cyan)
+                        { startLat: 47.6062, startLng: -122.3321, endLat: 39.9042, endLng: 116.4074, color: '#a29bfe', stroke: 1.6 }, // Seattle -> Beijing (Lavender)
                         
-                        // Atlantik-Überquerungen
-                        { startLat: 40.7128, startLng: -74.0060, endLat: 38.7223, endLng: -9.1393, color: '#ffd700' }, // NY -> Lisbon
-                        { startLat: 42.3601, startLng: -71.0589, endLat: 53.3498, endLng: -6.2603, color: '#ffd700' }, // Boston -> Dublin
-                        { startLat: 25.7617, startLng: -80.1918, endLat: 28.0339, endLng: -15.4151, color: '#ffd700' }, // Miami -> Tenerife
+                        // Atlantik-Überquerungen mit Gradient-ähnlichen Farben
+                        { startLat: 40.7128, startLng: -74.0060, endLat: 38.7223, endLng: -9.1393, color: '#ffeaa7', stroke: 1.5 }, // NY -> Lisbon (Light Gold)
+                        { startLat: 42.3601, startLng: -71.0589, endLat: 53.3498, endLng: -6.2603, color: '#55efc4', stroke: 1.7 }, // Boston -> Dublin (Mint)
+                        { startLat: 25.7617, startLng: -80.1918, endLat: 28.0339, endLng: -15.4151, color: '#ff7675', stroke: 1.3 }, // Miami -> Tenerife (Coral)
                     ])
                     .arcColor('color')
-                    .arcAltitude(0.3)
-                    .arcStroke(2)
-                    .arcDashLength(0.2)
-                    .arcDashGap(1)
-                    .arcDashInitialGap(() => Math.random() * 3)
-                    .arcDashAnimateTime(1600); // 50% langsamer (800 * 2)
+                    .arcAltitude((d) => Math.random() * 0.4 + 0.2) // Variable Höhen wie bei Stripe
+                    .arcStroke((d) => d.stroke || 1.5) // Variable Strichstärken
+                    .arcDashLength(0.8) // Längere Dash-Segmente für fließendere Linien
+                    .arcDashGap(0.2) // Kleinere Gaps für kontinuierlichere Linien
+                    .arcDashInitialGap(() => Math.random() * 2)
+                    .arcDashAnimateTime(2400); // Langsamere, elegantere Animation
 
                 scene.add(Globe);
 
