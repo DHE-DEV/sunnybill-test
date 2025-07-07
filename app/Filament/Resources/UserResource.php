@@ -103,6 +103,7 @@ class UserResource extends Resource
                         Forms\Components\TextInput::make('temporary_password')
                             ->label('Temporäres Passwort')
                             ->disabled()
+                            ->dehydrated(false) // Verhindert das Hashing durch Filament
                             ->helperText('Wird automatisch gelöscht, wenn der Benutzer sein Passwort ändert')
                             ->visible(fn (string $context, $record): bool => $context === 'edit' && $record && $record->hasTemporaryPassword()),
                     ])

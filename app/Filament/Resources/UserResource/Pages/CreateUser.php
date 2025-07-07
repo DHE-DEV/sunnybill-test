@@ -56,11 +56,17 @@ class CreateUser extends CreateRecord
     {
         $user = $this->record;
         
-        if ($user && $user->email) {
+        if ($user && $user->email && $this->temporaryPassword) {
+            // Korrigiere das temporäre Passwort falls es gehashed wurde
+            if ($user->temporary_password && str_starts_with($user->temporary_password, '$2y$')) {
+                // Das temporäre Passwort wurde gehashed - korrigiere es
+                $user->update(['temporary_password' => $this->temporaryPassword]);
+            }
+            
             try {
-                // Sende E-Mail-Verifikation mit temporärem Passwort aus der Datenbank
+                // Sende E-Mail-Verifikation mit temporärem Passwort
                 if (!$user->hasVerifiedEmail()) {
-                    $user->sendEmailVerificationNotification($user->getTemporaryPasswordForEmail());
+                    $user->sendEmailVerificationNotification($this->temporaryPassword);
                     
                     Notification::make()
                         ->success()
