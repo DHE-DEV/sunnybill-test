@@ -372,7 +372,7 @@
 
             .billing-features li::before {
                 content: '✓';
-                color: #f53003;
+                color: #00ba88;
                 font-weight: bold;
                 margin-right: 1rem;
                 font-size: 1.2rem;
@@ -1003,7 +1003,7 @@
                 <div class="billing-content">
                     <div class="billing-visual">
                         <div class="dashboard-screenshot">
-                            <img src="/storage/customers/customer_stat_1.png" alt="Abrechnungssystem Screenshot">
+                            <img src="/storage/customers/ki_billing_1.png" alt="Abrechnungssystem Screenshot">
                         </div>
                     </div>
                     <div class="billing-text">
