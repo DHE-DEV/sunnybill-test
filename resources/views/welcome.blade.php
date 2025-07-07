@@ -1047,7 +1047,7 @@
             <div class="container">
                 <h2 class="section-title scroll-animate">Modernste Technologie für Ihr Business</h2>
                 <p class="section-subtitle scroll-animate">
-                    VoltMaster kombiniert bewährte Technologien mit innovativen KI-Algorithmen für maximale Effizienz
+                    VoltMaster kombiniert bewährte Cloud-Technologien mit innovativen KI-Algorithmen für maximale Effizienz und unbegrenzte Skalierbarkeit
                 </p>
             </div>
         </section>
