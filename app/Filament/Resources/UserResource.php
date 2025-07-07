@@ -99,6 +99,12 @@ class UserResource extends Resource
                             ->displayFormat('d.m.Y H:i')
                             ->helperText('Zeitpunkt der letzten Passwort-Änderung')
                             ->visible(fn (string $context): bool => $context === 'edit'),
+
+                        Forms\Components\TextInput::make('temporary_password')
+                            ->label('Temporäres Passwort')
+                            ->disabled()
+                            ->helperText('Wird automatisch gelöscht, wenn der Benutzer sein Passwort ändert')
+                            ->visible(fn (string $context, $record): bool => $context === 'edit' && $record && $record->hasTemporaryPassword()),
                     ])
                     ->columns(2),
 
@@ -298,6 +304,7 @@ class UserResource extends Resource
                                 
                                 $record->update([
                                     'password' => Hash::make($temporaryPassword),
+                                    'temporary_password' => $temporaryPassword,
                                     'password_change_required' => true,
                                     'password_changed_at' => now(),
                                 ]);
@@ -317,6 +324,64 @@ class UserResource extends Resource
                                     ->danger()
                                     ->send();
                             }
+                        }),
+
+                    Tables\Actions\Action::make('resend_temporary_password')
+                        ->label('Temporäres Passwort erneut senden')
+                        ->icon('heroicon-o-key')
+                        ->color('warning')
+                        ->visible(fn ($record) => $record->hasTemporaryPassword())
+                        ->requiresConfirmation()
+                        ->modalHeading('Temporäres Passwort erneut senden')
+                        ->modalDescription(fn ($record) => "Möchten Sie das temporäre Passwort erneut an {$record->email} senden?")
+                        ->action(function ($record) {
+                            try {
+                                if ($record->hasTemporaryPassword()) {
+                                    // Sende E-Mail-Verifikation mit temporärem Passwort
+                                    if (!$record->hasVerifiedEmail()) {
+                                        $record->sendEmailVerificationNotification($record->getTemporaryPasswordForEmail());
+                                        
+                                        Notification::make()
+                                            ->title('E-Mail-Verifikation mit temporärem Passwort gesendet')
+                                            ->body("Eine E-Mail-Verifikation mit dem temporären Passwort wurde an {$record->email} gesendet.")
+                                            ->success()
+                                            ->send();
+                                    } else {
+                                        // Sende separate Passwort-E-Mail
+                                        $record->notify(new \App\Notifications\NewUserPasswordNotification($record->getTemporaryPasswordForEmail()));
+                                        
+                                        Notification::make()
+                                            ->title('Temporäres Passwort erneut gesendet')
+                                            ->body("Das temporäre Passwort wurde erneut an {$record->email} gesendet.")
+                                            ->success()
+                                            ->send();
+                                    }
+                                }
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Fehler beim Senden des temporären Passworts')
+                                    ->body("Das temporäre Passwort konnte nicht gesendet werden: " . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+
+                    Tables\Actions\Action::make('clear_temporary_password')
+                        ->label('Temporäres Passwort löschen')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->visible(fn ($record) => $record->hasTemporaryPassword())
+                        ->requiresConfirmation()
+                        ->modalHeading('Temporäres Passwort löschen')
+                        ->modalDescription(fn ($record) => "Möchten Sie das temporäre Passwort für {$record->name} löschen?")
+                        ->action(function ($record) {
+                            $record->clearTemporaryPassword();
+                            
+                            Notification::make()
+                                ->title('Temporäres Passwort gelöscht')
+                                ->body("Das temporäre Passwort wurde erfolgreich gelöscht.")
+                                ->success()
+                                ->send();
                         }),
 
                     Tables\Actions\Action::make('resend_verification')

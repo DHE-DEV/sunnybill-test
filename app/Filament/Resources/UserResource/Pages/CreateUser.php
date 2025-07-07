@@ -38,9 +38,11 @@ class CreateUser extends CreateRecord
         if (empty($data['password'])) {
             $this->temporaryPassword = User::generateRandomPassword();
             $data['password'] = Hash::make($this->temporaryPassword);
+            $data['temporary_password'] = $this->temporaryPassword; // Speichere im Klartext
         } else {
             // Falls ein Passwort eingegeben wurde, verwende es als temporäres Passwort
             $this->temporaryPassword = $data['password'];
+            $data['temporary_password'] = $this->temporaryPassword; // Speichere im Klartext
         }
         
         // Setze password_change_required auf true für neue Benutzer
@@ -55,9 +57,9 @@ class CreateUser extends CreateRecord
         
         if ($user && $user->email) {
             try {
-                // Sende E-Mail-Verifikation mit temporärem Passwort
+                // Sende E-Mail-Verifikation mit temporärem Passwort aus der Datenbank
                 if (!$user->hasVerifiedEmail()) {
-                    $user->sendEmailVerificationNotification($this->temporaryPassword);
+                    $user->sendEmailVerificationNotification($user->getTemporaryPasswordForEmail());
                     
                     Notification::make()
                         ->success()

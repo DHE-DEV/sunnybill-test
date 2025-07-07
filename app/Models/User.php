@@ -25,6 +25,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'name',
         'email',
         'password',
+        'temporary_password',
         'role',
         'is_active',
         'last_login_at',
@@ -170,13 +171,14 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     }
 
     /**
-     * Mark password as changed
+     * Mark password as changed and clear temporary password
      */
     public function markPasswordAsChanged(): void
     {
         $this->update([
             'password_change_required' => false,
             'password_changed_at' => now(),
+            'temporary_password' => null, // Lösche temporäres Passwort
         ]);
     }
 
@@ -186,6 +188,41 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function requirePasswordChange(): void
     {
         $this->update(['password_change_required' => true]);
+    }
+
+    /**
+     * Set temporary password
+     */
+    public function setTemporaryPassword(string $password): void
+    {
+        $this->update([
+            'temporary_password' => $password,
+            'password_change_required' => true,
+        ]);
+    }
+
+    /**
+     * Clear temporary password
+     */
+    public function clearTemporaryPassword(): void
+    {
+        $this->update(['temporary_password' => null]);
+    }
+
+    /**
+     * Check if user has temporary password
+     */
+    public function hasTemporaryPassword(): bool
+    {
+        return !empty($this->temporary_password);
+    }
+
+    /**
+     * Get temporary password for email notifications
+     */
+    public function getTemporaryPasswordForEmail(): ?string
+    {
+        return $this->temporary_password;
     }
 
     /**
