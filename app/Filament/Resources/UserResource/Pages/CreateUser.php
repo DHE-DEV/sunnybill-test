@@ -38,9 +38,11 @@ class CreateUser extends CreateRecord
         if (empty($data['password'])) {
             $this->temporaryPassword = User::generateRandomPassword(12);
             $data['password'] = $this->temporaryPassword; // Wird später durch Filament gehashed
+            $data['temporary_password'] = $this->temporaryPassword; // Wird durch Mutator unverschlüsselt gespeichert
         } else {
             // Falls ein Passwort eingegeben wurde, verwende es als temporäres Passwort
             $this->temporaryPassword = $data['password'];
+            $data['temporary_password'] = $this->temporaryPassword; // Wird durch Mutator unverschlüsselt gespeichert
             // $data['password'] bleibt unverändert und wird durch Filament gehashed
         }
         

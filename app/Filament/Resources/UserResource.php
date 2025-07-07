@@ -305,13 +305,10 @@ class UserResource extends Resource
                                 
                                 $record->update([
                                     'password' => Hash::make($temporaryPassword),
+                                    'temporary_password' => $temporaryPassword, // Wird durch Mutator unverschlüsselt gespeichert
                                     'password_change_required' => true,
                                     'password_changed_at' => now(),
                                 ]);
-                                
-                                // Setze temporäres Passwort direkt (unverschlüsselt)
-                                $record->temporary_password = $temporaryPassword;
-                                $record->save();
                                 
                                 // Sende E-Mail mit neuem Passwort
                                 $record->notify(new \App\Notifications\NewUserPasswordNotification($temporaryPassword));

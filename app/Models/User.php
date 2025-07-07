@@ -25,6 +25,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'name',
         'email',
         'password',
+        'temporary_password',
         'role',
         'is_active',
         'last_login_at',
@@ -60,6 +61,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             'password_change_required' => 'boolean',
             'password_changed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Mutator for temporary_password - prevents automatic hashing
+     */
+    protected function setTemporaryPasswordAttribute($value): void
+    {
+        // Store temporary password as plain text (no hashing)
+        $this->attributes['temporary_password'] = $value;
     }
 
     /**
