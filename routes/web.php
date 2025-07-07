@@ -42,9 +42,10 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
     if (! $wasAlreadyVerified) {
         $user->markEmailAsVerified();
         
-        // Sende Account-Aktivierungs-E-Mail
+        // Sende Account-Aktivierungs-E-Mail mit temporärem Passwort
         try {
-            $user->notify(new \App\Notifications\AccountActivatedNotification());
+            $temporaryPassword = $user->getTemporaryPasswordForEmail();
+            $user->notify(new \App\Notifications\AccountActivatedNotification($temporaryPassword));
         } catch (\Exception $e) {
             // Log error but don't break the verification process
             \Log::error('Failed to send account activation notification: ' . $e->getMessage());
