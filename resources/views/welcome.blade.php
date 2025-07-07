@@ -1571,7 +1571,7 @@
                     .arcDashLength(0.2)
                     .arcDashGap(1)
                     .arcDashInitialGap(() => Math.random() * 3)
-                    .arcDashAnimateTime(800);
+                    .arcDashAnimateTime(1600); // 50% langsamer (800 * 2)
 
                 scene.add(Globe);
 
