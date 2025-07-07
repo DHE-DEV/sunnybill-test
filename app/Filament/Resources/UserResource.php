@@ -69,7 +69,8 @@ class UserResource extends Resource
                             ->dehydrated(fn ($state) => filled($state))
                             ->required(false)
                             ->minLength(8)
-                            ->helperText('Mindestens 8 Zeichen. Leer lassen für automatisches zufälliges Passwort (bei neuen Benutzern) oder um das aktuelle Passwort beizubehalten (bei Bearbeitung).'),
+                            ->default(fn (string $context): string => $context === 'create' ? User::generateRandomPassword() : '')
+                            ->helperText('Mindestens 8 Zeichen. Bei neuen Benutzern wird automatisch ein sicheres Passwort generiert. Bei der Bearbeitung leer lassen, um das aktuelle Passwort beizubehalten.'),
 
                         Forms\Components\Select::make('role')
                             ->label('Rolle')

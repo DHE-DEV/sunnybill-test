@@ -52,25 +52,14 @@ class CreateUser extends CreateRecord
         
         if ($user && $user->email) {
             try {
-                // Sende Passwort-E-Mail mit temporärem Passwort
-                if ($temporaryPassword) {
-                    $user->notify(new NewUserPasswordNotification($temporaryPassword));
+                // Sende E-Mail-Verifikation mit temporärem Passwort
+                if (!$user->hasVerifiedEmail()) {
+                    $user->sendEmailVerificationNotification($temporaryPassword);
                     
                     Notification::make()
                         ->success()
-                        ->title('Benutzer erstellt und Passwort gesendet')
-                        ->body("Der Benutzer wurde erstellt und das temporäre Passwort wurde an {$user->email} gesendet.")
-                        ->send();
-                }
-                
-                // Sende E-Mail-Verifikation
-                if (!$user->hasVerifiedEmail()) {
-                    $user->sendEmailVerificationNotification();
-                    
-                    Notification::make()
-                        ->info()
-                        ->title('E-Mail-Verifikation gesendet')
-                        ->body("Eine E-Mail-Bestätigung wurde zusätzlich an {$user->email} gesendet.")
+                        ->title('Benutzer erstellt und E-Mail-Verifikation gesendet')
+                        ->body("Der Benutzer wurde erstellt und eine E-Mail-Verifikation mit den Anmeldedaten wurde an {$user->email} gesendet.")
                         ->send();
                 }
                     
@@ -79,7 +68,7 @@ class CreateUser extends CreateRecord
                 Notification::make()
                     ->warning()
                     ->title('E-Mail-Versand fehlgeschlagen')
-                    ->body("Der Benutzer wurde erstellt, aber die E-Mails konnten nicht gesendet werden. Fehler: " . $e->getMessage())
+                    ->body("Der Benutzer wurde erstellt, aber die E-Mail-Verifikation konnte nicht gesendet werden. Fehler: " . $e->getMessage())
                     ->send();
             }
         }

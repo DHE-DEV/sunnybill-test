@@ -134,9 +134,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     /**
      * Send the email verification notification.
      */
-    public function sendEmailVerificationNotification()
+    public function sendEmailVerificationNotification($temporaryPassword = null)
     {
-        $this->notify(new CustomVerifyEmail);
+        $this->notify(new CustomVerifyEmail($temporaryPassword));
     }
 
     /**
@@ -144,17 +144,16 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public static function generateRandomPassword(int $length = 12): string
     {
-        $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+        $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         $password = '';
         
         // Ensure at least one character from each type
         $password .= chr(rand(97, 122)); // lowercase
         $password .= chr(rand(65, 90));  // uppercase
         $password .= chr(rand(48, 57));  // number
-        $password .= '!@#$%^&*'[rand(0, 7)]; // special char
         
         // Fill the rest randomly
-        for ($i = 4; $i < $length; $i++) {
+        for ($i = 3; $i < $length; $i++) {
             $password .= $characters[rand(0, strlen($characters) - 1)];
         }
         
