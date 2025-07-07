@@ -114,7 +114,7 @@
 
             /* Technology Overview Section */
             .technology-overview {
-                padding: 8rem 2rem;
+                padding: 10rem 2rem 4rem;
                 background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
                 position: relative;
             }
@@ -636,7 +636,7 @@
                 width: 100%;
                 height: 100%;
                 position: relative;
-                border-radius: 20px;
+                #border-radius: 20px;
                 overflow: hidden;
             }
 
@@ -644,7 +644,7 @@
                 width: 100%;
                 height: 100%;
                 display: block;
-                border-radius: 20px;
+                #border-radius: 20px;
             }
 
             /* Globe Loading Animation */
