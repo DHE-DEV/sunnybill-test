@@ -217,6 +217,14 @@
                 background-clip: text;
             }
 
+            .features .section-title {
+                color: white !important;
+                background: none !important;
+                -webkit-background-clip: unset !important;
+                -webkit-text-fill-color: white !important;
+                background-clip: unset !important;
+            }
+
             .section-subtitle {
                 text-align: center;
                 font-size: 1.2rem;
