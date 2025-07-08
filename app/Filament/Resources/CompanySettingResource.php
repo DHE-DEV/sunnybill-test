@@ -647,6 +647,92 @@ class CompanySettingResource extends Resource
 
                         Forms\Components\Tabs\Tab::make('Gmail-Integration')
                             ->schema([
+                                Forms\Components\Section::make('OAuth2-Status')
+                                    ->schema([
+                                        Forms\Components\Placeholder::make('gmail_oauth_status')
+                                            ->label('')
+                                            ->content(function ($record) {
+                                                if (!$record) {
+                                                    return new \Illuminate\Support\HtmlString('<p class="text-gray-500">Speichern Sie die Einstellungen, um den Status zu sehen.</p>');
+                                                }
+                                                
+                                                $enabled = $record->gmail_enabled;
+                                                $clientId = $record->gmail_client_id;
+                                                $clientSecret = $record->gmail_client_secret;
+                                                $accessToken = $record->gmail_access_token;
+                                                $refreshToken = $record->gmail_refresh_token;
+                                                $emailAddress = $record->gmail_email_address;
+                                                $tokenExpiresAt = $record->gmail_token_expires_at;
+                                                
+                                                $statusItems = [
+                                                    'Gmail aktiviert' => $enabled ? '✅ Ja' : '❌ Nein',
+                                                    'Client ID' => $clientId ? '✅ Vorhanden (' . substr($clientId, 0, 20) . '...)' : '❌ Fehlt',
+                                                    'Client Secret' => $clientSecret ? '✅ Vorhanden (' . substr($clientSecret, 0, 10) . '...)' : '❌ Fehlt',
+                                                    'Access Token' => $accessToken ? '✅ Vorhanden (' . substr($accessToken, 0, 20) . '...)' : '❌ Fehlt',
+                                                    'Refresh Token' => $refreshToken ? '✅ Vorhanden (' . substr($refreshToken, 0, 20) . '...)' : '❌ Fehlt',
+                                                    'E-Mail-Adresse' => $emailAddress ? '✅ ' . $emailAddress : '❌ Nicht gesetzt',
+                                                ];
+                                                
+                                                if ($tokenExpiresAt) {
+                                                    $expiresAt = \Carbon\Carbon::parse($tokenExpiresAt);
+                                                    $isExpired = $expiresAt->isPast();
+                                                    $statusItems['Token läuft ab'] = $expiresAt->format('d.m.Y H:i:s') . ($isExpired ? ' ❌ (ABGELAUFEN)' : ' ✅ (Gültig)');
+                                                } else {
+                                                    $statusItems['Token Ablauf'] = '❌ Nicht gesetzt';
+                                                }
+                                                
+                                                $html = '<div class="space-y-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">';
+                                                foreach ($statusItems as $label => $value) {
+                                                    $html .= '<div class="flex justify-between items-center">';
+                                                    $html .= '<span class="font-medium text-gray-700 dark:text-gray-300">' . $label . ':</span>';
+                                                    $html .= '<span class="text-sm">' . $value . '</span>';
+                                                    $html .= '</div>';
+                                                }
+                                                
+                                                // Fehlende Konfiguration identifizieren
+                                                $missing = [];
+                                                if (!$enabled) $missing[] = 'Gmail aktivieren';
+                                                if (!$clientId) $missing[] = 'Client ID';
+                                                if (!$clientSecret) $missing[] = 'Client Secret';
+                                                if (!$accessToken) $missing[] = 'Access Token';
+                                                if (!$refreshToken) $missing[] = 'Refresh Token';
+                                                if (!$emailAddress) $missing[] = 'E-Mail-Adresse';
+                                                
+                                                if (count($missing) > 0) {
+                                                    $html .= '<div class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">';
+                                                    $html .= '<p class="text-sm font-medium text-red-800 dark:text-red-200 mb-2">Fehlende Konfiguration:</p>';
+                                                    $html .= '<ul class="text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">';
+                                                    foreach ($missing as $item) {
+                                                        $html .= '<li>' . $item . '</li>';
+                                                    }
+                                                    $html .= '</ul>';
+                                                    
+                                                    if (!$accessToken || !$refreshToken) {
+                                                        $html .= '<div class="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">';
+                                                        $html .= '<p class="text-sm text-blue-800 dark:text-blue-200">';
+                                                        $html .= '<strong>Nächster Schritt:</strong> Klicken Sie auf "Gmail autorisieren" um OAuth2-Tokens zu erhalten.';
+                                                        $html .= '</p>';
+                                                        $html .= '</div>';
+                                                    }
+                                                    
+                                                    $html .= '</div>';
+                                                } else {
+                                                    $html .= '<div class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">';
+                                                    $html .= '<p class="text-sm text-green-800 dark:text-green-200">';
+                                                    $html .= '<strong>✅ Konfiguration vollständig!</strong> Gmail-Integration ist bereit.';
+                                                    $html .= '</p>';
+                                                    $html .= '</div>';
+                                                }
+                                                
+                                                $html .= '</div>';
+                                                
+                                                return new \Illuminate\Support\HtmlString($html);
+                                            })
+                                            ->reactive(),
+                                    ])
+                                    ->description('Live-Status der Gmail OAuth2-Konfiguration')
+                                    ->collapsible(),
+                                
                                 Forms\Components\Section::make('OAuth2-Konfiguration')
                                     ->schema([
                                         Forms\Components\Toggle::make('gmail_enabled')
