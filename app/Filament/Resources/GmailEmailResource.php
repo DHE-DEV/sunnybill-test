@@ -575,8 +575,15 @@ class GmailEmailResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::unread()->where('is_trash', false)->count();
-        return $count > 0 ? (string) $count : null;
+        $unreadCount = static::getModel()::unread()->where('is_trash', false)->count();
+        $readCount = static::getModel()::read()->where('is_trash', false)->count();
+        
+        // Kombiniere beide Counts in einem Badge
+        if ($unreadCount > 0 || $readCount > 0) {
+            return $unreadCount . '/' . $readCount;
+        }
+        
+        return null;
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -589,13 +596,15 @@ class GmailEmailResource extends Resource
             return 'warning';
         }
         
-        return null;
+        return 'primary'; // Blau für gelesene E-Mails
     }
 
     public static function getNavigationBadgeTooltip(): ?string
     {
-        $count = static::getModel()::unread()->where('is_trash', false)->count();
-        return $count === 1 ? '1 ungelesene E-Mail' : "{$count} ungelesene E-Mails";
+        $unreadCount = static::getModel()::unread()->where('is_trash', false)->count();
+        $readCount = static::getModel()::read()->where('is_trash', false)->count();
+        
+        return "Ungelesen: {$unreadCount} | Gelesen: {$readCount}";
     }
 
     public static function canCreate(): bool

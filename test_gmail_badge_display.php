@@ -2,15 +2,9 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schedule;
 use App\Models\GmailEmail;
 use App\Filament\Resources\GmailEmailResource;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
-
-// Gmail Badge Test Command
 Artisan::command('test:gmail-badge', function () {
     $this->info("=== Gmail Badge Display Test ===");
     $this->newLine();
@@ -95,10 +89,3 @@ Artisan::command('test:gmail-badge', function () {
         $this->line($e->getTraceAsString());
     }
 })->purpose('Testet die Gmail Badge-Funktionalität');
-
-// Gmail Auto-Sync Scheduler
-Schedule::command('gmail:sync')
-    ->everyMinute()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/gmail-sync.log'));

@@ -73,25 +73,42 @@
             /* Hero Section */
             .hero {
                 min-height: 100vh;
-                background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05)), 
-                           url('https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2126&q=80') center/cover no-repeat;
+                background: linear-gradient(135deg, rgba(26, 32, 44, 0.8), rgba(45, 55, 72, 0.7)), 
+                           url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') center/cover no-repeat;
+                background-attachment: fixed;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 position: relative;
-                color: #1a202c;
-                padding-top: 80px;
+                color: white;
+                padding: 80px 1rem 2rem;
+                overflow: hidden;
+            }
+
+            .hero::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+                z-index: 1;
             }
 
             .hero-content {
                 text-align: center;
                 max-width: 900px;
-                padding: 2rem;
+                width: 100%;
+                padding: 3rem 2rem;
                 z-index: 2;
-                background: rgba(255, 255, 255, 0.9);
+                background: rgba(255, 255, 255, 0.95);
                 border-radius: 20px;
-                backdrop-filter: blur(10px);
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(15px);
+                box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15);
+                color: #1a202c;
+                margin: 0 auto;
+                position: relative;
             }
 
             .hero-title {
@@ -103,6 +120,8 @@
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
                 line-height: 1.2;
+                word-wrap: break-word;
+                hyphens: auto;
             }
 
             .hero-subtitle {
@@ -651,8 +670,45 @@
 
             /* Responsive Design */
             @media (max-width: 768px) {
+                .navbar {
+                    padding: 1rem;
+                }
+
+                .nav-container {
+                    padding: 0 0.5rem;
+                }
+
+                .hero {
+                    padding: 80px 0.5rem 2rem;
+                    background-attachment: scroll;
+                    min-height: 90vh;
+                }
+
+                .hero-content {
+                    padding: 2rem 1.5rem;
+                    margin: 0 0.5rem;
+                    max-width: calc(100vw - 1rem);
+                    width: calc(100% - 1rem);
+                }
+
                 .hero-title {
-                    font-size: 2.5rem;
+                    font-size: 2.2rem;
+                    line-height: 1.1;
+                    margin-bottom: 1rem;
+                    word-break: break-word;
+                    overflow-wrap: break-word;
+                }
+
+                .hero-subtitle {
+                    font-size: 1.1rem;
+                    margin-bottom: 1.5rem;
+                    line-height: 1.3;
+                }
+
+                .hero-description {
+                    font-size: 1rem;
+                    margin-bottom: 2rem;
+                    line-height: 1.6;
                 }
 
                 .about-content,
@@ -669,29 +725,43 @@
                 .cta-buttons {
                     flex-direction: column;
                     align-items: center;
+                    gap: 1rem;
                 }
 
                 .btn {
                     width: 100%;
-                    max-width: 300px;
+                    max-width: 280px;
+                    padding: 12px 20px;
+                    font-size: 1rem;
                 }
 
                 .section-title {
                     font-size: 2rem;
+                    line-height: 1.2;
+                    margin-bottom: 1rem;
+                }
+
+                .section-subtitle {
+                    font-size: 1rem;
+                    margin-bottom: 3rem;
+                    padding: 0 1rem;
                 }
 
                 .cta-content h2 {
                     font-size: 2rem;
+                    line-height: 1.2;
                 }
 
                 .value-text h3 {
-                    font-size: 2rem;
+                    font-size: 1.8rem;
+                    line-height: 1.2;
                 }
 
                 .benefit-item {
                     flex-direction: column;
                     text-align: center;
                     gap: 1rem;
+                    padding: 1rem;
                 }
 
                 .benefit-item:hover {
@@ -708,6 +778,100 @@
 
                 .stack-result {
                     padding: 1.5rem;
+                }
+
+                .services-grid {
+                    grid-template-columns: 1fr;
+                    gap: 2rem;
+                }
+
+                .service-card {
+                    padding: 2rem 1.5rem;
+                }
+
+                .expertise-grid {
+                    grid-template-columns: 1fr;
+                    gap: 1.5rem;
+                }
+
+                .process-steps {
+                    grid-template-columns: 1fr;
+                    gap: 2rem;
+                }
+
+                .footer-content {
+                    grid-template-columns: 1fr;
+                    gap: 2rem;
+                    text-align: center;
+                }
+
+                /* Zusätzliche Mobile-Optimierungen */
+                .container {
+                    padding: 0 1rem;
+                }
+
+                .about-section,
+                .services-section,
+                .expertise-section,
+                .process-section,
+                .unique-value-section,
+                .cta-section {
+                    padding: 4rem 1rem;
+                }
+
+                .about-text h3,
+                .service-card h3 {
+                    font-size: 1.3rem;
+                    line-height: 1.3;
+                }
+
+                .about-text p,
+                .service-card p {
+                    font-size: 1rem;
+                    line-height: 1.6;
+                }
+
+                .consultant-icon {
+                    font-size: 4rem;
+                }
+
+                .about-visual {
+                    height: 200px;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .hero-title {
+                    font-size: 1.8rem;
+                }
+
+                .hero-subtitle {
+                    font-size: 1rem;
+                }
+
+                .hero-description {
+                    font-size: 0.95rem;
+                }
+
+                .section-title {
+                    font-size: 1.6rem;
+                }
+
+                .value-text h3 {
+                    font-size: 1.5rem;
+                }
+
+                .cta-content h2 {
+                    font-size: 1.6rem;
+                }
+
+                .hero-content {
+                    padding: 1.5rem 1rem;
+                }
+
+                .btn {
+                    padding: 10px 16px;
+                    font-size: 0.95rem;
                 }
             }
 
