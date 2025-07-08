@@ -87,6 +87,17 @@ class CompanySetting extends Model
         'gmail_archive_processed',
         'gmail_processed_label',
         'gmail_max_results',
+        // Gmail Push-Benachrichtigungseinstellungen
+        'gmail_notifications_enabled',
+        'gmail_notification_users',
+        'gmail_notification_types',
+        'gmail_notification_filters',
+        'gmail_notification_template',
+        'gmail_notification_schedule',
+        'gmail_notification_sound',
+        'gmail_notification_duration',
+        'gmail_notifications_last_sent',
+        'gmail_notifications_sent_count',
     ];
 
     protected $casts = [
@@ -125,6 +136,16 @@ class CompanySetting extends Model
         'gmail_mark_as_read' => 'boolean',
         'gmail_archive_processed' => 'boolean',
         'gmail_max_results' => 'integer',
+        // Gmail Push-Benachrichtigungseinstellungen
+        'gmail_notifications_enabled' => 'boolean',
+        'gmail_notification_users' => 'array',
+        'gmail_notification_types' => 'array',
+        'gmail_notification_filters' => 'array',
+        'gmail_notification_schedule' => 'array',
+        'gmail_notification_sound' => 'boolean',
+        'gmail_notification_duration' => 'integer',
+        'gmail_notifications_last_sent' => 'datetime',
+        'gmail_notifications_sent_count' => 'integer',
     ];
 
     /**
@@ -976,6 +997,324 @@ class CompanySetting extends Model
                 'gmail_email_address' => null,
                 'gmail_last_error' => null,
             ]);
+        } catch (\Exception $e) {
+            // Spalten existieren noch nicht - ignorieren
+        }
+    }
+
+    // ===== GMAIL PUSH-BENACHRICHTIGUNGS METHODEN =====
+
+    /**
+     * Prüft ob Gmail Push-Benachrichtigungen aktiviert sind
+     */
+    public function areGmailNotificationsEnabled(): bool
+    {
+        try {
+            return (bool) $this->gmail_notifications_enabled;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Gibt die Benutzer-IDs zurück, die Benachrichtigungen erhalten sollen
+     */
+    public function getGmailNotificationUsers(): array
+    {
+        try {
+            return $this->gmail_notification_users ?? [];
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Gibt die aktivierten Benachrichtigungstypen zurück
+     */
+    public function getGmailNotificationTypes(): array
+    {
+        try {
+            return $this->gmail_notification_types ?? ['browser', 'in_app'];
+        } catch (\Exception $e) {
+            return ['browser', 'in_app'];
+        }
+    }
+
+    /**
+     * Gibt die Benachrichtigungsfilter zurück
+     */
+    public function getGmailNotificationFilters(): array
+    {
+        try {
+            return $this->gmail_notification_filters ?? [];
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Gibt das Benachrichtigungstemplate zurück
+     */
+    public function getGmailNotificationTemplate(): string
+    {
+        try {
+            return $this->gmail_notification_template ?? 'Neue E-Mail von {sender} mit dem Betreff "{subject}"';
+        } catch (\Exception $e) {
+            return 'Neue E-Mail von {sender} mit dem Betreff "{subject}"';
+        }
+    }
+
+    /**
+     * Gibt die Benachrichtigungszeiten zurück
+     */
+    public function getGmailNotificationSchedule(): array
+    {
+        try {
+            return $this->gmail_notification_schedule ?? [
+                'enabled' => false,
+                'start_time' => '08:00',
+                'end_time' => '18:00',
+                'days' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+            ];
+        } catch (\Exception $e) {
+            return [
+                'enabled' => false,
+                'start_time' => '08:00',
+                'end_time' => '18:00',
+                'days' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+            ];
+        }
+    }
+
+    /**
+     * Prüft ob Sound-Benachrichtigungen aktiviert sind
+     */
+    public function areGmailSoundNotificationsEnabled(): bool
+    {
+        try {
+            return (bool) $this->gmail_notification_sound;
+        } catch (\Exception $e) {
+            return true;
+        }
+    }
+
+    /**
+     * Gibt die Benachrichtigungsdauer in Millisekunden zurück
+     */
+    public function getGmailNotificationDuration(): int
+    {
+        try {
+            return $this->gmail_notification_duration ?? 5000;
+        } catch (\Exception $e) {
+            return 5000;
+        }
+    }
+
+    /**
+     * Aktualisiert den Zeitstempel der letzten gesendeten Benachrichtigung
+     */
+    public function updateGmailNotificationLastSent(): void
+    {
+        try {
+            $this->update(['gmail_notifications_last_sent' => now()]);
+        } catch (\Exception $e) {
+            // Spalte existiert noch nicht - ignorieren
+        }
+    }
+
+    /**
+     * Erhöht den Zähler für gesendete Benachrichtigungen
+     */
+    public function incrementGmailNotificationsSentCount(): void
+    {
+        try {
+            $this->increment('gmail_notifications_sent_count');
+        } catch (\Exception $e) {
+            // Spalte existiert noch nicht - ignorieren
+        }
+    }
+
+    /**
+     * Gibt die Anzahl der gesendeten Benachrichtigungen zurück
+     */
+    public function getGmailNotificationsSentCount(): int
+    {
+        try {
+            return $this->gmail_notifications_sent_count ?? 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Gibt den Zeitstempel der letzten gesendeten Benachrichtigung zurück
+     */
+    public function getGmailNotificationsLastSent(): ?string
+    {
+        try {
+            return $this->gmail_notifications_last_sent?->format('d.m.Y H:i:s');
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Prüft ob ein Benutzer Benachrichtigungen erhalten soll
+     */
+    public function shouldUserReceiveGmailNotifications(int $userId): bool
+    {
+        if (!$this->areGmailNotificationsEnabled()) {
+            return false;
+        }
+
+        $notificationUsers = $this->getGmailNotificationUsers();
+        return empty($notificationUsers) || in_array($userId, $notificationUsers);
+    }
+
+    /**
+     * Prüft ob aktuell Benachrichtigungen gesendet werden sollen (Zeitfenster)
+     */
+    public function isGmailNotificationTimeActive(): bool
+    {
+        $schedule = $this->getGmailNotificationSchedule();
+        
+        if (!$schedule['enabled']) {
+            return true; // Immer aktiv wenn kein Zeitfenster konfiguriert
+        }
+
+        $now = now();
+        $currentDay = strtolower($now->format('l'));
+        $currentTime = $now->format('H:i');
+
+        // Prüfe ob heute ein aktiver Tag ist
+        if (!in_array($currentDay, $schedule['days'])) {
+            return false;
+        }
+
+        // Prüfe ob aktuelle Zeit im Zeitfenster liegt
+        return $currentTime >= $schedule['start_time'] && $currentTime <= $schedule['end_time'];
+    }
+
+    /**
+     * Prüft ob eine E-Mail den konfigurierten Filtern entspricht
+     */
+    public function doesEmailMatchNotificationFilters(array $emailData): bool
+    {
+        $filters = $this->getGmailNotificationFilters();
+        
+        if (empty($filters)) {
+            return true; // Keine Filter = alle E-Mails
+        }
+
+        // Sender-Filter
+        if (!empty($filters['senders'])) {
+            $fromEmails = array_column($emailData['from'] ?? [], 'email');
+            $matchesSender = false;
+            
+            foreach ($filters['senders'] as $allowedSender) {
+                foreach ($fromEmails as $fromEmail) {
+                    if (str_contains(strtolower($fromEmail), strtolower($allowedSender))) {
+                        $matchesSender = true;
+                        break 2;
+                    }
+                }
+            }
+            
+            if (!$matchesSender) {
+                return false;
+            }
+        }
+
+        // Betreff-Keywords
+        if (!empty($filters['subject_keywords'])) {
+            $subject = strtolower($emailData['subject'] ?? '');
+            $matchesKeyword = false;
+            
+            foreach ($filters['subject_keywords'] as $keyword) {
+                if (str_contains($subject, strtolower($keyword))) {
+                    $matchesKeyword = true;
+                    break;
+                }
+            }
+            
+            if (!$matchesKeyword) {
+                return false;
+            }
+        }
+
+        // Wichtigkeits-Level
+        if (!empty($filters['importance_level'])) {
+            $isImportant = $emailData['is_important'] ?? false;
+            
+            if ($filters['importance_level'] === 'important_only' && !$isImportant) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Gibt den Status der Gmail-Benachrichtigungskonfiguration zurück
+     */
+    public function getGmailNotificationStatus(): array
+    {
+        return [
+            'enabled' => $this->areGmailNotificationsEnabled(),
+            'users_count' => count($this->getGmailNotificationUsers()),
+            'notification_types' => $this->getGmailNotificationTypes(),
+            'has_filters' => !empty($this->getGmailNotificationFilters()),
+            'schedule_enabled' => $this->getGmailNotificationSchedule()['enabled'],
+            'sound_enabled' => $this->areGmailSoundNotificationsEnabled(),
+            'last_sent' => $this->getGmailNotificationsLastSent(),
+            'sent_count' => $this->getGmailNotificationsSentCount(),
+            'time_active' => $this->isGmailNotificationTimeActive(),
+        ];
+    }
+
+    /**
+     * Setzt die Gmail-Benachrichtigungseinstellungen
+     */
+    public function setGmailNotificationSettings(array $settings): void
+    {
+        try {
+            $updateData = [];
+            
+            if (isset($settings['enabled'])) {
+                $updateData['gmail_notifications_enabled'] = (bool) $settings['enabled'];
+            }
+            
+            if (isset($settings['users'])) {
+                $updateData['gmail_notification_users'] = $settings['users'];
+            }
+            
+            if (isset($settings['types'])) {
+                $updateData['gmail_notification_types'] = $settings['types'];
+            }
+            
+            if (isset($settings['filters'])) {
+                $updateData['gmail_notification_filters'] = $settings['filters'];
+            }
+            
+            if (isset($settings['template'])) {
+                $updateData['gmail_notification_template'] = $settings['template'];
+            }
+            
+            if (isset($settings['schedule'])) {
+                $updateData['gmail_notification_schedule'] = $settings['schedule'];
+            }
+            
+            if (isset($settings['sound'])) {
+                $updateData['gmail_notification_sound'] = (bool) $settings['sound'];
+            }
+            
+            if (isset($settings['duration'])) {
+                $updateData['gmail_notification_duration'] = (int) $settings['duration'];
+            }
+            
+            if (!empty($updateData)) {
+                $this->update($updateData);
+            }
         } catch (\Exception $e) {
             // Spalten existieren noch nicht - ignorieren
         }

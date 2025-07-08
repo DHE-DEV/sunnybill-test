@@ -35,6 +35,14 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'notes',
         'password_change_required',
         'password_changed_at',
+        // Gmail-Benachrichtigungseinstellungen
+        'gmail_notifications_enabled',
+        'gmail_notification_preferences',
+        'gmail_browser_notifications',
+        'gmail_email_notifications',
+        'gmail_sound_notifications',
+        'gmail_last_notification_at',
+        'gmail_notifications_received_count',
     ];
 
     /**
@@ -61,6 +69,14 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             'is_active' => 'boolean',
             'password_change_required' => 'boolean',
             'password_changed_at' => 'datetime',
+            // Gmail-Benachrichtigungseinstellungen
+            'gmail_notifications_enabled' => 'boolean',
+            'gmail_notification_preferences' => 'array',
+            'gmail_browser_notifications' => 'boolean',
+            'gmail_email_notifications' => 'boolean',
+            'gmail_sound_notifications' => 'boolean',
+            'gmail_last_notification_at' => 'datetime',
+            'gmail_notifications_received_count' => 'integer',
         ];
     }
 
