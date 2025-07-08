@@ -212,10 +212,8 @@ class GmailSyncCommand extends Command
      */
     private function syncCompanyEmails(CompanySetting $company): array
     {
-        // Set current company context
-        CompanySetting::setCurrent($company);
-        
-        $gmailService = new GmailService();
+        // Initialize Gmail service with company context
+        $gmailService = new GmailService($company);
         
         // Verify configuration
         if (!$gmailService->isConfigured()) {
@@ -242,7 +240,16 @@ class GmailSyncCommand extends Command
         foreach ($newEmailIds as $gmailId) {
             $email = GmailEmail::findByGmailId($gmailId);
             if ($email) {
-                event(new NewGmailReceived($email));
+                // Get users who should receive notifications
+                $users = $company->users()
+                    ->where('gmail_notifications_enabled', true)
+                    ->get()
+                    ->map(function ($user) {
+                        return ['id' => $user->id, 'name' => $user->name, 'email' => $user->email];
+                    })
+                    ->toArray();
+                
+                event(new NewGmailReceived($email, $users));
             }
         }
         

@@ -39,10 +39,8 @@ class SyncGmailEmailsJob implements ShouldQueue
         Log::info("Starting Gmail sync job for company: {$this->company->company_name} (ID: {$this->company->id})");
         
         try {
-            // Set current company context
-            CompanySetting::setCurrent($this->company);
-            
-            $gmailService = new GmailService();
+            // Initialize Gmail service with company context
+            $gmailService = new GmailService($this->company);
             
             // Verify configuration
             if (!$gmailService->isConfigured()) {
@@ -69,7 +67,16 @@ class SyncGmailEmailsJob implements ShouldQueue
             foreach ($newEmailIds as $gmailId) {
                 $email = GmailEmail::findByGmailId($gmailId);
                 if ($email) {
-                    event(new NewGmailReceived($email));
+                    // Get users who should receive notifications
+                    $users = $this->company->users()
+                        ->where('gmail_notifications_enabled', true)
+                        ->get()
+                        ->map(function ($user) {
+                            return ['id' => $user->id, 'name' => $user->name, 'email' => $user->email];
+                        })
+                        ->toArray();
+                    
+                    event(new NewGmailReceived($email, $users));
                 }
             }
             

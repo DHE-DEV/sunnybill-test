@@ -16,9 +16,9 @@ class GmailService
     private string $baseUrl = 'https://www.googleapis.com/gmail/v1';
     private string $oauthUrl = 'https://oauth2.googleapis.com/token';
 
-    public function __construct()
+    public function __construct(?CompanySetting $company = null)
     {
-        $this->settings = CompanySetting::current();
+        $this->settings = $company ?? CompanySetting::current();
     }
 
     /**
