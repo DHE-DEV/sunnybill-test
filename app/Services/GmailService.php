@@ -317,6 +317,11 @@ class GmailService
         ];
 
         try {
+            // Filter anwenden wenn aktiviert
+            if ($this->settings->gmail_filter_inbox && !isset($options['q'])) {
+                $options['q'] = '-in:inbox';
+            }
+            
             // E-Mail-Liste abrufen
             $messagesResponse = $this->getMessages($options);
             $messages = $messagesResponse['messages'] ?? [];
