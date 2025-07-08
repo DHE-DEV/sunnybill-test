@@ -206,8 +206,3 @@ Route::prefix('admin/gmail/oauth')->group(function () {
     Route::get('/test', [App\Http\Controllers\GmailOAuthController::class, 'test'])
         ->name('gmail.oauth.test');
 });
-
-// Notifications Route
-Route::get('/admin/notifications', function () {
-    return redirect('/admin/pages/notifications');
-})->name('filament.admin.pages.notifications');

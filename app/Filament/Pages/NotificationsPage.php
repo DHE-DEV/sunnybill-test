@@ -9,6 +9,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use App\Models\Notification;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -33,6 +34,16 @@ class NotificationsPage extends Page implements HasTable, HasActions
     protected static ?int $navigationSort = 1;
     
     protected static string $view = 'filament.pages.notifications-page';
+
+    public static function getUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?Model $tenant = null): string
+    {
+        return '/admin/notifications';
+    }
+
+    public static function getNavigationUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?Model $tenant = null): string
+    {
+        return '/admin/notifications';
+    }
 
     public function getTitle(): string
     {
