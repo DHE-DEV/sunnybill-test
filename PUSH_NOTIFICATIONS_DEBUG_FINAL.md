@@ -54,7 +54,7 @@ Route::get('/api/notifications/count/test', function () {
 
 ### Schritt 1: Test-Seite öffnen
 ```
-http://localhost/test_push_notifications_simple.html
+https://sunnybill-test.test/test_push_notifications_simple.html
 ```
 
 ### Schritt 2: Browser-Support prüfen
