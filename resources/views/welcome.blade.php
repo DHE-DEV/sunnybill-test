@@ -1562,7 +1562,7 @@
                     </div>
                     <div class="footer-section">
                         <h3>Unternehmen</h3>
-                        <p><a href="#">Über uns</a></p>
+                        <p><a href="{{ route('ueber-uns') }}">Über uns</a></p>
                         <p><a href="#">Karriere</a></p>
                         <p><a href="#">Presse</a></p>
                         <p><a href="#">Partner</a></p>

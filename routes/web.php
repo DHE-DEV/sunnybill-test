@@ -24,6 +24,10 @@ Route::get('/impressum', function () {
     return view('impressum');
 })->name('impressum');
 
+Route::get('/ueber-uns', function () {
+    return view('ueber-uns');
+})->name('ueber-uns');
+
 // Login Route (redirect to Filament)
 Route::get('/login', function () {
     return redirect('/admin/login');
