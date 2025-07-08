@@ -92,7 +92,10 @@ class SolarPlantStatusResource extends Resource
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('#')
                     ->sortable()
-                    ->width(50),
+                    ->width(50)
+                    ->alignCenter()
+                    ->badge()
+                    ->color('gray'),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->searchable()
@@ -184,6 +187,8 @@ class SolarPlantStatusResource extends Resource
             ])
             ->reorderable('sort_order')
             ->defaultSort('sort_order')
+            ->recordUrl(null)
+            ->striped()
             ->emptyStateHeading('Keine Status vorhanden')
             ->emptyStateDescription('Erstellen Sie den ersten Status für Solaranlagen.')
             ->emptyStateIcon('heroicon-o-tag');
