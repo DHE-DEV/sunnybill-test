@@ -344,13 +344,26 @@ class GmailService
                     // E-Mail-Daten parsen
                     $emailData = $this->parseEmailData($messageData);
                     
+                    // Detailliertes Logging für E-Mail Labels
+                    $this->logEmailLabels($messageId, $emailData);
+                    
                     // E-Mail erstellen oder aktualisieren
                     if ($existingEmail) {
                         $existingEmail->update($emailData);
                         $stats['updated']++;
+                        Log::info("Gmail: Updated email", [
+                            'gmail_id' => $messageId,
+                            'subject' => $emailData['subject'],
+                            'labels' => $emailData['labels']
+                        ]);
                     } else {
                         GmailEmail::create($emailData);
                         $stats['new']++;
+                        Log::info("Gmail: Created new email", [
+                            'gmail_id' => $messageId,
+                            'subject' => $emailData['subject'],
+                            'labels' => $emailData['labels']
+                        ]);
                     }
 
                     // Anhänge herunterladen wenn aktiviert
@@ -763,6 +776,57 @@ class GmailService
         } catch (\Exception $e) {
             Log::error("Failed to restore message {$messageId} from trash: " . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Loggt detaillierte E-Mail Label Informationen
+     */
+    private function logEmailLabels(string $messageId, array $emailData): void
+    {
+        $labels = $emailData['labels'] ?? [];
+        $subject = $emailData['subject'] ?? 'No Subject';
+        $from = $emailData['from'][0]['email'] ?? 'Unknown';
+        
+        // Kategorisiere Labels
+        $systemLabels = [];
+        $userLabels = [];
+        $categoryLabels = [];
+        
+        foreach ($labels as $label) {
+            if (str_starts_with($label, 'CATEGORY_')) {
+                $categoryLabels[] = $label;
+            } elseif (in_array($label, ['INBOX', 'SENT', 'DRAFT', 'TRASH', 'SPAM', 'UNREAD', 'STARRED', 'IMPORTANT'])) {
+                $systemLabels[] = $label;
+            } else {
+                $userLabels[] = $label;
+            }
+        }
+        
+        // Detailliertes Logging
+        Log::info("Gmail Email Labels", [
+            'gmail_id' => $messageId,
+            'subject' => $subject,
+            'from' => $from,
+            'total_labels' => count($labels),
+            'all_labels' => $labels,
+            'system_labels' => $systemLabels,
+            'category_labels' => $categoryLabels,
+            'user_labels' => $userLabels,
+            'has_inbox' => in_array('INBOX', $labels),
+            'is_unread' => in_array('UNREAD', $labels),
+            'is_important' => in_array('IMPORTANT', $labels),
+            'is_starred' => in_array('STARRED', $labels),
+            'filter_active' => $this->settings->gmail_filter_inbox ?? false,
+        ]);
+        
+        // Zusätzliches Warning wenn INBOX Label trotz Filter gefunden wird
+        if ($this->settings->gmail_filter_inbox && in_array('INBOX', $labels)) {
+            Log::warning("Gmail: Email with INBOX label found despite filter being active", [
+                'gmail_id' => $messageId,
+                'subject' => $subject,
+                'labels' => $labels
+            ]);
         }
     }
 
