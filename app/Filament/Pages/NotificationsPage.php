@@ -31,6 +31,8 @@ class NotificationsPage extends Page implements HasTable, HasActions
     protected static ?string $navigationGroup = 'System';
     
     protected static ?int $navigationSort = 1;
+    
+    protected static string $view = 'filament.pages.notifications-page';
 
     public function getTitle(): string
     {
