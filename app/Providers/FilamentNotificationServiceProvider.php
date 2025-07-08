@@ -32,7 +32,7 @@ class FilamentNotificationServiceProvider extends ServiceProvider
                 Filament::registerUserMenuItems([
                     UserMenuItem::make()
                         ->label('Benachrichtigungen' . ($unreadCount > 0 ? " ({$unreadCount})" : ''))
-                        ->url(route('filament.admin.pages.notifications'))
+                        ->url('/admin/notifications')
                         ->icon('heroicon-o-bell')
                         ->sort(1),
                 ]);
