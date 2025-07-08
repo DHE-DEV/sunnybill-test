@@ -34,8 +34,6 @@ class FilamentNotificationServiceProvider extends ServiceProvider
                         ->label('Benachrichtigungen' . ($unreadCount > 0 ? " ({$unreadCount})" : ''))
                         ->url(route('filament.admin.pages.notifications'))
                         ->icon('heroicon-o-bell')
-                        ->badge($unreadCount > 0 ? $unreadCount : null)
-                        ->badgeColor('danger')
                         ->sort(1),
                 ]);
             }
