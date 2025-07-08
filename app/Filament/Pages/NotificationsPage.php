@@ -340,7 +340,26 @@ class NotificationsPage extends Page implements HasTable, HasActions
 
                 Tables\Columns\BadgeColumn::make('recipient')
                     ->label('Empfänger')
-                    ->formatStateUsing(fn (Notification $record): string => $record->getRecipientName())
+                    ->formatStateUsing(function (Notification $record): string {
+                        $currentUser = auth()->user();
+                        
+                        if (!$currentUser) {
+                            return $record->getRecipientName();
+                        }
+                        
+                        // Wenn der aktuelle Benutzer der direkte Empfänger ist
+                        if ($record->recipient_type === 'user' && $record->user_id === $currentUser->id) {
+                            return 'Ich';
+                        }
+                        
+                        // Für Team-Benachrichtigungen den Team-Namen anzeigen
+                        if ($record->recipient_type === 'team' && $record->team) {
+                            return $record->team->name;
+                        }
+                        
+                        // Fallback auf die ursprüngliche Methode
+                        return $record->getRecipientName();
+                    })
                     ->color(fn (Notification $record): string => $record->getRecipientColor())
                     ->sortable(query: function ($query, string $direction) {
                         return $query->orderBy('recipient_type', $direction)
