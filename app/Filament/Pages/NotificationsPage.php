@@ -343,24 +343,33 @@ class NotificationsPage extends Page implements HasTable, HasActions
                     ->formatStateUsing(function (Notification $record): string {
                         $currentUser = auth()->user();
                         
-                        if (!$currentUser) {
-                            return $record->getRecipientName();
+                        // Für Team-Benachrichtigungen
+                        if ($record->recipient_type === 'team') {
+                            if ($record->team) {
+                                return $record->team->name;
+                            }
+                            return 'Team (unbekannt)';
                         }
                         
-                        // Wenn der aktuelle Benutzer der direkte Empfänger ist
-                        if ($record->recipient_type === 'user' && $record->user_id === $currentUser->id) {
-                            return 'Ich';
+                        // Für Benutzer-Benachrichtigungen
+                        if ($record->recipient_type === 'user') {
+                            if ($currentUser && $record->user_id === $currentUser->id) {
+                                return 'Ich';
+                            }
+                            if ($record->user) {
+                                return $record->user->name;
+                            }
+                            return 'Benutzer (unbekannt)';
                         }
                         
-                        // Für Team-Benachrichtigungen den Team-Namen anzeigen
-                        if ($record->recipient_type === 'team' && $record->team) {
-                            return $record->team->name;
-                        }
-                        
-                        // Fallback auf die ursprüngliche Methode
-                        return $record->getRecipientName();
+                        return 'Unbekannt';
                     })
-                    ->color(fn (Notification $record): string => $record->getRecipientColor())
+                    ->color(function (Notification $record): string {
+                        if ($record->recipient_type === 'team' && $record->team) {
+                            return 'primary';
+                        }
+                        return 'gray';
+                    })
                     ->sortable(query: function ($query, string $direction) {
                         return $query->orderBy('recipient_type', $direction)
                                    ->orderBy('user_id', $direction)
