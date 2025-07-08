@@ -186,16 +186,11 @@ class SolarPlantResource extends Resource
                                     ->schema([
                                         Forms\Components\Select::make('status')
                                             ->label('Status')
-                                            ->options([
-                                                'in_planning' => 'In Planung',
-                                                'planned' => 'Geplant',
-                                                'under_construction' => 'Im Bau',
-                                                'awaiting_commissioning' => 'Warte auf Inbetriebnahme',
-                                                'active' => 'Aktiv',
-                                                'maintenance' => 'Wartung',
-                                                'inactive' => 'Inaktiv',
-                                            ])
-                                            ->default('in_planning')
+                                            ->options(\App\Models\SolarPlantStatus::getActiveOptions())
+                                            ->default(function () {
+                                                $defaultStatus = \App\Models\SolarPlantStatus::getDefault();
+                                                return $defaultStatus ? $defaultStatus->key : 'in_planning';
+                                            })
                                             ->required(),
                                         Forms\Components\Toggle::make('is_active')
                                             ->label('Aktiv')
@@ -396,26 +391,14 @@ class SolarPlantResource extends Resource
                     ->color('success'),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'in_planning' => 'In Planung',
-                        'planned' => 'Geplant',
-                        'under_construction' => 'Im Bau',
-                        'awaiting_commissioning' => 'Warte auf Inbetriebnahme',
-                        'active' => 'Aktiv',
-                        'maintenance' => 'Wartung',
-                        'inactive' => 'Inaktiv',
-                        default => $state,
+                    ->formatStateUsing(function ($state) {
+                        $status = \App\Models\SolarPlantStatus::where('key', $state)->first();
+                        return $status ? $status->name : $state;
                     })
                     ->badge()
-                    ->color(fn ($state) => match($state) {
-                        'in_planning' => 'gray',
-                        'planned' => 'info',
-                        'under_construction' => 'warning',
-                        'awaiting_commissioning' => 'primary',
-                        'active' => 'success',
-                        'maintenance' => 'info',
-                        'inactive' => 'danger',
-                        default => 'gray',
+                    ->color(function ($state) {
+                        $status = \App\Models\SolarPlantStatus::where('key', $state)->first();
+                        return $status ? $status->color : 'gray';
                     }),
                 Tables\Columns\TextColumn::make('total_participation')
                     ->label('Beteiligung')
@@ -449,15 +432,7 @@ class SolarPlantResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
-                    ->options([
-                        'in_planning' => 'In Planung',
-                        'planned' => 'Geplant',
-                        'under_construction' => 'Im Bau',
-                        'awaiting_commissioning' => 'Warte auf Inbetriebnahme',
-                        'active' => 'Aktiv',
-                        'maintenance' => 'Wartung',
-                        'inactive' => 'Inaktiv',
-                    ]),
+                    ->options(\App\Models\SolarPlantStatus::getActiveOptions()),
                 Tables\Filters\Filter::make('is_active')
                     ->label('Nur aktive Anlagen')
                     ->query(fn (Builder $query): Builder => $query->where('is_active', true)),
