@@ -676,13 +676,126 @@ class CompanySettingResource extends Resource
                                                     ->visible(fn ($get) => $get('gmail_enabled')),
                                             ]),
                                         
-                                        Forms\Components\TextInput::make('gmail_email_address')
-                                            ->label('Verbundene E-Mail-Adresse')
-                                            ->email()
-                                            ->disabled()
-                                            ->placeholder('Wird nach der Autorisierung angezeigt')
-                                            ->helperText('Die E-Mail-Adresse des verbundenen Gmail-Kontos')
-                                            ->visible(fn ($get) => $get('gmail_enabled')),
+                        Forms\Components\TextInput::make('gmail_email_address')
+                            ->label('Verbundene E-Mail-Adresse')
+                            ->email()
+                            ->disabled()
+                            ->placeholder('Wird nach der Autorisierung angezeigt')
+                            ->helperText('Die E-Mail-Adresse des verbundenen Gmail-Kontos')
+                            ->visible(fn ($get) => $get('gmail_enabled')),
+                        
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('authorize_gmail')
+                                ->label('Gmail autorisieren')
+                                ->icon('heroicon-o-key')
+                                ->color('primary')
+                                ->action(function ($record) {
+                                    if (!$record) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Fehler')
+                                            ->body('Bitte speichern Sie zuerst die Einstellungen.')
+                                            ->danger()
+                                            ->send();
+                                        return;
+                                    }
+                                    
+                                    try {
+                                        $gmailService = new \App\Services\GmailService();
+                                        $redirectUri = url('/admin/gmail/oauth/callback');
+                                        $authUrl = $gmailService->getAuthorizationUrl($redirectUri);
+                                        
+                                        // Öffne Authorization URL in neuem Tab
+                                        return redirect()->away($authUrl);
+                                    } catch (\Exception $e) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Autorisierung fehlgeschlagen')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                    }
+                                })
+                                ->visible(function ($record) {
+                                    if (!$record) return false;
+                                    return $record->isGmailEnabled() && 
+                                           $record->getGmailClientId() && 
+                                           $record->getGmailClientSecret() && 
+                                           !$record->getGmailRefreshToken();
+                                }),
+                            
+                            Forms\Components\Actions\Action::make('test_gmail_connection')
+                                ->label('Verbindung testen')
+                                ->icon('heroicon-o-wifi')
+                                ->color('secondary')
+                                ->action(function ($record) {
+                                    if (!$record) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Fehler')
+                                            ->body('Bitte speichern Sie zuerst die Einstellungen.')
+                                            ->danger()
+                                            ->send();
+                                        return;
+                                    }
+                                    
+                                    try {
+                                        $gmailService = new \App\Services\GmailService();
+                                        $result = $gmailService->testConnection();
+                                        
+                                        if ($result['success']) {
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Verbindung erfolgreich')
+                                                ->body("Verbunden mit: {$result['email']}")
+                                                ->success()
+                                                ->send();
+                                        } else {
+                                            throw new \Exception($result['error']);
+                                        }
+                                    } catch (\Exception $e) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Verbindung fehlgeschlagen')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                    }
+                                })
+                                ->visible(function ($record) {
+                                    if (!$record) return false;
+                                    return $record->isGmailEnabled() && 
+                                           $record->getGmailRefreshToken();
+                                }),
+                            
+                            Forms\Components\Actions\Action::make('revoke_gmail_access')
+                                ->label('Zugriff widerrufen')
+                                ->icon('heroicon-o-x-mark')
+                                ->color('danger')
+                                ->requiresConfirmation()
+                                ->modalHeading('Gmail-Zugriff widerrufen')
+                                ->modalDescription('Sind Sie sicher, dass Sie den Gmail-Zugriff widerrufen möchten? Dies entfernt alle gespeicherten Tokens.')
+                                ->action(function ($record) {
+                                    if (!$record) return;
+                                    
+                                    try {
+                                        $record->clearGmailTokens();
+                                        
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Zugriff widerrufen')
+                                            ->body('Der Gmail-Zugriff wurde erfolgreich widerrufen.')
+                                            ->success()
+                                            ->send();
+                                    } catch (\Exception $e) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Fehler beim Widerrufen')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                    }
+                                })
+                                ->visible(function ($record) {
+                                    if (!$record) return false;
+                                    return $record->isGmailEnabled() && 
+                                           $record->getGmailRefreshToken();
+                                }),
+                        ])
+                        ->visible(fn ($get) => $get('gmail_enabled')),
                                     ])
                                     ->description('OAuth2-Einstellungen für die Verbindung zu Gmail'),
                                 

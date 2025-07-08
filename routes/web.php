@@ -181,3 +181,15 @@ Route::delete('/admin/documents/{document}/delete', function (Document $document
         ], 500);
     }
 })->name('documents.delete');
+
+// Gmail OAuth2 Routes
+Route::prefix('admin/gmail/oauth')->group(function () {
+    Route::get('/callback', [App\Http\Controllers\GmailOAuthController::class, 'callback'])
+        ->name('gmail.oauth.callback');
+    Route::get('/authorize', [App\Http\Controllers\GmailOAuthController::class, 'authorize'])
+        ->name('gmail.oauth.authorize');
+    Route::post('/revoke', [App\Http\Controllers\GmailOAuthController::class, 'revoke'])
+        ->name('gmail.oauth.revoke');
+    Route::get('/test', [App\Http\Controllers\GmailOAuthController::class, 'test'])
+        ->name('gmail.oauth.test');
+});

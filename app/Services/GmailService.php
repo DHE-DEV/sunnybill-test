@@ -21,58 +21,79 @@ class GmailService
     }
 
     /**
-     * Prüft ob die Gmail-Integration konfiguriert ist
+     * Prüft ob Gmail konfiguriert ist
      */
     public function isConfigured(): bool
     {
-        return $this->settings->hasValidGmailConfig();
+        return $this->settings->isGmailEnabled() && 
+               $this->settings->getGmailClientId() && 
+               $this->settings->getGmailClientSecret();
     }
-
+    
     /**
-     * Generiert die OAuth2 Authorization URL
+     * Erstellt die OAuth2-Autorisierungs-URL
      */
     public function getAuthorizationUrl(string $redirectUri): string
     {
+        if (!$this->isConfigured()) {
+            throw new \Exception('Gmail ist nicht konfiguriert. Bitte konfigurieren Sie Client ID und Client Secret.');
+        }
+        
         $params = [
             'client_id' => $this->settings->getGmailClientId(),
             'redirect_uri' => $redirectUri,
-            'scope' => 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify',
+            'scope' => 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email',
             'response_type' => 'code',
             'access_type' => 'offline',
             'prompt' => 'consent',
+            'state' => csrf_token(),
         ];
-
-        return 'https://accounts.google.com/o/oauth2/auth?' . http_build_query($params);
+        
+        return 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params);
     }
-
+    
     /**
-     * Tauscht den Authorization Code gegen Access Token
+     * Tauscht den Autorisierungscode gegen Access- und Refresh-Tokens
      */
     public function exchangeCodeForTokens(string $code, string $redirectUri): array
     {
-        $response = Http::post($this->oauthUrl, [
+        if (!$this->isConfigured()) {
+            throw new \Exception('Gmail ist nicht konfiguriert.');
+        }
+        
+        $response = Http::post('https://oauth2.googleapis.com/token', [
             'client_id' => $this->settings->getGmailClientId(),
             'client_secret' => $this->settings->getGmailClientSecret(),
             'code' => $code,
             'grant_type' => 'authorization_code',
             'redirect_uri' => $redirectUri,
         ]);
-
+        
         if (!$response->successful()) {
-            throw new \Exception('Failed to exchange code for tokens: ' . $response->body());
+            throw new \Exception('Fehler beim Token-Austausch: ' . $response->body());
         }
-
+        
         $tokens = $response->json();
         
-        // E-Mail-Adresse abrufen
-        $emailAddress = $this->getUserEmailAddress($tokens['access_token']);
+        // Speichere Tokens in den Einstellungen
+        $this->settings->setGmailTokens(
+            $tokens['access_token'],
+            $tokens['refresh_token'] ?? null,
+            now()->addSeconds($tokens['expires_in'])
+        );
         
-        // Tokens speichern
-        $this->settings->saveGmailTokens($tokens, $emailAddress);
+        // Hole E-Mail-Adresse des verbundenen Kontos
+        try {
+            $userInfo = $this->getUserInfo($tokens['access_token']);
+            $this->settings->gmail_email_address = $userInfo['email'];
+            $this->settings->save();
+        } catch (\Exception $e) {
+            \Log::warning('Konnte E-Mail-Adresse nicht abrufen: ' . $e->getMessage());
+        }
         
         return $tokens;
     }
-
+    
     /**
      * Erneuert den Access Token mit dem Refresh Token
      */
@@ -81,51 +102,103 @@ class GmailService
         $refreshToken = $this->settings->getGmailRefreshToken();
         
         if (!$refreshToken) {
-            throw new \Exception('No refresh token available');
+            throw new \Exception('Kein Refresh Token verfügbar. Bitte autorisieren Sie Gmail erneut.');
         }
-
-        $response = Http::post($this->oauthUrl, [
+        
+        $response = Http::post('https://oauth2.googleapis.com/token', [
             'client_id' => $this->settings->getGmailClientId(),
             'client_secret' => $this->settings->getGmailClientSecret(),
             'refresh_token' => $refreshToken,
             'grant_type' => 'refresh_token',
         ]);
-
+        
         if (!$response->successful()) {
-            throw new \Exception('Failed to refresh access token: ' . $response->body());
+            throw new \Exception('Fehler beim Token-Refresh: ' . $response->body());
         }
-
+        
         $tokens = $response->json();
-        $this->settings->updateGmailAccessToken($tokens['access_token'], $tokens['expires_in']);
+        
+        // Speichere neuen Access Token
+        $this->settings->setGmailTokens(
+            $tokens['access_token'],
+            $tokens['refresh_token'] ?? $refreshToken, // Behalte alten Refresh Token falls keiner zurückgegeben wird
+            now()->addSeconds($tokens['expires_in'])
+        );
         
         return $tokens['access_token'];
     }
-
+    
     /**
-     * Gibt einen gültigen Access Token zurück (erneuert wenn nötig)
+     * Holt einen gültigen Access Token (erneuert automatisch falls nötig)
      */
-    private function getValidAccessToken(): string
+    public function getValidAccessToken(): string
     {
-        if ($this->settings->isGmailTokenExpired()) {
-            return $this->refreshAccessToken();
+        $accessToken = $this->settings->getGmailAccessToken();
+        $expiresAt = $this->settings->getGmailTokenExpiresAt();
+        
+        // Prüfe ob Token noch gültig ist (mit 5 Minuten Puffer)
+        if ($accessToken && $expiresAt && $expiresAt->gt(now()->addMinutes(5))) {
+            return $accessToken;
         }
-
-        return $this->settings->getGmailAccessToken();
+        
+        // Token ist abgelaufen oder nicht vorhanden, erneuere ihn
+        return $this->refreshAccessToken();
     }
-
+    
     /**
-     * Ruft die E-Mail-Adresse des Benutzers ab
+     * Holt Benutzerinformationen von Google
      */
-    private function getUserEmailAddress(string $accessToken): string
+    public function getUserInfo(string $accessToken = null): array
     {
-        $response = Http::withToken($accessToken)
-            ->get($this->baseUrl . '/users/me/profile');
-
-        if (!$response->successful()) {
-            throw new \Exception('Failed to get user email address: ' . $response->body());
+        if (!$accessToken) {
+            $accessToken = $this->getValidAccessToken();
         }
-
-        return $response->json()['emailAddress'];
+        
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $accessToken,
+        ])->get('https://www.googleapis.com/oauth2/v2/userinfo');
+        
+        if (!$response->successful()) {
+            throw new \Exception('Fehler beim Abrufen der Benutzerinformationen: ' . $response->body());
+        }
+        
+        return $response->json();
+    }
+    
+    /**
+     * Testet die Gmail-Verbindung
+     */
+    public function testConnection(): array
+    {
+        try {
+            if (!$this->isConfigured()) {
+                return [
+                    'success' => false,
+                    'error' => 'Gmail ist nicht konfiguriert.'
+                ];
+            }
+            
+            if (!$this->settings->getGmailRefreshToken()) {
+                return [
+                    'success' => false,
+                    'error' => 'Keine Autorisierung vorhanden. Bitte autorisieren Sie Gmail zuerst.'
+                ];
+            }
+            
+            $userInfo = $this->getUserInfo();
+            
+            return [
+                'success' => true,
+                'email' => $userInfo['email'],
+                'name' => $userInfo['name'] ?? null,
+            ];
+            
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
     }
 
     /**
@@ -685,28 +758,6 @@ class GmailService
         } catch (\Exception $e) {
             Log::error("Failed to restore message {$messageId} from trash: " . $e->getMessage());
             return false;
-        }
-    }
-
-    /**
-     * Testet die Gmail-Verbindung
-     */
-    public function testConnection(): array
-    {
-        try {
-            $profile = $this->makeApiRequest('/profile');
-            
-            return [
-                'success' => true,
-                'email' => $profile['emailAddress'],
-                'messages_total' => $profile['messagesTotal'] ?? 0,
-                'threads_total' => $profile['threadsTotal'] ?? 0,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-            ];
         }
     }
 
