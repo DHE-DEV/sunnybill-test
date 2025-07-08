@@ -68,6 +68,8 @@ class Customer extends Model
         'is_active',
         'deactivated_at',
         'customer_type',
+        'lexware_version',
+        'lexware_json',
     ];
 
     protected $casts = [
@@ -76,6 +78,8 @@ class Customer extends Model
         'is_active' => 'boolean',
         'deactivated_at' => 'datetime',
         'payment_days' => 'integer',
+        'lexware_version' => 'integer',
+        'lexware_json' => 'array',
     ];
 
     protected $attributes = [
@@ -169,7 +173,7 @@ class Customer extends Model
      */
     public function billingAddress()
     {
-        return $this->morphOne(Address::class, 'addressable')->where('type', 'billing')->where('is_primary', true);
+        return $this->morphOne(Address::class, 'addressable')->where('type', 'billing');
     }
 
     /**
@@ -177,7 +181,7 @@ class Customer extends Model
      */
     public function shippingAddress()
     {
-        return $this->morphOne(Address::class, 'addressable')->where('type', 'shipping')->where('is_primary', true);
+        return $this->morphOne(Address::class, 'addressable')->where('type', 'shipping');
     }
 
     /**
@@ -471,6 +475,11 @@ class Customer extends Model
             $highestNumber = 0;
             
             foreach ($lastCustomers as $customer) {
+                // Überspringe Kunden ohne Kundennummer
+                if (empty($customer->customer_number)) {
+                    continue;
+                }
+                
                 try {
                     $number = $companySettings->extractCustomerNumber($customer->customer_number);
                     $highestNumber = max($highestNumber, $number);
