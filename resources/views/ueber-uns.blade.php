@@ -939,7 +939,7 @@
         <!-- Expertise Section -->
         <section class="expertise-section">
             <div class="container">
-                <h2 class="section-title scroll-animate" style="color: white;">Meine Expertise</h2>
+                <h2 class="section-title white-text scroll-animate">Meine Expertise</h2>
                 <p class="section-subtitle scroll-animate" style="color: rgba(255,255,255,0.8);">
                     Fundierte Kenntnisse und bewährte Methoden für Ihren Unternehmenserfolg
                 </p>
