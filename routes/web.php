@@ -11,6 +11,15 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Legal Pages
+Route::get('/datenschutz', function () {
+    return view('datenschutz');
+})->name('datenschutz');
+
+Route::get('/nutzungsbedingungen', function () {
+    return view('nutzungsbedingungen');
+})->name('nutzungsbedingungen');
+
 // Login Route (redirect to Filament)
 Route::get('/login', function () {
     return redirect('/admin/login');
