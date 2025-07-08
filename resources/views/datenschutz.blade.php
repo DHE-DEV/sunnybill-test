@@ -138,7 +138,7 @@
             <div class="contact-info">
                 <strong>dhe, daniel Henninger</strong><br>
                 E-Mail: info@voltmaster.de<br>
-                Telefon: +49 (0) 123 456789<br>
+                Telefon: +49 (0) 174 6346743<br>
                 Website: https://sunnybill-test.chargedata.eu
             </div>
 
@@ -331,7 +331,7 @@
             <div class="contact-info">
                 <strong>dhe, daniel Henninger</strong><br>
                 E-Mail: datenschutz@voltmaster.de<br>
-                Telefon: +49 (0) 123 456789
+                Telefon: +49 (0) 174 6346743
             </div>
 
             <p><strong>Stand:</strong> {{ date('d.m.Y') }}</p>
