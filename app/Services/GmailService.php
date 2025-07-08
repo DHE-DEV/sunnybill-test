@@ -266,15 +266,12 @@ class GmailService
             'maxResults' => $options['maxResults'] ?? $this->settings->getGmailMaxResults(),
         ];
 
-        // Standardmäßig nur Posteingang synchronisieren (nicht Papierkorb oder Spam)
-        if (!isset($options['labelIds']) && !isset($options['q'])) {
-            $params['labelIds'] = ['INBOX'];
-        } elseif (isset($options['labelIds'])) {
-            $params['labelIds'] = $options['labelIds'];
-        }
-
         if (isset($options['q'])) {
             $params['q'] = $options['q'];
+        }
+
+        if (isset($options['labelIds'])) {
+            $params['labelIds'] = $options['labelIds'];
         }
 
         if (isset($options['pageToken'])) {

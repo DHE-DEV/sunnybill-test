@@ -29,31 +29,16 @@ protected function getTableQuery(): Builder
 - Schließt E-Mails mit TRASH-Label explizit aus
 - Benutzer können weiterhin über die vorhandenen Filter andere Ordner auswählen
 
-### 2. GmailService - INBOX-Standard für Synchronisation
+### 2. GmailService - Vollständige Synchronisation beibehalten
 **Datei:** `app/Services/GmailService.php`
 
-```php
-public function getMessages(array $options = []): array
-{
-    $params = [
-        'maxResults' => $options['maxResults'] ?? $this->settings->getGmailMaxResults(),
-    ];
+**Wichtige Entscheidung:** Der GmailService synchronisiert weiterhin alle E-Mails (einschließlich Papierkorb), um sicherzustellen, dass Label-Änderungen korrekt erfasst werden.
 
-    // Standardmäßig nur Posteingang synchronisieren (nicht Papierkorb oder Spam)
-    if (!isset($options['labelIds']) && !isset($options['q'])) {
-        $params['labelIds'] = ['INBOX'];
-    } elseif (isset($options['labelIds'])) {
-        $params['labelIds'] = $options['labelIds'];
-    }
-    
-    // ... Rest der Methode
-}
-```
-
-**Änderungen:**
-- Neue Synchronisationen holen standardmäßig nur E-Mails aus dem INBOX
-- Verhindert, dass E-Mails aus Papierkorb oder Spam automatisch synchronisiert werden
-- Ermöglicht weiterhin explizite Synchronisation anderer Ordner durch Parameter
+**Warum diese Entscheidung:**
+- Wenn eine E-Mail in den Papierkorb verschoben wird, ändert sich ihr Label von `["UNREAD", "IMPORTANT", "CATEGORY_PERSONAL", "INBOX"]` zu `["UNREAD", "IMPORTANT", "CATEGORY_PERSONAL", "TRASH"]`
+- Ohne vollständige Synchronisation würden solche Label-Änderungen nicht erfasst
+- Die E-Mail würde in der Datenbank mit veralteten Labels gespeichert bleiben
+- Das Problem wird stattdessen durch die Anzeige-Filter in der UI gelöst
 
 ## Funktionsweise
 
@@ -63,10 +48,11 @@ public function getMessages(array $options = []): array
 3. ✗ E-Mails aus dem Papierkorb waren sichtbar
 
 ### Nach der Änderung:
-1. ✓ Nur INBOX-E-Mails werden standardmäßig synchronisiert
+1. ✓ Alle E-Mails werden weiterhin synchronisiert (um Label-Änderungen zu erfassen)
 2. ✓ Nur INBOX-E-Mails werden standardmäßig angezeigt
 3. ✓ E-Mails aus dem Papierkorb sind ausgeblendet
-4. ✓ Benutzer können über Filter andere Ordner auswählen:
+4. ✓ Label-Änderungen (z.B. Verschieben in Papierkorb) werden korrekt erfasst
+5. ✓ Benutzer können über Filter andere Ordner auswählen:
    - Posteingang (Standard)
    - Gesendet
    - Entwürfe
@@ -99,9 +85,10 @@ Tables\Filters\SelectFilter::make('gmail_folder')
 
 ## Auswirkungen
 1. **Benutzerfreundlichkeit:** E-Mails aus dem Papierkorb werden nicht mehr fälschlicherweise angezeigt
-2. **Performance:** Weniger E-Mails werden standardmäßig synchronisiert und angezeigt
-3. **Datenintegrität:** Bestehende E-Mails bleiben unverändert, nur die Anzeige wird gefiltert
+2. **Datenintegrität:** Label-Änderungen werden korrekt erfasst (z.B. wenn E-Mails in Papierkorb verschoben werden)
+3. **Performance:** Weniger E-Mails werden standardmäßig angezeigt (aber alle werden synchronisiert)
 4. **Flexibilität:** Benutzer können weiterhin alle Ordner über Filter erreichen
+5. **Korrekte Synchronisation:** E-Mail-Status bleibt immer aktuell
 
 ## Kompatibilität
 - ✓ Bestehende E-Mails werden nicht verändert
@@ -112,5 +99,6 @@ Tables\Filters\SelectFilter::make('gmail_folder')
 ## Deployment
 Die Änderungen sind sofort nach dem Deployment aktiv:
 1. Neue Seitenaufrufe zeigen nur INBOX-E-Mails
-2. Neue Synchronisationen holen nur INBOX-E-Mails
+2. Synchronisationen erfassen weiterhin alle E-Mails (für korrekte Label-Updates)
 3. Benutzer können bei Bedarf andere Ordner über Filter auswählen
+4. Label-Änderungen werden korrekt in der Datenbank aktualisiert
