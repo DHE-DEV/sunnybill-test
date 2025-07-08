@@ -410,21 +410,34 @@ class CustomerResource extends Resource
                     ])->columns(3),
 
                 \Filament\Infolists\Components\Section::make('Rechnungsadresse')
-                    ->description(fn ($record) => $record->hasSeparateBillingAddress()
-                        ? 'Separate Rechnungsadresse für ZUGFeRD-Rechnungen ist hinterlegt.'
-                        : 'Keine separate Rechnungsadresse. Standard-Adresse wird für Rechnungen verwendet.')
+                    ->description(function ($record) {
+                        if ($record->hasSeparateBillingAddress()) {
+                            return 'Separate Rechnungsadresse für ZUGFeRD-Rechnungen ist hinterlegt.';
+                        } elseif ($record->billingAddress) {
+                            return 'Rechnungsadresse wurde von Lexoffice importiert.';
+                        } else {
+                            return 'Keine separate Rechnungsadresse. Standard-Adresse wird für Rechnungen verwendet.';
+                        }
+                    })
                     ->schema([
                         \Filament\Infolists\Components\TextEntry::make('billing_address_display')
-                            ->label('Rechnungsadresse')
+                            ->hiddenLabel()
                             ->getStateUsing(function ($record) {
-                                if ($record->hasSeparateBillingAddress()) {
+                                if ($record->billingAddress) {
                                     $addr = $record->billingAddress;
-                                    $address = $addr->street;
+                                    $address = $addr->street_address . ',';
                                     if ($addr->address_line_2) $address .= "\n" . $addr->address_line_2;
                                     $address .= "\n" . $addr->postal_code . ' ' . $addr->city;
                                     if ($addr->state) $address .= ', ' . $addr->state;
                                     if ($addr->country !== 'Deutschland') $address .= "\n" . $addr->country;
-                                    return $address;
+                                    
+                                    // Prüfe ob es eine manuell erstellte separate Adresse ist oder von Lexoffice importiert
+                                    // Wenn der Kunde eine Lexoffice-ID hat und synchronisiert wurde, ist es wahrscheinlich importiert
+                                    if ($record->lexoffice_id && $record->lexoffice_synced_at) {
+                                        return $address . "\n\n(Importiert von Lexoffice)";
+                                    } else {
+                                        return $address;
+                                    }
                                 }
                                 return 'Keine separate Rechnungsadresse hinterlegt';
                             })
@@ -433,31 +446,231 @@ class CustomerResource extends Resource
                     ])
                     ->headerActions([
                         \Filament\Infolists\Components\Actions\Action::make('manage_billing_address')
-                            ->label(fn ($record) => $record->hasSeparateBillingAddress() ? 'Rechnungsadresse bearbeiten' : 'Rechnungsadresse hinzufügen')
-                            ->icon(fn ($record) => $record->hasSeparateBillingAddress() ? 'heroicon-o-pencil' : 'heroicon-o-plus')
-                            ->color(fn ($record) => $record->hasSeparateBillingAddress() ? 'warning' : 'success')
-                            ->url(fn ($record) => CustomerResource::getUrl('edit', ['record' => $record]) . '#adressen')
-                            ->openUrlInNewTab(false),
+                            ->label(function ($record) {
+                                if ($record->hasSeparateBillingAddress() || $record->billingAddress) {
+                                    return 'Rechnungsadresse bearbeiten';
+                                }
+                                return 'Rechnungsadresse hinzufügen';
+                            })
+                            ->icon(function ($record) {
+                                if ($record->hasSeparateBillingAddress() || $record->billingAddress) {
+                                    return 'heroicon-o-pencil';
+                                }
+                                return 'heroicon-o-plus';
+                            })
+                            ->color(function ($record) {
+                                if ($record->hasSeparateBillingAddress() || $record->billingAddress) {
+                                    return 'warning';
+                                }
+                                return 'success';
+                            })
+                            ->form([
+                                Forms\Components\TextInput::make('street_address')
+                                    ->label('Straße & Hausnummer')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('postal_code')
+                                    ->label('PLZ')
+                                    ->required()
+                                    ->maxLength(10),
+                                Forms\Components\TextInput::make('city')
+                                    ->label('Stadt')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('state')
+                                    ->label('Bundesland/Region')
+                                    ->maxLength(255),
+                                Forms\Components\Select::make('country')
+                                    ->label('Land')
+                                    ->options([
+                                        'Deutschland' => 'Deutschland',
+                                        'Österreich' => 'Österreich',
+                                        'Schweiz' => 'Schweiz',
+                                        'Frankreich' => 'Frankreich',
+                                        'Italien' => 'Italien',
+                                        'Niederlande' => 'Niederlande',
+                                        'Belgien' => 'Belgien',
+                                        'Luxemburg' => 'Luxemburg',
+                                        'Dänemark' => 'Dänemark',
+                                        'Schweden' => 'Schweden',
+                                        'Norwegen' => 'Norwegen',
+                                        'Finnland' => 'Finnland',
+                                        'Polen' => 'Polen',
+                                        'Tschechien' => 'Tschechien',
+                                        'Slowakei' => 'Slowakei',
+                                        'Ungarn' => 'Ungarn',
+                                        'Slowenien' => 'Slowenien',
+                                        'Kroatien' => 'Kroatien',
+                                        'Spanien' => 'Spanien',
+                                        'Portugal' => 'Portugal',
+                                        'Vereinigtes Königreich' => 'Vereinigtes Königreich',
+                                        'Irland' => 'Irland',
+                                        'Vereinigte Staaten' => 'Vereinigte Staaten',
+                                        'Kanada' => 'Kanada',
+                                        'Australien' => 'Australien',
+                                        'Neuseeland' => 'Neuseeland',
+                                        'Japan' => 'Japan',
+                                        'Südkorea' => 'Südkorea',
+                                        'China' => 'China',
+                                        'Indien' => 'Indien',
+                                        'Brasilien' => 'Brasilien',
+                                        'Mexiko' => 'Mexiko',
+                                        'Argentinien' => 'Argentinien',
+                                        'Chile' => 'Chile',
+                                        'Südafrika' => 'Südafrika',
+                                        'Ägypten' => 'Ägypten',
+                                        'Israel' => 'Israel',
+                                        'Türkei' => 'Türkei',
+                                        'Russland' => 'Russland',
+                                        'Ukraine' => 'Ukraine',
+                                        'Weißrussland' => 'Weißrussland',
+                                        'Serbien' => 'Serbien',
+                                        'Bosnien und Herzegowina' => 'Bosnien und Herzegowina',
+                                        'Montenegro' => 'Montenegro',
+                                        'Nordmazedonien' => 'Nordmazedonien',
+                                        'Albanien' => 'Albanien',
+                                        'Bulgarien' => 'Bulgarien',
+                                        'Rumänien' => 'Rumänien',
+                                        'Moldau' => 'Moldau',
+                                        'Litauen' => 'Litauen',
+                                        'Lettland' => 'Lettland',
+                                        'Estland' => 'Estland',
+                                        'Griechenland' => 'Griechenland',
+                                        'Zypern' => 'Zypern',
+                                        'Malta' => 'Malta',
+                                        'Island' => 'Island',
+                                    ])
+                                    ->default('Deutschland')
+                                    ->searchable()
+                                    ->required(),
+                            ])
+                            ->fillForm(function ($record) {
+                                $billingAddress = $record->billingAddress;
+                                if ($billingAddress) {
+                                    return [
+                                        'street_address' => $billingAddress->street_address,
+                                        'postal_code' => $billingAddress->postal_code,
+                                        'city' => $billingAddress->city,
+                                        'state' => $billingAddress->state,
+                                        'country' => $billingAddress->country,
+                                    ];
+                                }
+                                return [
+                                    'country' => 'Deutschland',
+                                ];
+                            })
+                            ->action(function ($record, array $data, $livewire) {
+                                $billingAddress = $record->billingAddress;
+                                
+                                if ($billingAddress) {
+                                    // Bestehende Adresse aktualisieren
+                                    $billingAddress->update([
+                                        'street_address' => $data['street_address'],
+                                        'postal_code' => $data['postal_code'],
+                                        'city' => $data['city'],
+                                        'state' => $data['state'],
+                                        'country' => $data['country'],
+                                    ]);
+                                } else {
+                                    // Neue Adresse erstellen
+                                    $record->addresses()->create([
+                                        'type' => 'billing',
+                                        'street_address' => $data['street_address'],
+                                        'postal_code' => $data['postal_code'],
+                                        'city' => $data['city'],
+                                        'state' => $data['state'],
+                                        'country' => $data['country'],
+                                        'is_primary' => false,
+                                    ]);
+                                }
+                                
+                                // Automatische Lexoffice-Synchronisation wenn Lexoffice-ID vorhanden
+                                $lexofficeMessage = '';
+                                if ($record->lexoffice_id) {
+                                    try {
+                                        $lexofficeService = new LexofficeService();
+                                        
+                                        // Verwende direkte Synchronisation mit gespeicherter Version wenn verfügbar
+                                        if ($record->lexware_version && $record->lexware_json) {
+                                            $syncResult = $lexofficeService->exportCustomerWithStoredVersion($record);
+                                        } else {
+                                            // Fallback auf normale Synchronisation
+                                            $syncResult = $lexofficeService->syncCustomer($record);
+                                        }
+                                        
+                                        if ($syncResult['success']) {
+                                            $action = $syncResult['action'] ?? 'synchronisiert';
+                                            $versionInfo = '';
+                                            
+                                            if (isset($syncResult['old_version']) && isset($syncResult['new_version'])) {
+                                                $versionInfo = " (Version {$syncResult['old_version']} → {$syncResult['new_version']})";
+                                            }
+                                            
+                                            $lexofficeMessage = ' und automatisch in Lexoffice ' . $action . $versionInfo;
+                                        } else {
+                                            $lexofficeMessage = ' (Lexoffice-Synchronisation fehlgeschlagen: ' . $syncResult['error'] . ')';
+                                        }
+                                    } catch (\Exception $e) {
+                                        $lexofficeMessage = ' (Lexoffice-Synchronisation fehlgeschlagen: ' . $e->getMessage() . ')';
+                                    }
+                                }
+                                
+                                // Refresh der Livewire-Komponente
+                                if (method_exists($livewire, '$refresh')) {
+                                    $livewire->$refresh();
+                                }
+                                
+                                Notification::make()
+                                    ->title('Rechnungsadresse gespeichert')
+                                    ->body('Die Rechnungsadresse wurde erfolgreich ' . ($billingAddress ? 'aktualisiert' : 'erstellt') . $lexofficeMessage . '.')
+                                    ->success()
+                                    ->send();
+                            })
+                            ->modalHeading(function ($record) {
+                                if ($record->hasSeparateBillingAddress() || $record->billingAddress) {
+                                    return 'Rechnungsadresse bearbeiten';
+                                }
+                                return 'Rechnungsadresse hinzufügen';
+                            })
+                            ->modalSubmitActionLabel('Speichern')
+                            ->modalWidth('lg'),
                     ])
                     ->collapsible()
-                    ->collapsed(fn ($record) => !$record->hasSeparateBillingAddress()),
+                    ->collapsed(function ($record) {
+                        // Nicht kollabieren wenn eine Rechnungsadresse vorhanden ist (separate oder importierte)
+                        return !($record->hasSeparateBillingAddress() || $record->billingAddress);
+                    }),
 
                 \Filament\Infolists\Components\Section::make('Lieferadresse')
-                    ->description(fn ($record) => $record->shippingAddress
-                        ? 'Separate Lieferadresse für Installationen ist hinterlegt.'
-                        : 'Keine separate Lieferadresse. Standard-Adresse wird für Lieferungen verwendet.')
+                    ->description(function ($record) {
+                        if ($record->shippingAddress) {
+                            if ($record->lexoffice_id && $record->lexoffice_synced_at) {
+                                return 'Lieferadresse wurde von Lexoffice importiert.';
+                            } else {
+                                return 'Separate Lieferadresse für Installationen ist hinterlegt.';
+                            }
+                        } else {
+                            return 'Keine separate Lieferadresse. Standard-Adresse wird für Lieferungen verwendet.';
+                        }
+                    })
                     ->schema([
                         \Filament\Infolists\Components\TextEntry::make('shipping_address_display')
-                            ->label('Lieferadresse')
+                            ->hiddenLabel()
                             ->getStateUsing(function ($record) {
                                 if ($record->shippingAddress) {
                                     $addr = $record->shippingAddress;
-                                    $address = $addr->street;
+                                    $address = $addr->street_address . ',';
                                     if ($addr->address_line_2) $address .= "\n" . $addr->address_line_2;
                                     $address .= "\n" . $addr->postal_code . ' ' . $addr->city;
                                     if ($addr->state) $address .= ', ' . $addr->state;
                                     if ($addr->country !== 'Deutschland') $address .= "\n" . $addr->country;
-                                    return $address;
+                                    
+                                    // Prüfe ob es eine von Lexoffice importierte Adresse ist
+                                    if ($record->lexoffice_id && $record->lexoffice_synced_at) {
+                                        return $address . "\n\n(Importiert von Lexoffice)";
+                                    } else {
+                                        return $address;
+                                    }
                                 }
                                 return 'Keine separate Lieferadresse hinterlegt';
                             })
@@ -469,8 +682,171 @@ class CustomerResource extends Resource
                             ->label(fn ($record) => $record->shippingAddress ? 'Lieferadresse bearbeiten' : 'Lieferadresse hinzufügen')
                             ->icon(fn ($record) => $record->shippingAddress ? 'heroicon-o-pencil' : 'heroicon-o-plus')
                             ->color(fn ($record) => $record->shippingAddress ? 'warning' : 'success')
-                            ->url(fn ($record) => CustomerResource::getUrl('edit', ['record' => $record]) . '#adressen')
-                            ->openUrlInNewTab(false),
+                            ->form([
+                                Forms\Components\TextInput::make('street_address')
+                                    ->label('Straße & Hausnummer')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('postal_code')
+                                    ->label('PLZ')
+                                    ->required()
+                                    ->maxLength(10),
+                                Forms\Components\TextInput::make('city')
+                                    ->label('Stadt')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('state')
+                                    ->label('Bundesland/Region')
+                                    ->maxLength(255),
+                                Forms\Components\Select::make('country')
+                                    ->label('Land')
+                                    ->options([
+                                        'Deutschland' => 'Deutschland',
+                                        'Österreich' => 'Österreich',
+                                        'Schweiz' => 'Schweiz',
+                                        'Frankreich' => 'Frankreich',
+                                        'Italien' => 'Italien',
+                                        'Niederlande' => 'Niederlande',
+                                        'Belgien' => 'Belgien',
+                                        'Luxemburg' => 'Luxemburg',
+                                        'Dänemark' => 'Dänemark',
+                                        'Schweden' => 'Schweden',
+                                        'Norwegen' => 'Norwegen',
+                                        'Finnland' => 'Finnland',
+                                        'Polen' => 'Polen',
+                                        'Tschechien' => 'Tschechien',
+                                        'Slowakei' => 'Slowakei',
+                                        'Ungarn' => 'Ungarn',
+                                        'Slowenien' => 'Slowenien',
+                                        'Kroatien' => 'Kroatien',
+                                        'Spanien' => 'Spanien',
+                                        'Portugal' => 'Portugal',
+                                        'Vereinigtes Königreich' => 'Vereinigtes Königreich',
+                                        'Irland' => 'Irland',
+                                        'Vereinigte Staaten' => 'Vereinigte Staaten',
+                                        'Kanada' => 'Kanada',
+                                        'Australien' => 'Australien',
+                                        'Neuseeland' => 'Neuseeland',
+                                        'Japan' => 'Japan',
+                                        'Südkorea' => 'Südkorea',
+                                        'China' => 'China',
+                                        'Indien' => 'Indien',
+                                        'Brasilien' => 'Brasilien',
+                                        'Mexiko' => 'Mexiko',
+                                        'Argentinien' => 'Argentinien',
+                                        'Chile' => 'Chile',
+                                        'Südafrika' => 'Südafrika',
+                                        'Ägypten' => 'Ägypten',
+                                        'Israel' => 'Israel',
+                                        'Türkei' => 'Türkei',
+                                        'Russland' => 'Russland',
+                                        'Ukraine' => 'Ukraine',
+                                        'Weißrussland' => 'Weißrussland',
+                                        'Serbien' => 'Serbien',
+                                        'Bosnien und Herzegowina' => 'Bosnien und Herzegowina',
+                                        'Montenegro' => 'Montenegro',
+                                        'Nordmazedonien' => 'Nordmazedonien',
+                                        'Albanien' => 'Albanien',
+                                        'Bulgarien' => 'Bulgarien',
+                                        'Rumänien' => 'Rumänien',
+                                        'Moldau' => 'Moldau',
+                                        'Litauen' => 'Litauen',
+                                        'Lettland' => 'Lettland',
+                                        'Estland' => 'Estland',
+                                        'Griechenland' => 'Griechenland',
+                                        'Zypern' => 'Zypern',
+                                        'Malta' => 'Malta',
+                                        'Island' => 'Island',
+                                    ])
+                                    ->default('Deutschland')
+                                    ->searchable()
+                                    ->required(),
+                            ])
+                            ->fillForm(function ($record) {
+                                $shippingAddress = $record->shippingAddress;
+                                if ($shippingAddress) {
+                                    return [
+                                        'street_address' => $shippingAddress->street_address,
+                                        'postal_code' => $shippingAddress->postal_code,
+                                        'city' => $shippingAddress->city,
+                                        'state' => $shippingAddress->state,
+                                        'country' => $shippingAddress->country,
+                                    ];
+                                }
+                                return [
+                                    'country' => 'Deutschland',
+                                ];
+                            })
+                            ->action(function ($record, array $data, $livewire) {
+                                $shippingAddress = $record->shippingAddress;
+                                
+                                if ($shippingAddress) {
+                                    // Bestehende Adresse aktualisieren
+                                    $shippingAddress->update([
+                                        'street_address' => $data['street_address'],
+                                        'postal_code' => $data['postal_code'],
+                                        'city' => $data['city'],
+                                        'state' => $data['state'],
+                                        'country' => $data['country'],
+                                    ]);
+                                } else {
+                                    // Neue Adresse erstellen
+                                    $record->addresses()->create([
+                                        'type' => 'shipping',
+                                        'street_address' => $data['street_address'],
+                                        'postal_code' => $data['postal_code'],
+                                        'city' => $data['city'],
+                                        'state' => $data['state'],
+                                        'country' => $data['country'],
+                                        'is_primary' => false,
+                                    ]);
+                                }
+                                
+                                // Automatische Lexoffice-Synchronisation wenn Lexoffice-ID vorhanden
+                                $lexofficeMessage = '';
+                                if ($record->lexoffice_id) {
+                                    try {
+                                        $lexofficeService = new LexofficeService();
+                                        
+                                        // Verwende direkte Synchronisation mit gespeicherter Version wenn verfügbar
+                                        if ($record->lexware_version && $record->lexware_json) {
+                                            $syncResult = $lexofficeService->exportCustomerWithStoredVersion($record);
+                                        } else {
+                                            // Fallback auf normale Synchronisation
+                                            $syncResult = $lexofficeService->syncCustomer($record);
+                                        }
+                                        
+                                        if ($syncResult['success']) {
+                                            $action = $syncResult['action'] ?? 'synchronisiert';
+                                            $versionInfo = '';
+                                            
+                                            if (isset($syncResult['old_version']) && isset($syncResult['new_version'])) {
+                                                $versionInfo = " (Version {$syncResult['old_version']} → {$syncResult['new_version']})";
+                                            }
+                                            
+                                            $lexofficeMessage = ' und automatisch in Lexoffice ' . $action . $versionInfo;
+                                        } else {
+                                            $lexofficeMessage = ' (Lexoffice-Synchronisation fehlgeschlagen: ' . $syncResult['error'] . ')';
+                                        }
+                                    } catch (\Exception $e) {
+                                        $lexofficeMessage = ' (Lexoffice-Synchronisation fehlgeschlagen: ' . $e->getMessage() . ')';
+                                    }
+                                }
+                                
+                                // Refresh der Livewire-Komponente
+                                if (method_exists($livewire, '$refresh')) {
+                                    $livewire->$refresh();
+                                }
+                                
+                                Notification::make()
+                                    ->title('Lieferadresse gespeichert')
+                                    ->body('Die Lieferadresse wurde erfolgreich ' . ($shippingAddress ? 'aktualisiert' : 'erstellt') . $lexofficeMessage . '.')
+                                    ->success()
+                                    ->send();
+                            })
+                            ->modalHeading(fn ($record) => $record->shippingAddress ? 'Lieferadresse bearbeiten' : 'Lieferadresse hinzufügen')
+                            ->modalSubmitActionLabel('Speichern')
+                            ->modalWidth('lg'),
                     ])
                     ->collapsible()
                     ->collapsed(fn ($record) => !$record->shippingAddress),
@@ -510,12 +886,95 @@ class CustomerResource extends Resource
                 \Filament\Infolists\Components\Section::make('Lexoffice-Synchronisation')
                     ->schema([
                         \Filament\Infolists\Components\TextEntry::make('lexoffice_id')
-                            ->label('Lexoffice-ID'),
+                            ->label('Lexoffice-ID')
+                            ->copyable(),
                         \Filament\Infolists\Components\TextEntry::make('lexoffice_synced_at')
                             ->label('Zuletzt synchronisiert')
-                            ->dateTime('d.m.Y H:i'),
+                            ->dateTime('d.m.Y H:i')
+                            ->placeholder('Noch nie synchronisiert'),
+                        \Filament\Infolists\Components\TextEntry::make('lexware_version')
+                            ->label('Lexware-Version')
+                            ->badge()
+                            ->color('info')
+                            ->placeholder('Keine Version gespeichert'),
+                        \Filament\Infolists\Components\TextEntry::make('lexware_data_status')
+                            ->label('Lexware-Daten')
+                            ->getStateUsing(function ($record) {
+                                if ($record->lexware_json) {
+                                    $dataSize = strlen(json_encode($record->lexware_json));
+                                    return 'Gespeichert (' . round($dataSize / 1024, 1) . ' KB)';
+                                }
+                                return 'Keine Daten gespeichert';
+                            })
+                            ->badge()
+                            ->color(fn ($record) => $record->lexware_json ? 'success' : 'gray'),
+                        \Filament\Infolists\Components\TextEntry::make('sync_status')
+                            ->label('Status')
+                            ->getStateUsing(function ($record) {
+                                if ($record->lexoffice_id) {
+                                    return 'Synchronisiert';
+                                }
+                                return 'Nicht synchronisiert';
+                            })
+                            ->badge()
+                            ->color(fn ($record) => $record->lexoffice_id ? 'success' : 'warning')
+                            ->columnSpanFull(),
                     ])->columns(2)
-                    ->visible(fn ($record) => $record->lexoffice_id),
+                    ->headerActions([
+                        \Filament\Infolists\Components\Actions\Action::make('sync_with_lexoffice')
+                            ->label('Synchronisieren')
+                            ->icon('heroicon-o-arrow-path')
+                            ->color('success')
+                            ->action(function ($record, $livewire) {
+                                $service = new LexofficeService();
+                                $result = $service->syncCustomer($record);
+                                
+                                if ($result['success']) {
+                                    // Aktualisiere das Record um die neuen Daten anzuzeigen
+                                    $record->refresh();
+                                    
+                                    // Refresh der gesamten Livewire-Komponente
+                                    if (method_exists($livewire, '$refresh')) {
+                                        $livewire->$refresh();
+                                    }
+                                    
+                                    $message = $result['message'] ?? 'Synchronisation erfolgreich';
+                                    
+                                    Notification::make()
+                                        ->title('Synchronisation erfolgreich')
+                                        ->body($message)
+                                        ->success()
+                                        ->send();
+                                } elseif (isset($result['conflict']) && $result['conflict']) {
+                                    // Synchronisationskonflikt
+                                    Notification::make()
+                                        ->title('Synchronisationskonflikt erkannt')
+                                        ->body("Sowohl lokale als auch Lexoffice-Daten wurden geändert.\n" .
+                                               "Lokal: {$result['local_updated']}\n" .
+                                               "Lexoffice: {$result['lexoffice_updated']}\n" .
+                                               "Letzte Sync: {$result['last_synced']}")
+                                        ->warning()
+                                        ->persistent()
+                                        ->send();
+                                } else {
+                                    Notification::make()
+                                        ->title('Synchronisation fehlgeschlagen')
+                                        ->body($result['error'])
+                                        ->danger()
+                                        ->send();
+                                }
+                            })
+                            ->requiresConfirmation()
+                            ->modalHeading('Kunde mit Lexoffice synchronisieren')
+                            ->modalDescription(function ($record) {
+                                if ($record->lexoffice_id) {
+                                    return 'Möchten Sie die Kundendaten in Lexoffice aktualisieren?';
+                                }
+                                return 'Möchten Sie diesen Kunden in Lexoffice erstellen?';
+                            })
+                            ->modalSubmitActionLabel('Synchronisieren')
+                            ->visible(fn () => config('services.lexoffice.api_key')), // Nur anzeigen wenn API Key konfiguriert ist
+                    ]),
 
                 \Filament\Infolists\Components\Section::make('Status & Sonstiges')
                     ->collapsible()

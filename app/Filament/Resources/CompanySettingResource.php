@@ -493,6 +493,157 @@ class CompanySettingResource extends Resource
                                    ])
                                    ->collapsible(),
                            ]),
+
+                        Forms\Components\Tabs\Tab::make('Lexware-Synchronisation')
+                            ->schema([
+                                Forms\Components\Section::make('API-Konfiguration')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('lexware_sync_enabled')
+                                            ->label('Lexware-Synchronisation aktiviert')
+                                            ->helperText('Aktiviert oder deaktiviert die automatische Synchronisation mit Lexware/Lexoffice')
+                                            ->default(false)
+                                            ->reactive(),
+                                        
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('lexware_api_url')
+                                                    ->label('API-URL')
+                                                    ->url()
+                                                    ->default('https://api.lexoffice.io/v1')
+                                                    ->placeholder('https://api.lexoffice.io/v1')
+                                                    ->maxLength(255)
+                                                    ->helperText('Standard: https://api.lexoffice.io/v1')
+                                                    ->visible(fn ($get) => $get('lexware_sync_enabled')),
+                                                
+                                                Forms\Components\TextInput::make('lexware_organization_id')
+                                                    ->label('Organisation-ID')
+                                                    ->placeholder('z.B. 801ccedc-d81c-43a5-b0d4-031ec6909bcb')
+                                                    ->maxLength(255)
+                                                    ->helperText('Die Organisation-ID aus Ihrem Lexware-Account')
+                                                    ->required(fn ($get) => $get('lexware_sync_enabled'))
+                                                    ->visible(fn ($get) => $get('lexware_sync_enabled')),
+                                            ]),
+                                        
+                                        Forms\Components\TextInput::make('lexware_api_key')
+                                            ->label('API-Schlüssel')
+                                            ->password()
+                                            ->revealable()
+                                            ->placeholder('Ihr Lexware API-Schlüssel')
+                                            ->maxLength(255)
+                                            ->helperText('Der API-Schlüssel für den Zugriff auf die Lexware-API')
+                                            ->required(fn ($get) => $get('lexware_sync_enabled'))
+                                            ->visible(fn ($get) => $get('lexware_sync_enabled')),
+                                    ])
+                                    ->description('Grundlegende API-Einstellungen für die Verbindung zu Lexware/Lexoffice'),
+                                
+                                Forms\Components\Section::make('Synchronisations-Optionen')
+                                    ->schema([
+                                        Forms\Components\Grid::make(3)
+                                            ->schema([
+                                                Forms\Components\Toggle::make('lexware_auto_sync_customers')
+                                                    ->label('Automatische Kunden-Synchronisation')
+                                                    ->helperText('Synchronisiert Kunden automatisch bei Änderungen')
+                                                    ->default(true),
+                                                
+                                                Forms\Components\Toggle::make('lexware_auto_sync_addresses')
+                                                    ->label('Automatische Adress-Synchronisation')
+                                                    ->helperText('Synchronisiert Adressen automatisch bei Änderungen')
+                                                    ->default(true),
+                                                
+                                                Forms\Components\Toggle::make('lexware_import_customer_numbers')
+                                                    ->label('Kundennummern importieren')
+                                                    ->helperText('Importiert Kundennummern aus Lexware')
+                                                    ->default(true),
+                                            ]),
+                                    ])
+                                    ->visible(fn ($get) => $get('lexware_sync_enabled'))
+                                    ->description('Konfigurieren Sie, welche Daten automatisch synchronisiert werden sollen'),
+                                
+                                Forms\Components\Section::make('Debug & Logging')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('lexware_debug_logging')
+                                            ->label('Debug-Logging aktiviert')
+                                            ->helperText('Aktiviert detailliertes Logging für Debugging-Zwecke')
+                                            ->default(false),
+                                    ])
+                                    ->visible(fn ($get) => $get('lexware_sync_enabled'))
+                                    ->description('Erweiterte Einstellungen für Debugging und Fehlerbehebung'),
+                                
+                                Forms\Components\Section::make('Status & Informationen')
+                                    ->schema([
+                                        Forms\Components\Placeholder::make('lexware_status')
+                                            ->label('')
+                                            ->content(function ($record) {
+                                                if (!$record) {
+                                                    return new \Illuminate\Support\HtmlString('<p class="text-gray-500">Speichern Sie die Einstellungen, um den Status zu sehen.</p>');
+                                                }
+                                                
+                                                $status = $record->getLexwareConfigStatus();
+                                                
+                                                $statusColor = $status['is_valid'] ? 'green' : 'red';
+                                                $statusText = $status['is_valid'] ? 'Konfiguration vollständig' : 'Konfiguration unvollständig';
+                                                $statusIcon = $status['is_valid'] ? '✅' : '❌';
+                                                
+                                                $lastSync = $status['last_sync'] ? $status['last_sync'] : 'Noch nie';
+                                                $lastError = $status['last_error'] ? $status['last_error'] : 'Keine Fehler';
+                                                
+                                                return new \Illuminate\Support\HtmlString("
+                                                    <div class='space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border'>
+                                                        <div class='flex justify-between items-center'>
+                                                            <span class='font-medium text-gray-700 dark:text-gray-300'>Konfigurationsstatus:</span>
+                                                            <span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{$statusColor}-100 text-{$statusColor}-800 dark:bg-{$statusColor}-800 dark:text-{$statusColor}-100'>
+                                                                {$statusIcon} {$statusText}
+                                                            </span>
+                                                        </div>
+                                                        <div class='flex justify-between items-center'>
+                                                            <span class='font-medium text-gray-700 dark:text-gray-300'>API-Schlüssel:</span>
+                                                            <span class='text-sm'>" . ($status['api_key_set'] ? '✅ Gesetzt' : '❌ Nicht gesetzt') . "</span>
+                                                        </div>
+                                                        <div class='flex justify-between items-center'>
+                                                            <span class='font-medium text-gray-700 dark:text-gray-300'>Organisation-ID:</span>
+                                                            <span class='text-sm'>" . ($status['organization_id_set'] ? '✅ Gesetzt' : '❌ Nicht gesetzt') . "</span>
+                                                        </div>
+                                                        <div class='flex justify-between items-center'>
+                                                            <span class='font-medium text-gray-700 dark:text-gray-300'>Letzte Synchronisation:</span>
+                                                            <span class='text-sm text-gray-600 dark:text-gray-400'>{$lastSync}</span>
+                                                        </div>
+                                                        <div class='flex justify-between items-start'>
+                                                            <span class='font-medium text-gray-700 dark:text-gray-300'>Letzter Fehler:</span>
+                                                            <span class='text-sm text-gray-600 dark:text-gray-400 text-right max-w-xs break-words'>{$lastError}</span>
+                                                        </div>
+                                                    </div>
+                                                ");
+                                            }),
+                                    ])
+                                    ->visible(fn ($get) => $get('lexware_sync_enabled'))
+                                    ->collapsible(),
+                                
+                                Forms\Components\Section::make('Hilfe & Dokumentation')
+                                    ->schema([
+                                        Forms\Components\Placeholder::make('lexware_help')
+                                            ->label('')
+                                            ->content(new \Illuminate\Support\HtmlString("
+                                                <div class='space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
+                                                    <h4 class='font-semibold text-blue-800 dark:text-blue-200'>So richten Sie die Lexware-Synchronisation ein:</h4>
+                                                    <ol class='list-decimal list-inside space-y-2 text-sm text-blue-700 dark:text-blue-300'>
+                                                        <li>Loggen Sie sich in Ihr Lexoffice-Konto ein</li>
+                                                        <li>Gehen Sie zu den API-Einstellungen</li>
+                                                        <li>Erstellen Sie einen neuen API-Schlüssel</li>
+                                                        <li>Kopieren Sie die Organisation-ID aus Ihrem Account</li>
+                                                        <li>Tragen Sie beide Werte in die Felder oben ein</li>
+                                                        <li>Aktivieren Sie die Synchronisation</li>
+                                                    </ol>
+                                                    <div class='mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800'>
+                                                        <p class='text-sm text-yellow-800 dark:text-yellow-200'>
+                                                            <strong>Wichtig:</strong> Der API-Schlüssel wird verschlüsselt gespeichert und ist nur für autorisierte Benutzer sichtbar.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ")),
+                                    ])
+                                    ->collapsible()
+                                    ->collapsed(),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ])
