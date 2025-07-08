@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use App\Notifications\CustomVerifyEmail;
+use App\Models\Team;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
@@ -341,5 +342,41 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function companySetting()
     {
         return $this->belongsTo(CompanySetting::class);
+    }
+
+    /**
+     * Many-to-Many Beziehung zu Teams
+     */
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'team_user')
+                    ->withTimestamps()
+                    ->withPivot('role', 'joined_at')
+                    ->orderBy('name');
+    }
+
+    /**
+     * Prüft ob User Mitglied eines bestimmten Teams ist
+     */
+    public function isMemberOf(Team $team): bool
+    {
+        return $this->teams()->where('team_id', $team->id)->exists();
+    }
+
+    /**
+     * Holt die Rolle des Users in einem bestimmten Team
+     */
+    public function getRoleInTeam(Team $team): ?string
+    {
+        $pivot = $this->teams()->where('team_id', $team->id)->first()?->pivot;
+        return $pivot?->role;
+    }
+
+    /**
+     * Anzahl der Teams, in denen der User Mitglied ist
+     */
+    public function getTeamsCountAttribute(): int
+    {
+        return $this->teams()->count();
     }
 }

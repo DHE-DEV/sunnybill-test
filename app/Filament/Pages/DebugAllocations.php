@@ -15,7 +15,7 @@ class DebugAllocations extends Page
     
     protected static ?string $title = 'Debug Kostenträger-Aufteilungen';
     
-    protected static ?string $navigationGroup = 'Debug';
+    protected static ?string $navigationGroup = 'System';
     
     protected static ?int $navigationSort = 999;
     

@@ -14,6 +14,9 @@ class Notification extends Model
 
     protected $fillable = [
         'user_id',
+        'created_by',
+        'team_id',
+        'recipient_type',
         'type',
         'title',
         'message',
@@ -64,11 +67,87 @@ class Notification extends Model
     const PRIORITY_URGENT = 'urgent';
 
     /**
-     * Beziehung zum User
+     * Beziehung zum User (Empfänger)
      */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Beziehung zum Ersteller
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Beziehung zum Team (falls Team-Benachrichtigung)
+     */
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * Gibt den Empfänger-Namen zurück
+     */
+    public function getRecipientNameAttribute(): string
+    {
+        if ($this->recipient_type === 'team' && $this->team) {
+            return $this->team->name;
+        }
+        
+        if ($this->user && $this->user->id === auth()->id()) {
+            return 'Ich';
+        }
+        
+        return $this->user ? $this->user->name : 'Unbekannt';
+    }
+
+    /**
+     * Gibt den Empfänger-Namen zurück (Methoden-Version für Filament)
+     */
+    public function getRecipientName(): string
+    {
+        return $this->getRecipientNameAttribute();
+    }
+
+    /**
+     * Gibt die Empfänger-Farbe zurück (für Team-Badges)
+     */
+    public function getRecipientColorAttribute(): string
+    {
+        if ($this->recipient_type === 'team' && $this->team) {
+            return $this->team->color;
+        }
+        
+        return 'gray';
+    }
+
+    /**
+     * Gibt die Empfänger-Farbe zurück (Methoden-Version für Filament)
+     */
+    public function getRecipientColor(): string
+    {
+        return $this->getRecipientColorAttribute();
+    }
+
+    /**
+     * Prüft ob es eine Team-Benachrichtigung ist
+     */
+    public function isTeamNotification(): bool
+    {
+        return $this->recipient_type === 'team';
+    }
+
+    /**
+     * Prüft ob der aktuelle User der Empfänger ist
+     */
+    public function isRecipientCurrentUser(): bool
+    {
+        return $this->user_id === auth()->id();
     }
 
     /**
