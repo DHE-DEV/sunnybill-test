@@ -575,12 +575,22 @@ class GmailEmailResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $unreadCount = static::getModel()::unread()->where('is_trash', false)->count();
-        $readCount = static::getModel()::read()->where('is_trash', false)->count();
+        $unreadCount = static::getModel()::unread()
+            ->whereJsonContains('labels', 'INBOX')
+            ->whereJsonDoesntContain('labels', 'TRASH')
+            ->count();
+            
+        $readCount = static::getModel()::read()
+            ->whereJsonContains('labels', 'INBOX')
+            ->whereJsonDoesntContain('labels', 'TRASH')
+            ->count();
         
-        // Kombiniere beide Counts in einem Badge
+        // Erstelle zwei separate Badges nebeneinander
         if ($unreadCount > 0 || $readCount > 0) {
-            return $unreadCount . '/' . $readCount;
+            return '<span style="display: inline-flex; gap: 4px;">' .
+                   '<span style="background: #3b82f6; color: white; padding: 2px 6px; border-radius: 9999px; font-size: 11px; font-weight: 600;">' . $readCount . '</span>' .
+                   '<span style="background: #f97316; color: white; padding: 2px 6px; border-radius: 9999px; font-size: 11px; font-weight: 600;">' . $unreadCount . '</span>' .
+                   '</span>';
         }
         
         return null;
@@ -588,23 +598,23 @@ class GmailEmailResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        $unreadCount = static::getModel()::unread()->where('is_trash', false)->count();
-        
-        if ($unreadCount > 10) {
-            return 'danger';
-        } elseif ($unreadCount > 0) {
-            return 'warning';
-        }
-        
-        return 'primary'; // Blau für gelesene E-Mails
+        // Keine Farbe setzen, da wir eigene Styles verwenden
+        return null;
     }
 
     public static function getNavigationBadgeTooltip(): ?string
     {
-        $unreadCount = static::getModel()::unread()->where('is_trash', false)->count();
-        $readCount = static::getModel()::read()->where('is_trash', false)->count();
+        $unreadCount = static::getModel()::unread()
+            ->whereJsonContains('labels', 'INBOX')
+            ->whereJsonDoesntContain('labels', 'TRASH')
+            ->count();
+            
+        $readCount = static::getModel()::read()
+            ->whereJsonContains('labels', 'INBOX')
+            ->whereJsonDoesntContain('labels', 'TRASH')
+            ->count();
         
-        return "Ungelesen: {$unreadCount} | Gelesen: {$readCount}";
+        return "Gelesen (blau): {$readCount} | Ungelesen (orange): {$unreadCount}";
     }
 
     public static function canCreate(): bool

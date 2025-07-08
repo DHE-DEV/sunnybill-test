@@ -6,9 +6,11 @@ Die Gmail E-Mail Navigation Badge wurde erfolgreich erweitert, um sowohl ungeles
 ## Implementierte Funktionen
 
 ### 1. Badge-Format
-- **Format**: `ungelesen/gelesen` (z.B. "5/23")
+- **Format**: `gelesen/ungelesen` (z.B. "23/5")
 - **Anzeige**: Kombiniert beide Counts in einem Badge
 - **Verhalten**: Badge wird nur angezeigt, wenn E-Mails vorhanden sind
+- **Links**: Anzahl gelesener E-Mails
+- **Rechts**: Anzahl ungelesener E-Mails
 
 ### 2. Farblogik
 Die Badge-Farbe ändert sich basierend auf der Anzahl ungelesener E-Mails:
