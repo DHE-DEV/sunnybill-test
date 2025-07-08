@@ -985,6 +985,30 @@ class CompanySetting extends Model
     }
 
     /**
+     * Setzt die Gmail OAuth2-Tokens (Alias für saveGmailTokens für Kompatibilität)
+     */
+    public function setGmailTokens(string $accessToken, ?string $refreshToken = null, ?\Carbon\Carbon $expiresAt = null): void
+    {
+        try {
+            $updateData = [
+                'gmail_access_token' => $accessToken,
+            ];
+
+            if ($refreshToken) {
+                $updateData['gmail_refresh_token'] = $refreshToken;
+            }
+
+            if ($expiresAt) {
+                $updateData['gmail_token_expires_at'] = $expiresAt;
+            }
+
+            $this->update($updateData);
+        } catch (\Exception $e) {
+            // Spalten existieren noch nicht - ignorieren
+        }
+    }
+
+    /**
      * Löscht alle Gmail-Tokens (für Logout)
      */
     public function clearGmailTokens(): void
