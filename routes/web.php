@@ -20,6 +20,10 @@ Route::get('/nutzungsbedingungen', function () {
     return view('nutzungsbedingungen');
 })->name('nutzungsbedingungen');
 
+Route::get('/impressum', function () {
+    return view('impressum');
+})->name('impressum');
+
 // Login Route (redirect to Filament)
 Route::get('/login', function () {
     return redirect('/admin/login');

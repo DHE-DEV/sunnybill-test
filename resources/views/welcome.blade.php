@@ -1577,7 +1577,7 @@
                 </div>
                 <div class="footer-bottom">
                     <p>&copy; {{ date('Y') }} VoltMaster. Alle Rechte vorbehalten. | 
-                    <a href="{{ route('datenschutz') }}">Datenschutz</a> | <a href="#">Impressum</a> | <a href="{{ route('nutzungsbedingungen') }}">Nutzungsbedingungen</a></p>
+                    <a href="{{ route('datenschutz') }}">Datenschutz</a> | <a href="{{ route('impressum') }}">Impressum</a> | <a href="{{ route('nutzungsbedingungen') }}">Nutzungsbedingungen</a></p>
                 </div>
             </div>
         </footer>
