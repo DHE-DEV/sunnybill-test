@@ -293,4 +293,44 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         // Zusätzlich: Bestimmte E-Mail-Domains haben Zugriff
         return str_ends_with($this->email, '@chargedata.eu');
     }
+
+    /**
+     * Beziehung zu Benachrichtigungen
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Ungelesene Benachrichtigungen
+     */
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->unread()->notExpired();
+    }
+
+    /**
+     * Zählt ungelesene Benachrichtigungen
+     */
+    public function getUnreadNotificationsCountAttribute(): int
+    {
+        return Notification::countUnreadForUser($this->id);
+    }
+
+    /**
+     * Holt die neuesten Benachrichtigungen
+     */
+    public function getRecentNotifications(int $limit = 10)
+    {
+        return Notification::getRecentForUser($this->id, $limit);
+    }
+
+    /**
+     * Markiert alle Benachrichtigungen als gelesen
+     */
+    public function markAllNotificationsAsRead(): int
+    {
+        return Notification::markAllAsReadForUser($this->id);
+    }
 }

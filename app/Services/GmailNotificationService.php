@@ -5,8 +5,9 @@ namespace App\Services;
 use App\Models\CompanySetting;
 use App\Models\User;
 use App\Models\GmailEmail;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Notification as LaravelNotification;
 use App\Events\NewGmailReceived;
 use App\Jobs\SendGmailNotification;
 
@@ -276,6 +277,29 @@ class GmailNotificationService
     private function sendInAppNotification(array $user, array $data): void
     {
         try {
+            // Erstelle In-App-Benachrichtigung in der Datenbank
+            Notification::create([
+                'user_id' => $user['id'],
+                'type' => 'gmail_email',
+                'title' => $data['title'],
+                'message' => $data['message'],
+                'icon' => 'heroicon-o-envelope',
+                'color' => 'primary',
+                'priority' => $data['is_important'] ? 'high' : 'normal',
+                'action_url' => $data['url'],
+                'action_text' => 'E-Mail anzeigen',
+                'data' => [
+                    'sender' => $data['sender'],
+                    'subject' => $data['subject'],
+                    'snippet' => $data['snippet'],
+                    'email_id' => $data['email_id'],
+                    'gmail_id' => $data['gmail_id'],
+                    'has_attachments' => $data['has_attachments'],
+                    'received_at' => $data['received_at'],
+                ],
+                'expires_at' => now()->addDays(30), // Benachrichtigung läuft nach 30 Tagen ab
+            ]);
+
             // Verwende Laravel Broadcasting für Real-time Updates
             broadcast(new \App\Events\GmailNotificationReceived($user['id'], $data));
 
