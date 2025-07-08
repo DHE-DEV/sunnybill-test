@@ -161,7 +161,21 @@ class GmailEmailResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->where('is_trash', false))
+            ->modifyQueryUsing(function (Builder $query) {
+                // Standardmäßig nur Posteingang anzeigen, außer ein anderer Filter ist aktiv
+                $request = request();
+                $hasLabelFilter = $request->has('tableFilters') && 
+                                 isset($request->get('tableFilters')['gmail_folder']) &&
+                                 !empty($request->get('tableFilters')['gmail_folder']['value']);
+                
+                if (!$hasLabelFilter) {
+                    // Standard: Nur Posteingang (INBOX) anzeigen und Papierkorb ausschließen
+                    $query->whereJsonContains('labels', 'INBOX')
+                          ->whereJsonDoesntContain('labels', 'TRASH');
+                }
+                
+                return $query;
+            })
             ->columns([
                 Tables\Columns\IconColumn::make('is_read')
                     ->label('')
@@ -260,14 +274,52 @@ class GmailEmailResource extends Resource
                             );
                     }),
                 
-                Tables\Filters\SelectFilter::make('labels')
-                    ->label('Label')
+                Tables\Filters\SelectFilter::make('gmail_folder')
+                    ->label('E-Mail-Ordner')
                     ->options([
                         'INBOX' => 'Posteingang',
                         'SENT' => 'Gesendet',
                         'DRAFT' => 'Entwürfe',
-                        'SPAM' => 'Spam',
+                        'ALL_MAIL' => 'Alle E-Mails',
                         'TRASH' => 'Papierkorb',
+                        'SPAM' => 'Spam',
+                    ])
+                    ->default('INBOX')
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+                        
+                        switch ($data['value']) {
+                            case 'INBOX':
+                                return $query->whereJsonContains('labels', 'INBOX')
+                                           ->whereJsonDoesntContain('labels', 'TRASH');
+                            
+                            case 'SENT':
+                                return $query->whereJsonContains('labels', 'SENT')
+                                           ->whereJsonDoesntContain('labels', 'TRASH');
+                            
+                            case 'DRAFT':
+                                return $query->whereJsonContains('labels', 'DRAFT')
+                                           ->whereJsonDoesntContain('labels', 'TRASH');
+                            
+                            case 'ALL_MAIL':
+                                return $query->whereJsonDoesntContain('labels', 'TRASH');
+                            
+                            case 'TRASH':
+                                return $query->whereJsonContains('labels', 'TRASH');
+                            
+                            case 'SPAM':
+                                return $query->whereJsonContains('labels', 'SPAM');
+                            
+                            default:
+                                return $query;
+                        }
+                    }),
+                
+                Tables\Filters\SelectFilter::make('labels')
+                    ->label('Zusätzliche Labels')
+                    ->options([
                         'IMPORTANT' => 'Wichtig',
                         'STARRED' => 'Favoriten',
                         'UNREAD' => 'Ungelesen',
