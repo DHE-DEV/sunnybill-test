@@ -308,8 +308,7 @@ class GmailEmailResource extends Resource
                                     ->danger()
                                     ->send();
                             }
-                        })
-                        ->after(fn () => redirect()->refresh()),
+                        }),
                     
                     Tables\Actions\Action::make('mark_unread')
                         ->label('Als ungelesen markieren')
@@ -335,8 +334,7 @@ class GmailEmailResource extends Resource
                                     ->danger()
                                     ->send();
                             }
-                        })
-                        ->after(fn () => redirect()->refresh()),
+                        }),
                     
                     Tables\Actions\Action::make('star')
                         ->label('Favorit hinzufügen')
@@ -470,8 +468,7 @@ class GmailEmailResource extends Resource
                             ->body($errors > 0 ? "$errors Fehler aufgetreten" : '')
                             ->success()
                             ->send();
-                    })
-                    ->after(fn () => redirect()->refresh()),
+                    }),
                 
                 Tables\Actions\BulkAction::make('mark_as_unread')
                     ->label('Als ungelesen markieren')
@@ -498,8 +495,7 @@ class GmailEmailResource extends Resource
                             ->body($errors > 0 ? "$errors Fehler aufgetreten" : '')
                             ->success()
                             ->send();
-                    })
-                    ->after(fn () => redirect()->refresh()),
+                    }),
                 
                 Tables\Actions\BulkAction::make('move_to_trash')
                     ->label('In Papierkorb verschieben')

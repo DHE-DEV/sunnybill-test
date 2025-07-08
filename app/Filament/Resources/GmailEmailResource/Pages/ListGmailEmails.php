@@ -33,8 +33,6 @@ class ListGmailEmails extends ListRecords
                             ->success()
                             ->send();
                         
-                        // Seite neu laden um Badge zu aktualisieren
-                        return redirect()->refresh();
                     } catch (\Exception $e) {
                         \Filament\Notifications\Notification::make()
                             ->title('Synchronisation fehlgeschlagen')
