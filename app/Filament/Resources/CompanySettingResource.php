@@ -644,6 +644,119 @@ class CompanySettingResource extends Resource
                                     ->collapsible()
                                     ->collapsed(),
                             ]),
+
+                        Forms\Components\Tabs\Tab::make('Gmail-Integration')
+                            ->schema([
+                                Forms\Components\Section::make('OAuth2-Konfiguration')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('gmail_enabled')
+                                            ->label('Gmail-Integration aktiviert')
+                                            ->helperText('Aktiviert oder deaktiviert die Gmail-Integration')
+                                            ->default(false)
+                                            ->reactive(),
+                                        
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('gmail_client_id')
+                                                    ->label('Client ID')
+                                                    ->placeholder('Ihre Gmail OAuth2 Client ID')
+                                                    ->maxLength(255)
+                                                    ->helperText('Die Client ID aus der Google Cloud Console')
+                                                    ->required(fn ($get) => $get('gmail_enabled'))
+                                                    ->visible(fn ($get) => $get('gmail_enabled')),
+                                                
+                                                Forms\Components\TextInput::make('gmail_client_secret')
+                                                    ->label('Client Secret')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->placeholder('Ihr Gmail OAuth2 Client Secret')
+                                                    ->maxLength(255)
+                                                    ->helperText('Das Client Secret aus der Google Cloud Console')
+                                                    ->required(fn ($get) => $get('gmail_enabled'))
+                                                    ->visible(fn ($get) => $get('gmail_enabled')),
+                                            ]),
+                                        
+                                        Forms\Components\TextInput::make('gmail_email_address')
+                                            ->label('Verbundene E-Mail-Adresse')
+                                            ->email()
+                                            ->disabled()
+                                            ->placeholder('Wird nach der Autorisierung angezeigt')
+                                            ->helperText('Die E-Mail-Adresse des verbundenen Gmail-Kontos')
+                                            ->visible(fn ($get) => $get('gmail_enabled')),
+                                    ])
+                                    ->description('OAuth2-Einstellungen für die Verbindung zu Gmail'),
+                                
+                                Forms\Components\Section::make('Synchronisations-Einstellungen')
+                                    ->schema([
+                                        Forms\Components\Grid::make(3)
+                                            ->schema([
+                                                Forms\Components\Toggle::make('gmail_auto_sync')
+                                                    ->label('Automatische Synchronisation')
+                                                    ->helperText('Synchronisiert E-Mails automatisch')
+                                                    ->default(true),
+                                                
+                                                Forms\Components\TextInput::make('gmail_sync_interval')
+                                                    ->label('Sync-Intervall (Minuten)')
+                                                    ->numeric()
+                                                    ->default(5)
+                                                    ->minValue(1)
+                                                    ->maxValue(60)
+                                                    ->helperText('Intervall für automatische Synchronisation'),
+                                                
+                                                Forms\Components\TextInput::make('gmail_max_results')
+                                                    ->label('Max. E-Mails pro Sync')
+                                                    ->numeric()
+                                                    ->default(100)
+                                                    ->minValue(10)
+                                                    ->maxValue(500)
+                                                    ->helperText('Maximale Anzahl E-Mails pro Synchronisation'),
+                                            ]),
+                                    ])
+                                    ->visible(fn ($get) => $get('gmail_enabled'))
+                                    ->description('Konfigurieren Sie die automatische E-Mail-Synchronisation'),
+                                
+                                Forms\Components\Section::make('Anhang-Einstellungen')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('gmail_download_attachments')
+                                            ->label('Anhänge herunterladen')
+                                            ->helperText('Lädt E-Mail-Anhänge automatisch herunter')
+                                            ->default(true),
+                                        
+                                        Forms\Components\TextInput::make('gmail_attachment_path')
+                                            ->label('Anhang-Pfad')
+                                            ->default('gmail-attachments')
+                                            ->placeholder('gmail-attachments')
+                                            ->maxLength(255)
+                                            ->helperText('Verzeichnis für heruntergeladene Anhänge'),
+                                    ])
+                                    ->visible(fn ($get) => $get('gmail_enabled'))
+                                    ->description('Einstellungen für den Download von E-Mail-Anhängen'),
+                                
+                                Forms\Components\Section::make('E-Mail-Verarbeitung')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Toggle::make('gmail_mark_as_read')
+                                                    ->label('Als gelesen markieren')
+                                                    ->helperText('Markiert verarbeitete E-Mails als gelesen')
+                                                    ->default(false),
+                                                
+                                                Forms\Components\Toggle::make('gmail_archive_processed')
+                                                    ->label('Verarbeitete E-Mails archivieren')
+                                                    ->helperText('Archiviert verarbeitete E-Mails automatisch')
+                                                    ->default(false),
+                                            ]),
+                                        
+                                        Forms\Components\TextInput::make('gmail_processed_label')
+                                            ->label('Label für verarbeitete E-Mails')
+                                            ->default('Processed')
+                                            ->placeholder('Processed')
+                                            ->maxLength(255)
+                                            ->helperText('Label das verarbeiteten E-Mails hinzugefügt wird'),
+                                    ])
+                                    ->visible(fn ($get) => $get('gmail_enabled'))
+                                    ->description('Konfigurieren Sie die automatische Verarbeitung von E-Mails'),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ])

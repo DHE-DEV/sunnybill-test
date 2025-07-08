@@ -65,6 +65,28 @@ class CompanySetting extends Model
         'lexware_debug_logging',
         'lexware_last_sync',
         'lexware_last_error',
+        // Gmail OAuth2 Einstellungen
+        'gmail_enabled',
+        'gmail_client_id',
+        'gmail_client_secret',
+        'gmail_refresh_token',
+        'gmail_access_token',
+        'gmail_token_expires_at',
+        'gmail_email_address',
+        'gmail_auto_sync',
+        'gmail_sync_interval',
+        'gmail_download_attachments',
+        'gmail_attachment_path',
+        'gmail_labels',
+        'gmail_default_label',
+        'gmail_last_sync',
+        'gmail_last_error',
+        'gmail_total_emails',
+        'gmail_unread_emails',
+        'gmail_mark_as_read',
+        'gmail_archive_processed',
+        'gmail_processed_label',
+        'gmail_max_results',
     ];
 
     protected $casts = [
@@ -90,6 +112,19 @@ class CompanySetting extends Model
         'lexware_import_customer_numbers' => 'boolean',
         'lexware_debug_logging' => 'boolean',
         'lexware_last_sync' => 'datetime',
+        // Gmail OAuth2 Einstellungen
+        'gmail_enabled' => 'boolean',
+        'gmail_token_expires_at' => 'datetime',
+        'gmail_auto_sync' => 'boolean',
+        'gmail_sync_interval' => 'integer',
+        'gmail_download_attachments' => 'boolean',
+        'gmail_labels' => 'array',
+        'gmail_last_sync' => 'datetime',
+        'gmail_total_emails' => 'integer',
+        'gmail_unread_emails' => 'integer',
+        'gmail_mark_as_read' => 'boolean',
+        'gmail_archive_processed' => 'boolean',
+        'gmail_max_results' => 'integer',
     ];
 
     /**
@@ -549,5 +584,388 @@ class CompanySetting extends Model
         ];
 
         return $status;
+    }
+
+    // ===== GMAIL API METHODEN =====
+
+    /**
+     * Prüft ob die Gmail-Integration aktiviert ist
+     */
+    public function isGmailEnabled(): bool
+    {
+        try {
+            return (bool) $this->gmail_enabled;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Gibt die Gmail Client ID zurück
+     */
+    public function getGmailClientId(): ?string
+    {
+        try {
+            return $this->gmail_client_id;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Gibt das Gmail Client Secret zurück
+     */
+    public function getGmailClientSecret(): ?string
+    {
+        try {
+            return $this->gmail_client_secret;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Gibt den Gmail Refresh Token zurück
+     */
+    public function getGmailRefreshToken(): ?string
+    {
+        try {
+            return $this->gmail_refresh_token;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Gibt den Gmail Access Token zurück
+     */
+    public function getGmailAccessToken(): ?string
+    {
+        try {
+            return $this->gmail_access_token;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Prüft ob der Gmail Access Token abgelaufen ist
+     */
+    public function isGmailTokenExpired(): bool
+    {
+        try {
+            return $this->gmail_token_expires_at && $this->gmail_token_expires_at->isPast();
+        } catch (\Exception $e) {
+            return true;
+        }
+    }
+
+    /**
+     * Gibt die Gmail E-Mail-Adresse zurück
+     */
+    public function getGmailEmailAddress(): ?string
+    {
+        try {
+            return $this->gmail_email_address;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Prüft ob automatische Gmail-Synchronisation aktiviert ist
+     */
+    public function isGmailAutoSyncEnabled(): bool
+    {
+        try {
+            return (bool) $this->gmail_auto_sync;
+        } catch (\Exception $e) {
+            return true;
+        }
+    }
+
+    /**
+     * Gibt das Gmail Sync-Intervall in Minuten zurück
+     */
+    public function getGmailSyncInterval(): int
+    {
+        try {
+            return $this->gmail_sync_interval ?? 5;
+        } catch (\Exception $e) {
+            return 5;
+        }
+    }
+
+    /**
+     * Prüft ob Anhänge heruntergeladen werden sollen
+     */
+    public function shouldDownloadGmailAttachments(): bool
+    {
+        try {
+            return (bool) $this->gmail_download_attachments;
+        } catch (\Exception $e) {
+            return true;
+        }
+    }
+
+    /**
+     * Gibt den Gmail Anhang-Pfad zurück
+     */
+    public function getGmailAttachmentPath(): string
+    {
+        try {
+            return $this->gmail_attachment_path ?? 'gmail-attachments';
+        } catch (\Exception $e) {
+            return 'gmail-attachments';
+        }
+    }
+
+    /**
+     * Gibt die Gmail Labels zurück
+     */
+    public function getGmailLabels(): array
+    {
+        try {
+            return $this->gmail_labels ?? [];
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Gibt das Standard-Gmail-Label zurück
+     */
+    public function getGmailDefaultLabel(): ?string
+    {
+        try {
+            return $this->gmail_default_label;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Gibt die maximale Anzahl der Gmail-Ergebnisse zurück
+     */
+    public function getGmailMaxResults(): int
+    {
+        try {
+            return $this->gmail_max_results ?? 100;
+        } catch (\Exception $e) {
+            return 100;
+        }
+    }
+
+    /**
+     * Prüft ob E-Mails als gelesen markiert werden sollen
+     */
+    public function shouldMarkGmailAsRead(): bool
+    {
+        try {
+            return (bool) $this->gmail_mark_as_read;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Prüft ob verarbeitete E-Mails archiviert werden sollen
+     */
+    public function shouldArchiveProcessedGmail(): bool
+    {
+        try {
+            return (bool) $this->gmail_archive_processed;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Gibt das Label für verarbeitete E-Mails zurück
+     */
+    public function getGmailProcessedLabel(): string
+    {
+        try {
+            return $this->gmail_processed_label ?? 'Processed';
+        } catch (\Exception $e) {
+            return 'Processed';
+        }
+    }
+
+    /**
+     * Prüft ob alle erforderlichen Gmail-Einstellungen konfiguriert sind
+     */
+    public function hasValidGmailConfig(): bool
+    {
+        return $this->isGmailEnabled() 
+            && !empty($this->getGmailClientId()) 
+            && !empty($this->getGmailClientSecret())
+            && !empty($this->getGmailRefreshToken());
+    }
+
+    /**
+     * Aktualisiert den Gmail Access Token
+     */
+    public function updateGmailAccessToken(string $accessToken, int $expiresIn): void
+    {
+        try {
+            $this->update([
+                'gmail_access_token' => $accessToken,
+                'gmail_token_expires_at' => now()->addSeconds($expiresIn - 60), // 60 Sekunden Puffer
+            ]);
+        } catch (\Exception $e) {
+            // Spalten existieren noch nicht - ignorieren
+        }
+    }
+
+    /**
+     * Aktualisiert den letzten Gmail-Sync-Zeitstempel
+     */
+    public function updateGmailLastSync(): void
+    {
+        try {
+            $this->update(['gmail_last_sync' => now()]);
+        } catch (\Exception $e) {
+            // Spalte existiert noch nicht - ignorieren
+        }
+    }
+
+    /**
+     * Speichert den letzten Gmail-Fehler
+     */
+    public function setGmailLastError(?string $error): void
+    {
+        try {
+            $this->update(['gmail_last_error' => $error]);
+        } catch (\Exception $e) {
+            // Spalte existiert noch nicht - ignorieren
+        }
+    }
+
+    /**
+     * Gibt den letzten Gmail-Fehler zurück
+     */
+    public function getGmailLastError(): ?string
+    {
+        try {
+            return $this->gmail_last_error;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Gibt den letzten Gmail-Sync-Zeitstempel zurück
+     */
+    public function getGmailLastSync(): ?string
+    {
+        try {
+            return $this->gmail_last_sync?->format('d.m.Y H:i:s');
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Aktualisiert die Gmail-Statistiken
+     */
+    public function updateGmailStats(int $totalEmails, int $unreadEmails): void
+    {
+        try {
+            $this->update([
+                'gmail_total_emails' => $totalEmails,
+                'gmail_unread_emails' => $unreadEmails,
+            ]);
+        } catch (\Exception $e) {
+            // Spalten existieren noch nicht - ignorieren
+        }
+    }
+
+    /**
+     * Gibt die Gmail-Statistiken zurück
+     */
+    public function getGmailStats(): array
+    {
+        try {
+            return [
+                'total_emails' => $this->gmail_total_emails ?? 0,
+                'unread_emails' => $this->gmail_unread_emails ?? 0,
+                'last_sync' => $this->getGmailLastSync(),
+                'last_error' => $this->getGmailLastError(),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'total_emails' => 0,
+                'unread_emails' => 0,
+                'last_sync' => null,
+                'last_error' => null,
+            ];
+        }
+    }
+
+    /**
+     * Prüft ob die Gmail-Konfiguration vollständig ist
+     */
+    public function getGmailConfigStatus(): array
+    {
+        $status = [
+            'enabled' => $this->isGmailEnabled(),
+            'client_id_set' => !empty($this->getGmailClientId()),
+            'client_secret_set' => !empty($this->getGmailClientSecret()),
+            'refresh_token_set' => !empty($this->getGmailRefreshToken()),
+            'access_token_set' => !empty($this->getGmailAccessToken()),
+            'token_expired' => $this->isGmailTokenExpired(),
+            'email_address' => $this->getGmailEmailAddress(),
+            'last_sync' => $this->getGmailLastSync(),
+            'last_error' => $this->getGmailLastError(),
+            'is_valid' => $this->hasValidGmailConfig(),
+            'auto_sync' => $this->isGmailAutoSyncEnabled(),
+            'sync_interval' => $this->getGmailSyncInterval(),
+        ];
+
+        return $status;
+    }
+
+    /**
+     * Speichert die Gmail OAuth2-Tokens
+     */
+    public function saveGmailTokens(array $tokens, ?string $emailAddress = null): void
+    {
+        try {
+            $updateData = [
+                'gmail_access_token' => $tokens['access_token'] ?? null,
+                'gmail_refresh_token' => $tokens['refresh_token'] ?? $this->getGmailRefreshToken(),
+            ];
+
+            if (isset($tokens['expires_in'])) {
+                $updateData['gmail_token_expires_at'] = now()->addSeconds($tokens['expires_in'] - 60);
+            }
+
+            if ($emailAddress) {
+                $updateData['gmail_email_address'] = $emailAddress;
+            }
+
+            $this->update($updateData);
+        } catch (\Exception $e) {
+            // Spalten existieren noch nicht - ignorieren
+        }
+    }
+
+    /**
+     * Löscht alle Gmail-Tokens (für Logout)
+     */
+    public function clearGmailTokens(): void
+    {
+        try {
+            $this->update([
+                'gmail_access_token' => null,
+                'gmail_refresh_token' => null,
+                'gmail_token_expires_at' => null,
+                'gmail_email_address' => null,
+                'gmail_last_error' => null,
+            ]);
+        } catch (\Exception $e) {
+            // Spalten existieren noch nicht - ignorieren
+        }
     }
 }
