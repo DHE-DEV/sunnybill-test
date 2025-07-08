@@ -161,21 +161,6 @@ class GmailEmailResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(function (Builder $query) {
-                // Standardmäßig nur Posteingang anzeigen, außer ein anderer Filter ist aktiv
-                $request = request();
-                $hasLabelFilter = $request->has('tableFilters') && 
-                                 isset($request->get('tableFilters')['gmail_folder']) &&
-                                 !empty($request->get('tableFilters')['gmail_folder']['value']);
-                
-                if (!$hasLabelFilter) {
-                    // Standard: Nur Posteingang (INBOX) anzeigen und Papierkorb ausschließen
-                    $query->whereJsonContains('labels', 'INBOX')
-                          ->whereJsonDoesntContain('labels', 'TRASH');
-                }
-                
-                return $query;
-            })
             ->columns([
                 Tables\Columns\IconColumn::make('is_read')
                     ->label('')
@@ -286,11 +271,10 @@ class GmailEmailResource extends Resource
                     ])
                     ->default('INBOX')
                     ->query(function (Builder $query, array $data): Builder {
-                        if (empty($data['value'])) {
-                            return $query;
-                        }
+                        // Wenn kein Wert gesetzt ist, verwende INBOX als Standard
+                        $value = $data['value'] ?? 'INBOX';
                         
-                        switch ($data['value']) {
+                        switch ($value) {
                             case 'INBOX':
                                 return $query->whereJsonContains('labels', 'INBOX')
                                            ->whereJsonDoesntContain('labels', 'TRASH');
@@ -313,7 +297,8 @@ class GmailEmailResource extends Resource
                                 return $query->whereJsonContains('labels', 'SPAM');
                             
                             default:
-                                return $query;
+                                return $query->whereJsonContains('labels', 'INBOX')
+                                           ->whereJsonDoesntContain('labels', 'TRASH');
                         }
                     }),
                 
