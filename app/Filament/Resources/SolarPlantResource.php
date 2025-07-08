@@ -134,6 +134,16 @@ class SolarPlantResource extends Resource
                                     ->minValue(0)
                                     ->placeholder('z.B. 15.000000')
                                     ->columnSpan(1),
+                                Forms\Components\TextInput::make('degradation_rate')
+                                    ->label('Degradationsrate (%/Jahr)')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->suffix('%/Jahr')
+                                    ->minValue(0)
+                                    ->maxValue(10)
+                                    ->placeholder('z.B. 0.50')
+                                    ->helperText('Jährlicher Leistungsverlust in Prozent (typisch: 0,5-0,8%)')
+                                    ->columnSpan(1),
                             ]),
                         Forms\Components\Tabs\Tab::make('Finanzierung')
                             ->icon('heroicon-o-currency-euro')
@@ -309,6 +319,9 @@ class SolarPlantResource extends Resource
                         \Filament\Infolists\Components\TextEntry::make('expected_annual_yield_kwh')
                             ->label('Erwarteter Jahresertrag')
                             ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') . ' kWh' : '-')
+                            ->placeholder('-'),
+                        \Filament\Infolists\Components\TextEntry::make('formatted_degradation_rate')
+                            ->label('Degradationsrate')
                             ->placeholder('-'),
                     ])->columns(3),
 

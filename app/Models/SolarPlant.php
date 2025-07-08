@@ -45,6 +45,7 @@ class SolarPlant extends Model
         'annual_operating_costs',
         'feed_in_tariff_per_kwh',
         'electricity_price_per_kwh',
+        'degradation_rate',
         'status',
         'is_active',
         'notes',
@@ -66,6 +67,7 @@ class SolarPlant extends Model
         'annual_operating_costs' => 'decimal:2',
         'feed_in_tariff_per_kwh' => 'decimal:6',
         'electricity_price_per_kwh' => 'decimal:6',
+        'degradation_rate' => 'decimal:2',
         'is_active' => 'boolean',
         'panel_count' => 'integer',
         'inverter_count' => 'integer',
@@ -392,6 +394,14 @@ class SolarPlant extends Model
     public function getFormattedElectricityPriceAttribute(): string
     {
         return $this->electricity_price_per_kwh ? number_format($this->electricity_price_per_kwh, 6, ',', '.') . ' €/kWh' : '-';
+    }
+
+    /**
+     * Formatierte Degradationsrate
+     */
+    public function getFormattedDegradationRateAttribute(): string
+    {
+        return $this->degradation_rate ? number_format($this->degradation_rate, 2, ',', '.') . ' %/Jahr' : '-';
     }
 
     /**
