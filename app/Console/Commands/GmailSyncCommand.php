@@ -212,22 +212,36 @@ class GmailSyncCommand extends Command
      */
     private function syncCompanyEmails(CompanySetting $company): array
     {
+        $this->line("  📧 Initializing Gmail service...");
+        
         // Initialize Gmail service with company context
         $gmailService = new GmailService($company);
         
         // Verify configuration
+        $this->line("  🔧 Verifying Gmail configuration...");
         if (!$gmailService->isConfigured()) {
             throw new \Exception('Gmail is not properly configured');
         }
+        $this->line("  ✅ Gmail configuration verified");
         
         // Test connection
+        $this->line("  🔗 Testing Gmail connection...");
         $connectionTest = $gmailService->testConnection();
         if (!$connectionTest['success']) {
             throw new \Exception('Gmail connection failed: ' . $connectionTest['error']);
         }
+        $this->line("  ✅ Gmail connection successful");
         
         // Get emails before sync to detect new ones
+        $this->line("  📊 Counting existing emails...");
         $emailsBefore = GmailEmail::pluck('gmail_id')->toArray();
+        $this->line("  📈 Found " . count($emailsBefore) . " existing emails in database");
+        
+        // Show sync details
+        $this->line("  🔄 Starting email synchronization...");
+        $this->line("  ⏰ Last sync: " . ($company->gmail_last_sync ? $company->gmail_last_sync->format('Y-m-d H:i:s') : 'Never'));
+        $this->line("  ⚙️  Sync interval: {$company->gmail_sync_interval} minutes");
+        $this->line("  🎯 Filter inbox only: " . ($company->gmail_filter_inbox ? 'Yes' : 'No'));
         
         // Perform synchronization
         $stats = $gmailService->syncEmails();
@@ -236,9 +250,28 @@ class GmailSyncCommand extends Command
         $emailsAfter = GmailEmail::pluck('gmail_id')->toArray();
         $newEmailIds = array_diff($emailsAfter, $emailsBefore);
         
+        $this->line("  📈 After sync: " . count($emailsAfter) . " total emails in database");
+        
+        if (count($newEmailIds) > 0) {
+            $this->line("  🆕 New email IDs found:");
+            foreach (array_slice($newEmailIds, 0, 5) as $gmailId) {
+                $email = GmailEmail::where('gmail_id', $gmailId)->first();
+                if ($email) {
+                    $this->line("    - {$email->subject} (from: {$email->from_email})");
+                }
+            }
+            if (count($newEmailIds) > 5) {
+                $this->line("    ... and " . (count($newEmailIds) - 5) . " more");
+            }
+        }
+        
         // Fire events for new emails
+        if (count($newEmailIds) > 0) {
+            $this->line("  🔔 Firing events for new emails...");
+        }
+        
         foreach ($newEmailIds as $gmailId) {
-            $email = GmailEmail::findByGmailId($gmailId);
+            $email = GmailEmail::where('gmail_id', $gmailId)->first();
             if ($email) {
                 // Get users who should receive notifications
                 $users = $company->users()
@@ -250,8 +283,13 @@ class GmailSyncCommand extends Command
                     ->toArray();
                 
                 event(new NewGmailReceived($email, $users));
+                $this->line("    📧 Event fired for: {$email->subject}");
             }
         }
+        
+        // Update last sync timestamp
+        $this->line("  💾 Updating last sync timestamp...");
+        $company->update(['gmail_last_sync' => now()]);
         
         return $stats;
     }
