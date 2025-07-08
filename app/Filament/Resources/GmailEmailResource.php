@@ -585,9 +585,12 @@ class GmailEmailResource extends Resource
             ->whereJsonDoesntContain('labels', 'TRASH')
             ->count();
         
-        // Verwende Text-Format mit Symbolen für bessere Unterscheidung
+        // Zwei separate Badges ohne Symbole, mit 2px Abstand
         if ($unreadCount > 0 || $readCount > 0) {
-            return "📖{$readCount} 📧{$unreadCount}";
+            return '<span style="display: inline-flex; gap: 2px;">' .
+                   '<span style="background: #3b82f6; color: white; padding: 1px 6px; border-radius: 9999px; font-size: 11px; font-weight: 500;">' . $readCount . '</span>' .
+                   '<span style="background: #f97316; color: white; padding: 1px 6px; border-radius: 9999px; font-size: 11px; font-weight: 500;">' . $unreadCount . '</span>' .
+                   '</span>';
         }
         
         return null;
@@ -621,7 +624,7 @@ class GmailEmailResource extends Resource
             ->whereJsonDoesntContain('labels', 'TRASH')
             ->count();
         
-        return "📖 Gelesen: {$readCount} | 📧 Ungelesen: {$unreadCount}";
+        return "Gelesen: {$readCount} | Ungelesen: {$unreadCount}";
     }
 
     public static function canCreate(): bool
