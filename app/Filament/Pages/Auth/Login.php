@@ -51,4 +51,9 @@ class Login extends BaseLogin
     {
         return 'Bitte geben Sie Ihre Zugangsdaten ein';
     }
+
+    protected function getRedirectUrl(): ?string
+    {
+        return $this->getPanel()->getUrl();
+    }
 }

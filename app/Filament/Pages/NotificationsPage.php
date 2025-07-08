@@ -40,15 +40,6 @@ class NotificationsPage extends Page implements HasTable, HasActions
     
     protected static string $view = 'filament.pages.notifications-page';
 
-    public static function getUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?Model $tenant = null): string
-    {
-        return '/admin/notifications';
-    }
-
-    public static function getNavigationUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?Model $tenant = null): string
-    {
-        return '/admin/notifications';
-    }
 
     public function getTitle(): string
     {
