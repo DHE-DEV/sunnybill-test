@@ -1041,7 +1041,7 @@
                         <a href="mailto:info@voltmaster.de" class="btn btn-primary">
                             Beratung anfragen
                         </a>
-                        <a href="tel:+49123456789" class="btn btn-secondary">
+                        <a href="tel:+491746346743" class="btn btn-secondary">
                             Anrufen
                         </a>
                     </div>
@@ -1070,7 +1070,7 @@
                     <div class="footer-section">
                         <h3>Kontakt</h3>
                         <p><a href="mailto:info@voltmaster.de">info@voltmaster.de</a></p>
-                        <p><a href="tel:+49123456789">+49 123 456 789</a></p>
+                        <p><a href="tel:+491746346743">+49 174 6346743</a></p>
                         <p>Verfügbar für Projekte deutschlandweit</p>
                     </div>
                     <div class="footer-section">
