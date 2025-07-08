@@ -44,7 +44,7 @@ class ListGmailEmails extends ListRecords
             Actions\Action::make('test_connection')
                 ->label('Verbindung testen')
                 ->icon('heroicon-o-wifi')
-                ->color('secondary')
+                ->color('success')
                 ->action(function () {
                     try {
                         $gmailService = new \App\Services\GmailService();
