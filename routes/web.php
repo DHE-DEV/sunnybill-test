@@ -24,6 +24,33 @@ Route::middleware('auth')->group(function () {
     })->name('api.notifications.count');
 });
 
+// Test API Route (ohne Auth für Debugging)
+Route::get('/api/notifications/count/test', function () {
+    try {
+        $user = \App\Models\User::first();
+        if (!$user) {
+            return response()->json([
+                'error' => 'Kein User gefunden',
+                'unread_count' => 0
+            ], 404);
+        }
+        
+        $unreadCount = $user->unread_notifications_count;
+        
+        return response()->json([
+            'unread_count' => $unreadCount,
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'timestamp' => now()->timestamp
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'unread_count' => 0
+        ], 500);
+    }
+})->name('api.notifications.count.test');
+
 // Legal Pages
 Route::get('/datenschutz', function () {
     return view('datenschutz');

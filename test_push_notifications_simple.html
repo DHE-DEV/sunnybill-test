@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push-Benachrichtigungen Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Push-Benachrichtigungen Test</h1>
+        
+        <div id="status"></div>
+        
+        <div>
+            <button onclick="checkSupport()">Browser-Support prüfen</button>
+            <button onclick="requestPermission()">Berechtigung anfordern</button>
+            <button onclick="testNotification()">Test-Benachrichtigung senden</button>
+            <button onclick="startPolling()">Polling starten</button>
+            <button onclick="stopPolling()">Polling stoppen</button>
+            <button onclick="clearLog()">Log leeren</button>
+        </div>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        let pollingInterval = null;
+        let lastNotificationCount = 0;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logDiv.textContent += logEntry;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+
+        function checkSupport() {
+            log('=== Browser-Support Check ===');
+            
+            if (!("Notification" in window)) {
+                updateStatus('❌ Dieser Browser unterstützt keine Desktop-Benachrichtigungen', 'error');
+                log('Browser unterstützt keine Notifications');
+                return false;
+            }
+            
+            updateStatus('✅ Browser unterstützt Desktop-Benachrichtigungen', 'success');
+            log('Browser unterstützt Notifications');
+            log(`Aktuelle Berechtigung: ${Notification.permission}`);
+            
+            return true;
+        }
+
+        async function requestPermission() {
+            log('=== Berechtigung anfordern ===');
+            
+            if (!checkSupport()) return;
+            
+            if (Notification.permission === "granted") {
+                updateStatus('✅ Berechtigung bereits erteilt', 'success');
+                log('Berechtigung bereits erteilt');
+                return true;
+            }
+            
+            if (Notification.permission === "denied") {
+                updateStatus('❌ Berechtigung verweigert - bitte in Browser-Einstellungen aktivieren', 'error');
+                log('Berechtigung verweigert');
+                return false;
+            }
+            
+            try {
+                const permission = await Notification.requestPermission();
+                log(`Berechtigung erhalten: ${permission}`);
+                
+                if (permission === "granted") {
+                    updateStatus('✅ Berechtigung erfolgreich erteilt', 'success');
+                    return true;
+                } else {
+                    updateStatus('❌ Berechtigung verweigert', 'error');
+                    return false;
+                }
+            } catch (error) {
+                log(`Fehler bei Berechtigung: ${error.message}`);
+                updateStatus('❌ Fehler beim Anfordern der Berechtigung', 'error');
+                return false;
+            }
+        }
+
+        function testNotification() {
+            log('=== Test-Benachrichtigung ===');
+            
+            if (Notification.permission !== "granted") {
+                updateStatus('⚠️ Berechtigung erforderlich - bitte zuerst anfordern', 'warning');
+                log('Keine Berechtigung für Benachrichtigungen');
+                return;
+            }
+            
+            try {
+                const notification = new Notification('🧪 Test-Benachrichtigung', {
+                    body: 'Dies ist eine Test-Benachrichtigung um ' + new Date().toLocaleTimeString(),
+                    icon: '/images/voltmaster-favicon.svg',
+                    badge: '/images/voltmaster-favicon.svg',
+                    tag: 'test-notification'
+                });
+                
+                log('Test-Benachrichtigung gesendet');
+                updateStatus('✅ Test-Benachrichtigung gesendet', 'success');
+                
+                // Auto-close nach 5 Sekunden
+                setTimeout(() => {
+                    notification.close();
+                    log('Test-Benachrichtigung automatisch geschlossen');
+                }, 5000);
+                
+                // Click-Handler
+                notification.onclick = function() {
+                    log('Test-Benachrichtigung wurde geklickt');
+                    window.focus();
+                    notification.close();
+                };
+                
+            } catch (error) {
+                log(`Fehler bei Test-Benachrichtigung: ${error.message}`);
+                updateStatus('❌ Fehler beim Senden der Test-Benachrichtigung', 'error');
+            }
+        }
+
+        async function checkForNewNotifications() {
+            try {
+                log('API-Aufruf: /api/notifications/count/test');
+                const response = await fetch('/api/notifications/count/test');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                log(`API-Response: ${JSON.stringify(data)}`);
+                
+                if (data.error) {
+                    log(`API-Fehler: ${data.error}`);
+                    updateStatus(`⚠️ API-Fehler: ${data.error}`, 'warning');
+                    return;
+                }
+                
+                if (data.unread_count > lastNotificationCount && lastNotificationCount > 0) {
+                    const newCount = data.unread_count - lastNotificationCount;
+                    log(`Neue Benachrichtigungen erkannt: ${newCount}`);
+                    
+                    if (Notification.permission === "granted") {
+                        const notification = new Notification(
+                            `${newCount} neue Gmail E-Mail${newCount > 1 ? 's' : ''}`,
+                            {
+                                body: 'Klicken Sie hier, um die Benachrichtigungen anzuzeigen',
+                                icon: '/images/voltmaster-favicon.svg',
+                                badge: '/images/voltmaster-favicon.svg',
+                                tag: 'gmail-notification'
+                            }
+                        );
+                        
+                        setTimeout(() => notification.close(), 5000);
+                        
+                        notification.onclick = function() {
+                            window.location.href = '/admin/notifications';
+                            notification.close();
+                        };
+                        
+                        updateStatus(`🔔 ${newCount} neue Benachrichtigung(en) gesendet`, 'success');
+                    }
+                } else {
+                    log(`Aktuelle Benachrichtigungen: ${data.unread_count} (User: ${data.user_name})`);
+                }
+                
+                lastNotificationCount = data.unread_count;
+                
+            } catch (error) {
+                log(`Fehler beim API-Aufruf: ${error.message}`);
+                updateStatus('❌ Fehler beim Abrufen der Benachrichtigungen', 'error');
+            }
+        }
+
+        function startPolling() {
+            log('=== Polling starten ===');
+            
+            if (pollingInterval) {
+                log('Polling läuft bereits');
+                return;
+            }
+            
+            // Initiale Prüfung
+            checkForNewNotifications();
+            
+            // Polling alle 10 Sekunden (für Test)
+            pollingInterval = setInterval(checkForNewNotifications, 10000);
+            
+            log('Polling gestartet (alle 10 Sekunden)');
+            updateStatus('🔄 Polling aktiv - prüft alle 10 Sekunden', 'info');
+        }
+
+        function stopPolling() {
+            log('=== Polling stoppen ===');
+            
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                log('Polling gestoppt');
+                updateStatus('⏹️ Polling gestoppt', 'warning');
+            } else {
+                log('Polling war nicht aktiv');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+            log('Log geleert');
+        }
+
+        // Automatische Initialisierung
+        window.addEventListener('load', function() {
+            log('=== Push-Benachrichtigungen Test gestartet ===');
+            checkSupport();
+        });
+    </script>
+</body>
+</html>
