@@ -107,6 +107,10 @@ class AdminPanelProvider extends PanelProvider
                     ->url('/admin/notifications')
                     ->icon('heroicon-o-bell')
                     ->sort(1),
-            ]);
+            ])
+            ->renderHook(
+                'panels::body.end',
+                fn (): string => view('layouts.filament-notifications')->render()
+            );
     }
 }

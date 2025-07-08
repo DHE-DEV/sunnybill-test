@@ -11,6 +11,19 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// API Routes for Notifications
+Route::middleware('auth')->group(function () {
+    Route::get('/api/notifications/count', function () {
+        $user = auth()->user();
+        $unreadCount = $user->unread_notifications_count;
+        
+        return response()->json([
+            'unread_count' => $unreadCount,
+            'user_id' => $user->id
+        ]);
+    })->name('api.notifications.count');
+});
+
 // Legal Pages
 Route::get('/datenschutz', function () {
     return view('datenschutz');
