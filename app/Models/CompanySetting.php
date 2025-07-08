@@ -649,6 +649,18 @@ class CompanySetting extends Model
     }
 
     /**
+     * Gibt das Gmail Token Ablaufdatum zurück
+     */
+    public function getGmailTokenExpiresAt(): ?\Carbon\Carbon
+    {
+        try {
+            return $this->gmail_token_expires_at;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
      * Prüft ob der Gmail Access Token abgelaufen ist
      */
     public function isGmailTokenExpired(): bool
