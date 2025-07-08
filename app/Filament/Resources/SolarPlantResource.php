@@ -423,11 +423,41 @@ class SolarPlantResource extends Resource
                     ->counts('participations')
                     ->badge()
                     ->color('info'),
-                Tables\Columns\TextColumn::make('installation_date')
-                    ->label('Installation')
+                Tables\Columns\TextColumn::make('planned_installation_date')
+                    ->label('Geplante Installation')
                     ->date('d.m.Y')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('installation_date')
+                    ->label('Tatsächliche Installation')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('planned_commissioning_date')
+                    ->label('Geplante Inbetriebnahme')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('commissioning_date')
+                    ->label('Tatsächliche Inbetriebnahme')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('total_investment')
+                    ->label('Gesamtinvestition')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 2, ',', '.') . ' €' : '-')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('annual_operating_costs')
+                    ->label('Jährliche Betriebskosten')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 2, ',', '.') . ' €' : '-')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('expected_annual_yield_kwh')
+                    ->label('Erwarteter Jahresertrag')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, ',', '.') . ' kWh' : '-')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
                     ->boolean()
