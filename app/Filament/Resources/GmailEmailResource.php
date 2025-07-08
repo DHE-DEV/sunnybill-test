@@ -292,6 +292,7 @@ class GmailEmailResource extends Resource
                             try {
                                 $gmailService = new GmailService();
                                 if ($gmailService->markAsRead($record->gmail_id)) {
+                                    $record->markAsRead();
                                     Notification::make()
                                         ->title('E-Mail als gelesen markiert')
                                         ->success()
@@ -306,7 +307,8 @@ class GmailEmailResource extends Resource
                                     ->danger()
                                     ->send();
                             }
-                        }),
+                        })
+                        ->after(fn () => redirect()->refresh()),
                     
                     Tables\Actions\Action::make('mark_unread')
                         ->label('Als ungelesen markieren')
@@ -317,6 +319,7 @@ class GmailEmailResource extends Resource
                             try {
                                 $gmailService = new GmailService();
                                 if ($gmailService->markAsUnread($record->gmail_id)) {
+                                    $record->markAsUnread();
                                     Notification::make()
                                         ->title('E-Mail als ungelesen markiert')
                                         ->success()
@@ -331,7 +334,8 @@ class GmailEmailResource extends Resource
                                     ->danger()
                                     ->send();
                             }
-                        }),
+                        })
+                        ->after(fn () => redirect()->refresh()),
                     
                     Tables\Actions\Action::make('star')
                         ->label('Favorit hinzufügen')
@@ -452,6 +456,7 @@ class GmailEmailResource extends Resource
                         foreach ($records as $record) {
                             try {
                                 if (!$record->is_read && $gmailService->markAsRead($record->gmail_id)) {
+                                    $record->markAsRead();
                                     $success++;
                                 }
                             } catch (\Exception $e) {
@@ -464,7 +469,8 @@ class GmailEmailResource extends Resource
                             ->body($errors > 0 ? "$errors Fehler aufgetreten" : '')
                             ->success()
                             ->send();
-                    }),
+                    })
+                    ->after(fn () => redirect()->refresh()),
                 
                 Tables\Actions\BulkAction::make('mark_as_unread')
                     ->label('Als ungelesen markieren')
@@ -478,6 +484,7 @@ class GmailEmailResource extends Resource
                         foreach ($records as $record) {
                             try {
                                 if ($record->is_read && $gmailService->markAsUnread($record->gmail_id)) {
+                                    $record->markAsUnread();
                                     $success++;
                                 }
                             } catch (\Exception $e) {
@@ -490,7 +497,8 @@ class GmailEmailResource extends Resource
                             ->body($errors > 0 ? "$errors Fehler aufgetreten" : '')
                             ->success()
                             ->send();
-                    }),
+                    })
+                    ->after(fn () => redirect()->refresh()),
                 
                 Tables\Actions\BulkAction::make('move_to_trash')
                     ->label('In Papierkorb verschieben')
@@ -533,7 +541,8 @@ class GmailEmailResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::unread()->count();
+        $count = static::getModel()::unread()->count();
+        return $count > 0 ? (string) $count : null;
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -547,6 +556,12 @@ class GmailEmailResource extends Resource
         }
         
         return null;
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        $count = static::getModel()::unread()->count();
+        return $count === 1 ? '1 ungelesene E-Mail' : "{$count} ungelesene E-Mails";
     }
 
     public static function canCreate(): bool

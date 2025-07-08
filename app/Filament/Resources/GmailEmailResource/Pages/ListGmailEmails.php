@@ -32,6 +32,9 @@ class ListGmailEmails extends ListRecords
                             ->body("Verarbeitet: {$stats['processed']}, Neu: {$stats['new']}, Aktualisiert: {$stats['updated']}, Fehler: {$stats['errors']}")
                             ->success()
                             ->send();
+                        
+                        // Seite neu laden um Badge zu aktualisieren
+                        return redirect()->refresh();
                     } catch (\Exception $e) {
                         \Filament\Notifications\Notification::make()
                             ->title('Synchronisation fehlgeschlagen')
