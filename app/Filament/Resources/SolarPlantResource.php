@@ -420,7 +420,6 @@ class SolarPlantResource extends Resource
                 Tables\Columns\TextColumn::make('total_participation')
                     ->label('Beteiligung')
                     ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
-                    ->sortable()
                     ->badge()
                     ->color(fn ($state) => $state >= 100 ? 'success' : 'warning'),
                 Tables\Columns\TextColumn::make('participations_count')
