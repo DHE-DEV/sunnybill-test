@@ -42,21 +42,21 @@ class GmailEmailResource extends Resource
                                     ->disabled()
                                     ->columnSpanFull(),
                                 
-                                Forms\Components\TextInput::make('from_string')
+                                Forms\Components\Placeholder::make('from_display')
                                     ->label('Von')
-                                    ->disabled(),
+                                    ->content(fn ($record) => $record ? $record->from_string : 'Unbekannt'),
                                 
-                                Forms\Components\TextInput::make('to_string')
+                                Forms\Components\Placeholder::make('to_display')
                                     ->label('An')
-                                    ->disabled(),
+                                    ->content(fn ($record) => $record ? $record->to_string : 'Unbekannt'),
                                 
-                                Forms\Components\TextInput::make('gmail_date')
+                                Forms\Components\Placeholder::make('date_display')
                                     ->label('Datum')
-                                    ->disabled(),
+                                    ->content(fn ($record) => $record && $record->gmail_date ? $record->gmail_date->format('d.m.Y H:i') : 'Unbekannt'),
                                 
-                                Forms\Components\TextInput::make('readable_size')
+                                Forms\Components\Placeholder::make('size_display')
                                     ->label('Größe')
-                                    ->disabled(),
+                                    ->content(fn ($record) => $record ? $record->readable_size : 'Unbekannt'),
                             ]),
                     ]),
                 
@@ -101,6 +101,18 @@ class GmailEmailResource extends Resource
                     ->schema([
                         Forms\Components\Tabs::make('content')
                             ->tabs([
+                                Forms\Components\Tabs\Tab::make('Formatiert')
+                                    ->schema([
+                                        Forms\Components\ViewField::make('formatted_html')
+                                            ->label('E-Mail-Inhalt (formatiert)')
+                                            ->view('filament.components.gmail-html-content')
+                                            ->viewData(fn ($record) => [
+                                                'html_content' => $record ? $record->body_html : '',
+                                                'text_content' => $record ? $record->body_text : '',
+                                                'subject' => $record ? $record->subject : '',
+                                            ]),
+                                    ]),
+                                
                                 Forms\Components\Tabs\Tab::make('Text')
                                     ->schema([
                                         Forms\Components\Textarea::make('body_text')
@@ -109,17 +121,16 @@ class GmailEmailResource extends Resource
                                             ->disabled(),
                                     ]),
                                 
-                                Forms\Components\Tabs\Tab::make('HTML')
+                                Forms\Components\Tabs\Tab::make('HTML-Code')
                                     ->schema([
                                         Forms\Components\Textarea::make('body_html')
-                                            ->label('HTML-Inhalt')
+                                            ->label('HTML-Quellcode')
                                             ->rows(15)
                                             ->disabled(),
                                     ]),
                             ]),
                     ])
-                    ->collapsible()
-                    ->collapsed(),
+                    ->collapsible(),
                 
                 Forms\Components\Section::make('Anhänge')
                     ->schema([
