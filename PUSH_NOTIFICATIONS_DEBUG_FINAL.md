@@ -151,3 +151,23 @@ Nach erfolgreichem Test die Test-Route aus `routes/web.php` entfernen.
 5. Test-Route und Test-Seite nach erfolgreichem Test entfernen
 
 Die Push-Benachrichtigungen sollten jetzt funktionieren! 🎉
+
+## Weiterführende Dokumentation
+
+### Windows-Benachrichtigungen optimieren
+Für eine detaillierte Anleitung zur Optimierung von Windows-Benachrichtigungen siehe:
+**`WINDOWS_BENACHRICHTIGUNGEN_ANLEITUNG.md`**
+
+Diese Anleitung enthält:
+- ✅ Anzeigedauer von Benachrichtigungen verlängern
+- ✅ Benachrichtigungsverlauf aktivieren
+- ✅ Browser-spezifische Einstellungen für Edge/Chrome/Firefox
+- ✅ Fokus-Assistent konfigurieren
+- ✅ Registry-Einstellungen für erweiterte Konfiguration
+- ✅ Problembehandlung und häufige Lösungen
+
+### Weitere Ressourcen
+- **Push-Benachrichtigungen Debug**: `PUSH_NOTIFICATIONS_DEBUG_FINAL.md` (diese Datei)
+- **Dashboard-Design-Fixes**: `DASHBOARD_DESIGN_FIX_SUMMARY.md`
+- **Gmail-Integration**: `GMAIL_NOTIFICATIONS_COMPLETE_INTEGRATION.md`
+- **Notification-System**: `NOTIFICATION_SYSTEM_COMPLETE_IMPLEMENTATION.md`
