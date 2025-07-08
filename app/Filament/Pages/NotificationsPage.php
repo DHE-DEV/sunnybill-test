@@ -213,7 +213,7 @@ class NotificationsPage extends Page implements HasTable, HasActions
             ->emptyStateIcon('heroicon-o-bell-slash');
     }
 
-    protected function getTableRecordKey($record): string
+    public function getTableRecordKey($record): string
     {
         return $record->getKey();
     }
@@ -223,7 +223,7 @@ class NotificationsPage extends Page implements HasTable, HasActions
         return $record->action_url;
     }
 
-    protected function getTableRecordUrlTarget($record): ?string
+    public function getTableRecordUrlTarget($record): ?string
     {
         return $record->action_url ? '_blank' : null;
     }
