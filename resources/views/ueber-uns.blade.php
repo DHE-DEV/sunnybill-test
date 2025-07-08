@@ -186,6 +186,14 @@
                 background-clip: text;
             }
 
+            .section-title.white-text {
+                background: none;
+                -webkit-background-clip: unset;
+                -webkit-text-fill-color: unset;
+                background-clip: unset;
+                color: white !important;
+            }
+
             .section-subtitle {
                 text-align: center;
                 font-size: 1.2rem;
@@ -802,7 +810,7 @@
         <!-- Unique Value Proposition Section -->
         <section class="unique-value-section">
             <div class="container">
-                <h2 class="section-title scroll-animate" style="color: white;">Einzigartiger Wettbewerbsvorteil</h2>
+                <h2 class="section-title white-text scroll-animate">Einzigartiger Wettbewerbsvorteil</h2>
                 <p class="section-subtitle scroll-animate" style="color: rgba(255,255,255,0.8);">
                     30+ Jahre Softwareentwicklung treffen auf strategische Unternehmensberatung
                 </p>
