@@ -35,6 +35,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'notes',
         'password_change_required',
         'password_changed_at',
+        'company_setting_id',
         // Gmail-Benachrichtigungseinstellungen
         'gmail_notifications_enabled',
         'gmail_notification_preferences',
@@ -332,5 +333,13 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function markAllNotificationsAsRead(): int
     {
         return Notification::markAllAsReadForUser($this->id);
+    }
+
+    /**
+     * Beziehung zur CompanySetting
+     */
+    public function companySetting()
+    {
+        return $this->belongsTo(CompanySetting::class);
     }
 }

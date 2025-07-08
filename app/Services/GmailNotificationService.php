@@ -146,7 +146,7 @@ class GmailNotificationService
     /**
      * Sendet Benachrichtigungen an alle berechtigten Benutzer
      */
-    private function sendNotifications(GmailEmail $email, array $users): void
+    public function sendNotifications(GmailEmail $email, array $users): void
     {
         $notificationTypes = $this->settings->getGmailNotificationTypes();
         $template = $this->settings->getGmailNotificationTemplate();

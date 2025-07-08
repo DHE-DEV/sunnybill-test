@@ -1347,4 +1347,13 @@ class CompanySetting extends Model
             // Spalten existieren noch nicht - ignorieren
         }
     }
+
+    /**
+     * Get the users that belong to this company
+     */
+    public function users()
+    {
+        return $this->hasMany(User::class, 'company_setting_id');
+    }
+
 }
