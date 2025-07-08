@@ -20,6 +20,9 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Widgets\SolarStatsWidget;
 use App\Filament\Pages\Auth\Login;
 use App\Models\CompanySetting;
+use Filament\Navigation\UserMenuItem;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Notification;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -90,6 +93,20 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsed(),
             ])
             ->sidebarCollapsibleOnDesktop()
-            ->maxContentWidth('full');
+            ->maxContentWidth('full')
+            ->userMenuItems([
+                'notifications' => UserMenuItem::make()
+                    ->label(function () {
+                        if (Auth::check()) {
+                            $user = Auth::user();
+                            $unreadCount = $user->unread_notifications_count;
+                            return 'Benachrichtigungen' . ($unreadCount > 0 ? " ({$unreadCount})" : '');
+                        }
+                        return 'Benachrichtigungen';
+                    })
+                    ->url('/admin/notifications')
+                    ->icon('heroicon-o-bell')
+                    ->sort(1),
+            ]);
     }
 }
