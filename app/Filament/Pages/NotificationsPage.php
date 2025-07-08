@@ -320,9 +320,18 @@ class NotificationsPage extends Page implements HasTable, HasActions
 
                 Tables\Columns\TextColumn::make('creator.name')
                     ->label('Absender')
-                    ->formatStateUsing(fn (Notification $record): string =>
-                        $record->creator ? $record->creator->name : 'System'
-                    )
+                    ->formatStateUsing(fn (Notification $record): string => {
+                        if (!$record->creator) {
+                            return 'System';
+                        }
+                        
+                        // Wenn der aktuelle Benutzer der Ersteller ist, zeige "Ich"
+                        if ($record->creator->id === Auth::id()) {
+                            return 'Ich';
+                        }
+                        
+                        return $record->creator->name;
+                    })
                     ->color('gray')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false)
