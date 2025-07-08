@@ -161,6 +161,7 @@ class GmailEmailResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->where('is_trash', false))
             ->columns([
                 Tables\Columns\IconColumn::make('is_read')
                     ->label('')
@@ -541,13 +542,13 @@ class GmailEmailResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::unread()->count();
+        $count = static::getModel()::unread()->where('is_trash', false)->count();
         return $count > 0 ? (string) $count : null;
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        $unreadCount = static::getModel()::unread()->count();
+        $unreadCount = static::getModel()::unread()->where('is_trash', false)->count();
         
         if ($unreadCount > 10) {
             return 'danger';
@@ -560,7 +561,7 @@ class GmailEmailResource extends Resource
 
     public static function getNavigationBadgeTooltip(): ?string
     {
-        $count = static::getModel()::unread()->count();
+        $count = static::getModel()::unread()->where('is_trash', false)->count();
         return $count === 1 ? '1 ungelesene E-Mail' : "{$count} ungelesene E-Mails";
     }
 
