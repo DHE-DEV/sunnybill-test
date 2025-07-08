@@ -585,12 +585,9 @@ class GmailEmailResource extends Resource
             ->whereJsonDoesntContain('labels', 'TRASH')
             ->count();
         
-        // Erstelle zwei separate Badges nebeneinander
+        // Verwende Text-Format mit Symbolen für bessere Unterscheidung
         if ($unreadCount > 0 || $readCount > 0) {
-            return '<span style="display: inline-flex; gap: 4px;">' .
-                   '<span style="background: #3b82f6; color: white; padding: 2px 6px; border-radius: 9999px; font-size: 11px; font-weight: 600;">' . $readCount . '</span>' .
-                   '<span style="background: #f97316; color: white; padding: 2px 6px; border-radius: 9999px; font-size: 11px; font-weight: 600;">' . $unreadCount . '</span>' .
-                   '</span>';
+            return "📖{$readCount} 📧{$unreadCount}";
         }
         
         return null;
@@ -598,8 +595,18 @@ class GmailEmailResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        // Keine Farbe setzen, da wir eigene Styles verwenden
-        return null;
+        $unreadCount = static::getModel()::unread()
+            ->whereJsonContains('labels', 'INBOX')
+            ->whereJsonDoesntContain('labels', 'TRASH')
+            ->count();
+        
+        if ($unreadCount > 10) {
+            return 'danger';
+        } elseif ($unreadCount > 0) {
+            return 'warning';
+        }
+        
+        return 'primary';
     }
 
     public static function getNavigationBadgeTooltip(): ?string
@@ -614,7 +621,7 @@ class GmailEmailResource extends Resource
             ->whereJsonDoesntContain('labels', 'TRASH')
             ->count();
         
-        return "Gelesen (blau): {$readCount} | Ungelesen (orange): {$unreadCount}";
+        return "📖 Gelesen: {$readCount} | 📧 Ungelesen: {$unreadCount}";
     }
 
     public static function canCreate(): bool
