@@ -5,10 +5,19 @@ namespace App\Filament\Resources\GmailEmailResource\Pages;
 use App\Filament\Resources\GmailEmailResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListGmailEmails extends ListRecords
 {
     protected static string $resource = GmailEmailResource::class;
+
+    protected function getTableQuery(): Builder
+    {
+        // Standardmäßig nur E-Mails aus dem Posteingang anzeigen (nicht aus Papierkorb)
+        return parent::getTableQuery()
+            ->whereJsonContains('labels', 'INBOX')
+            ->whereJsonDoesntContain('labels', 'TRASH');
+    }
 
     protected function getHeaderActions(): array
     {
