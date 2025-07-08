@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CompanySetting;
 use App\Models\GmailEmail;
+use App\Models\GmailLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -346,6 +347,11 @@ class GmailService
                     
                     // Detailliertes Logging für E-Mail Labels
                     $this->logEmailLabels($messageId, $emailData);
+                    
+                    // Datenbank-Logging wenn aktiviert
+                    if ($this->settings->gmail_logging_enabled) {
+                        $this->createGmailLog($emailData, $existingEmail ? 'updated' : 'created');
+                    }
                     
                     // E-Mail erstellen oder aktualisieren
                     if ($existingEmail) {
@@ -827,6 +833,54 @@ class GmailService
                 'subject' => $subject,
                 'labels' => $labels
             ]);
+        }
+    }
+
+    /**
+     * Erstellt einen Gmail-Log-Eintrag
+     */
+    private function createGmailLog(array $emailData, string $action = 'sync', ?string $notes = null): void
+    {
+        try {
+            $labels = $emailData['labels'] ?? [];
+            
+            // Kategorisiere Labels
+            $systemLabels = [];
+            $userLabels = [];
+            $categoryLabels = [];
+            
+            foreach ($labels as $label) {
+                if (str_starts_with($label, 'CATEGORY_')) {
+                    $categoryLabels[] = $label;
+                } elseif (in_array($label, ['INBOX', 'SENT', 'DRAFT', 'TRASH', 'SPAM', 'UNREAD', 'STARRED', 'IMPORTANT'])) {
+                    $systemLabels[] = $label;
+                } else {
+                    $userLabels[] = $label;
+                }
+            }
+            
+            $logData = [
+                'gmail_id' => $emailData['gmail_id'],
+                'subject' => $emailData['subject'],
+                'from_email' => $emailData['from'][0]['email'] ?? null,
+                'total_labels' => count($labels),
+                'all_labels' => $labels,
+                'system_labels' => $systemLabels,
+                'category_labels' => $categoryLabels,
+                'user_labels' => $userLabels,
+                'has_inbox' => in_array('INBOX', $labels),
+                'is_unread' => in_array('UNREAD', $labels),
+                'is_important' => in_array('IMPORTANT', $labels),
+                'is_starred' => in_array('STARRED', $labels),
+                'filter_active' => $this->settings->gmail_filter_inbox ?? false,
+                'action' => $action,
+                'notes' => $notes,
+            ];
+            
+            GmailLog::create($logData);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to create Gmail log entry: ' . $e->getMessage());
         }
     }
 

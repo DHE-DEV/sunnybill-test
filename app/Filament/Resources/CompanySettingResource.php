@@ -946,6 +946,19 @@ class CompanySettingResource extends Resource
                                                     ->default(false),
                                             ]),
                                         
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Toggle::make('gmail_filter_inbox')
+                                                    ->label('INBOX-Filter aktiviert')
+                                                    ->helperText('Filtert E-Mails mit INBOX-Label heraus')
+                                                    ->default(false),
+                                                
+                                                Forms\Components\Toggle::make('gmail_logging_enabled')
+                                                    ->label('E-Mail Logging aktiviert')
+                                                    ->helperText('Speichert detaillierte E-Mail-Logs in der Datenbank')
+                                                    ->default(false),
+                                            ]),
+                                        
                                         Forms\Components\TextInput::make('gmail_processed_label')
                                             ->label('Label für verarbeitete E-Mails')
                                             ->default('Processed')

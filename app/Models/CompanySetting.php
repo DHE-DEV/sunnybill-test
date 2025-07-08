@@ -98,6 +98,8 @@ class CompanySetting extends Model
         'gmail_notification_duration',
         'gmail_notifications_last_sent',
         'gmail_notifications_sent_count',
+        'gmail_filter_inbox',
+        'gmail_logging_enabled',
     ];
 
     protected $casts = [
@@ -146,6 +148,8 @@ class CompanySetting extends Model
         'gmail_notification_duration' => 'integer',
         'gmail_notifications_last_sent' => 'datetime',
         'gmail_notifications_sent_count' => 'integer',
+        'gmail_filter_inbox' => 'boolean',
+        'gmail_logging_enabled' => 'boolean',
     ];
 
     /**
