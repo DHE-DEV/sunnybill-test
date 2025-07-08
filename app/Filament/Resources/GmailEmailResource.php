@@ -25,9 +25,46 @@ class GmailEmailResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Gmail E-Mails';
 
-    protected static ?string $navigationGroup = 'E-Mail';
+    protected static ?int $navigationSort = 10;
 
-    protected static ?int $navigationSort = 1;
+    public static function getNavigationBadge(): ?string
+    {
+        try {
+            $unreadCount = static::getModel()::unread()
+                ->whereJsonContains('labels', 'INBOX')
+                ->whereJsonDoesntContain('labels', 'TRASH')
+                ->count();
+                
+            $readCount = static::getModel()::read()
+                ->whereJsonContains('labels', 'INBOX')
+                ->whereJsonDoesntContain('labels', 'TRASH')
+                ->count();
+            
+            if ($unreadCount > 0 || $readCount > 0) {
+                // Format: "Gelesen|Ungelesen" z.B. "1|2"
+                return $readCount . '|' . $unreadCount;
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        try {
+            $unreadCount = static::getModel()::unread()
+                ->whereJsonContains('labels', 'INBOX')
+                ->whereJsonDoesntContain('labels', 'TRASH')
+                ->count();
+            
+            // Rote Farbe wenn ungelesene E-Mails vorhanden, sonst blau
+            return $unreadCount > 0 ? 'danger' : 'primary';
+        } catch (\Exception $e) {
+            return 'gray';
+        }
+    }
 
     public static function form(Form $form): Form
     {
@@ -573,59 +610,6 @@ class GmailEmailResource extends Resource
         ];
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        $unreadCount = static::getModel()::unread()
-            ->whereJsonContains('labels', 'INBOX')
-            ->whereJsonDoesntContain('labels', 'TRASH')
-            ->count();
-            
-        $readCount = static::getModel()::read()
-            ->whereJsonContains('labels', 'INBOX')
-            ->whereJsonDoesntContain('labels', 'TRASH')
-            ->count();
-        
-        // Zwei separate Badges ohne Symbole, mit 2px Abstand
-        if ($unreadCount > 0 || $readCount > 0) {
-            return '<span style="display: inline-flex; gap: 2px;">' .
-                   '<span style="background: #3b82f6; color: white; padding: 1px 6px; border-radius: 9999px; font-size: 11px; font-weight: 500;">' . $readCount . '</span>' .
-                   '<span style="background: #f97316; color: white; padding: 1px 6px; border-radius: 9999px; font-size: 11px; font-weight: 500;">' . $unreadCount . '</span>' .
-                   '</span>';
-        }
-        
-        return null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        $unreadCount = static::getModel()::unread()
-            ->whereJsonContains('labels', 'INBOX')
-            ->whereJsonDoesntContain('labels', 'TRASH')
-            ->count();
-        
-        if ($unreadCount > 10) {
-            return 'danger';
-        } elseif ($unreadCount > 0) {
-            return 'warning';
-        }
-        
-        return 'primary';
-    }
-
-    public static function getNavigationBadgeTooltip(): ?string
-    {
-        $unreadCount = static::getModel()::unread()
-            ->whereJsonContains('labels', 'INBOX')
-            ->whereJsonDoesntContain('labels', 'TRASH')
-            ->count();
-            
-        $readCount = static::getModel()::read()
-            ->whereJsonContains('labels', 'INBOX')
-            ->whereJsonDoesntContain('labels', 'TRASH')
-            ->count();
-        
-        return "Gelesen: {$readCount} | Ungelesen: {$unreadCount}";
-    }
 
     public static function canCreate(): bool
     {

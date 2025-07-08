@@ -28,10 +28,9 @@ class NotificationsPage extends Page implements HasTable, HasActions
     protected static ?string $title = 'Benachrichtigungen';
     
     protected static ?string $navigationLabel = 'Benachrichtigungen';
+
     
-    protected static ?string $navigationGroup = 'System';
-    
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 11;
     
     protected static string $view = 'filament.pages.notifications-page';
 
@@ -241,6 +240,37 @@ class NotificationsPage extends Page implements HasTable, HasActions
     public function getTableRecordUrlTarget($record): ?string
     {
         return $record->action_url ? '_blank' : null;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        try {
+            $unreadCount = Notification::query()
+                ->where('user_id', Auth::id())
+                ->unread()
+                ->notExpired()
+                ->count();
+            
+            return $unreadCount > 0 ? (string) $unreadCount : null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        try {
+            $unreadCount = Notification::query()
+                ->where('user_id', Auth::id())
+                ->unread()
+                ->notExpired()
+                ->count();
+            
+            // Rote Farbe wenn ungelesene Benachrichtigungen vorhanden, sonst keine Badge
+            return $unreadCount > 0 ? 'danger' : null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public static function shouldRegisterNavigation(): bool

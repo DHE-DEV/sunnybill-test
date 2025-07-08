@@ -23,6 +23,9 @@ use App\Models\CompanySetting;
 use Filament\Navigation\UserMenuItem;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
+use Filament\Navigation\NavigationBuilder;
+use Filament\Navigation\NavigationItem;
+use App\Models\GmailEmail;
 
 class AdminPanelProvider extends PanelProvider
 {
