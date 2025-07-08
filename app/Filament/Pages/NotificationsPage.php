@@ -22,7 +22,7 @@ class NotificationsPage extends Page implements HasTable, HasActions
 
     protected static ?string $navigationIcon = 'heroicon-o-bell';
     
-    protected static string $slug = 'notifications';
+    protected static ?string $slug = 'notifications';
     
     protected static ?string $title = 'Benachrichtigungen';
     
