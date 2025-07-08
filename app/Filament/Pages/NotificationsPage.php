@@ -21,9 +21,13 @@ class NotificationsPage extends Page implements HasTable, HasActions
     use InteractsWithActions;
 
     protected static ?string $navigationIcon = 'heroicon-o-bell';
-    protected static string $view = 'filament.pages.notifications-page';
+    
     protected static ?string $title = 'Benachrichtigungen';
+    
     protected static ?string $navigationLabel = 'Benachrichtigungen';
+    
+    protected static ?string $navigationGroup = 'System';
+    
     protected static ?int $navigationSort = 1;
 
     public function getTitle(): string
@@ -226,6 +230,6 @@ class NotificationsPage extends Page implements HasTable, HasActions
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false; // Wird über UserMenuItem registriert
+        return true;
     }
 }
