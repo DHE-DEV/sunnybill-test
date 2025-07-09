@@ -54,6 +54,6 @@ class Login extends BaseLogin
 
     protected function getRedirectUrl(): ?string
     {
-        return $this->getPanel()->getUrl();
+        return url('/admin');
     }
 }

@@ -113,7 +113,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 'panels::body.end',
-                fn (): string => view('layouts.filament-notifications')->render()
+                fn (): string => !request()->routeIs('filament.admin.auth.login')
+                    ? view('layouts.filament-notifications')->render()
+                    : ''
             );
     }
 }

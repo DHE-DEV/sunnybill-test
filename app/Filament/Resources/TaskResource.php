@@ -244,7 +244,8 @@ class TaskResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->width('120px')
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('parentTask.task_number')
                     ->label('Gehört zu')
@@ -448,6 +449,15 @@ class TaskResource extends Resource
                 Filter::make('main_tasks')
                     ->label('Hauptaufgaben')
                     ->query(fn (Builder $query): Builder => $query->mainTasks())
+                    ->toggle(),
+
+                Filter::make('my_tasks')
+                    ->label('Nur meine Aufgaben')
+                    ->query(fn (Builder $query): Builder => $query->where(function ($q) {
+                        $q->where('assigned_to', auth()->id())
+                          ->orWhere('owner_id', auth()->id())
+                          ->orWhere('created_by', auth()->id());
+                    }))
                     ->toggle(),
 
                 Tables\Filters\TrashedFilter::make(),

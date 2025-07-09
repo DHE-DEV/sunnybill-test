@@ -36,10 +36,27 @@ class UserResource extends Resource
                 Forms\Components\Section::make('Benutzerinformationen')
                     ->description('Grundlegende Informationen des Benutzers')
                     ->schema([
+                        Forms\Components\Select::make('salutation')
+                            ->label('Anrede')
+                            ->options(User::getSalutations())
+                            ->placeholder('Bitte wählen'),
+
                         Forms\Components\TextInput::make('name')
                             ->label('Name')
                             ->required()
                             ->maxLength(255),
+
+                        Forms\Components\TextInput::make('name_abbreviation')
+                            ->label('Namenskürzel')
+                            ->maxLength(10)
+                            ->helperText('Kurzes Kürzel für den Namen (max. 10 Zeichen)'),
+
+                        Forms\Components\Select::make('address_form')
+                            ->label('Ansprache')
+                            ->options(User::getAddressForms())
+                            ->default('du')
+                            ->required()
+                            ->helperText('Wie soll der Benutzer angesprochen werden?'),
 
                         Forms\Components\TextInput::make('email')
                             ->label('E-Mail')
@@ -147,10 +164,34 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('salutation')
+                    ->label('Anrede')
+                    ->formatStateUsing(fn (?string $state): string => $state ? User::getSalutations()[$state] ?? $state : '-')
+                    ->sortable()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->searchable()
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('name_abbreviation')
+                    ->label('Kürzel')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('address_form')
+                    ->label('Ansprache')
+                    ->formatStateUsing(fn (string $state): string => User::getAddressForms()[$state] ?? $state)
+                    ->badge()
+                    ->color(fn (string $state): string => match($state) {
+                        'ich' => 'info',
+                        'du' => 'success',
+                        default => 'gray'
+                    })
+                    ->sortable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-Mail')
@@ -213,6 +254,14 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('salutation')
+                    ->label('Anrede')
+                    ->options(User::getSalutations()),
+
+                Tables\Filters\SelectFilter::make('address_form')
+                    ->label('Ansprache')
+                    ->options(User::getAddressForms()),
+
                 Tables\Filters\SelectFilter::make('role')
                     ->label('Rolle')
                     ->options(User::getRoles()),
@@ -474,6 +523,24 @@ class UserResource extends Resource
                             }
                         }),
 
+                    Tables\Actions\Action::make('mark_password_changed')
+                        ->label('Passwort als gewechselt markieren')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->visible(fn ($record) => $record->password_change_required || $record->hasTemporaryPassword())
+                        ->requiresConfirmation()
+                        ->modalHeading('Passwort als gewechselt markieren')
+                        ->modalDescription(fn ($record) => "Möchten Sie für {$record->name} markieren, dass das Passwort bereits gewechselt wurde? Dies entfernt die Passwort-Wechsel-Anforderung und löscht temporäre Passwörter.")
+                        ->action(function ($record) {
+                            $record->markPasswordAsChanged();
+                            
+                            Notification::make()
+                                ->title('Passwort als gewechselt markiert')
+                                ->body("Für {$record->name} wurde das Passwort als gewechselt markiert. Die Passwort-Wechsel-Anforderung wurde entfernt.")
+                                ->success()
+                                ->send();
+                        }),
+
                     Tables\Actions\DeleteAction::make()
                         ->requiresConfirmation()
                         ->modalHeading('Benutzer löschen')
@@ -554,15 +621,30 @@ class UserResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['name', 'email', 'department'];
+        return ['name', 'email', 'department', 'name_abbreviation'];
     }
 
     public static function getGlobalSearchResultDetails($record): array
     {
-        return [
+        $details = [
             'E-Mail' => $record->email,
             'Rolle' => $record->role_label,
-            'Abteilung' => $record->department,
         ];
+
+        if ($record->salutation) {
+            $details['Anrede'] = $record->salutation_label;
+        }
+
+        if ($record->name_abbreviation) {
+            $details['Kürzel'] = $record->name_abbreviation;
+        }
+
+        $details['Ansprache'] = $record->address_form_label;
+
+        if ($record->department) {
+            $details['Abteilung'] = $record->department;
+        }
+
+        return $details;
     }
 }

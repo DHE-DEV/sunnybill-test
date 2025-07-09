@@ -37,6 +37,10 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'password_change_required',
         'password_changed_at',
         'company_setting_id',
+        // Neue Benutzerfelder
+        'salutation',
+        'name_abbreviation',
+        'address_form',
         // Gmail-Benachrichtigungseinstellungen
         'gmail_notifications_enabled',
         'gmail_notification_preferences',
@@ -111,6 +115,60 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             'user' => 'Benutzer',
             'viewer' => 'Betrachter',
         ];
+    }
+
+    /**
+     * Get available salutations
+     */
+    public static function getSalutations(): array
+    {
+        return [
+            'herr' => 'Herr',
+            'frau' => 'Frau',
+        ];
+    }
+
+    /**
+     * Get available address forms
+     */
+    public static function getAddressForms(): array
+    {
+        return [
+            'ich' => 'Ich',
+            'du' => 'Du',
+        ];
+    }
+
+    /**
+     * Get salutation label
+     */
+    public function getSalutationLabelAttribute(): ?string
+    {
+        return $this->salutation ? self::getSalutations()[$this->salutation] ?? $this->salutation : null;
+    }
+
+    /**
+     * Get address form label
+     */
+    public function getAddressFormLabelAttribute(): string
+    {
+        return self::getAddressForms()[$this->address_form] ?? $this->address_form;
+    }
+
+    /**
+     * Get full name with salutation
+     */
+    public function getFullNameWithSalutationAttribute(): string
+    {
+        $parts = [];
+        
+        if ($this->salutation) {
+            $parts[] = $this->salutation_label;
+        }
+        
+        $parts[] = $this->name;
+        
+        return implode(' ', $parts);
     }
 
     /**

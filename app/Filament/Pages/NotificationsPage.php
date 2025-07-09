@@ -318,7 +318,7 @@ class NotificationsPage extends Page implements HasTable, HasActions
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->width('120px'),
 
-                Tables\Columns\TextColumn::make('creator.name')
+                Tables\Columns\BadgeColumn::make('creator.name')
                     ->label('Absender')
                     ->formatStateUsing(function (Notification $record): string {
                         if (!$record->creator) {
@@ -333,22 +333,45 @@ class NotificationsPage extends Page implements HasTable, HasActions
                         
                         return $record->creator->name;
                     })
-                    ->color('gray')
+                    ->color(function (Notification $record): string {
+                        if (!$record->creator) {
+                            return 'gray';
+                        }
+                        
+                        // Wenn der aktuelle Benutzer der Ersteller ist, zeige grau
+                        $currentUser = auth()->user();
+                        if ($currentUser && $record->creator->id === $currentUser->id) {
+                            return 'gray';
+                        }
+                        
+                        // Andere Absender hellblau
+                        return 'info';
+                    })
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->width('150px'),
 
-                Tables\Columns\BadgeColumn::make('recipient')
+                Tables\Columns\TextColumn::make('recipient_display')
                     ->label('Empfänger')
-                    ->formatStateUsing(function (Notification $record): string {
+                    ->getStateUsing(function (Notification $record): string {
                         $currentUser = auth()->user();
+                        
+                        // Debug: Zeige alle relevanten Daten
+                        \Log::info('Recipient Debug', [
+                            'recipient_type' => $record->recipient_type,
+                            'user_id' => $record->user_id,
+                            'team_id' => $record->team_id,
+                            'current_user_id' => $currentUser?->id,
+                            'user_loaded' => $record->user ? $record->user->name : 'null',
+                            'team_loaded' => $record->team ? $record->team->name : 'null'
+                        ]);
                         
                         // Für Team-Benachrichtigungen
                         if ($record->recipient_type === 'team') {
-                            if ($record->team) {
+                            if ($record->team_id && $record->team) {
                                 return $record->team->name;
                             }
-                            return 'Team (unbekannt)';
+                            return 'Team (ID: ' . $record->team_id . ')';
                         }
                         
                         // Für Benutzer-Benachrichtigungen
@@ -356,16 +379,17 @@ class NotificationsPage extends Page implements HasTable, HasActions
                             if ($currentUser && $record->user_id === $currentUser->id) {
                                 return 'Ich';
                             }
-                            if ($record->user) {
+                            if ($record->user_id && $record->user) {
                                 return $record->user->name;
                             }
-                            return 'Benutzer (unbekannt)';
+                            return 'Benutzer (ID: ' . $record->user_id . ')';
                         }
                         
-                        return 'Unbekannt';
+                        return 'Typ: ' . $record->recipient_type;
                     })
+                    ->badge()
                     ->color(function (Notification $record): string {
-                        if ($record->recipient_type === 'team' && $record->team) {
+                        if ($record->recipient_type === 'team') {
                             return 'primary';
                         }
                         return 'gray';

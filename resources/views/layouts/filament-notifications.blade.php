@@ -90,10 +90,20 @@
             }
 
             async startPolling() {
+                // Only start polling if we're on the admin panel, not on login page
+                if (!window.location.pathname.startsWith('/admin') || window.location.pathname.includes('/login')) {
+                    return;
+                }
+                
                 let lastNotificationCount = 0;
                 
                 const checkForNewNotifications = async () => {
                     try {
+                        // Double check we're still on admin pages
+                        if (!window.location.pathname.startsWith('/admin') || window.location.pathname.includes('/login')) {
+                            return;
+                        }
+                        
                         const response = await fetch('/api/notifications/count');
                         if (!response.ok) {
                             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
