@@ -23,20 +23,7 @@ class FilamentNotificationServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Füge Benachrichtigungen zum User-Menü hinzu
-        Filament::serving(function () {
-            if (Auth::check()) {
-                $user = Auth::user();
-                $unreadCount = $user->unread_notifications_count;
-                
-                Filament::registerUserMenuItems([
-                    UserMenuItem::make()
-                        ->label('Benachrichtigungen' . ($unreadCount > 0 ? " ({$unreadCount})" : ''))
-                        ->url('/admin/notifications')
-                        ->icon('heroicon-o-bell')
-                        ->sort(1),
-                ]);
-            }
-        });
+        // Benachrichtigungen werden bereits im AdminPanelProvider definiert
+        // Keine doppelte Definition nötig
     }
 }

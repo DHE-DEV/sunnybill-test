@@ -239,6 +239,27 @@ class TaskResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('title')
+                    ->label('Titel')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->formatStateUsing(function (Task $record): string {
+                        $title = '<span style="color: #f59e0b; font-weight: bold;">' . e($record->title) . '</span>';
+                        $description = $record->description;
+                        
+                        if ($description && strlen($description) > 0) {
+                            $shortDescription = strlen($description) > 40
+                                ? substr($description, 0, 40) . '...'
+                                : $description;
+                            return $title . '<br><span style="color: #6b7280; font-size: 0.875rem; font-weight: normal;">' . e($shortDescription) . '</span>';
+                        }
+                        
+                        return $title;
+                    })
+                    ->html()
+                    ->wrap(),
+
                 TextColumn::make('task_number')
                     ->label('Nr.')
                     ->searchable()
@@ -258,28 +279,19 @@ class TaskResource extends Resource
                     ->color('primary')
                     ->weight('medium'),
                     
-                TextColumn::make('taskType.name')
+                BadgeColumn::make('taskType.name')
                     ->label('Typ')
-                    ->badge()
-                    ->color(fn (Task $record): string => $record->taskType->color ?? 'primary')
-                    ->icon(fn (Task $record): string => $record->taskType->icon ?? 'heroicon-o-clipboard-document-list')
+                    ->color('gray')
                     ->sortable()
                     ->toggleable(),
-
-                TextColumn::make('title')
-                    ->label('Titel')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold')
-                    ->limit(50),
 
                 BadgeColumn::make('priority')
                     ->label('Priorität')
                     ->colors([
-                        'secondary' => 'low',
-                        'primary' => 'medium',
-                        'warning' => 'high',
-                        'danger' => 'urgent',
+                        'gray' => 'low',
+                        'blue' => 'medium',
+                        'orange' => 'high',
+                        'red' => 'urgent',
                     ])
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'low' => 'Niedrig',
@@ -294,12 +306,12 @@ class TaskResource extends Resource
                 BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([
-                        'secondary' => 'open',
-                        'primary' => 'in_progress',
-                        'warning' => 'waiting_external',
-                        'info' => 'waiting_internal',
-                        'success' => 'completed',
-                        'danger' => 'cancelled',
+                        'gray' => 'open',
+                        'blue' => 'in_progress',
+                        'yellow' => 'waiting_external',
+                        'purple' => 'waiting_internal',
+                        'green' => 'completed',
+                        'red' => 'cancelled',
                     ])
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'open' => 'Offen',
@@ -338,7 +350,7 @@ class TaskResource extends Resource
                     ->label('Kunde')
                     ->searchable()
                     ->limit(30)
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('supplier.company_name')
                     ->label('Lieferant')
@@ -356,13 +368,13 @@ class TaskResource extends Resource
                     ->label('Geschätzt')
                     ->suffix(' min')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('actual_minutes')
                     ->label('Tatsächlich')
                     ->suffix(' min')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('subtasks_count')
                     ->label('Unteraufgaben')
@@ -458,6 +470,16 @@ class TaskResource extends Resource
                           ->orWhere('owner_id', auth()->id())
                           ->orWhere('created_by', auth()->id());
                     }))
+                    ->toggle(),
+
+                Filter::make('owned_by_me')
+                    ->label('Ich bin Inhaber')
+                    ->query(fn (Builder $query): Builder => $query->where('owner_id', auth()->id()))
+                    ->toggle(),
+
+                Filter::make('assigned_to_me')
+                    ->label('Mir zugewiesen')
+                    ->query(fn (Builder $query): Builder => $query->where('assigned_to', auth()->id()))
                     ->toggle(),
 
                 Tables\Filters\TrashedFilter::make(),

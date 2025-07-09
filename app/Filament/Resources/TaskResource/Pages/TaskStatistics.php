@@ -3,54 +3,37 @@
 namespace App\Filament\Resources\TaskResource\Pages;
 
 use App\Filament\Resources\TaskResource;
-use Filament\Actions;
-use Filament\Resources\Pages\ListRecords;
+use App\Models\Task;
+use App\Models\TaskType;
+use App\Models\User;
+use Filament\Resources\Pages\Page;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
 
-class ListTasks extends ListRecords
+class TaskStatistics extends Page
 {
     protected static string $resource = TaskResource::class;
     
-    protected static string $view = 'filament.resources.task-resource.pages.list-tasks';
-
-    public bool $showStatistics = false;
-
-    public function mount(): void
-    {
-        parent::mount();
-        // Prüfe URL-Parameter oder Session für den aktuellen Zustand
-        $this->showStatistics = request()->get('statistics', false);
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            Actions\Action::make('toggleView')
-                ->label(fn() => $this->showStatistics ? 'Aufgaben anzeigen' : 'Statistik anzeigen')
-                ->icon(fn() => $this->showStatistics ? 'heroicon-o-list-bullet' : 'heroicon-o-chart-bar')
-                ->color(fn() => $this->showStatistics ? 'primary' : 'primary')
-                ->action(function () {
-                    $this->showStatistics = !$this->showStatistics;
-                }),
-            
-            Actions\CreateAction::make()
-                ->icon('heroicon-o-plus'),
-        ];
-    }
+    protected static string $view = 'filament.resources.task-resource.pages.task-statistics';
+    
+    protected static ?string $title = 'Aufgaben Statistiken';
+    
+    protected static ?string $navigationLabel = 'Statistiken';
 
     public function getTitle(): string
     {
-        return $this->showStatistics ? 'Aufgaben Statistiken' : 'Aufgaben';
+        return 'Aufgaben Statistiken';
     }
 
     public function getStatistics(): array
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
         
         // Basis-Query für alle Aufgaben
-        $allTasksQuery = TaskResource::getEloquentQuery();
+        $allTasksQuery = Task::query();
         
         // Basis-Query für meine Aufgaben
-        $myTasksQuery = TaskResource::getEloquentQuery()->where(function ($q) use ($userId) {
+        $myTasksQuery = Task::query()->where(function ($q) use ($userId) {
             $q->where('assigned_to', $userId)
               ->orWhere('owner_id', $userId)
               ->orWhere('created_by', $userId);
@@ -74,9 +57,9 @@ class ListTasks extends ListRecords
                 'completed' => (clone $myTasksQuery)->where('status', 'completed')->count(),
                 'overdue' => (clone $myTasksQuery)->overdue()->count(),
                 'due_today' => (clone $myTasksQuery)->dueToday()->count(),
-                'assigned_to_me' => TaskResource::getEloquentQuery()->where('assigned_to', $userId)->count(),
-                'owned_by_me' => TaskResource::getEloquentQuery()->where('owner_id', $userId)->count(),
-                'created_by_me' => TaskResource::getEloquentQuery()->where('created_by', $userId)->count(),
+                'assigned_to_me' => Task::where('assigned_to', $userId)->count(),
+                'owned_by_me' => Task::where('owner_id', $userId)->count(),
+                'created_by_me' => Task::where('created_by', $userId)->count(),
             ],
             'priority_distribution' => $this->getPriorityDistribution($allTasksQuery),
             'status_distribution' => $this->getStatusDistribution($allTasksQuery),
@@ -101,7 +84,7 @@ class ListTasks extends ListRecords
         $distribution = [];
         $priorityLabels = [
             'low' => 'Niedrig',
-            'medium' => 'Mittel',
+            'medium' => 'Mittel', 
             'high' => 'Hoch',
             'urgent' => 'Dringend'
         ];
@@ -199,6 +182,7 @@ class ListTasks extends ListRecords
 
     private function getProductivityStats($query): array
     {
+        $userId = Auth::id();
         $now = now();
         
         // Aufgaben der letzten 30 Tage
@@ -261,7 +245,7 @@ class ListTasks extends ListRecords
     private function getTeamStats(): array
     {
         // Top 5 aktivste Benutzer (nach Anzahl zugewiesener Aufgaben)
-        $topAssignees = TaskResource::getEloquentQuery()
+        $topAssignees = Task::query()
             ->join('users', 'tasks.assigned_to', '=', 'users.id')
             ->selectRaw('users.name, COUNT(*) as task_count')
             ->groupBy('users.id', 'users.name')
@@ -271,7 +255,7 @@ class ListTasks extends ListRecords
             ->toArray();
         
         // Top 5 Aufgaben-Ersteller
-        $topCreators = TaskResource::getEloquentQuery()
+        $topCreators = Task::query()
             ->join('users', 'tasks.created_by', '=', 'users.id')
             ->selectRaw('users.name, COUNT(*) as task_count')
             ->groupBy('users.id', 'users.name')

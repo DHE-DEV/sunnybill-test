@@ -12,9 +12,15 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Support\Enums\MaxWidth;
+use Illuminate\Support\Facades\Auth;
 
 class GmailEmailResource extends Resource
 {
+
     protected static ?string $model = GmailEmail::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-envelope';
@@ -26,6 +32,10 @@ class GmailEmailResource extends Resource
     protected static ?string $pluralModelLabel = 'Gmail E-Mails';
 
     protected static ?int $navigationSort = 10;
+
+    public string $currentSort = 'date';
+    public string $activeTab = 'inbox';
+    public bool $showStatistics = false;
 
     public static function getNavigationBadge(): ?string
     {
