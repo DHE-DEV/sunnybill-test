@@ -57,17 +57,25 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
+        <!-- Header mit Schließen-Button -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-800">PDF-Analyse</h1>
                     <p class="text-gray-600 mt-2">{{ $analysis['filename'] }}</p>
                 </div>
-                <div class="text-right">
-                    <p class="text-sm text-gray-500">E-Mail von:</p>
-                    <p class="font-medium">{{ $email->from_string }}</p>
-                    <p class="text-sm text-gray-500 mt-1">{{ $email->gmail_date->format('d.m.Y H:i') }}</p>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm text-gray-500">E-Mail von:</p>
+                        <p class="font-medium">{{ $email->from_string }}</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ $email->gmail_date->format('d.m.Y H:i') }}</p>
+                    </div>
+                    <button onclick="window.close()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Schließen
+                    </button>
                 </div>
             </div>
         </div>
