@@ -261,4 +261,8 @@ Route::prefix('admin/gmail')->middleware('auth')->group(function () {
         ->name('gmail.attachment.analyze');
     Route::get('/emails/{email}/attachments/{attachment}/analyze-json', [App\Http\Controllers\PdfAnalysisController::class, 'analyzePdf'])
         ->name('gmail.attachment.analyze.json');
+    Route::get('/emails/{email}/attachments/{attachment}/analyze-variable', [App\Http\Controllers\PdfAnalysisController::class, 'showVariableAnalysis'])
+        ->name('gmail.attachment.analyze.variable');
+    Route::get('/emails/{email}/attachments/{attachment}/analyze-variable-json', [App\Http\Controllers\PdfAnalysisController::class, 'analyzeWithVariableSystem'])
+        ->name('gmail.attachment.analyze.variable.json');
 });

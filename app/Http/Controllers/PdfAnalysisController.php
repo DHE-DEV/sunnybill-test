@@ -5,12 +5,29 @@ namespace App\Http\Controllers;
 use App\Models\GmailEmail;
 use App\Models\SupplierContract;
 use App\Services\GmailService;
+use App\Services\SupplierRecognitionService;
+use App\Services\RuleBasedExtractionService;
+use App\Services\ContractMatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Smalot\PdfParser\Parser;
 
 class PdfAnalysisController extends Controller
 {
+    protected $supplierRecognitionService;
+    protected $ruleBasedExtractionService;
+    protected $contractMatchingService;
+
+    public function __construct(
+        SupplierRecognitionService $supplierRecognitionService,
+        RuleBasedExtractionService $ruleBasedExtractionService,
+        ContractMatchingService $contractMatchingService
+    ) {
+        $this->supplierRecognitionService = $supplierRecognitionService;
+        $this->ruleBasedExtractionService = $ruleBasedExtractionService;
+        $this->contractMatchingService = $contractMatchingService;
+    }
+
     public function analyzePdf(Request $request, $emailUuid, $attachmentId)
     {
         try {
@@ -122,6 +139,81 @@ class PdfAnalysisController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Fehler bei der PDF-Analyse: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Analysiert PDF mit dem neuen variablen PDF-Analyse-System
+     */
+    public function analyzeWithVariableSystem(Request $request, $emailUuid, $attachmentId)
+    {
+        try {
+            // Gmail Email finden
+            $email = GmailEmail::where('uuid', $emailUuid)->firstOrFail();
+            
+            // Gmail Service initialisieren
+            $gmailService = new GmailService();
+            
+            // PDF-Anhang herunterladen
+            $attachmentData = $gmailService->downloadAttachment($email->gmail_id, $attachmentId);
+            
+            if (!$attachmentData) {
+                return response()->json([
+                    'error' => 'PDF-Anhang konnte nicht geladen werden.'
+                ], 404);
+            }
+            
+            // PDF-Daten sind bereits dekodiert
+            $pdfContent = $attachmentData;
+            
+            // PDF Parser initialisieren
+            $parser = new Parser();
+            $pdf = $parser->parseContent($pdfContent);
+            
+            // Text aus allen Seiten extrahieren
+            $allText = '';
+            $pages = $pdf->getPages();
+            
+            foreach ($pages as $pageNumber => $page) {
+                $pageText = $page->getText();
+                $allText .= $pageText . "\n\n";
+            }
+
+            // Variables PDF-Analyse-System anwenden
+            $variableAnalysis = $this->performVariableAnalysis($allText, $email);
+            
+            // Grundlegende PDF-Informationen (wie bisher)
+            $basicAnalysis = [
+                'basic_info' => [
+                    'title' => $pdf->getDetails()['Title'] ?? 'Nicht verfügbar',
+                    'author' => $pdf->getDetails()['Author'] ?? 'Nicht verfügbar',
+                    'subject' => $pdf->getDetails()['Subject'] ?? 'Nicht verfügbar',
+                    'creator' => $pdf->getDetails()['Creator'] ?? 'Nicht verfügbar',
+                    'producer' => $pdf->getDetails()['Producer'] ?? 'Nicht verfügbar',
+                    'creation_date' => $pdf->getDetails()['CreationDate'] ?? 'Nicht verfügbar',
+                    'modification_date' => $pdf->getDetails()['ModDate'] ?? 'Nicht verfügbar',
+                    'page_count' => count($pdf->getPages()),
+                ],
+                'metadata' => $pdf->getDetails(),
+                'text_content' => $allText,
+                'file_info' => [
+                    'size' => strlen($pdfContent),
+                    'size_formatted' => $this->formatBytes(strlen($pdfContent)),
+                    'mime_type' => 'application/pdf',
+                ]
+            ];
+
+            return response()->json([
+                'success' => true,
+                'analysis_type' => 'variable_system',
+                'basic_analysis' => $basicAnalysis,
+                'variable_analysis' => $variableAnalysis,
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Fehler bei der variablen PDF-Analyse: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -248,8 +340,11 @@ class PdfAnalysisController extends Controller
             // E-Mail-Weiterleitung-Analyse
             $analysis['forwarding_analysis'] = $this->analyzeEmailForwarding($email, $allText);
             
-            // Vertragserkennung
+            // Vertragserkennung (alte Methode)
             $analysis['contract_recognition'] = $this->recognizeContracts($allText, $email);
+
+            // Neue variable PDF-Analyse hinzufügen
+            $analysis['variable_analysis'] = $this->performVariableAnalysis($allText, $email);
 
             return $this->showAnalysisPage($analysis, $email);
 
@@ -1609,6 +1704,178 @@ class PdfAnalysisController extends Controller
             return 'Mittel';
         } else {
             return 'Niedrig';
+        }
+    }
+
+    /**
+     * Führt die variable PDF-Analyse durch
+     */
+    private function performVariableAnalysis($pdfText, $email = null)
+    {
+        $analysis = [
+            'supplier_recognition' => null,
+            'extracted_data' => null,
+            'contract_matching' => null,
+            'processing_time' => null,
+            'confidence_scores' => [],
+            'errors' => [],
+        ];
+
+        $startTime = microtime(true);
+
+        try {
+            // Schritt 1: Lieferanten-Erkennung
+            $supplierResult = $this->supplierRecognitionService->recognizeSupplier($pdfText);
+            $analysis['supplier_recognition'] = $supplierResult;
+
+            if ($supplierResult['success'] && !empty($supplierResult['recognized_supplier'])) {
+                $recognizedSupplier = $supplierResult['recognized_supplier'];
+                
+                // Schritt 2: Regelbasierte Datenextraktion
+                $extractionResult = $this->ruleBasedExtractionService->extractData(
+                    $pdfText,
+                    $recognizedSupplier['supplier_id']
+                );
+                $analysis['extracted_data'] = $extractionResult;
+
+                // Schritt 3: Vertragszuordnung
+                if ($extractionResult['success'] && !empty($extractionResult['extracted_data'])) {
+                    $contractResult = $this->contractMatchingService->findMatchingContract(
+                        $extractionResult['extracted_data'],
+                        $recognizedSupplier['supplier_id']
+                    );
+                    $analysis['contract_matching'] = $contractResult;
+                }
+            } else {
+                // Fallback: Versuche Datenextraktion ohne spezifischen Lieferanten
+                $extractionResult = $this->ruleBasedExtractionService->extractDataWithoutSupplier($pdfText);
+                $analysis['extracted_data'] = $extractionResult;
+                
+                // Versuche Vertragszuordnung mit extrahierten Daten
+                if ($extractionResult['success'] && !empty($extractionResult['extracted_data'])) {
+                    $contractResult = $this->contractMatchingService->findMatchingContractByData(
+                        $extractionResult['extracted_data']
+                    );
+                    $analysis['contract_matching'] = $contractResult;
+                }
+            }
+
+            // Sammle Confidence Scores
+            $analysis['confidence_scores'] = $this->collectConfidenceScores($analysis);
+
+        } catch (\Exception $e) {
+            $analysis['errors'][] = 'Fehler bei der variablen Analyse: ' . $e->getMessage();
+        }
+
+        $analysis['processing_time'] = round((microtime(true) - $startTime) * 1000, 2) . ' ms';
+
+        return $analysis;
+    }
+
+    /**
+     * Sammelt Confidence Scores aus allen Analyseschritten
+     */
+    private function collectConfidenceScores($analysis)
+    {
+        $scores = [];
+
+        if (isset($analysis['supplier_recognition']['confidence_score'])) {
+            $scores['supplier_recognition'] = $analysis['supplier_recognition']['confidence_score'];
+        }
+
+        if (isset($analysis['extracted_data']['confidence_score'])) {
+            $scores['data_extraction'] = $analysis['extracted_data']['confidence_score'];
+        }
+
+        if (isset($analysis['contract_matching']['confidence_score'])) {
+            $scores['contract_matching'] = $analysis['contract_matching']['confidence_score'];
+        }
+
+        // Berechne Gesamt-Confidence
+        if (!empty($scores)) {
+            $scores['overall'] = round(array_sum($scores) / count($scores), 2);
+        }
+
+        return $scores;
+    }
+
+    /**
+     * Erweitert die showAnalysis Methode um das variable System
+     */
+    public function showVariableAnalysis($emailUuid, $attachmentId)
+    {
+        try {
+            // Gmail Email finden
+            $email = GmailEmail::where('uuid', $emailUuid)->firstOrFail();
+            
+            if (!$email->has_attachments) {
+                return $this->showError('Diese E-Mail hat keine Anhänge.');
+            }
+
+            $pdfAttachments = $email->getPdfAttachments();
+            $targetAttachment = null;
+            
+            foreach ($pdfAttachments as $attachment) {
+                if (($attachment['id'] ?? $attachment['attachmentId'] ?? null) === $attachmentId) {
+                    $targetAttachment = $attachment;
+                    break;
+                }
+            }
+
+            if (!$targetAttachment) {
+                return $this->showError('PDF-Anhang nicht gefunden.');
+            }
+
+            // Gmail Service initialisieren
+            $gmailService = new GmailService();
+            $attachmentData = $gmailService->downloadAttachment($email->gmail_id, $attachmentId);
+            
+            if (!$attachmentData) {
+                return $this->showError('Anhang-Daten konnten nicht geladen werden.');
+            }
+
+            // PDF-Daten sind bereits dekodiert
+            $pdfContent = $attachmentData;
+            
+            // PDF Parser initialisieren
+            $parser = new Parser();
+            $pdf = $parser->parseContent($pdfContent);
+            
+            // Text aus allen Seiten extrahieren
+            $allText = '';
+            $pages = $pdf->getPages();
+            
+            foreach ($pages as $pageNumber => $page) {
+                $pageText = $page->getText();
+                $allText .= $pageText . "\n\n";
+            }
+
+            // Variables PDF-Analyse-System anwenden
+            $variableAnalysis = $this->performVariableAnalysis($allText, $email);
+            
+            // Grundlegende Analyse (vereinfacht)
+            $analysis = [
+                'filename' => $targetAttachment['filename'] ?? 'Unbekannte Datei',
+                'basic_info' => [
+                    'title' => $pdf->getDetails()['Title'] ?? 'Nicht verfügbar',
+                    'page_count' => count($pdf->getPages()),
+                ],
+                'text_content' => $allText,
+                'file_info' => [
+                    'size' => strlen($pdfContent),
+                    'size_formatted' => $this->formatBytes(strlen($pdfContent)),
+                    'mime_type' => 'application/pdf',
+                ],
+                'variable_analysis' => $variableAnalysis,
+            ];
+
+            return response()->view('pdf-analysis.variable-show', [
+                'analysis' => $analysis,
+                'email' => $email
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->showError('Fehler bei der variablen PDF-Analyse: ' . $e->getMessage());
         }
     }
 }

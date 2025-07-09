@@ -129,6 +129,22 @@ class SupplierContract extends Model
     }
 
     /**
+     * Beziehung zu Contract Matching Rules
+     */
+    public function contractMatchingRules(): HasMany
+    {
+        return $this->hasMany(ContractMatchingRule::class);
+    }
+
+    /**
+     * Aktive Contract Matching Rules
+     */
+    public function activeContractMatchingRules(): HasMany
+    {
+        return $this->contractMatchingRules()->active();
+    }
+
+    /**
      * Scope für aktive Verträge
      */
     public function scopeActive($query)

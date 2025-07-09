@@ -188,6 +188,70 @@ class Supplier extends Model
     }
 
     /**
+     * Beziehung zu Recognition Patterns
+     */
+    public function recognitionPatterns(): HasMany
+    {
+        return $this->hasMany(SupplierRecognitionPattern::class);
+    }
+
+    /**
+     * Aktive Recognition Patterns
+     */
+    public function activeRecognitionPatterns(): HasMany
+    {
+        return $this->recognitionPatterns()->active();
+    }
+
+    /**
+     * Beziehung zu PDF Extraction Rules
+     */
+    public function pdfExtractionRules(): HasMany
+    {
+        return $this->hasMany(PdfExtractionRule::class);
+    }
+
+    /**
+     * Aktive PDF Extraction Rules
+     */
+    public function activePdfExtractionRules(): HasMany
+    {
+        return $this->pdfExtractionRules()->active();
+    }
+
+    /**
+     * Beziehung zu Recognition Patterns
+     */
+    public function recognitionPatterns(): HasMany
+    {
+        return $this->hasMany(SupplierRecognitionPattern::class);
+    }
+
+    /**
+     * Aktive Recognition Patterns
+     */
+    public function activeRecognitionPatterns(): HasMany
+    {
+        return $this->recognitionPatterns()->active();
+    }
+
+    /**
+     * Beziehung zu PDF Extraction Rules
+     */
+    public function pdfExtractionRules(): HasMany
+    {
+        return $this->hasMany(PdfExtractionRule::class);
+    }
+
+    /**
+     * Aktive PDF Extraction Rules
+     */
+    public function activePdfExtractionRules(): HasMany
+    {
+        return $this->pdfExtractionRules()->active();
+    }
+
+    /**
      * Polymorphe Beziehung zu Dokumenten
      */
     public function documents(): MorphMany
