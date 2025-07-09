@@ -214,8 +214,7 @@ class GmailEmailResource extends Resource
                             }),
                     ])
                     ->visible(fn ($record) => $record && $record->has_attachments && $record->hasPdfAttachments())
-                    ->collapsible()
-                    ->collapsed(),
+                    ->collapsible(),
             ]);
     }
 
