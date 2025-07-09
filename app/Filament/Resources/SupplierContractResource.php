@@ -44,10 +44,18 @@ class SupplierContractResource extends Resource
                             ->preload()
                             ->required(),
                         Forms\Components\TextInput::make('contract_number')
-                            ->label('Vertragsnummer')
+                            ->label('Vertragsnummer intern')
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
+                        Forms\Components\TextInput::make('creditor_number')
+                            ->label('Kreditorennummer')
+                            ->maxLength(255)
+                            ->placeholder('z.B. KR-12345'),
+                        Forms\Components\TextInput::make('external_contract_number')
+                            ->label('Vertragsnummer extern')
+                            ->maxLength(255)
+                            ->placeholder('z.B. EXT-2024-001'),
                         Forms\Components\TextInput::make('title')
                             ->label('Titel')
                             ->required()
@@ -82,6 +90,23 @@ class SupplierContractResource extends Resource
                                 'CHF' => 'Schweizer Franken (CHF)',
                             ])
                             ->default('EUR'),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Vertragserkennung')
+                    ->description('Diese Informationen werden zur automatischen Vertragserkennung benötigt. Es müssen nicht alle Felder befüllt werden.')
+                    ->schema([
+                        Forms\Components\TextInput::make('contract_recognition_1')
+                            ->label('Vertragserkennung 1')
+                            ->maxLength(255)
+                            ->placeholder('z.B. Erkennungsmerkmal 1'),
+                        Forms\Components\TextInput::make('contract_recognition_2')
+                            ->label('Vertragserkennung 2')
+                            ->maxLength(255)
+                            ->placeholder('z.B. Erkennungsmerkmal 2'),
+                        Forms\Components\TextInput::make('contract_recognition_3')
+                            ->label('Vertragserkennung 3')
+                            ->maxLength(255)
+                            ->placeholder('z.B. Erkennungsmerkmal 3'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Zusätzliche Informationen')

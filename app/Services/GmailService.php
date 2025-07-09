@@ -627,6 +627,25 @@ class GmailService
     }
 
     /**
+     * Lädt einen einzelnen Anhang herunter
+     */
+    public function downloadAttachment(string $messageId, string $attachmentId): ?string
+    {
+        try {
+            $attachmentData = $this->makeApiRequest("/messages/{$messageId}/attachments/{$attachmentId}");
+            
+            if (isset($attachmentData['data'])) {
+                return $this->decodeBody($attachmentData['data']);
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            Log::error("Failed to download attachment {$attachmentId} from message {$messageId}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Lädt nur PDF-Anhänge herunter und erstellt eine ZIP-Datei
      */
     public function downloadPdfAttachments(string $messageId, array $attachments): ?string

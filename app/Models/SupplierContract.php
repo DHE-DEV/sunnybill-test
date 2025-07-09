@@ -18,6 +18,8 @@ class SupplierContract extends Model
     protected $fillable = [
         'supplier_id',
         'contract_number',
+        'creditor_number',
+        'external_contract_number',
         'title',
         'description',
         'start_date',
@@ -27,6 +29,9 @@ class SupplierContract extends Model
         'status',
         'payment_terms',
         'notes',
+        'contract_recognition_1',
+        'contract_recognition_2',
+        'contract_recognition_3',
         'is_active',
         'created_by',
     ];

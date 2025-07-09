@@ -150,14 +150,21 @@ class GmailEmailResource extends Resource
                             ->tabs([
                                 Forms\Components\Tabs\Tab::make('Formatiert')
                                     ->schema([
-                                        Forms\Components\ViewField::make('formatted_html')
+                                        Forms\Components\Textarea::make('body_html')
                                             ->label('E-Mail-Inhalt (formatiert)')
-                                            ->view('filament.components.gmail-html-content')
-                                            ->viewData(fn ($record) => [
-                                                'html_content' => $record ? $record->body_html : '',
-                                                'text_content' => $record ? $record->body_text : '',
-                                                'subject' => $record ? $record->subject : '',
-                                            ]),
+                                            ->rows(20)
+                                            ->disabled()
+                                            ->formatStateUsing(function ($state, $record) {
+                                                if (!$record) return 'Kein Inhalt verfügbar';
+                                                
+                                                if (!empty($record->body_html)) {
+                                                    return strip_tags($record->body_html);
+                                                } elseif (!empty($record->body_text)) {
+                                                    return $record->body_text;
+                                                }
+                                                
+                                                return 'Kein E-Mail-Inhalt verfügbar';
+                                            }),
                                     ]),
                                 
                                 Forms\Components\Tabs\Tab::make('Text')
@@ -181,40 +188,131 @@ class GmailEmailResource extends Resource
                 
                 Forms\Components\Section::make('PDF-Anhänge')
                     ->schema([
-                        Forms\Components\Repeater::make('pdf_attachments')
-                            ->label('PDF-Anhänge')
+                        Forms\Components\Repeater::make('pdf_attachments_display')
+                            ->label('')
                             ->schema([
-                                Forms\Components\TextInput::make('filename')
-                                    ->label('Dateiname')
-                                    ->disabled(),
+                                Forms\Components\Grid::make(3)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('filename')
+                                            ->label('Dateiname')
+                                            ->disabled(),
+                                        
+                                        Forms\Components\TextInput::make('size')
+                                            ->label('Größe')
+                                            ->disabled(),
+                                        
+                                        Forms\Components\TextInput::make('type')
+                                            ->label('Typ')
+                                            ->disabled(),
+                                        
+                                        Forms\Components\Hidden::make('attachment_id'),
+                                    ]),
                                 
-                                Forms\Components\TextInput::make('mimeType')
-                                    ->label('MIME-Type')
-                                    ->disabled(),
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('download_url')
+                                            ->label('Download-Link')
+                                            ->disabled()
+                                            ->suffixAction(
+                                                Forms\Components\Actions\Action::make('download')
+                                                    ->icon('heroicon-o-arrow-down-tray')
+                                                    ->url(fn ($state) => $state)
+                                                    ->openUrlInNewTab(false)
+                                            ),
+                                        
+                                        Forms\Components\TextInput::make('preview_url')
+                                            ->label('Vorschau-Link')
+                                            ->disabled()
+                                            ->suffixAction(
+                                                Forms\Components\Actions\Action::make('preview')
+                                                    ->icon('heroicon-o-eye')
+                                                    ->url(fn ($state) => $state)
+                                                    ->openUrlInNewTab(true)
+                                            ),
+                                    ]),
                                 
-                                Forms\Components\TextInput::make('size')
-                                    ->label('Größe')
-                                    ->disabled(),
+                                Forms\Components\Grid::make(1)
+                                    ->schema([
+                                        Forms\Components\Actions::make([
+                                            Forms\Components\Actions\Action::make('analyze_pdf')
+                                                ->label('PDF analysieren')
+                                                ->icon('heroicon-o-document-magnifying-glass')
+                                                ->color('info')
+                                                ->action(function ($livewire, $state, $get) {
+                                                    $record = $livewire->record;
+                                                    $attachmentId = $get('attachment_id');
+                                                    
+                                                    if (!$attachmentId) {
+                                                        \Filament\Notifications\Notification::make()
+                                                            ->title('Fehler')
+                                                            ->body('Anhang-ID nicht gefunden')
+                                                            ->danger()
+                                                            ->send();
+                                                        return;
+                                                    }
+                                                    
+                                                    try {
+                                                        $analyzeUrl = route('gmail.attachment.analyze', [
+                                                            'email' => $record->uuid,
+                                                            'attachment' => $attachmentId
+                                                        ]);
+                                                        
+                                                        // Redirect zur Analyse-URL in neuem Tab
+                                                        $livewire->js("window.open('{$analyzeUrl}', '_blank');");
+                                                        
+                                                    } catch (\Exception $e) {
+                                                        \Filament\Notifications\Notification::make()
+                                                            ->title('Fehler')
+                                                            ->body('Fehler beim Öffnen der PDF-Analyse: ' . $e->getMessage())
+                                                            ->danger()
+                                                            ->send();
+                                                    }
+                                                }),
+                                        ])
+                                    ]),
                             ])
                             ->disabled()
-                            ->columns(3)
-                            ->default(function ($record) {
-                                if (!$record || !$record->attachments) {
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->formatStateUsing(function ($state, $record) {
+                                if (!$record || !$record->has_attachments || !$record->hasPdfAttachments()) {
                                     return [];
                                 }
                                 
-                                // Filtere nur PDF-Anhänge
-                                return collect($record->attachments)->filter(function ($attachment) {
-                                    $mimeType = $attachment['mimeType'] ?? '';
-                                    $filename = $attachment['filename'] ?? '';
+                                $pdfAttachments = $record->getPdfAttachments();
+                                if (empty($pdfAttachments)) {
+                                    return [];
+                                }
+                                
+                                $formattedAttachments = [];
+                                foreach ($pdfAttachments as $attachment) {
+                                    $filename = $attachment['filename'] ?? 'Unbekannte Datei';
+                                    $size = isset($attachment['size']) ? number_format($attachment['size'] / 1024, 1) . ' KB' : 'Unbekannt';
+                                    $attachmentId = $attachment['id'] ?? $attachment['attachmentId'] ?? null;
                                     
-                                    return $mimeType === 'application/pdf' ||
-                                           str_ends_with(strtolower($filename), '.pdf');
-                                })->values()->toArray();
+                                    $downloadUrl = '';
+                                    $previewUrl = '';
+                                    
+                                    if ($attachmentId) {
+                                        $downloadUrl = route('gmail.attachment.download', ['email' => $record->uuid, 'attachment' => $attachmentId]);
+                                        $previewUrl = route('gmail.attachment.preview', ['email' => $record->uuid, 'attachment' => $attachmentId]);
+                                    }
+                                    
+                                    $formattedAttachments[] = [
+                                        'filename' => $filename,
+                                        'size' => $size,
+                                        'type' => 'PDF',
+                                        'download_url' => $downloadUrl,
+                                        'preview_url' => $previewUrl,
+                                        'attachment_id' => $attachmentId,
+                                    ];
+                                }
+                                
+                                return $formattedAttachments;
                             }),
                     ])
-                    ->visible(fn ($record) => $record && $record->has_attachments && $record->hasPdfAttachments())
-                    ->collapsible(),
+                    ->visible(fn ($record) => $record && $record->has_attachments && $record->hasPdfAttachments()),
             ]);
     }
 

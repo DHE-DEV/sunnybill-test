@@ -45,6 +45,14 @@ class SupplierResource extends Resource
                             ->options(SupplierType::active()->ordered()->pluck('name', 'id'))
                             ->searchable()
                             ->preload(),
+                        Forms\Components\TextInput::make('creditor_number')
+                            ->label('Kreditorennummer')
+                            ->maxLength(255)
+                            ->placeholder('z.B. 12345'),
+                        Forms\Components\TextInput::make('contract_number')
+                            ->label('Vertragsnummer')
+                            ->maxLength(255)
+                            ->placeholder('z.B. V-2024-001'),
                         Forms\Components\TextInput::make('contact_person')
                             ->label('Ansprechpartner')
                             ->maxLength(255),
@@ -74,6 +82,23 @@ class SupplierResource extends Resource
                             ->label('Land')
                             ->default('Deutschland')
                             ->maxLength(255),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Vertragserkennung')
+                    ->description('Diese Informationen werden zur automatischen Vertragserkennung benötigt. Es müssen nicht alle Felder befüllt werden.')
+                    ->schema([
+                        Forms\Components\TextInput::make('contract_recognition_1')
+                            ->label('Vertragserkennung 1')
+                            ->maxLength(255)
+                            ->placeholder('z.B. Erkennungsmerkmal 1'),
+                        Forms\Components\TextInput::make('contract_recognition_2')
+                            ->label('Vertragserkennung 2')
+                            ->maxLength(255)
+                            ->placeholder('z.B. Erkennungsmerkmal 2'),
+                        Forms\Components\TextInput::make('contract_recognition_3')
+                            ->label('Vertragserkennung 3')
+                            ->maxLength(255)
+                            ->placeholder('z.B. Erkennungsmerkmal 3'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Steuerliche Daten')
@@ -119,6 +144,18 @@ class SupplierResource extends Resource
                     ->label('Lieferanten-Nr.')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('creditor_number')
+                    ->label('Kreditorennummer')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
+                Tables\Columns\TextColumn::make('contract_number')
+                    ->label('Vertragsnummer')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
                 Tables\Columns\TextColumn::make('company_name')
                     ->label('Firmenname')
                     ->searchable()

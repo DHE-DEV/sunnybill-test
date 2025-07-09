@@ -250,3 +250,15 @@ Route::prefix('admin/gmail/oauth')->group(function () {
     Route::get('/test', [App\Http\Controllers\GmailOAuthController::class, 'test'])
         ->name('gmail.oauth.test');
 });
+
+// Gmail Attachment Routes
+Route::prefix('admin/gmail')->middleware('auth')->group(function () {
+    Route::get('/emails/{email}/attachments/{attachment}/download', [App\Http\Controllers\GmailAttachmentController::class, 'download'])
+        ->name('gmail.attachment.download');
+    Route::get('/emails/{email}/attachments/{attachment}/preview', [App\Http\Controllers\GmailAttachmentController::class, 'preview'])
+        ->name('gmail.attachment.preview');
+    Route::get('/emails/{email}/attachments/{attachment}/analyze', [App\Http\Controllers\PdfAnalysisController::class, 'showAnalysis'])
+        ->name('gmail.attachment.analyze');
+    Route::get('/emails/{email}/attachments/{attachment}/analyze-json', [App\Http\Controllers\PdfAnalysisController::class, 'analyzePdf'])
+        ->name('gmail.attachment.analyze.json');
+});
