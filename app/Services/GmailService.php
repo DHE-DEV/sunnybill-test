@@ -627,6 +627,86 @@ class GmailService
     }
 
     /**
+     * Lädt nur PDF-Anhänge herunter und erstellt eine ZIP-Datei
+     */
+    public function downloadPdfAttachments(string $messageId, array $attachments): ?string
+    {
+        // Filtere nur PDF-Anhänge
+        $pdfAttachments = array_filter($attachments, function ($attachment) {
+            $mimeType = $attachment['mimeType'] ?? '';
+            $filename = $attachment['filename'] ?? '';
+            
+            return $mimeType === 'application/pdf' ||
+                   str_ends_with(strtolower($filename), '.pdf');
+        });
+
+        if (empty($pdfAttachments)) {
+            return null;
+        }
+
+        $tempFiles = [];
+        $zipFileName = "pdf_attachments_{$messageId}_" . date('Y-m-d_H-i-s') . '.zip';
+        $zipPath = storage_path("app/temp/{$zipFileName}");
+
+        // Stelle sicher, dass das temp-Verzeichnis existiert
+        if (!file_exists(dirname($zipPath))) {
+            mkdir(dirname($zipPath), 0755, true);
+        }
+
+        try {
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath, \ZipArchive::CREATE) !== TRUE) {
+                throw new \Exception('Konnte ZIP-Datei nicht erstellen');
+            }
+
+            foreach ($pdfAttachments as $attachment) {
+                if (!isset($attachment['id'])) {
+                    continue;
+                }
+
+                try {
+                    $attachmentData = $this->makeApiRequest("/messages/{$messageId}/attachments/{$attachment['id']}");
+                    
+                    if (isset($attachmentData['data'])) {
+                        $fileContent = $this->decodeBody($attachmentData['data']);
+                        $filename = $attachment['filename'] ?? "attachment_{$attachment['id']}.pdf";
+                        
+                        // Füge Datei zur ZIP hinzu
+                        $zip->addFromString($filename, $fileContent);
+                        
+                        Log::info("PDF attachment added to ZIP", [
+                            'gmail_id' => $messageId,
+                            'filename' => $filename,
+                            'size' => strlen($fileContent)
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Failed to download PDF attachment {$attachment['id']}: " . $e->getMessage());
+                }
+            }
+
+            $zip->close();
+
+            // Prüfe ob ZIP-Datei erstellt wurde und Inhalt hat
+            if (file_exists($zipPath) && filesize($zipPath) > 0) {
+                return $zipPath;
+            } else {
+                throw new \Exception('ZIP-Datei konnte nicht erstellt werden oder ist leer');
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Failed to create PDF attachments ZIP: " . $e->getMessage());
+            
+            // Aufräumen bei Fehler
+            if (file_exists($zipPath)) {
+                unlink($zipPath);
+            }
+            
+            return null;
+        }
+    }
+
+    /**
      * Speichert einen Anhang
      */
     private function saveAttachment(string $messageId, array $attachment, string $content): ?string

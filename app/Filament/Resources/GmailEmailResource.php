@@ -179,10 +179,10 @@ class GmailEmailResource extends Resource
                     ])
                     ->collapsible(),
                 
-                Forms\Components\Section::make('Anhänge')
+                Forms\Components\Section::make('PDF-Anhänge')
                     ->schema([
-                        Forms\Components\Repeater::make('attachments')
-                            ->label('Anhänge')
+                        Forms\Components\Repeater::make('pdf_attachments')
+                            ->label('PDF-Anhänge')
                             ->schema([
                                 Forms\Components\TextInput::make('filename')
                                     ->label('Dateiname')
@@ -197,9 +197,23 @@ class GmailEmailResource extends Resource
                                     ->disabled(),
                             ])
                             ->disabled()
-                            ->columns(3),
+                            ->columns(3)
+                            ->default(function ($record) {
+                                if (!$record || !$record->attachments) {
+                                    return [];
+                                }
+                                
+                                // Filtere nur PDF-Anhänge
+                                return collect($record->attachments)->filter(function ($attachment) {
+                                    $mimeType = $attachment['mimeType'] ?? '';
+                                    $filename = $attachment['filename'] ?? '';
+                                    
+                                    return $mimeType === 'application/pdf' ||
+                                           str_ends_with(strtolower($filename), '.pdf');
+                                })->values()->toArray();
+                            }),
                     ])
-                    ->visible(fn ($record) => $record && $record->has_attachments)
+                    ->visible(fn ($record) => $record && $record->has_attachments && $record->hasPdfAttachments())
                     ->collapsible()
                     ->collapsed(),
             ]);

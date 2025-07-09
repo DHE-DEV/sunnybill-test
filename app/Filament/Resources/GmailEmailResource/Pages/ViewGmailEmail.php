@@ -173,28 +173,33 @@ class ViewGmailEmail extends ViewRecord
                     }
                 }),
             
-            Actions\Action::make('download_attachments')
-                ->label('Anhänge herunterladen')
+            Actions\Action::make('download_pdf_attachments')
+                ->label('PDF-Anhänge herunterladen')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('primary')
-                ->visible(fn () => $this->record->has_attachments)
+                ->visible(fn () => $this->record->hasPdfAttachments())
                 ->action(function () {
                     try {
                         $gmailService = new GmailService();
-                        $downloadedFiles = $gmailService->downloadAttachments($this->record->gmail_id);
+                        $pdfAttachments = $this->record->getPdfAttachments();
                         
-                        if (!empty($downloadedFiles)) {
-                            Notification::make()
-                                ->title('Anhänge heruntergeladen')
-                                ->body(count($downloadedFiles) . ' Datei(en) heruntergeladen')
-                                ->success()
-                                ->send();
+                        if (empty($pdfAttachments)) {
+                            throw new \Exception('Keine PDF-Anhänge zum Herunterladen gefunden');
+                        }
+                        
+                        $zipPath = $gmailService->downloadPdfAttachments($this->record->gmail_id, $pdfAttachments);
+                        
+                        if ($zipPath && file_exists($zipPath)) {
+                            $fileName = basename($zipPath);
+                            
+                            // Download-Response erstellen
+                            return response()->download($zipPath, $fileName)->deleteFileAfterSend(true);
                         } else {
-                            throw new \Exception('Keine Anhänge zum Herunterladen gefunden');
+                            throw new \Exception('ZIP-Datei konnte nicht erstellt werden');
                         }
                     } catch (\Exception $e) {
                         Notification::make()
-                            ->title('Fehler beim Herunterladen')
+                            ->title('Fehler beim Herunterladen der PDF-Anhänge')
                             ->body($e->getMessage())
                             ->danger()
                             ->send();

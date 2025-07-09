@@ -301,6 +301,42 @@ class GmailEmail extends Model
     }
 
     /**
+     * Prüft ob die E-Mail PDF-Anhänge hat
+     */
+    public function hasPdfAttachments(): bool
+    {
+        if (!$this->has_attachments || !$this->attachments) {
+            return false;
+        }
+
+        return collect($this->attachments)->contains(function ($attachment) {
+            $mimeType = $attachment['mimeType'] ?? '';
+            $filename = $attachment['filename'] ?? '';
+            
+            return $mimeType === 'application/pdf' ||
+                   str_ends_with(strtolower($filename), '.pdf');
+        });
+    }
+
+    /**
+     * Gibt nur PDF-Anhänge zurück
+     */
+    public function getPdfAttachments()
+    {
+        if (!$this->has_attachments || !$this->attachments) {
+            return collect([]);
+        }
+
+        return collect($this->attachments)->filter(function ($attachment) {
+            $mimeType = $attachment['mimeType'] ?? '';
+            $filename = $attachment['filename'] ?? '';
+            
+            return $mimeType === 'application/pdf' ||
+                   str_ends_with(strtolower($filename), '.pdf');
+        });
+    }
+
+    /**
      * Lädt einen Anhang herunter
      */
     public function downloadAttachment(string $attachmentId): ?string
