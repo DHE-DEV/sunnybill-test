@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CompanySettingResource\Pages;
 use App\Models\CompanySetting;
+use App\Services\DocumentFormBuilder;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -146,19 +147,19 @@ class CompanySettingResource extends Resource
                             ->schema([
                                 Forms\Components\Section::make('Logo-Upload')
                                     ->schema([
-                                        Forms\Components\FileUpload::make('logo_path')
-                                            ->label('Firmenlogo')
-                                            ->image()
-                                            ->directory('company-logos')
-                                            ->visibility('public')
-                                            ->imageEditor()
-                                            ->imageEditorAspectRatios([
-                                                null,
-                                                '16:9',
-                                                '4:3',
-                                                '1:1',
-                                            ])
-                                            ->helperText('Empfohlene Formate: PNG, JPG, SVG. Wird anstatt des Textes "SunnyBill" angezeigt.'),
+                                        DocumentFormBuilder::quickUpload([
+                                            'fileLabel' => 'Firmenlogo',
+                                            'required' => false,
+                                            'image' => true,
+                                            'acceptedFileTypes' => ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'],
+                                            'maxSize' => 5120, // 5MB
+                                            'directory' => '', // Root-Verzeichnis
+                                            'preserveFilenames' => false,
+                                            'timestampFilenames' => true,
+                                            'columnSpanFull' => false,
+                                        ])
+                                            ->name('logo_path')
+                                            ->helperText('Empfohlene Formate: PNG, JPG, SVG. Wird anstatt des Textes "SunnyBill" angezeigt. Wird automatisch in DigitalOcean Spaces gespeichert.'),
                                     ]),
                                 
                                 Forms\Components\Section::make('Logo-Größe')
