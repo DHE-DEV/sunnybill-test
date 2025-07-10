@@ -147,19 +147,42 @@ class CompanySettingResource extends Resource
                             ->schema([
                                 Forms\Components\Section::make('Logo-Upload')
                                     ->schema([
-                                        DocumentFormBuilder::quickUpload([
-                                            'fileLabel' => 'Firmenlogo',
-                                            'required' => false,
-                                            'image' => true,
-                                            'acceptedFileTypes' => ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'],
-                                            'maxSize' => 5120, // 5MB
-                                            'directory' => '', // Root-Verzeichnis
-                                            'preserveFilenames' => false,
-                                            'timestampFilenames' => true,
-                                            'columnSpanFull' => false,
-                                        ])
-                                            ->name('logo_path')
-                                            ->helperText('Empfohlene Formate: PNG, JPG, SVG. Wird anstatt des Textes "SunnyBill" angezeigt. Wird automatisch in DigitalOcean Spaces gespeichert.'),
+                                        Forms\Components\FileUpload::make('logo_path')
+                                            ->label('Firmenlogo')
+                                            ->required(false)
+                                            ->image()
+                                            ->imageEditor()
+                                            ->imageEditorAspectRatios([
+                                                '16:9',
+                                                '4:3',
+                                                '1:1',
+                                            ])
+                                            ->acceptedFileTypes(['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'])
+                                            ->maxSize(5120) // 5MB
+                                            ->disk('s3') // Direkt DigitalOcean Spaces verwenden
+                                            ->directory('') // Root-Verzeichnis
+                                            ->preserveFilenames(false)
+                                            ->getUploadedFileNameForStorageUsing(function ($file) {
+                                                // Zeitstempel-basierte Benennung für Logos
+                                                $pathInfo = pathinfo($file->getClientOriginalName());
+                                                $name = $pathInfo['filename'] ?? 'logo';
+                                                $extension = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
+                                                
+                                                // Bereinige den ursprünglichen Namen
+                                                $cleanName = preg_replace('/[^\w\-_.]/', '-', $name);
+                                                $cleanName = preg_replace('/-+/', '-', $cleanName);
+                                                $cleanName = trim($cleanName, '-');
+                                                
+                                                if (empty($cleanName)) {
+                                                    $cleanName = 'logo';
+                                                }
+                                                
+                                                // Generiere Zeitstempel
+                                                $timestamp = now()->format('Y-m-d_H-i-s');
+                                                
+                                                return $cleanName . '_' . $timestamp . $extension;
+                                            })
+                                            ->helperText('Empfohlene Formate: PNG, JPG, SVG. Wird anstatt des Textes "SunnyBill" angezeigt. Wird automatisch in DigitalOcean Spaces im Root-Verzeichnis gespeichert.'),
                                     ]),
                                 
                                 Forms\Components\Section::make('Logo-Größe')
