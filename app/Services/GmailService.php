@@ -219,6 +219,14 @@ class GmailService
         if (!$response->successful()) {
             $error = 'Gmail API request failed: ' . $response->body();
             $this->settings->setGmailLastError($error);
+            
+            // Prüfe auf Rate Limit (429) und protokolliere es
+            if ($response->status() === 429) {
+                $this->handleRateLimit($response, $endpoint);
+                // Für Rate Limits werfen wir eine spezielle Exception
+                throw new \Exception('RATE_LIMIT_EXCEEDED: ' . $error);
+            }
+            
             throw new \Exception($error);
         }
 
@@ -631,16 +639,55 @@ class GmailService
      */
     public function downloadAttachment(string $messageId, string $attachmentId): ?string
     {
+        \Log::info('Gmail API: Starte Anhang-Download', [
+            'message_id' => $messageId,
+            'attachment_id' => $attachmentId,
+            'api_endpoint' => "/messages/{$messageId}/attachments/{$attachmentId}"
+        ]);
+        
         try {
             $attachmentData = $this->makeApiRequest("/messages/{$messageId}/attachments/{$attachmentId}");
             
+            Log::info('Gmail API: API-Request erfolgreich', [
+                'message_id' => $messageId,
+                'attachment_id' => $attachmentId,
+                'response_keys' => array_keys($attachmentData),
+                'has_data_field' => isset($attachmentData['data']),
+                'data_size' => isset($attachmentData['data']) ? strlen($attachmentData['data']) : 0
+            ]);
+            
             if (isset($attachmentData['data'])) {
-                return $this->decodeBody($attachmentData['data']);
+                $decodedData = $this->decodeBody($attachmentData['data']);
+                
+                Log::info('Gmail API: Anhang-Download erfolgreich', [
+                    'message_id' => $messageId,
+                    'attachment_id' => $attachmentId,
+                    'encoded_size' => strlen($attachmentData['data']),
+                    'decoded_size' => $decodedData ? strlen($decodedData) : 0,
+                    'decode_success' => $decodedData !== null
+                ]);
+                
+                return $decodedData;
+            } else {
+                Log::warning('Gmail API: Keine Daten im Response', [
+                    'message_id' => $messageId,
+                    'attachment_id' => $attachmentId,
+                    'response_keys' => array_keys($attachmentData),
+                    'full_response' => $attachmentData
+                ]);
             }
             
             return null;
         } catch (\Exception $e) {
-            Log::error("Failed to download attachment {$attachmentId} from message {$messageId}: " . $e->getMessage());
+            \Log::error('Gmail API: Anhang-Download fehlgeschlagen', [
+                'message_id' => $messageId,
+                'attachment_id' => $attachmentId,
+                'error_message' => $e->getMessage(),
+                'error_class' => get_class($e),
+                'error_code' => method_exists($e, 'getCode') ? $e->getCode() : null,
+                'error_line' => $e->getLine(),
+                'error_file' => $e->getFile()
+            ]);
             return null;
         }
     }
@@ -981,6 +1028,89 @@ class GmailService
         } catch (\Exception $e) {
             Log::error('Failed to create Gmail log entry: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Behandelt Gmail API Rate Limits
+     */
+    private function handleRateLimit($response, string $endpoint): void
+    {
+        $responseBody = $response->json();
+        $retryAfter = null;
+        
+        // Extrahiere Retry-After Zeit aus der Fehlermeldung
+        if (isset($responseBody['error']['message'])) {
+            $message = $responseBody['error']['message'];
+            if (preg_match('/Retry after (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/', $message, $matches)) {
+                $retryAfter = $matches[1];
+            }
+        }
+        
+        \Log::warning('Gmail API Rate Limit erreicht', [
+            'endpoint' => $endpoint,
+            'retry_after' => $retryAfter,
+            'response_status' => $response->status(),
+            'error_message' => $responseBody['error']['message'] ?? 'Unknown error',
+            'current_time' => now()->toISOString(),
+            'suggested_action' => 'Warten Sie bis zum angegebenen Zeitpunkt oder reduzieren Sie die API-Anfragen'
+        ]);
+        
+        // Speichere Rate Limit Info in den Einstellungen
+        $this->settings->setGmailLastError(
+            "Rate Limit erreicht. Retry nach: " . ($retryAfter ?? 'unbekannt')
+        );
+    }
+
+    /**
+     * Lädt einen einzelnen Anhang herunter mit Rate Limit Behandlung
+     */
+    public function downloadAttachmentWithRetry(string $messageId, string $attachmentId, int $maxRetries = 3): ?string
+    {
+        $attempt = 0;
+        
+        while ($attempt < $maxRetries) {
+            try {
+                return $this->downloadAttachment($messageId, $attachmentId);
+            } catch (\Exception $e) {
+                $attempt++;
+                
+                // Prüfe ob es ein Rate Limit Fehler ist
+                if (strpos($e->getMessage(), 'RATE_LIMIT_EXCEEDED') !== false ||
+                    strpos($e->getMessage(), 'User-rate limit exceeded') !== false) {
+                    
+                    if ($attempt < $maxRetries) {
+                        $waitTime = pow(2, $attempt) * 60; // Exponential backoff: 2, 4, 8 Minuten
+                        
+                        \Log::info('Rate Limit Retry', [
+                            'message_id' => $messageId,
+                            'attachment_id' => $attachmentId,
+                            'attempt' => $attempt,
+                            'max_retries' => $maxRetries,
+                            'wait_time_seconds' => $waitTime,
+                            'next_retry_at' => now()->addSeconds($waitTime)->toISOString(),
+                            'error_message' => $e->getMessage()
+                        ]);
+                        
+                        sleep($waitTime);
+                        continue;
+                    }
+                }
+                
+                // Für andere Fehler oder wenn max retries erreicht
+                \Log::error('Download Attachment Retry Failed', [
+                    'message_id' => $messageId,
+                    'attachment_id' => $attachmentId,
+                    'attempt' => $attempt,
+                    'max_retries' => $maxRetries,
+                    'error_message' => $e->getMessage(),
+                    'final_attempt' => true
+                ]);
+                
+                throw $e;
+            }
+        }
+        
+        return null;
     }
 
     /**

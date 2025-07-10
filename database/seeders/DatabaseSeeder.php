@@ -23,6 +23,9 @@ class DatabaseSeeder extends Seeder
             SolarPlantMilestoneSeeder::class,
             PlantParticipationSeeder::class,
             SupplierSeeder::class,
+            SupplierRecognitionPatternSeeder::class,
+            PdfExtractionRuleSeeder::class,
+            ContractMatchingRuleSeeder::class,
         ]);
     }
 }

@@ -266,3 +266,13 @@ Route::prefix('admin/gmail')->middleware('auth')->group(function () {
     Route::get('/emails/{email}/attachments/{attachment}/analyze-variable-json', [App\Http\Controllers\PdfAnalysisController::class, 'analyzeWithVariableSystem'])
         ->name('gmail.attachment.analyze.variable.json');
 });
+
+// Uploaded PDF Routes
+Route::prefix('admin/uploaded-pdfs')->middleware('auth')->group(function () {
+    Route::get('/{uploadedPdf}/download', [App\Http\Controllers\UploadedPdfController::class, 'download'])
+        ->name('uploaded-pdfs.download');
+    Route::get('/{uploadedPdf}/view-pdf', [App\Http\Controllers\UploadedPdfController::class, 'viewPdf'])
+        ->name('uploaded-pdfs.view-pdf');
+    Route::get('/{uploadedPdf}/analyze', [App\Http\Controllers\UploadedPdfController::class, 'analyze'])
+        ->name('uploaded-pdfs.analyze');
+});

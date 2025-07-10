@@ -16,12 +16,19 @@ class SupplierRecognitionPattern extends Model
         'pattern_value',
         'description',
         'confidence_weight',
+        'priority',
+        'is_regex',
+        'case_sensitive',
+        'test_examples',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'confidence_weight' => 'integer',
+        'is_regex' => 'boolean',
+        'case_sensitive' => 'boolean',
+        'confidence_weight' => 'float',
+        'priority' => 'integer',
     ];
 
     /**

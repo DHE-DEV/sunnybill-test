@@ -38,7 +38,8 @@ class PdfAnalysisController extends Controller
             $gmailService = new GmailService();
             
             // PDF-Anhang herunterladen
-            $attachmentData = $gmailService->downloadAttachment($email->gmail_id, $attachmentId);
+            // Verwende die neue Retry-Methode für Rate-Limit-Behandlung
+            $attachmentData = $gmailService->downloadAttachmentWithRetry($email->gmail_id, $attachmentId, 3);
             
             if (!$attachmentData) {
                 return response()->json([
@@ -156,7 +157,8 @@ class PdfAnalysisController extends Controller
             $gmailService = new GmailService();
             
             // PDF-Anhang herunterladen
-            $attachmentData = $gmailService->downloadAttachment($email->gmail_id, $attachmentId);
+            // Verwende die neue Retry-Methode für Rate-Limit-Behandlung
+            $attachmentData = $gmailService->downloadAttachmentWithRetry($email->gmail_id, $attachmentId, 3);
             
             if (!$attachmentData) {
                 return response()->json([
@@ -245,20 +247,74 @@ class PdfAnalysisController extends Controller
                 return $this->showError('PDF-Anhang nicht gefunden.');
             }
 
-            // Gmail Service initialisieren
-            $gmailService = new GmailService();
-            $attachmentData = $gmailService->downloadAttachment($email->gmail_id, $attachmentId);
+            \Log::info('PDF-Analyse: Starte Anhang-Laden', [
+                'email_id' => $email->id,
+                'email_uuid' => $email->uuid,
+                'gmail_id' => $email->gmail_id,
+                'attachment_id' => $attachmentId,
+                'email_subject' => $email->subject,
+                'has_attachments' => $email->has_attachments
+            ]);
+            
+            // Versuche zuerst die lokale Datei zu laden
+            $attachmentData = $this->getAttachmentData($email, $targetAttachment, $attachmentId);
             
             if (!$attachmentData) {
+                \Log::error('PDF-Analyse: Anhang-Daten konnten nicht geladen werden', [
+                    'email_id' => $email->id,
+                    'email_uuid' => $email->uuid,
+                    'gmail_id' => $email->gmail_id,
+                    'attachment_id' => $attachmentId,
+                    'error' => 'Weder lokale Datei noch Gmail API-Download erfolgreich',
+                    'email_subject' => $email->subject
+                ]);
                 return $this->showError('Anhang-Daten konnten nicht geladen werden.');
             }
+            
+            \Log::info('PDF-Analyse: Anhang-Daten erfolgreich geladen', [
+                'email_id' => $email->id,
+                'attachment_id' => $attachmentId,
+                'data_size' => strlen($attachmentData),
+                'data_type' => gettype($attachmentData)
+            ]);
 
             // PDF-Daten sind bereits dekodiert
             $pdfContent = $attachmentData;
             
+            \Log::info('PDF-Analyse: Starte PDF-Parsing', [
+                'email_id' => $email->id,
+                'attachment_id' => $attachmentId,
+                'pdf_content_size' => strlen($pdfContent),
+                'pdf_content_preview' => substr($pdfContent, 0, 100),
+                'memory_usage_before' => memory_get_usage(true)
+            ]);
+            
             // PDF Parser initialisieren
-            $parser = new Parser();
-            $pdf = $parser->parseContent($pdfContent);
+            try {
+                $parser = new Parser();
+                $pdf = $parser->parseContent($pdfContent);
+                
+                \Log::info('PDF-Analyse: PDF-Parsing erfolgreich', [
+                    'email_id' => $email->id,
+                    'attachment_id' => $attachmentId,
+                    'page_count' => count($pdf->getPages()),
+                    'memory_usage_after' => memory_get_usage(true),
+                    'pdf_details_count' => count($pdf->getDetails())
+                ]);
+                
+            } catch (\Exception $e) {
+                \Log::error('PDF-Analyse: PDF-Parsing fehlgeschlagen', [
+                    'email_id' => $email->id,
+                    'attachment_id' => $attachmentId,
+                    'error_message' => $e->getMessage(),
+                    'error_class' => get_class($e),
+                    'error_line' => $e->getLine(),
+                    'error_file' => $e->getFile(),
+                    'pdf_content_size' => strlen($pdfContent),
+                    'memory_usage' => memory_get_usage(true)
+                ]);
+                throw $e; // Re-throw für normale Fehlerbehandlung
+            }
             
             // Analyse durchführen (gleiche Logik wie analyzePdf)
             $analysis = [
@@ -1800,6 +1856,101 @@ class PdfAnalysisController extends Controller
     }
 
     /**
+     * Lädt Anhang-Daten - zuerst aus lokalem Storage, dann von Gmail API
+     */
+    private function getAttachmentData($email, $targetAttachment, $attachmentId): ?string
+    {
+        // Versuche zuerst lokale Datei zu laden
+        $localPath = $this->getLocalAttachmentPath($email, $targetAttachment);
+        
+        \Log::info('PDF-Analyse: Prüfe lokale Datei', [
+            'email_id' => $email->id,
+            'attachment_id' => $attachmentId,
+            'local_path' => $localPath,
+            'file_exists' => \Storage::exists($localPath)
+        ]);
+        
+        if (\Storage::exists($localPath)) {
+            try {
+                $fileContent = \Storage::get($localPath);
+                \Log::info('PDF-Analyse: Lokale Datei erfolgreich geladen', [
+                    'email_id' => $email->id,
+                    'attachment_id' => $attachmentId,
+                    'local_path' => $localPath,
+                    'file_size' => strlen($fileContent)
+                ]);
+                return $fileContent;
+            } catch (\Exception $e) {
+                \Log::warning('PDF-Analyse: Fehler beim Laden der lokalen Datei', [
+                    'email_id' => $email->id,
+                    'attachment_id' => $attachmentId,
+                    'local_path' => $localPath,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        // Fallback: Lade von Gmail API
+        \Log::info('PDF-Analyse: Fallback zu Gmail API', [
+            'email_id' => $email->id,
+            'attachment_id' => $attachmentId,
+            'reason' => 'Lokale Datei nicht verfügbar'
+        ]);
+        
+        try {
+            $gmailService = new \App\Services\GmailService();
+            $attachmentData = $gmailService->downloadAttachmentWithRetry($email->gmail_id, $attachmentId, 3);
+            
+            if ($attachmentData) {
+                // Speichere für zukünftige Verwendung
+                try {
+                    \Storage::put($localPath, $attachmentData);
+                    \Log::info('PDF-Analyse: Datei lokal gespeichert', [
+                        'email_id' => $email->id,
+                        'attachment_id' => $attachmentId,
+                        'local_path' => $localPath,
+                        'file_size' => strlen($attachmentData)
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::warning('PDF-Analyse: Fehler beim lokalen Speichern', [
+                        'email_id' => $email->id,
+                        'attachment_id' => $attachmentId,
+                        'local_path' => $localPath,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                
+                return $attachmentData;
+            }
+        } catch (\Exception $e) {
+            \Log::error('PDF-Analyse: Gmail API-Download fehlgeschlagen', [
+                'email_id' => $email->id,
+                'attachment_id' => $attachmentId,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        return null;
+    }
+
+    /**
+     * Ermittelt den lokalen Speicherpfad für einen Anhang
+     */
+    private function getLocalAttachmentPath($email, $attachment): string
+    {
+        $settings = \App\Models\CompanySetting::current();
+        $attachmentPath = $settings->gmail_attachment_path ?? 'gmail-attachments';
+        
+        // Erstelle Verzeichnisstruktur: gmail-attachments/YYYY/MM/DD/gmail_id/
+        $datePath = $email->gmail_date ? $email->gmail_date->format('Y/m/d') : date('Y/m/d');
+        $fullPath = "{$attachmentPath}/{$datePath}/{$email->gmail_id}";
+        
+        $filename = $attachment['filename'] ?? "attachment_{$attachment['id']}";
+        
+        return "{$fullPath}/{$filename}";
+    }
+
+    /**
      * Erweitert die showAnalysis Methode um das variable System
      */
     public function showVariableAnalysis($emailUuid, $attachmentId)
@@ -1828,7 +1979,8 @@ class PdfAnalysisController extends Controller
 
             // Gmail Service initialisieren
             $gmailService = new GmailService();
-            $attachmentData = $gmailService->downloadAttachment($email->gmail_id, $attachmentId);
+            // Verwende die neue Retry-Methode für Rate-Limit-Behandlung
+            $attachmentData = $gmailService->downloadAttachmentWithRetry($email->gmail_id, $attachmentId, 3);
             
             if (!$attachmentData) {
                 return $this->showError('Anhang-Daten konnten nicht geladen werden.');

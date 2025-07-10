@@ -38,6 +38,7 @@ class SupplierRecognitionService
                 }
                 
                 $matchDetails[$supplierId][] = [
+                    'pattern_id' => $pattern->id,
                     'pattern_type' => $pattern->pattern_type,
                     'pattern_value' => $pattern->pattern_value,
                     'score' => $score,
@@ -209,6 +210,7 @@ class SupplierRecognitionService
                 }
                 
                 $matchDetails[$supplierId][] = [
+                    'pattern_id' => $pattern->id,
                     'pattern_type' => $pattern->pattern_type,
                     'pattern_value' => $pattern->pattern_value,
                     'score' => $score,

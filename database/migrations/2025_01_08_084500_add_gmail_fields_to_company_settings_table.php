@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('company_settings', function (Blueprint $table) {
             // Gmail OAuth2 Konfiguration
-            $table->boolean('gmail_enabled')->default(false)->after('lexware_last_error');
+            $table->boolean('gmail_enabled')->default(false)->after('portal_enabled');
             $table->string('gmail_client_id')->nullable()->after('gmail_enabled');
             $table->text('gmail_client_secret')->nullable()->after('gmail_client_id');
             $table->text('gmail_refresh_token')->nullable()->after('gmail_client_secret');

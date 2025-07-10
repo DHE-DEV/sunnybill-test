@@ -43,8 +43,8 @@ class GmailAttachmentController extends Controller
                 return $this->serveLocalFile($localPath, $attachment, true);
             }
 
-            // If not found locally, download from Gmail API
-            $fileContent = $this->gmailService->downloadAttachment($email->gmail_id, $attachmentId);
+            // If not found locally, download from Gmail API with retry logic
+            $fileContent = $this->gmailService->downloadAttachmentWithRetry($email->gmail_id, $attachmentId, 3);
             
             if (!$fileContent) {
                 abort(404, 'Anhang konnte nicht heruntergeladen werden');
@@ -115,8 +115,8 @@ class GmailAttachmentController extends Controller
                 return $this->serveLocalFile($localPath, $attachment, false);
             }
 
-            // If not found locally, download from Gmail API
-            $fileContent = $this->gmailService->downloadAttachment($email->gmail_id, $attachmentId);
+            // If not found locally, download from Gmail API with retry logic
+            $fileContent = $this->gmailService->downloadAttachmentWithRetry($email->gmail_id, $attachmentId, 3);
             
             if (!$fileContent) {
                 abort(404, 'Anhang konnte nicht heruntergeladen werden');

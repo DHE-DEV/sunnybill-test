@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('supplier_recognition_patterns', function (Blueprint $table) {
             $table->id();
-            $table->char('supplier_id', 36);
+            $table->char('supplier_id', 36)->nullable();
             $table->foreign('supplier_id')->references('id')->on('suppliers')->onDelete('cascade');
             $table->enum('pattern_type', [
                 'email_domain',

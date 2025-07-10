@@ -29,14 +29,17 @@ class RuleBasedExtractionService
 
         $extractedData = [];
         $extractionLog = [];
+        $usedRuleIds = [];
 
         foreach ($rules as $rule) {
             $value = $rule->extractWithFallback($pdfText);
             
             if ($value !== null) {
                 $extractedData[$rule->field_name] = $this->cleanExtractedValue($value, $rule->field_name);
+                $usedRuleIds[] = $rule->id;
                 
                 $extractionLog[] = [
+                    'rule_id' => $rule->id,
                     'field_name' => $rule->field_name,
                     'extraction_method' => $rule->extraction_method,
                     'pattern' => $rule->pattern,
@@ -65,7 +68,10 @@ class RuleBasedExtractionService
             'extraction_log' => $extractionLog
         ]);
 
-        return $extractedData;
+        return [
+            'data' => $extractedData,
+            'used_rule_ids' => array_unique($usedRuleIds),
+        ];
     }
 
     /**
@@ -73,6 +79,7 @@ class RuleBasedExtractionService
      */
     private function cleanExtractedValue(string $value, string $fieldName): string
     {
+        $originalValue = $value;
         $cleaned = trim($value);
 
         switch ($fieldName) {
@@ -108,6 +115,17 @@ class RuleBasedExtractionService
                 // Standard-Bereinigung: Entferne überflüssige Leerzeichen
                 $cleaned = preg_replace('/\s+/', ' ', $cleaned);
                 break;
+        }
+
+        // Log wenn Bereinigung einen leeren String produziert
+        if (empty($cleaned) && !empty($originalValue)) {
+            Log::warning('Bereinigung produzierte leeren String', [
+                'field_name' => $fieldName,
+                'original_value' => $originalValue,
+                'original_length' => strlen($originalValue),
+                'cleaned_value' => $cleaned,
+                'cleaned_length' => strlen($cleaned)
+            ]);
         }
 
         return $cleaned;
@@ -243,7 +261,18 @@ class RuleBasedExtractionService
      */
     public function extractDataWithConfidence(Supplier $supplier, string $pdfText): array
     {
-        $extractedData = $this->extractData($supplier, $pdfText);
+        $extractionResult = $this->extractData($supplier, $pdfText);
+        
+        if (empty($extractionResult)) {
+            return [
+                'extracted_data' => [],
+                'used_rule_ids' => [],
+                'confidence_scores' => [],
+                'overall_confidence' => 0,
+            ];
+        }
+
+        $extractedData = $extractionResult['data'];
         $confidenceScores = [];
 
         foreach ($extractedData as $fieldName => $value) {
@@ -253,6 +282,7 @@ class RuleBasedExtractionService
 
         return [
             'extracted_data' => $extractedData,
+            'used_rule_ids' => $extractionResult['used_rule_ids'],
             'confidence_scores' => $confidenceScores,
             'overall_confidence' => empty($confidenceScores) ? 0 : array_sum($confidenceScores) / count($confidenceScores),
         ];
@@ -300,9 +330,20 @@ class RuleBasedExtractionService
         }
 
         // Erhöhe Confidence wenn der Wert mehrfach im Text vorkommt
-        $occurrences = substr_count($pdfText, $value);
-        if ($occurrences > 1) {
-            $confidence += min(0.2, $occurrences * 0.05);
+        // Prüfe auf leeren String um substr_count Fehler zu vermeiden
+        if (empty($value)) {
+            Log::warning('Leerer Wert in calculateFieldConfidence gefunden', [
+                'field_name' => $fieldName,
+                'value' => $value,
+                'value_length' => strlen($value),
+                'pdf_text_preview' => substr($pdfText, 0, 200)
+            ]);
+            $confidence -= 0.3; // Reduziere Confidence für leere Werte
+        } else {
+            $occurrences = substr_count($pdfText, $value);
+            if ($occurrences > 1) {
+                $confidence += min(0.2, $occurrences * 0.05);
+            }
         }
 
         return max(0.0, min(1.0, $confidence));

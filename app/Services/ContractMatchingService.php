@@ -14,16 +14,32 @@ class ContractMatchingService
      * Findet passende Verträge für einen Lieferanten basierend auf extrahierten Daten
      */
     public function findMatchingContracts(
-        Supplier $supplier, 
-        array $extractedData, 
-        string $pdfText, 
+        Supplier $supplier,
+        array $extractedData,
+        string $pdfText,
         string $emailText = '',
         array $metadata = []
     ): array {
+        Log::info('ContractMatchingService: Starting contract matching', [
+            'supplier_id' => $supplier->id,
+            'supplier_name' => $supplier->display_name,
+            'extracted_data_keys' => array_keys($extractedData),
+            'has_pdf_text' => !empty($pdfText),
+            'has_email_text' => !empty($emailText),
+        ]);
+
         $contracts = SupplierContract::where('supplier_id', $supplier->id)
             ->active()
-            ->with('activeContractMatchingRules')
+            ->with(['activeContractMatchingRules', 'activeSolarPlantAssignments.solarPlant'])
             ->get();
+
+        Log::info('ContractMatchingService: Contracts loaded', [
+            'supplier_id' => $supplier->id,
+            'total_contracts' => $contracts->count(),
+            'contracts_with_solar_assignments' => $contracts->filter(function($contract) {
+                return $contract->activeSolarPlantAssignments->isNotEmpty();
+            })->count(),
+        ]);
 
         if ($contracts->isEmpty()) {
             Log::info('Keine aktiven Verträge für Lieferanten gefunden', [
@@ -162,6 +178,13 @@ class ContractMatchingService
             }
         }
 
+        // EON-spezifische Fallback-Logik
+        $eonConfidence = $this->calculateEonSpecificConfidence($contract, $sourceData);
+        if ($eonConfidence > 0) {
+            $confidence += $eonConfidence;
+            $checks++;
+        }
+
         return $checks > 0 ? min(1.0, $confidence / $checks) : 0;
     }
 
@@ -203,6 +226,7 @@ class ContractMatchingService
             
             if ($value !== null && $rule->matches($value)) {
                 $matchingFields[] = [
+                    'rule_id' => $rule->id,
                     'field_source' => $rule->field_source,
                     'field_name' => $rule->field_name,
                     'pattern' => $rule->matching_pattern,
@@ -227,6 +251,7 @@ class ContractMatchingService
             'creditor_number_match' => false,
             'recognition_fields_match' => [],
             'rule_matches' => [],
+            'eon_specific_matches' => [], // Neue EON-spezifische Matches
         ];
 
         // Prüfe Vertragsnummer
@@ -250,6 +275,9 @@ class ContractMatchingService
                 $details['recognition_fields_match'][] = $field;
             }
         }
+
+        // Prüfe EON-spezifische Matches mit Confidence
+        $details['eon_specific_matches'] = $this->getEonSpecificMatchDetails($contract, $sourceData);
 
         // Prüfe Regel-Matches
         foreach ($contract->activeContractMatchingRules as $rule) {
@@ -441,5 +469,136 @@ class ContractMatchingService
             : 0;
 
         return $analysis;
+    }
+
+    /**
+     * Berechnet EON-spezifische Confidence für Vertragserkennung
+     */
+    private function calculateEonSpecificConfidence(SupplierContract $contract, array $sourceData): float
+    {
+        $confidence = 0;
+        $extractedData = $sourceData['extracted_data'] ?? [];
+
+        // Prüfe Contract Account → External Contract Number Mapping
+        if (isset($extractedData['contract_account']) && $contract->external_contract_number) {
+            $normalizedContractAccount = $this->normalizeEonValue($extractedData['contract_account']);
+            $normalizedExternalContract = $this->normalizeEonValue($contract->external_contract_number);
+            
+            Log::debug('EON Contract Account Matching', [
+                'contract_id' => $contract->id,
+                'extracted_contract_account' => $extractedData['contract_account'],
+                'normalized_contract_account' => $normalizedContractAccount,
+                'external_contract_number' => $contract->external_contract_number,
+                'normalized_external_contract' => $normalizedExternalContract,
+            ]);
+
+            if ($normalizedContractAccount === $normalizedExternalContract) {
+                $confidence += 0.9; // Sehr hohe Confidence für exakte Übereinstimmung
+                Log::info('EON Contract Account Match gefunden', [
+                    'contract_id' => $contract->id,
+                    'contract_account' => $extractedData['contract_account'],
+                    'external_contract_number' => $contract->external_contract_number,
+                ]);
+            }
+        }
+
+        // Prüfe Consumption Site → Contract Recognition 1 Mapping
+        if (isset($extractedData['consumption_site']) && $contract->contract_recognition_1) {
+            $normalizedConsumptionSite = $this->normalizeEonValue($extractedData['consumption_site']);
+            $normalizedRecognition1 = $this->normalizeEonValue($contract->contract_recognition_1);
+            
+            Log::debug('EON Consumption Site Matching', [
+                'contract_id' => $contract->id,
+                'extracted_consumption_site' => $extractedData['consumption_site'],
+                'normalized_consumption_site' => $normalizedConsumptionSite,
+                'contract_recognition_1' => $contract->contract_recognition_1,
+                'normalized_recognition_1' => $normalizedRecognition1,
+            ]);
+
+            if (str_contains($normalizedRecognition1, $normalizedConsumptionSite) ||
+                str_contains($normalizedConsumptionSite, $normalizedRecognition1)) {
+                $confidence += 0.7; // Hohe Confidence für Teilübereinstimmung
+                Log::info('EON Consumption Site Match gefunden', [
+                    'contract_id' => $contract->id,
+                    'consumption_site' => $extractedData['consumption_site'],
+                    'contract_recognition_1' => $contract->contract_recognition_1,
+                ]);
+            }
+        }
+
+        return $confidence;
+    }
+
+    /**
+     * Normalisiert EON-Werte für besseren Vergleich
+     */
+    private function normalizeEonValue(string $value): string
+    {
+        // Entferne alle Leerzeichen und konvertiere zu Kleinbuchstaben
+        $normalized = strtolower(preg_replace('/\s+/', '', $value));
+        
+        Log::debug('EON Value Normalization', [
+            'original' => $value,
+            'normalized' => $normalized,
+        ]);
+        
+        return $normalized;
+    }
+
+    /**
+     * Ermittelt detaillierte EON-spezifische Match-Informationen mit Confidence
+     */
+    private function getEonSpecificMatchDetails(SupplierContract $contract, array $sourceData): array
+    {
+        $eonMatches = [];
+        $extractedData = $sourceData['extracted_data'] ?? [];
+
+        // Contract Account → External Contract Number Match
+        if (isset($extractedData['contract_account']) && $contract->external_contract_number) {
+            $normalizedContractAccount = $this->normalizeEonValue($extractedData['contract_account']);
+            $normalizedExternalContract = $this->normalizeEonValue($contract->external_contract_number);
+            
+            $matches = $normalizedContractAccount === $normalizedExternalContract;
+            $confidence = $matches ? 0.9 : 0.0;
+
+            $eonMatches[] = [
+                'field_type' => 'contract_account_to_external_contract',
+                'field_label' => 'Vertragskonto → Externe Vertragsnummer',
+                'extracted_value' => $extractedData['contract_account'],
+                'contract_value' => $contract->external_contract_number,
+                'normalized_extracted' => $normalizedContractAccount,
+                'normalized_contract' => $normalizedExternalContract,
+                'matches' => $matches,
+                'confidence' => $confidence,
+                'match_type' => 'exact_normalized',
+            ];
+        }
+
+        // Consumption Site → Contract Recognition 1 Match
+        if (isset($extractedData['consumption_site']) && $contract->contract_recognition_1) {
+            $normalizedConsumptionSite = $this->normalizeEonValue($extractedData['consumption_site']);
+            $normalizedRecognition1 = $this->normalizeEonValue($contract->contract_recognition_1);
+            
+            $exactMatch = $normalizedConsumptionSite === $normalizedRecognition1;
+            $partialMatch = str_contains($normalizedRecognition1, $normalizedConsumptionSite) ||
+                           str_contains($normalizedConsumptionSite, $normalizedRecognition1);
+            
+            $matches = $exactMatch || $partialMatch;
+            $confidence = $exactMatch ? 0.9 : ($partialMatch ? 0.7 : 0.0);
+
+            $eonMatches[] = [
+                'field_type' => 'consumption_site_to_recognition_1',
+                'field_label' => 'Verbrauchsstelle → Vertragserkennung 1',
+                'extracted_value' => $extractedData['consumption_site'],
+                'contract_value' => $contract->contract_recognition_1,
+                'normalized_extracted' => $normalizedConsumptionSite,
+                'normalized_contract' => $normalizedRecognition1,
+                'matches' => $matches,
+                'confidence' => $confidence,
+                'match_type' => $exactMatch ? 'exact_normalized' : ($partialMatch ? 'partial_normalized' : 'no_match'),
+            ];
+        }
+
+        return $eonMatches;
     }
 }

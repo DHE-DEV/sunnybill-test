@@ -67,6 +67,13 @@ return [
             'report' => false,
         ],
 
+        'pdf_uploads' => [
+            'driver' => 'local',
+            'root' => storage_path('app/pdf-uploads'),
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

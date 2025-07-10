@@ -12,20 +12,35 @@ class ContractMatchingRule extends Model
 
     protected $fillable = [
         'supplier_contract_id',
+        'rule_name',
+        'source_field',
+        'target_field',
         'field_source',
         'field_name',
         'matching_pattern',
         'match_type',
+        'match_threshold',
+        'match_pattern',
+        'priority',
         'description',
         'confidence_weight',
         'case_sensitive',
+        'normalize_whitespace',
+        'remove_special_chars',
+        'preprocessing_rules',
+        'fallback_rules',
+        'test_examples',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'case_sensitive' => 'boolean',
+        'normalize_whitespace' => 'boolean',
+        'remove_special_chars' => 'boolean',
         'confidence_weight' => 'integer',
+        'priority' => 'integer',
+        'match_threshold' => 'decimal:2',
     ];
 
     /**
@@ -65,8 +80,8 @@ class ContractMatchingRule extends Model
      */
     public function matches(string $value): bool
     {
-        $searchValue = $this->case_sensitive ? $value : strtolower($value);
-        $pattern = $this->case_sensitive ? $this->matching_pattern : strtolower($this->matching_pattern);
+        $searchValue = $this->normalizeValue($value);
+        $pattern = $this->normalizeValue($this->matching_pattern);
 
         switch ($this->match_type) {
             case 'exact':
@@ -88,6 +103,31 @@ class ContractMatchingRule extends Model
             default:
                 return false;
         }
+    }
+
+    /**
+     * Normalisiert einen Wert basierend auf den Rule-Einstellungen
+     */
+    public function normalizeValue(string $value): string
+    {
+        $normalized = $value;
+
+        // Whitespace normalisieren
+        if ($this->normalize_whitespace) {
+            $normalized = preg_replace('/\s+/', '', $normalized);
+        }
+
+        // Sonderzeichen entfernen
+        if ($this->remove_special_chars) {
+            $normalized = preg_replace('/[^a-zA-Z0-9\s]/', '', $normalized);
+        }
+
+        // Case-Sensitivity
+        if (!$this->case_sensitive) {
+            $normalized = strtolower($normalized);
+        }
+
+        return $normalized;
     }
 
     /**

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('pdf_extraction_rules', function (Blueprint $table) {
             $table->id();
-            $table->char('supplier_id', 36);
+            $table->char('supplier_id', 36)->nullable();
             $table->foreign('supplier_id')->references('id')->on('suppliers')->onDelete('cascade');
             $table->string('field_name', 100); // z.B. 'invoice_number', 'amount', 'date'
             $table->enum('extraction_method', [
