@@ -203,4 +203,35 @@ class TeamResource extends Resource
     {
         return 'primary';
     }
+
+    // Zugriffskontrolle für System-Ressourcen (Administrator + Superadmin Teams)
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+    }
 }
