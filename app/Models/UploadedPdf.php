@@ -55,18 +55,22 @@ class UploadedPdf extends Model
         // Fallback: Berechne Dateigröße dynamisch wenn sie in der DB fehlt
         if (!$fileSize && $this->fileExists()) {
             try {
-                $fileSize = filesize($this->getFullPath());
+                // Verwende documents-Disk für Dateigröße-Berechnung
+                $fileSize = Storage::disk('documents')->size($this->file_path);
                 
                 // Aktualisiere die Datenbank für zukünftige Aufrufe
                 $this->updateQuietly(['file_size' => $fileSize]);
                 
-                \Log::info('Dateigröße dynamisch berechnet und aktualisiert', [
+                \Log::info('Dateigröße dynamisch von documents-Disk berechnet und aktualisiert', [
                     'uploaded_pdf_id' => $this->id,
-                    'calculated_size' => $fileSize
+                    'calculated_size' => $fileSize,
+                    'file_path' => $this->file_path,
+                    'disk' => 'documents'
                 ]);
             } catch (\Exception $e) {
-                \Log::warning('Konnte Dateigröße nicht dynamisch berechnen', [
+                \Log::warning('Konnte Dateigröße nicht von documents-Disk berechnen', [
                     'uploaded_pdf_id' => $this->id,
+                    'file_path' => $this->file_path,
                     'error' => $e->getMessage()
                 ]);
                 return 'Unbekannt';
@@ -92,15 +96,58 @@ class UploadedPdf extends Model
      */
     public function fileExists(): bool
     {
-        return Storage::disk('pdf_uploads')->exists($this->file_path);
+        \Log::info('UploadedPdf: fileExists() Check', [
+            'uploaded_pdf_id' => $this->id,
+            'file_path' => $this->file_path,
+            'using_disk' => 'documents',
+            'old_disk_was' => 's3'
+        ]);
+        
+        return Storage::disk('documents')->exists($this->file_path);
     }
 
     /**
      * Gibt den vollständigen Dateipfad zurück
+     * Funktioniert sowohl mit lokalen als auch S3-Disks über StorageSetting-Konfiguration
      */
     public function getFullPath(): string
     {
-        return Storage::disk('pdf_uploads')->path($this->file_path);
+        \Log::info('UploadedPdf: getFullPath() verwendet documents-Disk', [
+            'uploaded_pdf_id' => $this->id,
+            'file_path' => $this->file_path,
+            'using_disk' => 'documents'
+        ]);
+        
+        return Storage::disk('documents')->path($this->file_path);
+    }
+    
+    /**
+     * Gibt die URL für die Datei zurück (funktioniert mit lokalen und S3-Disks)
+     */
+    public function getFileUrl(): string
+    {
+        \Log::info('UploadedPdf: getFileUrl() verwendet documents-Disk', [
+            'uploaded_pdf_id' => $this->id,
+            'file_path' => $this->file_path,
+            'using_disk' => 'documents'
+        ]);
+        
+        return Storage::disk('documents')->url($this->file_path);
+    }
+    
+    /**
+     * Gibt die S3-URL für die Datei zurück (Backward Compatibility)
+     * @deprecated Verwende getFileUrl() stattdessen
+     */
+    public function getS3Url(): string
+    {
+        \Log::warning('UploadedPdf: getS3Url() ist deprecated', [
+            'uploaded_pdf_id' => $this->id,
+            'file_path' => $this->file_path,
+            'message' => 'Verwende getFileUrl() stattdessen'
+        ]);
+        
+        return $this->getFileUrl();
     }
 
     /**

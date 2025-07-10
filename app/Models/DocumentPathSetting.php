@@ -42,6 +42,7 @@ class DocumentPathSetting extends Model
             'App\Models\Supplier' => 'Lieferant',
             'App\Models\SupplierContract' => 'Lieferantenvertrag',
             'App\Models\SupplierContractBilling' => 'Lieferanten-Abrechnung',
+            'App\Models\UploadedPdf' => 'PDF-Upload',
         ];
     }
 
@@ -224,6 +225,35 @@ class DocumentPathSetting extends Model
             }
         }
 
+        // UploadedPdf-spezifische Platzhalter
+        if ($model instanceof \App\Models\UploadedPdf) {
+            $replacements['{pdf_name}'] = $this->sanitizeValue($model->name ?? 'unknown');
+            $replacements['{pdf_id}'] = $model->id ?? 'unknown';
+            $replacements['{original_filename}'] = $this->sanitizeValue(pathinfo($model->original_filename ?? 'unknown', PATHINFO_FILENAME));
+            $replacements['{analysis_status}'] = $this->sanitizeValue($model->analysis_status ?? 'unknown');
+            
+            // UUID-Platzhalter
+            $uuid = \Illuminate\Support\Str::uuid()->toString();
+            $replacements['{file_uuid}'] = $uuid;
+            $replacements['{file_uuid_short}'] = substr($uuid, 0, 8);
+            
+            // Benutzer-Informationen
+            if ($model->uploadedBy) {
+                $replacements['{uploaded_by_name}'] = $this->sanitizeValue($model->uploadedBy->name ?? 'unknown');
+                $replacements['{uploaded_by_id}'] = $model->uploadedBy->id ?? 'unknown';
+            } else {
+                $replacements['{uploaded_by_name}'] = 'unknown';
+                $replacements['{uploaded_by_id}'] = 'unknown';
+            }
+            
+            // Dateigröße in MB
+            if ($model->file_size) {
+                $replacements['{file_size_mb}'] = round($model->file_size / 1024 / 1024, 2);
+            } else {
+                $replacements['{file_size_mb}'] = 'unknown';
+            }
+        }
+
         // Allgemeine Model-Platzhalter
         $replacements['{model_id}'] = $model->id ?? 'unknown';
         $replacements['{model_type}'] = class_basename($model);
@@ -363,6 +393,20 @@ class DocumentPathSetting extends Model
                     'supplier_number' => 'Lieferantennummer (vom zugehörigen Lieferanten)',
                     'supplier_name' => 'Lieferantenname (vom zugehörigen Lieferanten)',
                     'supplier_id' => 'Lieferanten-ID (vom zugehörigen Lieferanten)',
+                ]);
+                break;
+
+            case 'App\Models\UploadedPdf':
+                $placeholders = array_merge($placeholders, [
+                    'pdf_name' => 'PDF-Name',
+                    'pdf_id' => 'PDF-ID',
+                    'original_filename' => 'Original-Dateiname',
+                    'uploaded_by_name' => 'Hochgeladen von (Name)',
+                    'uploaded_by_id' => 'Hochgeladen von (ID)',
+                    'analysis_status' => 'Analyse-Status',
+                    'file_size_mb' => 'Dateigröße (MB)',
+                    'file_uuid' => 'Datei-UUID (vollständig)',
+                    'file_uuid_short' => 'Datei-UUID (kurz, 8 Zeichen)',
                 ]);
                 break;
         }
@@ -508,6 +552,27 @@ class DocumentPathSetting extends Model
                 'path_template' => 'abrechnungen/{supplier_number}/{contract_number}/{billing_period}/sonstiges',
                 'description' => 'Pfad für sonstige Dokumente zu Abrechnungen',
                 'placeholders' => ['billing_number', 'billing_period', 'supplier_number', 'contract_number'],
+            ],
+            [
+                'documentable_type' => 'App\Models\UploadedPdf',
+                'category' => null,
+                'path_template' => 'pdf-uploads/{year}/{month}',
+                'description' => 'Standard-Pfad für PDF-Uploads (nach Jahr/Monat)',
+                'placeholders' => ['pdf_name', 'pdf_id', 'original_filename', 'uploaded_by_name', 'year', 'month', 'file_uuid', 'file_uuid_short'],
+            ],
+            [
+                'documentable_type' => 'App\Models\UploadedPdf',
+                'category' => 'analysis',
+                'path_template' => 'pdf-uploads/analysiert/{year}/{month}',
+                'description' => 'Pfad für analysierte PDF-Uploads',
+                'placeholders' => ['pdf_name', 'pdf_id', 'original_filename', 'analysis_status', 'year', 'month', 'file_uuid', 'file_uuid_short'],
+            ],
+            [
+                'documentable_type' => 'App\Models\UploadedPdf',
+                'category' => 'user_organized',
+                'path_template' => 'pdf-uploads/benutzer/{uploaded_by_name}/{year}',
+                'description' => 'Pfad für PDF-Uploads organisiert nach Benutzer',
+                'placeholders' => ['uploaded_by_name', 'uploaded_by_id', 'pdf_name', 'year', 'month', 'file_uuid', 'file_uuid_short'],
             ],
         ];
 

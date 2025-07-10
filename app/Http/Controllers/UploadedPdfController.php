@@ -16,21 +16,50 @@ class UploadedPdfController extends Controller
      */
     public function download(UploadedPdf $uploadedPdf)
     {
+        \Log::info('PDF-Download: Diagnose-Start', [
+            'uploaded_pdf_id' => $uploadedPdf->id,
+            'file_path' => $uploadedPdf->file_path,
+            'method' => 'download',
+            'disk_should_be' => 'documents'
+        ]);
+
         if (!$uploadedPdf->fileExists()) {
+            \Log::error('PDF-Download: Datei nicht gefunden auf documents-Disk', [
+                'uploaded_pdf_id' => $uploadedPdf->id,
+                'file_path' => $uploadedPdf->file_path,
+            ]);
             abort(404, 'Datei nicht gefunden');
         }
 
-        $filePath = $uploadedPdf->getFullPath();
         $filename = $uploadedPdf->original_filename ?: $uploadedPdf->name . '.pdf';
 
-        \Log::info('PDF-Download angefordert', [
+        \Log::info('PDF-Download: Verwende documents-Disk (StorageSetting-kompatibel)', [
             'uploaded_pdf_id' => $uploadedPdf->id,
             'filename' => $filename,
             'file_path' => $uploadedPdf->file_path,
             'user_id' => auth()->id(),
         ]);
 
-        return response()->download($filePath, $filename);
+        // Verwende documents-Disk (funktioniert sowohl mit lokalen als auch S3-Disks)
+        try {
+            // Versuche temporäre URL für S3-kompatible Disks
+            $url = Storage::disk('documents')->temporaryUrl($uploadedPdf->file_path, now()->addMinutes(5));
+            
+            return response()->streamDownload(function () use ($url) {
+                echo file_get_contents($url);
+            }, $filename, [
+                'Content-Type' => 'application/pdf',
+            ]);
+        } catch (\Exception $e) {
+            // Fallback für lokale Disks
+            \Log::info('PDF-Download: Fallback zu direktem Download', [
+                'uploaded_pdf_id' => $uploadedPdf->id,
+                'reason' => 'temporaryUrl nicht verfügbar (lokale Disk)',
+                'error' => $e->getMessage()
+            ]);
+            
+            return Storage::disk('documents')->download($uploadedPdf->file_path, $filename);
+        }
     }
 
     /**
@@ -38,32 +67,54 @@ class UploadedPdfController extends Controller
      */
     public function viewPdf(UploadedPdf $uploadedPdf)
     {
+        \Log::info('PDF-View: Diagnose-Start', [
+            'uploaded_pdf_id' => $uploadedPdf->id,
+            'file_path' => $uploadedPdf->file_path,
+            'method' => 'viewPdf',
+            'disk_should_be' => 'documents'
+        ]);
+
         if (!$uploadedPdf->fileExists()) {
+            \Log::error('PDF-View: Datei nicht gefunden auf documents-Disk', [
+                'uploaded_pdf_id' => $uploadedPdf->id,
+                'file_path' => $uploadedPdf->file_path,
+            ]);
             abort(404, 'Datei nicht gefunden');
         }
 
-        $filePath = $uploadedPdf->getFullPath();
         $filename = $uploadedPdf->original_filename ?: $uploadedPdf->name . '.pdf';
 
-        \Log::info('PDF-Anzeige angefordert', [
+        \Log::info('PDF-View: Lade Datei von documents-Disk', [
             'uploaded_pdf_id' => $uploadedPdf->id,
             'filename' => $filename,
             'file_path' => $uploadedPdf->file_path,
             'user_id' => auth()->id(),
         ]);
 
-        // Lese die PDF-Datei
-        $fileContent = file_get_contents($filePath);
-        
-        if (!$fileContent) {
-            abort(404, 'Datei konnte nicht gelesen werden');
+        // Verwende documents-Disk (funktioniert sowohl mit lokalen als auch S3-Disks)
+        try {
+            // Versuche temporäre URL für S3-kompatible Disks
+            $url = Storage::disk('documents')->temporaryUrl($uploadedPdf->file_path, now()->addMinutes(5));
+            
+            return response()->streamDownload(function () use ($url) {
+                echo file_get_contents($url);
+            }, $filename, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"'
+            ]);
+        } catch (\Exception $e) {
+            // Fallback für lokale Disks
+            \Log::info('PDF-View: Fallback zu direkter Datei-Anzeige', [
+                'uploaded_pdf_id' => $uploadedPdf->id,
+                'reason' => 'temporaryUrl nicht verfügbar (lokale Disk)',
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->file(Storage::disk('documents')->path($uploadedPdf->file_path), [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"'
+            ]);
         }
-
-        // Gebe die PDF mit inline Content-Disposition zurück (für Browser-Anzeige)
-        return response($fileContent)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="' . $filename . '"')
-            ->header('Content-Length', strlen($fileContent));
     }
 
     /**
@@ -86,15 +137,20 @@ class UploadedPdfController extends Controller
         $uploadedPdf->setAnalysisStatus('processing');
 
         try {
-            // Lade die PDF-Datei
-            $filePath = $uploadedPdf->getFullPath();
-            $fileContent = file_get_contents($filePath);
+            // Lade die PDF-Datei von documents-Disk
+            \Log::info('PDF-Analyse: Lade Datei von documents-Disk', [
+                'uploaded_pdf_id' => $uploadedPdf->id,
+                'file_path' => $uploadedPdf->file_path,
+                'disk' => 'documents'
+            ]);
+            
+            $fileContent = Storage::disk('documents')->get($uploadedPdf->file_path);
 
             if (!$fileContent) {
-                throw new \Exception('Datei konnte nicht gelesen werden');
+                throw new \Exception('Datei konnte nicht von documents-Disk geladen werden');
             }
 
-            \Log::info('PDF-Datei erfolgreich geladen', [
+            \Log::info('PDF-Datei erfolgreich von documents-Disk geladen', [
                 'uploaded_pdf_id' => $uploadedPdf->id,
                 'file_size' => strlen($fileContent),
             ]);
@@ -937,15 +993,38 @@ class UploadedPdfController extends Controller
     private function extractRawXml(UploadedPdf $uploadedPdf): ?string
     {
         try {
-            $filePath = $uploadedPdf->getFullPath();
-            if (Storage::exists($uploadedPdf->file_path)) {
-                return ZugferdDocumentPdfReader::getXmlFromFile($filePath);
+            \Log::info('ZUGFeRD XML-Extraktion: Prüfe S3-Datei', [
+                'uploaded_pdf_id' => $uploadedPdf->id,
+                'file_path' => $uploadedPdf->file_path,
+                'disk' => 'documents'
+            ]);
+            
+            if (Storage::disk('documents')->exists($uploadedPdf->file_path)) {
+                // PROBLEM: ZugferdDocumentPdfReader::getXmlFromFile() erwartet lokalen Pfad
+                // Temporärer Fix: Lade Datei von documents-Disk und speichere temporär lokal
+                $fileContent = Storage::disk('documents')->get($uploadedPdf->file_path);
+                $tempPath = tempnam(sys_get_temp_dir(), 'zugferd_') . '.pdf';
+                file_put_contents($tempPath, $fileContent);
+                
+                \Log::info('ZUGFeRD XML-Extraktion: Temporäre Datei erstellt', [
+                    'uploaded_pdf_id' => $uploadedPdf->id,
+                    'temp_path' => $tempPath,
+                    'file_size' => strlen($fileContent)
+                ]);
+                
+                $xml = ZugferdDocumentPdfReader::getXmlFromFile($tempPath);
+                
+                // Lösche temporäre Datei
+                unlink($tempPath);
+                
+                return $xml;
             }
             return null;
         } catch (\Exception $e) {
             \Log::error('Konnte ZUGFeRD XML nicht extrahieren', [
                 'uploaded_pdf_id' => $uploadedPdf->id,
                 'error' => $e->getMessage(),
+                'file_path' => $uploadedPdf->file_path
             ]);
             return null;
         }

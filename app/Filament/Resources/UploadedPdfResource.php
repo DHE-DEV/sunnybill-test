@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UploadedPdfResource\Pages;
 use App\Models\UploadedPdf;
+use App\Models\DocumentPathSetting;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -17,6 +18,7 @@ use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class UploadedPdfResource extends Resource
 {
@@ -52,19 +54,64 @@ class UploadedPdfResource extends Resource
 
                         Forms\Components\FileUpload::make('file_path')
                             ->label('PDF-Datei')
-                            ->disk('pdf_uploads')
+                            ->disk('documents')
                             ->directory(function () {
-                                return date('Y/m');
+                                try {
+                                    // Versuche DocumentPathSetting für UploadedPdf zu verwenden
+                                    $pathSetting = DocumentPathSetting::where('documentable_type', 'App\Models\UploadedPdf')
+                                        ->whereNull('category') // Standard-Kategorie
+                                        ->first();
+                                    
+                                    if ($pathSetting) {
+                                        // Erstelle temporäres UploadedPdf-Objekt für Platzhalter
+                                        $tempUploadedPdf = new UploadedPdf([
+                                            'uploaded_by' => Auth::id(),
+                                            'created_at' => now(),
+                                        ]);
+                                        
+                                        $resolvedPath = $pathSetting->generatePath($tempUploadedPdf);
+                                        
+                                        \Log::info('PDF-Upload: Verwende DocumentPathSetting', [
+                                            'path_template' => $pathSetting->path_template,
+                                            'resolved_path' => $resolvedPath,
+                                            'setting_id' => $pathSetting->id,
+                                            'success' => true
+                                        ]);
+                                        
+                                        return $resolvedPath;
+                                    }
+                                } catch (\Exception $e) {
+                                    \Log::warning('PDF-Upload: DocumentPathSetting fehlgeschlagen', [
+                                        'error' => $e->getMessage(),
+                                        'fallback' => 'Verwende hardcodierten Pfad'
+                                    ]);
+                                }
+                                
+                                // Fallback: Hardcodierter Pfad
+                                $fallbackPath = date('Y/m');
+                                \Log::info('PDF-Upload: Verwende Fallback-Pfad', [
+                                    'fallback_path' => $fallbackPath,
+                                    'reason' => 'Kein DocumentPathSetting gefunden oder Fehler aufgetreten'
+                                ]);
+                                
+                                return $fallbackPath;
                             })
                             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                $timestamp = now()->format('Y-m-d_H-i-s');
-                                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                                // Generiere UUID für eindeutige Dateinamen
+                                $uuid = Str::uuid()->toString();
                                 $extension = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
                                 
-                                // Bereinige den Dateinamen
-                                $cleanName = preg_replace('/[^a-zA-Z0-9\-_.]/', '-', $originalName);
+                                // UUID-basierter Dateiname mit Original-Extension
+                                $uuidFileName = "{$uuid}.{$extension}";
                                 
-                                return "{$timestamp}_{$cleanName}.{$extension}";
+                                \Log::info('PDF-Upload: UUID-Dateiname generiert', [
+                                    'original_filename' => $file->getClientOriginalName(),
+                                    'uuid_filename' => $uuidFileName,
+                                    'uuid' => $uuid,
+                                    'extension' => $extension
+                                ]);
+                                
+                                return $uuidFileName;
                             })
                             ->storeFileNamesIn('original_filename')
                             ->acceptedFileTypes(['application/pdf'])
@@ -242,10 +289,25 @@ class UploadedPdfResource extends Resource
     public static function afterCreate(UploadedPdf $record): void
     {
         // Setze Dateigröße und MIME-Type
-        if ($record->file_path && Storage::disk('pdf_uploads')->exists($record->file_path)) {
+        if ($record->file_path && Storage::disk('documents')->exists($record->file_path)) {
             $record->update([
-                'file_size' => Storage::disk('pdf_uploads')->size($record->file_path),
-                'mime_type' => Storage::disk('pdf_uploads')->mimeType($record->file_path) ?? 'application/pdf',
+                'file_size' => Storage::disk('documents')->size($record->file_path),
+                'mime_type' => Storage::disk('documents')->mimeType($record->file_path) ?? 'application/pdf',
+            ]);
+            
+            \Log::info('PDF-Upload: Datei-Metadaten gesetzt', [
+                'record_id' => $record->id,
+                'file_path' => $record->file_path,
+                'file_size' => $record->file_size,
+                'mime_type' => $record->mime_type,
+                'uploaded_by' => $record->uploaded_by,
+                'disk' => 'documents'
+            ]);
+        } else {
+            \Log::warning('PDF-Upload: Datei nicht gefunden nach Upload', [
+                'record_id' => $record->id,
+                'file_path' => $record->file_path,
+                'disk' => 'documents',
             ]);
         }
     }
