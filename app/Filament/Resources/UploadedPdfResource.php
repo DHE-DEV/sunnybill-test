@@ -211,8 +211,13 @@ class UploadedPdfResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
+                    // Standard-Aktionen nur für Manager/Superadmin
+                    Tables\Actions\ViewAction::make()
+                        ->visible(fn (): bool => auth()->user()?->teams()->whereIn('name', ['Manager', 'Superadmin'])->exists() ?? false),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (): bool => auth()->user()?->teams()->whereIn('name', ['Manager', 'Superadmin'])->exists() ?? false),
+                    
+                    // Benutzerdefinierte Aktionen für alle berechtigten Benutzer
                     Action::make('analyze')
                         ->label('Analysieren')
                         ->icon('heroicon-o-magnifying-glass')
@@ -234,7 +239,10 @@ class UploadedPdfResource extends Resource
                         ->url(fn (UploadedPdf $record): string => route('uploaded-pdfs.download', $record))
                         ->openUrlInNewTab()
                         ->visible(fn (UploadedPdf $record): bool => $record->fileExists()),
-                    Tables\Actions\DeleteAction::make(),
+                    
+                    // Delete-Aktion nur für Manager/Superadmin
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn (): bool => auth()->user()?->teams()->whereIn('name', ['Manager', 'Superadmin'])->exists() ?? false),
                 ])
                     ->label('Aktionen')
                     ->icon('heroicon-m-ellipsis-vertical')
@@ -273,33 +281,48 @@ class UploadedPdfResource extends Resource
     }
 
     /**
-     * Zugriffskontrolle: Nur Superadmin-Team-Mitglieder haben Zugriff
+     * Zugriffskontrolle: User, Manager und Superadmin-Team-Mitglieder können die Liste sehen
      */
     public static function canViewAny(): bool
     {
-        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+        return auth()->user()?->teams()->whereIn('name', ['User', 'Manager', 'Superadmin'])->exists() ?? false;
     }
 
+    /**
+     * Nur Manager und Superadmin können neue PDFs erstellen
+     */
     public static function canCreate(): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->teams()->whereIn('name', ['Manager', 'Superadmin'])->exists() ?? false;
     }
 
+    /**
+     * Nur Manager und Superadmin können PDFs bearbeiten
+     */
     public static function canEdit($record): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->teams()->whereIn('name', ['Manager', 'Superadmin'])->exists() ?? false;
     }
 
+    /**
+     * Nur Manager und Superadmin können PDFs löschen
+     */
     public static function canDelete($record): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->teams()->whereIn('name', ['Manager', 'Superadmin'])->exists() ?? false;
     }
 
+    /**
+     * Nur Manager und Superadmin können Bulk-Löschungen durchführen
+     */
     public static function canDeleteAny(): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->teams()->whereIn('name', ['Manager', 'Superadmin'])->exists() ?? false;
     }
 
+    /**
+     * Alle berechtigten Benutzer können einzelne PDFs anzeigen
+     */
     public static function canView($record): bool
     {
         return static::canViewAny();

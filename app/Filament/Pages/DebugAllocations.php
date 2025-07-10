@@ -18,6 +18,11 @@ class DebugAllocations extends Page
     protected static ?string $navigationGroup = 'System';
     
     protected static ?int $navigationSort = 999;
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+    }
     
     public function mount()
     {

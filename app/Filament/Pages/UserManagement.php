@@ -22,6 +22,11 @@ class UserManagement extends Page
 
     protected static ?int $navigationSort = 2;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+    }
+
     public function getWidgets(): array
     {
         return [

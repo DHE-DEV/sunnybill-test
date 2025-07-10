@@ -24,6 +24,11 @@ class StorageSettings extends Page
 
     protected static ?int $navigationSort = 10;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+    }
+
     public ?array $data = [];
 
     public function mount(): void
