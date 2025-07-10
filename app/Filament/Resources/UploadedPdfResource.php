@@ -26,13 +26,13 @@ class UploadedPdfResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $modelLabel = 'PDF-Analyse';
 
     protected static ?string $pluralModelLabel = 'PDF-Analysen';
 
-    protected static ?string $navigationGroup = 'Dokumente';
+    protected static ?string $navigationGroup = 'PDF-Analyse System';
 
     public static function form(Form $form): Form
     {
@@ -270,6 +270,39 @@ class UploadedPdfResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+
+    /**
+     * Zugriffskontrolle: Nur Superadmin-Team-Mitglieder haben Zugriff
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canView($record): bool
+    {
+        return static::canViewAny();
     }
 
     /**

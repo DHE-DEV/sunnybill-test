@@ -329,4 +329,37 @@ class PdfExtractionRuleResource extends Resource
             'edit' => Pages\EditPdfExtractionRule::route('/{record}/edit'),
         ];
     }
+
+    /**
+     * Zugriffskontrolle: Nur Superadmin-Team-Mitglieder haben Zugriff
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canView($record): bool
+    {
+        return static::canViewAny();
+    }
 }
