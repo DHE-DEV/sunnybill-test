@@ -18,7 +18,7 @@ class SuppliersRelationManager extends RelationManager
 {
     protected static string $relationship = 'supplierAssignments';
 
-    protected static ?string $title = 'zugeordnete Firmen';
+    protected static ?string $title = 'Lieferanten';
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {

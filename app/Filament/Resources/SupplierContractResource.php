@@ -7,6 +7,7 @@ use App\Filament\Resources\SupplierContractResource\RelationManagers;
 use App\Models\Supplier;
 use App\Models\SupplierContract;
 use App\Models\SolarPlant;
+use App\Models\DummyFieldConfig;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -37,11 +38,33 @@ class SupplierContractResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Vertragsdaten')
                     ->schema([
+                        // Titel in separater Zeile über komplette Breite
+                        Forms\Components\TextInput::make('title')
+                            ->label('Titel')
+                            ->required()
+                            ->maxLength(255)
+                            ->helperText('Beliebiger Kurztext zur Erkennung in Listen')
+                            ->columnSpanFull(),
+                        
+                        // Beschreibung unter Titel über komplette Breite
+                        Forms\Components\Textarea::make('description')
+                            ->label('Beschreibung')
+                            ->rows(3)
+                            ->maxLength(1000)
+                            ->columnSpanFull(),
+                        
+                        // Restliche Felder im Grid
                         Forms\Components\Select::make('supplier_id')
                             ->label('Lieferant')
                             ->options(Supplier::active()->orderBy('company_name')->pluck('company_name', 'id'))
                             ->searchable()
                             ->preload()
+                            ->required(),
+                        // Status nach Lieferant
+                        Forms\Components\Select::make('status')
+                            ->label('Status')
+                            ->options(SupplierContract::getStatusOptions())
+                            ->default('draft')
                             ->required(),
                         Forms\Components\TextInput::make('contract_number')
                             ->label('Vertragsnummer intern')
@@ -49,26 +72,16 @@ class SupplierContractResource extends Resource
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
                         Forms\Components\TextInput::make('creditor_number')
-                            ->label('Kreditorennummer')
+                            ->label('Eigene Kundennummer bei Lieferant')
                             ->maxLength(255)
                             ->placeholder('z.B. KR-12345'),
                         Forms\Components\TextInput::make('external_contract_number')
                             ->label('Vertragsnummer extern')
                             ->maxLength(255)
                             ->placeholder('z.B. EXT-2024-001'),
-                        Forms\Components\TextInput::make('title')
-                            ->label('Titel')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\Textarea::make('description')
-                            ->label('Beschreibung')
-                            ->rows(3)
-                            ->maxLength(1000),
-                        Forms\Components\Select::make('status')
-                            ->label('Status')
-                            ->options(SupplierContract::getStatusOptions())
-                            ->default('draft')
-                            ->required(),
+                        
+                        // Dummy Fields in Spalte 2 unten nacheinander
+                        ...DummyFieldConfig::getDummyFieldsSchema('supplier_contract'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Laufzeit & Wert')
@@ -108,6 +121,7 @@ class SupplierContractResource extends Resource
                             ->maxLength(255)
                             ->placeholder('z.B. Erkennungsmerkmal 3'),
                     ])->columns(2),
+
 
                 Forms\Components\Section::make('Zusätzliche Informationen')
                     ->schema([
@@ -409,5 +423,55 @@ class SupplierContractResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+
+    /**
+     * Generiert die Schema-Felder für Custom Fields
+     */
+    protected static function getCustomFieldsSchema(): array
+    {
+        $fields = [];
+        
+        // Statische Felder für die 5 Custom Fields
+        for ($i = 1; $i <= 5; $i++) {
+            $fields[] = Forms\Components\TextInput::make("custom_field_{$i}")
+                ->label("Zusatzfeld {$i}")
+                ->maxLength(1000)
+                ->placeholder("Zusatzfeld {$i}")
+                ->helperText("Konfigurierbar unter System → Benutzerdefinierte Felder");
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Generiert einfache Schema-Felder basierend auf DummyFieldConfig
+     */
+    protected static function getSimpleDummyFieldsSchema(): array
+    {
+        $fields = [];
+        
+        try {
+            $dummyFields = DummyFieldConfig::active()
+                ->ordered()
+                ->get();
+
+            foreach ($dummyFields as $dummyField) {
+                $field = Forms\Components\TextInput::make($dummyField->field_key)
+                    ->label($dummyField->field_label)
+                    ->maxLength(1000);
+
+                if ($dummyField->field_description) {
+                    $field = $field->helperText($dummyField->field_description);
+                }
+
+                $fields[] = $field;
+            }
+        } catch (\Exception $e) {
+            // Fallback falls DummyFieldConfig Tabelle noch nicht existiert
+            return [];
+        }
+
+        return $fields;
     }
 }

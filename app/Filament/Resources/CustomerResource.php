@@ -320,6 +320,12 @@ class CustomerResource extends Resource
                     ])->columns(2)
                     ->visible(fn ($record) => $record?->lexoffice_id),
 
+                Forms\Components\Section::make('Zusätzliche Felder')
+                    ->schema(\App\Models\DummyFieldConfig::getDummyFieldsSchema('customer'))
+                    ->columns(1)
+                    ->collapsible()
+                    ->collapsed(),
+
                 Forms\Components\Section::make('Status & Sonstiges')
                     ->schema([
                         Forms\Components\Toggle::make('is_active')

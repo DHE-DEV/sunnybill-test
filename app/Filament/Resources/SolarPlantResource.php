@@ -213,6 +213,9 @@ class SolarPlantResource extends Resource
                                     ->placeholder('Zusätzliche Notizen zur Anlage...')
                                     ->columnSpanFull(),
                             ]),
+                        Forms\Components\Tabs\Tab::make('Zusätzliche Felder')
+                            ->icon('heroicon-o-plus-circle')
+                            ->schema(\App\Models\DummyFieldConfig::getDummyFieldsSchema('solar_plant')),
                     ])
                     ->columnSpanFull(),
             ]);
@@ -519,14 +522,14 @@ class SolarPlantResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\DocumentsRelationManager::class,
-            RelationManagers\MonthlyResultsRelationManager::class,
-            RelationManagers\TargetYieldsRelationManager::class,
             RelationManagers\ParticipationsRelationManager::class,
+            RelationManagers\MonthlyResultsRelationManager::class,
+            RelationManagers\DocumentsRelationManager::class,
+            RelationManagers\ContractsRelationManager::class,
+            RelationManagers\SuppliersRelationManager::class,
             RelationManagers\MilestonesRelationManager::class,
             RelationManagers\FavoriteNotesRelationManager::class,
             RelationManagers\StandardNotesRelationManager::class,
-            RelationManagers\SuppliersRelationManager::class,
         ];
     }
 

@@ -46,11 +46,11 @@ class SupplierResource extends Resource
                             ->searchable()
                             ->preload(),
                         Forms\Components\TextInput::make('creditor_number')
-                            ->label('Kreditorennummer')
+                            ->label('Eigene Kundennummer bei Lieferant')
                             ->maxLength(255)
                             ->placeholder('z.B. 12345'),
                         Forms\Components\TextInput::make('contract_number')
-                            ->label('Vertragsnummer')
+                            ->label('Eigene Vertragsnummer bei Lieferant')
                             ->maxLength(255)
                             ->placeholder('z.B. V-2024-001'),
                         Forms\Components\TextInput::make('contact_person')
@@ -63,7 +63,8 @@ class SupplierResource extends Resource
                         Forms\Components\TextInput::make('website')
                             ->label('Website')
                             ->url()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->placeholder('z.B. https://222.beispiel.de'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Adresse')
@@ -84,6 +85,7 @@ class SupplierResource extends Resource
                             ->maxLength(255),
                     ])->columns(2),
 
+                /*    
                 Forms\Components\Section::make('Vertragserkennung')
                     ->description('Diese Informationen werden zur automatischen Vertragserkennung benötigt. Es müssen nicht alle Felder befüllt werden.')
                     ->schema([
@@ -100,7 +102,7 @@ class SupplierResource extends Resource
                             ->maxLength(255)
                             ->placeholder('z.B. Erkennungsmerkmal 3'),
                     ])->columns(2),
-
+*/
                 Forms\Components\Section::make('Steuerliche Daten')
                     ->schema([
                         Forms\Components\TextInput::make('tax_number')
@@ -124,6 +126,12 @@ class SupplierResource extends Resource
                     ])->columns(2)
                     ->visible(fn ($record) => $record?->lexoffice_id),
 
+                Forms\Components\Section::make('Zusätzliche Felder')
+                    ->schema(\App\Models\DummyFieldConfig::getDummyFieldsSchema('supplier'))
+                    ->columns(1)
+                    ->collapsible()
+                    ->collapsed(),
+
                 Forms\Components\Section::make('Sonstiges')
                     ->schema([
                         Forms\Components\Textarea::make('notes')
@@ -145,13 +153,13 @@ class SupplierResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('creditor_number')
-                    ->label('Kreditorennummer')
+                    ->label('Eigene Kundennummer bei Lieferant')
                     ->searchable()
                     ->sortable()
                     ->toggleable()
                     ->toggledHiddenByDefault(),
                 Tables\Columns\TextColumn::make('contract_number')
-                    ->label('Vertragsnummer')
+                    ->label('Eigene Vertragsnummer bei Lieferant')
                     ->searchable()
                     ->sortable()
                     ->toggleable()

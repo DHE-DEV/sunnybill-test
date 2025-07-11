@@ -17,6 +17,7 @@ class PlantMonthlyResult extends Model
         'month',
         'energy_produced_kwh',
         'total_revenue',
+        'billing_type',
     ];
 
     protected $casts = [

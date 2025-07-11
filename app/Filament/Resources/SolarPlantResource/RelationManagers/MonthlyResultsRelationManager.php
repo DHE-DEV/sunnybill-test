@@ -139,6 +139,15 @@ class MonthlyResultsRelationManager extends RelationManager
                     ->prefix('€')
                     ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') : '0,000000')
                     ->helperText('Wird automatisch berechnet: Produzierte Energie × Einspeisevergütung'),
+                Forms\Components\Select::make('billing_type')
+                    ->label('Abrechnungstyp')
+                    ->options([
+                        'invoice' => 'Rechnung',
+                        'credit_note' => 'Gutschrift',
+                    ])
+                    ->default('invoice')
+                    ->required()
+                    ->helperText('Handelt es sich um eine Rechnung oder Gutschrift?'),
                 Forms\Components\Hidden::make('month')
                     ->dehydrateStateUsing(function (Forms\Get $get) {
                         $year = $get('year');
@@ -196,6 +205,19 @@ class MonthlyResultsRelationManager extends RelationManager
                     ->sortable()
                     ->badge()
                     ->color('success'),
+                Tables\Columns\TextColumn::make('billing_type')
+                    ->label('Typ')
+                    ->formatStateUsing(fn ($state) => match($state) {
+                        'invoice' => 'Rechnung',
+                        'credit_note' => 'Gutschrift',
+                        default => $state ?? 'Rechnung',
+                    })
+                    ->badge()
+                    ->color(fn ($state) => match($state) {
+                        'invoice' => 'primary',
+                        'credit_note' => 'warning',
+                        default => 'primary',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Erfasst am')
                     ->dateTime('d.m.Y H:i')
@@ -210,6 +232,12 @@ class MonthlyResultsRelationManager extends RelationManager
                 Tables\Filters\Filter::make('high_production')
                     ->label('Hohe Produktion (>1000 kWh)')
                     ->query(fn (Builder $query): Builder => $query->where('energy_produced_kwh', '>', 1000)),
+                Tables\Filters\SelectFilter::make('billing_type')
+                    ->label('Abrechnungstyp')
+                    ->options([
+                        'invoice' => 'Rechnung',
+                        'credit_note' => 'Gutschrift',
+                    ]),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()

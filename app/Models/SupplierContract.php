@@ -32,6 +32,11 @@ class SupplierContract extends Model
         'contract_recognition_1',
         'contract_recognition_2',
         'contract_recognition_3',
+        'custom_field_1',
+        'custom_field_2',
+        'custom_field_3',
+        'custom_field_4',
+        'custom_field_5',
         'is_active',
         'created_by',
     ];
@@ -271,6 +276,31 @@ class SupplierContract extends Model
             'terminated' => 'Gekündigt',
             'completed' => 'Abgeschlossen',
         ];
+    }
+
+    /**
+     * Holt die Custom Field Labels für Supplier Contracts
+     */
+    public static function getCustomFieldLabels(): array
+    {
+        return \App\Models\CustomField::active()
+            ->forContext('supplier_contract')
+            ->ordered()
+            ->pluck('field_label', 'field_key')
+            ->toArray();
+    }
+
+    /**
+     * Holt die Custom Field Konfigurationen für Supplier Contracts
+     */
+    public static function getCustomFieldConfigs(): array
+    {
+        return \App\Models\CustomField::active()
+            ->forContext('supplier_contract')
+            ->ordered()
+            ->get()
+            ->keyBy('field_key')
+            ->toArray();
     }
 
     /**
