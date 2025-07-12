@@ -116,6 +116,10 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => !request()->routeIs('filament.admin.auth.login')
                     ? view('layouts.filament-notifications')->render()
                     : ''
+            )
+            ->renderHook(
+                'panels::sidebar.footer',
+                fn (): string => view('vendor.filament.components.version')->render()
             );
     }
 }
