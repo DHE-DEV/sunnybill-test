@@ -64,7 +64,7 @@ class SupplierResource extends Resource
                             ->label('Website')
                             ->url()
                             ->maxLength(255)
-                            ->placeholder('z.B. https://222.beispiel.de'),
+                            ->placeholder('z.B. https://www.beispiel.de'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Adresse')

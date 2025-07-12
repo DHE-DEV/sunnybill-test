@@ -14,4 +14,9 @@ class CreateSupplier extends CreateRecord
     {
         return 'Neuer Lieferant';
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
