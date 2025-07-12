@@ -42,18 +42,32 @@ class ContractsRelationManager extends RelationManager
                     ->label('Vertragsnummer')
                     ->searchable()
                     ->sortable()
+                    ->toggleable()
                     ->weight('bold'),
+                Tables\Columns\TextColumn::make('title')
+                    ->label('Titel')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('supplier.company_name')
                     ->label('Lieferant')
                     ->searchable()
                     ->sortable()
+                    ->toggleable()
                     ->color('primary'),
                 Tables\Columns\TextColumn::make('malo_id')
                     ->label('MaLo-ID')
                     ->searchable()
                     ->placeholder('-')
-                    ->description('Marktlokation ID')
                     ->copyable()
+                    ->toggleable()
+                    ->color('info'),
+                Tables\Columns\TextColumn::make('ep_id')
+                    ->label('EP-ID')
+                    ->searchable()
+                    ->placeholder('-')
+                    ->copyable()
+                    ->toggleable()
                     ->color('info'),
                 Tables\Columns\TextColumn::make('contract_type')
                     ->label('Vertragsart')
@@ -69,6 +83,7 @@ class ContractsRelationManager extends RelationManager
                         default => $state,
                     })
                     ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->color(fn ($state) => match($state) {
                         'installation' => 'success',
                         'maintenance' => 'warning',
@@ -83,22 +98,26 @@ class ContractsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('start_date')
                     ->label('Vertragsbeginn')
                     ->date('d.m.Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('end_date')
                     ->label('Vertragsende')
                     ->date('d.m.Y')
                     ->sortable()
                     ->placeholder('Unbefristet')
-                    ->color(fn ($state) => $state && $state < now() ? 'danger' : 'gray'),
+                    ->color(fn ($state) => $state && $state < now() ? 'danger' : 'gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('contract_value')
                     ->label('Vertragswert')
                     ->formatStateUsing(fn ($state) => $state ? '€ ' . number_format($state, 2, ',', '.') : '-')
                     ->sortable()
-                    ->color('success'),
+                    ->color('success')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->formatStateUsing(fn ($state) => match($state) {
@@ -117,7 +136,8 @@ class ContractsRelationManager extends RelationManager
                         'terminated' => 'warning',
                         'completed' => 'info',
                         default => 'gray',
-                    }),
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('contract_type')

@@ -79,6 +79,14 @@ class SupplierContractResource extends Resource
                             ->label('Vertragsnummer extern')
                             ->maxLength(255)
                             ->placeholder('z.B. EXT-2024-001'),
+                        Forms\Components\TextInput::make('malo_id')
+                            ->label('MaLo-ID')
+                            ->helperText('Marktlokations-ID')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('ep_id')
+                            ->label('EP-ID')
+                            ->helperText('Einspeisepunkt-ID')
+                            ->maxLength(255),
                         
                         // Dummy Fields in Spalte 2 unten nacheinander
                         ...DummyFieldConfig::getDummyFieldsSchema('supplier_contract'),
@@ -146,6 +154,16 @@ class SupplierContractResource extends Resource
                     ->label('Vertragsnummer')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('malo_id')
+                    ->label('MaLo-ID')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('ep_id')
+                    ->label('EP-ID')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('supplier.company_name')
                     ->label('Lieferant')
                     ->searchable()

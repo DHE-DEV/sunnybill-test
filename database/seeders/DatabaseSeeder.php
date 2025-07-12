@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
             SupplierRecognitionPatternSeeder::class,
             PdfExtractionRuleSeeder::class,
             ContractMatchingRuleSeeder::class,
+            MaloIdFieldConfigSeeder::class,
+            EpIdFieldConfigSeeder::class,
         ]);
     }
 }
