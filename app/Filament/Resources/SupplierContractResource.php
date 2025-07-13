@@ -59,22 +59,23 @@ class SupplierContractResource extends Resource
                             ->options(Supplier::active()->orderBy('company_name')->pluck('company_name', 'id'))
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
                         // Status nach Lieferant
                         Forms\Components\Select::make('status')
                             ->label('Status')
                             ->options(SupplierContract::getStatusOptions())
                             ->default('draft')
                             ->required(),
+                        Forms\Components\TextInput::make('creditor_number')
+                            ->label('Eigene Kundennummer bei Lieferant')
+                            ->maxLength(255)
+                            ->placeholder('z.B. KR-12345'),
                         Forms\Components\TextInput::make('contract_number')
                             ->label('Vertragsnummer intern')
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
-                        Forms\Components\TextInput::make('creditor_number')
-                            ->label('Eigene Kundennummer bei Lieferant')
-                            ->maxLength(255)
-                            ->placeholder('z.B. KR-12345'),
                         Forms\Components\TextInput::make('external_contract_number')
                             ->label('Vertragsnummer extern')
                             ->maxLength(255)

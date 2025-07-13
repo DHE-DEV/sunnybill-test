@@ -51,6 +51,29 @@ class SolarPlantResource extends Resource
                                             ->maxLength(255)
                                             ->placeholder('z.B. Musterstraße 1, 12345 Musterstadt'),
                                     ]),
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('mastr_number')
+                                            ->label('MaStR-Nr.')
+                                            ->helperText('Marktstammdatenregister'),
+                                        Forms\Components\DatePicker::make('mastr_registration_date')
+                                            ->label('MaStR Registrierungsdatum')
+                                            ->helperText('Registrierungsdatum des Marktstammdatenregisters'),
+                                        Forms\Components\TextInput::make('malo_id')
+                                            ->label('MaLo-ID')
+                                            ->helperText('Marktlokations ID'),
+                                        Forms\Components\TextInput::make('melo_id')
+                                            ->label('MeLo-ID')
+                                            ->helperText('Messlokations ID'),
+                                        Forms\Components\TextInput::make('vnb_process_number')
+                                            ->label('VNB-Vorgangsnummer'),
+                                        Forms\Components\DatePicker::make('unit_commissioning_date')
+                                            ->label('Inbetriebnahmedatum der Einheit'),
+                                        Forms\Components\DatePicker::make('pv_soll_planning_date')
+                                            ->label('PV-Soll Planung erfolgte am:'),
+                                        Forms\Components\TextInput::make('pv_soll_project_number')
+                                            ->label('PV-Soll Projektnummer'),
+                                    ]),
                                 Forms\Components\Section::make('Geokoordinaten')
                                     ->description('Genaue Position der Solaranlage für Kartendarstellung')
                                     ->schema([
@@ -232,6 +255,25 @@ class SolarPlantResource extends Resource
                             ->weight('bold'),
                         \Filament\Infolists\Components\TextEntry::make('location')
                             ->label('Standort'),
+                        \Filament\Infolists\Components\TextEntry::make('mastr_number')
+                            ->label('MaStR-Nr.'),
+                        \Filament\Infolists\Components\TextEntry::make('mastr_registration_date')
+                            ->label('MaStR Registrierungsdatum')
+                            ->date('d.m.Y'),
+                        \Filament\Infolists\Components\TextEntry::make('malo_id')
+                            ->label('MaLo-ID'),
+                        \Filament\Infolists\Components\TextEntry::make('melo_id')
+                            ->label('MeLo-ID'),
+                        \Filament\Infolists\Components\TextEntry::make('vnb_process_number')
+                            ->label('VNB-Vorgangsnummer'),
+                        \Filament\Infolists\Components\TextEntry::make('unit_commissioning_date')
+                            ->label('Inbetriebnahmedatum der Einheit')
+                            ->date('d.m.Y'),
+                        \Filament\Infolists\Components\TextEntry::make('pv_soll_planning_date')
+                            ->label('PV-Soll Planung erfolgte am')
+                            ->date('d.m.Y'),
+                        \Filament\Infolists\Components\TextEntry::make('pv_soll_project_number')
+                            ->label('PV-Soll Projektnummer'),
                         \Filament\Infolists\Components\TextEntry::make('status')
                             ->label('Status')
                             ->formatStateUsing(fn ($state) => match($state) {
