@@ -244,7 +244,7 @@ class SupplierResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('company_name');
+            ->defaultSort('supplier_number', 'desc');
     }
 
     public static function getRelations(): array
