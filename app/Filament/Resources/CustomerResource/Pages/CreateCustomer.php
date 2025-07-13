@@ -14,4 +14,9 @@ class CreateCustomer extends CreateRecord
     {
         return 'Neuer Kunde';
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

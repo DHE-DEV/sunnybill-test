@@ -19,6 +19,11 @@ class EditCustomer extends EditRecord
         ];
     }
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function afterSave(): void
     {
         // Automatische Lexoffice-Synchronisation wenn Lexoffice-ID vorhanden
