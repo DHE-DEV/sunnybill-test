@@ -293,24 +293,30 @@ class Supplier extends Model
     }
 
     /**
-     * Generiere nächste Lieferantennummer
+     * Generiere nächste Lieferantennummer (nur für Fallback)
+     * Für normale Verwendung sollte generateUniqueSupplierNumber() verwendet werden
      */
     public static function generateSupplierNumber(): string
     {
         $companySettings = CompanySetting::current();
-        // Berücksichtige auch soft-deleted Records für die Nummerngeneration
-        $lastSuppliers = static::withTrashed()->orderBy('supplier_number', 'desc')->get();
+        // Berücksichtige nur aktive Records für fortlaufende Nummerierung
+        $lastSuppliers = static::orderBy('supplier_number', 'desc')->get();
         $highestNumber = 0;
         
         foreach ($lastSuppliers as $supplier) {
             try {
                 $number = $companySettings->extractSupplierNumber($supplier->supplier_number);
-                $highestNumber = max($highestNumber, $number);
+                // Nur "normale" Nummern berücksichtigen (unter 10000)
+                if ($number < 10000) {
+                    $highestNumber = max($highestNumber, $number);
+                }
             } catch (Exception $e) {
                 // Fallback für alte Formate
                 if (preg_match('/(\d+)$/', $supplier->supplier_number, $matches)) {
                     $number = (int) $matches[1];
-                    $highestNumber = max($highestNumber, $number);
+                    if ($number < 10000) {
+                        $highestNumber = max($highestNumber, $number);
+                    }
                 }
             }
         }
@@ -321,30 +327,26 @@ class Supplier extends Model
 
     /**
      * Generiere eindeutige Lieferantennummer (verhindert Duplikate)
+     * Verwendet fortlaufende Nummerierung und überspringt bereits verwendete Nummern
      */
     public static function generateUniqueSupplierNumber(): string
     {
-        $maxAttempts = 10;
-        $attempt = 0;
+        $companySettings = CompanySetting::current();
+        $maxAttempts = 1000; // Genug Versuche für fortlaufende Nummerierung
         
-        while ($attempt < $maxAttempts) {
-            $supplierNumber = static::generateSupplierNumber();
+        // Starte bei 1 und suche die erste verfügbare Nummer
+        for ($number = 1; $number <= $maxAttempts; $number++) {
+            $testNumber = $companySettings->generateSupplierNumber($number);
             
-            // Prüfe ob die Nummer bereits existiert (auch soft-deleted Records)
-            $exists = static::withTrashed()->where('supplier_number', $supplierNumber)->exists();
+            // Prüfe ob diese Nummer bereits existiert (aktive + soft-deleted)
+            $exists = static::withTrashed()->where('supplier_number', $testNumber)->exists();
             
             if (!$exists) {
-                return $supplierNumber; // Eindeutige Nummer gefunden
+                return $testNumber; // Erste verfügbare Nummer gefunden
             }
-            
-            $attempt++;
-            
-            // Kurze Pause um Race Conditions zu vermeiden
-            usleep(1000); // 1ms
         }
         
         // Fallback: Verwende Timestamp wenn alle Versuche fehlschlagen
-        $companySettings = CompanySetting::current();
         $timestamp = time();
         return ($companySettings->supplier_number_prefix ?? 'LF') . '-' . $timestamp;
     }
