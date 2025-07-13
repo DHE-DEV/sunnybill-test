@@ -314,6 +314,37 @@ class SupplierContract extends Model
             if (!$contract->created_by) {
                 $contract->created_by = auth()->user()?->name ?? 'System';
             }
+            
+            if (empty($contract->contract_number)) {
+                $contract->contract_number = static::generateUniqueContractNumber();
+            }
         });
+    }
+
+    /**
+     * Generiere eindeutige Vertragsnummer (verhindert Duplikate)
+     * Verwendet fortlaufende Nummerierung und überspringt bereits verwendete Nummern
+     */
+    public static function generateUniqueContractNumber(): string
+    {
+        $companySettings = \App\Models\CompanySetting::current();
+        $prefix = $companySettings?->supplier_contract_number_prefix ?? 'LV';
+        $maxAttempts = 1000; // Genug Versuche für fortlaufende Nummerierung
+        
+        // Starte bei 1 und suche die erste verfügbare Nummer
+        for ($number = 1; $number <= $maxAttempts; $number++) {
+            $testNumber = $prefix . '-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+            
+            // Prüfe ob diese Nummer bereits existiert (aktive + soft-deleted)
+            $exists = static::withTrashed()->where('contract_number', $testNumber)->exists();
+            
+            if (!$exists) {
+                return $testNumber; // Erste verfügbare Nummer gefunden
+            }
+        }
+        
+        // Fallback: Verwende Timestamp wenn alle Versuche fehlschlagen
+        $timestamp = time();
+        return $prefix . '-' . $timestamp;
     }
 }

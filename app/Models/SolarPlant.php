@@ -20,7 +20,7 @@ class SolarPlant extends Model
         
         static::creating(function ($solarPlant) {
             if (empty($solarPlant->plant_number)) {
-                $solarPlant->plant_number = static::generatePlantNumber();
+                $solarPlant->plant_number = static::generateUniquePlantNumber();
             }
         });
     }
@@ -463,7 +463,8 @@ class SolarPlant extends Model
     }
 
     /**
-     * Generiert eine eindeutige Solaranlagennummer
+     * Generiert eine eindeutige Solaranlagennummer (nur für Fallback)
+     * Für normale Verwendung sollte generateUniquePlantNumber() verwendet werden
      */
     private static function generatePlantNumber(): string
     {
@@ -471,13 +472,15 @@ class SolarPlant extends Model
             $companySettings = \App\Models\CompanySetting::current();
             $prefix = $companySettings?->solar_plant_number_prefix ?? 'SA';
             
-            // Finde die höchste Nummer für das Präfix
+            // Berücksichtige nur aktive Records für fortlaufende Nummerierung
             $lastPlant = static::where('plant_number', 'like', $prefix . '%')
                 ->orderBy('plant_number', 'desc')
                 ->first();
             
             if ($lastPlant && preg_match('/' . preg_quote($prefix) . '(\d+)$/', $lastPlant->plant_number, $matches)) {
-                $nextNumber = (int) $matches[1] + 1;
+                $number = (int) $matches[1];
+                // Nur "normale" Nummern berücksichtigen (unter 100000)
+                $nextNumber = $number < 100000 ? $number + 1 : 1;
             } else {
                 $nextNumber = 1;
             }
@@ -489,5 +492,32 @@ class SolarPlant extends Model
             $timestamp = time();
             return 'SA' . substr($timestamp, -6);
         }
+    }
+
+    /**
+     * Generiere eindeutige Solaranlagennummer (verhindert Duplikate)
+     * Verwendet fortlaufende Nummerierung und überspringt bereits verwendete Nummern
+     */
+    public static function generateUniquePlantNumber(): string
+    {
+        $companySettings = \App\Models\CompanySetting::current();
+        $prefix = $companySettings?->solar_plant_number_prefix ?? 'SA';
+        $maxAttempts = 1000; // Genug Versuche für fortlaufende Nummerierung
+        
+        // Starte bei 1 und suche die erste verfügbare Nummer
+        for ($number = 1; $number <= $maxAttempts; $number++) {
+            $testNumber = $prefix . str_pad($number, 6, '0', STR_PAD_LEFT);
+            
+            // Prüfe ob diese Nummer bereits existiert (aktive + soft-deleted)
+            $exists = static::withTrashed()->where('plant_number', $testNumber)->exists();
+            
+            if (!$exists) {
+                return $testNumber; // Erste verfügbare Nummer gefunden
+            }
+        }
+        
+        // Fallback: Verwende Timestamp wenn alle Versuche fehlschlagen
+        $timestamp = time();
+        return $prefix . '-' . $timestamp;
     }
 }
