@@ -298,7 +298,8 @@ class Supplier extends Model
     public static function generateSupplierNumber(): string
     {
         $companySettings = CompanySetting::current();
-        $lastSuppliers = static::orderBy('supplier_number', 'desc')->get();
+        // Berücksichtige auch soft-deleted Records für die Nummerngeneration
+        $lastSuppliers = static::withTrashed()->orderBy('supplier_number', 'desc')->get();
         $highestNumber = 0;
         
         foreach ($lastSuppliers as $supplier) {
@@ -329,8 +330,8 @@ class Supplier extends Model
         while ($attempt < $maxAttempts) {
             $supplierNumber = static::generateSupplierNumber();
             
-            // Prüfe ob die Nummer bereits existiert
-            $exists = static::where('supplier_number', $supplierNumber)->exists();
+            // Prüfe ob die Nummer bereits existiert (auch soft-deleted Records)
+            $exists = static::withTrashed()->where('supplier_number', $supplierNumber)->exists();
             
             if (!$exists) {
                 return $supplierNumber; // Eindeutige Nummer gefunden
