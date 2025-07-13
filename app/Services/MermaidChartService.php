@@ -10,10 +10,14 @@ class MermaidChartService
     /**
      * Generiert einen Mermaid-Chart-Code für eine Solaranlage
      */
-    public function generateSolarPlantChart(SolarPlant $solarPlant): string
+    public function generateSolarPlantChart(SolarPlant $solarPlant, ?string $customTemplate = null): string
     {
-        $companySetting = CompanySetting::current();
-        $template = $companySetting->mermaid_chart_template;
+        $template = $customTemplate;
+        
+        if (empty($template)) {
+            $companySetting = CompanySetting::current();
+            $template = $companySetting->mermaid_chart_template;
+        }
         
         if (empty($template)) {
             $template = $this->getDefaultTemplate();
