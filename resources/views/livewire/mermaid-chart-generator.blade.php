@@ -24,7 +24,7 @@
                 wire:click="generateChart"
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                 wire:loading.attr="disabled"
-                @if(!$selectedSolarPlantId) disabled @endif
+                @if(empty($selectedSolarPlantId)) disabled @endif
             >
                 <span wire:loading.remove wire:target="generateChart">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
