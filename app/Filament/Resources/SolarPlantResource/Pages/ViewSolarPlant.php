@@ -104,6 +104,46 @@ class ViewSolarPlant extends ViewRecord
                                                     ->trueColor('success')
                                                     ->falseColor('danger'),
                                             ]),
+                                        Infolists\Components\Grid::make(3)
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('mastr_number')
+                                                    ->label('MaStR-Nr.')
+                                                    ->placeholder('Nicht hinterlegt')
+                                                    ->copyable()
+                                                    ->badge()
+                                                    ->color('info'),
+                                                Infolists\Components\TextEntry::make('mastr_registration_date')
+                                                    ->label('MaStR Registrierungsdatum')
+                                                    ->date('d.m.Y')
+                                                    ->placeholder('Nicht hinterlegt'),
+                                                Infolists\Components\TextEntry::make('malo_id')
+                                                    ->label('MaLo-ID')
+                                                    ->placeholder('Nicht hinterlegt')
+                                                    ->copyable()
+                                                    ->badge()
+                                                    ->color('primary'),
+                                            ]),
+                                        Infolists\Components\Grid::make(3)
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('melo_id')
+                                                    ->label('MeLo-ID')
+                                                    ->placeholder('Nicht hinterlegt')
+                                                    ->copyable()
+                                                    ->badge()
+                                                    ->color('primary'),
+                                                Infolists\Components\TextEntry::make('vnb_process_number')
+                                                    ->label('VNB-Vorgangsnummer')
+                                                    ->placeholder('Nicht hinterlegt')
+                                                    ->copyable()
+                                                    ->badge()
+                                                    ->color('warning'),
+                                                Infolists\Components\TextEntry::make('pv_soll_project_number')
+                                                    ->label('PV-Soll Projektnummer')
+                                                    ->placeholder('Nicht hinterlegt')
+                                                    ->copyable()
+                                                    ->badge()
+                                                    ->color('success'),
+                                            ]),
                                     ])
                                     ->headerActions([
                                         Infolists\Components\Actions\Action::make('show_map')

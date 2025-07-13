@@ -250,59 +250,98 @@ class SolarPlantResource extends Resource
             ->schema([
                 \Filament\Infolists\Components\Section::make('Grunddaten')
                     ->schema([
-                        \Filament\Infolists\Components\TextEntry::make('name')
-                            ->label('Anlagenname')
-                            ->weight('bold'),
-                        \Filament\Infolists\Components\TextEntry::make('location')
-                            ->label('Standort'),
-                        \Filament\Infolists\Components\TextEntry::make('mastr_number')
-                            ->label('MaStR-Nr.'),
-                        \Filament\Infolists\Components\TextEntry::make('mastr_registration_date')
-                            ->label('MaStR Registrierungsdatum')
-                            ->date('d.m.Y'),
-                        \Filament\Infolists\Components\TextEntry::make('malo_id')
-                            ->label('MaLo-ID'),
-                        \Filament\Infolists\Components\TextEntry::make('melo_id')
-                            ->label('MeLo-ID'),
-                        \Filament\Infolists\Components\TextEntry::make('vnb_process_number')
-                            ->label('VNB-Vorgangsnummer'),
-                        \Filament\Infolists\Components\TextEntry::make('unit_commissioning_date')
-                            ->label('Inbetriebnahmedatum der Einheit')
-                            ->date('d.m.Y'),
-                        \Filament\Infolists\Components\TextEntry::make('pv_soll_planning_date')
-                            ->label('PV-Soll Planung erfolgte am')
-                            ->date('d.m.Y'),
-                        \Filament\Infolists\Components\TextEntry::make('pv_soll_project_number')
-                            ->label('PV-Soll Projektnummer'),
-                        \Filament\Infolists\Components\TextEntry::make('status')
-                            ->label('Status')
-                            ->formatStateUsing(fn ($state) => match($state) {
-                                'in_planning' => 'In Planung',
-                                'planned' => 'Geplant',
-                                'under_construction' => 'Im Bau',
-                                'awaiting_commissioning' => 'Warte auf Inbetriebnahme',
-                                'active' => 'Aktiv',
-                                'maintenance' => 'Wartung',
-                                'inactive' => 'Inaktiv',
-                                default => $state,
-                            })
-                            ->badge()
-                            ->color(fn ($state) => match($state) {
-                                'in_planning' => 'gray',
-                                'planned' => 'info',
-                                'under_construction' => 'warning',
-                                'awaiting_commissioning' => 'primary',
-                                'active' => 'success',
-                                'maintenance' => 'info',
-                                'inactive' => 'danger',
-                                default => 'gray',
-                            }),
-                        \Filament\Infolists\Components\IconEntry::make('is_active')
-                            ->label('Aktiv')
-                            ->boolean(),
+                        \Filament\Infolists\Components\Grid::make(2)
+                            ->schema([
+                                \Filament\Infolists\Components\TextEntry::make('name')
+                                    ->label('Anlagenname')
+                                    ->weight('bold')
+                                    ->size('lg'),
+                                \Filament\Infolists\Components\TextEntry::make('location')
+                                    ->label('Standort')
+                                    ->size('lg'),
+                            ]),
+                        
+                        \Filament\Infolists\Components\Grid::make(3)
+                            ->schema([
+                                \Filament\Infolists\Components\TextEntry::make('mastr_number')
+                                    ->label('MaStR-Nr.')
+                                    ->placeholder('Nicht hinterlegt')
+                                    ->copyable()
+                                    ->badge()
+                                    ->color('info'),
+                                \Filament\Infolists\Components\TextEntry::make('mastr_registration_date')
+                                    ->label('MaStR Registrierungsdatum')
+                                    ->date('d.m.Y')
+                                    ->placeholder('Nicht hinterlegt'),
+                                \Filament\Infolists\Components\TextEntry::make('malo_id')
+                                    ->label('MaLo-ID')
+                                    ->placeholder('Nicht hinterlegt')
+                                    ->copyable()
+                                    ->badge()
+                                    ->color('primary'),
+                            ]),
+                        
+                        \Filament\Infolists\Components\Grid::make(3)
+                            ->schema([
+                                \Filament\Infolists\Components\TextEntry::make('melo_id')
+                                    ->label('MeLo-ID')
+                                    ->placeholder('Nicht hinterlegt')
+                                    ->copyable()
+                                    ->badge()
+                                    ->color('primary'),
+                                \Filament\Infolists\Components\TextEntry::make('vnb_process_number')
+                                    ->label('VNB-Vorgangsnummer')
+                                    ->placeholder('Nicht hinterlegt')
+                                    ->copyable()
+                                    ->badge()
+                                    ->color('warning'),
+                                \Filament\Infolists\Components\TextEntry::make('pv_soll_project_number')
+                                    ->label('PV-Soll Projektnummer')
+                                    ->placeholder('Nicht hinterlegt')
+                                    ->copyable()
+                                    ->badge()
+                                    ->color('success'),
+                            ]),
+                        
+                        \Filament\Infolists\Components\Grid::make(3)
+                            ->schema([
+                                \Filament\Infolists\Components\TextEntry::make('status')
+                                    ->label('Status')
+                                    ->formatStateUsing(fn ($state) => match($state) {
+                                        'in_planning' => 'In Planung',
+                                        'planned' => 'Geplant',
+                                        'under_construction' => 'Im Bau',
+                                        'awaiting_commissioning' => 'Warte auf Inbetriebnahme',
+                                        'active' => 'Aktiv',
+                                        'maintenance' => 'Wartung',
+                                        'inactive' => 'Inaktiv',
+                                        default => $state,
+                                    })
+                                    ->badge()
+                                    ->color(fn ($state) => match($state) {
+                                        'in_planning' => 'gray',
+                                        'planned' => 'info',
+                                        'under_construction' => 'warning',
+                                        'awaiting_commissioning' => 'primary',
+                                        'active' => 'success',
+                                        'maintenance' => 'info',
+                                        'inactive' => 'danger',
+                                        default => 'gray',
+                                    }),
+                                \Filament\Infolists\Components\IconEntry::make('is_active')
+                                    ->label('Aktiv')
+                                    ->boolean(),
+                                \Filament\Infolists\Components\TextEntry::make('total_capacity_kw')
+                                    ->label('Gesamtleistung')
+                                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') . ' kWp' : '-')
+                                    ->badge()
+                                    ->color('success'),
+                            ]),
+                        
                         \Filament\Infolists\Components\TextEntry::make('description')
                             ->label('Beschreibung')
                             ->prose()
+                            ->placeholder('Keine Beschreibung hinterlegt')
                             ->columnSpanFull(),
                     ])
                     ->columns(2)
