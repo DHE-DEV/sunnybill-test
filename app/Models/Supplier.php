@@ -21,7 +21,7 @@ class Supplier extends Model
         
         static::creating(function ($supplier) {
             if (empty($supplier->supplier_number)) {
-                $supplier->supplier_number = static::generateSupplierNumber();
+                $supplier->supplier_number = static::generateUniqueSupplierNumber();
             }
         });
     }
@@ -316,5 +316,35 @@ class Supplier extends Model
         
         $newNumber = $highestNumber + 1;
         return $companySettings->generateSupplierNumber($newNumber);
+    }
+
+    /**
+     * Generiere eindeutige Lieferantennummer (verhindert Duplikate)
+     */
+    public static function generateUniqueSupplierNumber(): string
+    {
+        $maxAttempts = 10;
+        $attempt = 0;
+        
+        while ($attempt < $maxAttempts) {
+            $supplierNumber = static::generateSupplierNumber();
+            
+            // Prüfe ob die Nummer bereits existiert
+            $exists = static::where('supplier_number', $supplierNumber)->exists();
+            
+            if (!$exists) {
+                return $supplierNumber; // Eindeutige Nummer gefunden
+            }
+            
+            $attempt++;
+            
+            // Kurze Pause um Race Conditions zu vermeiden
+            usleep(1000); // 1ms
+        }
+        
+        // Fallback: Verwende Timestamp wenn alle Versuche fehlschlagen
+        $companySettings = CompanySetting::current();
+        $timestamp = time();
+        return ($companySettings->supplier_number_prefix ?? 'LF') . '-' . $timestamp;
     }
 }
