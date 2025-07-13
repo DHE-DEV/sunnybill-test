@@ -100,6 +100,7 @@ class CompanySetting extends Model
         'gmail_notifications_sent_count',
         'gmail_filter_inbox',
         'gmail_logging_enabled',
+        'mermaid_chart_template',
     ];
 
     protected $casts = [

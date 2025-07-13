@@ -993,10 +993,32 @@ class CompanySettingResource extends Resource
                                     ->visible(fn ($get) => $get('gmail_enabled'))
                                     ->description('Konfigurieren Sie die automatische Verarbeitung von E-Mails'),
                             ]),
-                    ])
-                    ->columnSpanFull(),
-            ])
-            ->columns(1);
+
+                       Forms\Components\Tabs\Tab::make('Mermaid-Charts')
+                           ->schema([
+                               Forms\Components\Section::make('Mermaid-Chart Template')
+                                   ->schema([
+                                       Forms\Components\Textarea::make('mermaid_chart_template')
+                                           ->label('Mermaid-Chart Template')
+                                           ->rows(20)
+                                           ->placeholder('Hier können Sie das Mermaid-Chart Template für Solaranlagen-Diagramme eingeben...')
+                                           ->helperText('Template für die automatische Generierung von Mermaid-Charts für Solaranlagen. Verwenden Sie Platzhalter wie {{plant_name}}, {{customers}}, etc.')
+                                           ->columnSpanFull(),
+                                   ])
+                                   ->description('Konfigurieren Sie das Template für automatisch generierte Mermaid-Charts'),
+                               
+                               Forms\Components\Section::make('Mermaid-Chart Generator')
+                                   ->schema([
+                                       Forms\Components\View::make('livewire.mermaid-chart-generator')
+                                           ->columnSpanFull(),
+                                   ])
+                                   ->description('Generieren Sie Mermaid-Charts für Solaranlagen basierend auf dem konfigurierten Template'),
+                           ])
+                           ->visible(fn () => auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false),
+                   ])
+                   ->columnSpanFull(),
+           ])
+           ->columns(1);
     }
 
     public static function table(Table $table): Table
