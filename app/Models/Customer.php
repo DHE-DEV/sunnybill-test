@@ -20,7 +20,7 @@ class Customer extends Model
         
         static::creating(function ($customer) {
             if (empty($customer->customer_number)) {
-                $customer->customer_number = static::generateCustomerNumber();
+                $customer->customer_number = static::generateUniqueCustomerNumber();
             }
         });
 
@@ -459,7 +459,8 @@ class Customer extends Model
     }
 
     /**
-     * Generiere nächste Kundennummer
+     * Generiere nächste Kundennummer (nur für Fallback)
+     * Für normale Verwendung sollte generateUniqueCustomerNumber() verwendet werden
      */
     public static function generateCustomerNumber(): string
     {
@@ -476,6 +477,7 @@ class Customer extends Model
                 return 'K' . str_pad($newNumber, 6, '0', STR_PAD_LEFT);
             }
             
+            // Berücksichtige nur aktive Records für fortlaufende Nummerierung
             $lastCustomers = static::orderBy('customer_number', 'desc')->get();
             $highestNumber = 0;
             
@@ -487,12 +489,17 @@ class Customer extends Model
                 
                 try {
                     $number = $companySettings->extractCustomerNumber($customer->customer_number);
-                    $highestNumber = max($highestNumber, $number);
+                    // Nur "normale" Nummern berücksichtigen (unter 10000)
+                    if ($number < 10000) {
+                        $highestNumber = max($highestNumber, $number);
+                    }
                 } catch (Exception $e) {
                     // Fallback für alte Formate
                     if (preg_match('/(\d+)$/', $customer->customer_number, $matches)) {
                         $number = (int) $matches[1];
-                        $highestNumber = max($highestNumber, $number);
+                        if ($number < 10000) {
+                            $highestNumber = max($highestNumber, $number);
+                        }
                     }
                 }
             }
@@ -504,5 +511,34 @@ class Customer extends Model
             $timestamp = time();
             return 'K' . substr($timestamp, -6);
         }
+    }
+
+    /**
+     * Generiere eindeutige Kundennummer (verhindert Duplikate)
+     * Verwendet fortlaufende Nummerierung und überspringt bereits verwendete Nummern
+     */
+    public static function generateUniqueCustomerNumber(): string
+    {
+        $companySettings = CompanySetting::current();
+        $maxAttempts = 1000; // Genug Versuche für fortlaufende Nummerierung
+        
+        // Starte bei 1 und suche die erste verfügbare Nummer
+        for ($number = 1; $number <= $maxAttempts; $number++) {
+            $testNumber = $companySettings ?
+                $companySettings->generateCustomerNumber($number) :
+                'K' . str_pad($number, 6, '0', STR_PAD_LEFT);
+            
+            // Prüfe ob diese Nummer bereits existiert (aktive + soft-deleted)
+            $exists = static::withTrashed()->where('customer_number', $testNumber)->exists();
+            
+            if (!$exists) {
+                return $testNumber; // Erste verfügbare Nummer gefunden
+            }
+        }
+        
+        // Fallback: Verwende Timestamp wenn alle Versuche fehlschlagen
+        $timestamp = time();
+        $prefix = $companySettings ? ($companySettings->customer_number_prefix ?? 'K') : 'K';
+        return $prefix . '-' . $timestamp;
     }
 }
