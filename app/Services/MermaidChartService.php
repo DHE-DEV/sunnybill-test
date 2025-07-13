@@ -35,19 +35,8 @@ class MermaidChartService
         $suppliers = $solarPlant->suppliers;
         $contracts = $solarPlant->supplierContracts;
         
-        // Erstelle Platzhalter-Ersetzungen
-        $replacements = [
-            '{{plant_name}}' => $solarPlant->name,
-            '{{plant_location}}' => $solarPlant->location,
-            '{{plant_capacity}}' => number_format($solarPlant->total_capacity_kw, 2, ',', '.') . ' kWp',
-            '{{plant_status}}' => $this->getStatusLabel($solarPlant->status),
-            '{{customers}}' => $this->generateCustomersSection($customers),
-            '{{suppliers}}' => $this->generateSuppliersSection($suppliers),
-            '{{contracts}}' => $this->generateContractsSection($contracts),
-            '{{customer_connections}}' => $this->generateCustomerConnections($customers),
-            '{{supplier_connections}}' => $this->generateSupplierConnections($suppliers, $contracts),
-            '{{billing_connections}}' => $this->generateBillingConnections($customers, $contracts),
-        ];
+        // Erstelle erweiterte Platzhalter-Ersetzungen
+        $replacements = $this->getExtendedReplacements($solarPlant, $customers, $suppliers, $contracts);
         
         // Ersetze Platzhalter im Template
         $chartCode = str_replace(array_keys($replacements), array_values($replacements), $template);
@@ -70,7 +59,7 @@ class MermaidChartService
     classDef info fill:#FFF,stroke:#999,stroke-width:1px,color:#333
 
     %% Solaranlage
-    SA["Solaranlage<br/>{{plant_name}}<br/>{{plant_capacity}}"]:::solarPlant
+    SA["Solaranlage<br/>{{plant_name}}<br/>{{plant_capacity}}<br/>{{plant_location}}<br/>Status: {{plant_status}}"]:::solarPlant
 
     {{customers}}
 
@@ -85,9 +74,52 @@ class MermaidChartService
     {{billing_connections}}
 
     %% Hinweis
-    Info["**Hinweise:**<br/>
-    - Alle Kosten/Erlöse werden anteilig verteilt.<br/>
-    - Alle Lieferanten und Dienstleister sind berücksichtigt."]:::info';
+    Info["**Aktualisiert:** {{last_updated}}<br/>
+    - Alle Kosten/Erlöse werden anteilig verteilt<br/>
+    - Alle Lieferanten und Dienstleister sind berücksichtigt<br/>
+    - Daten werden automatisch aktualisiert"]:::info';
+    }
+
+    /**
+     * Erweiterte Platzhalter-Ersetzungen
+     */
+    private function getExtendedReplacements(SolarPlant $solarPlant, $customers, $suppliers, $contracts): array
+    {
+        return [
+            // Grunddaten der Solaranlage
+            '{{plant_name}}' => $solarPlant->name,
+            '{{plant_location}}' => $solarPlant->location ?: 'Nicht angegeben',
+            '{{plant_capacity}}' => number_format($solarPlant->total_capacity_kw, 2, ',', '.') . ' kWp',
+            '{{plant_status}}' => $this->getStatusLabel($solarPlant->status),
+            '{{plant_commissioning_date}}' => $solarPlant->commissioning_date ? $solarPlant->commissioning_date->format('d.m.Y') : 'Nicht angegeben',
+            '{{plant_annual_yield}}' => $solarPlant->annual_yield_kwh ? number_format($solarPlant->annual_yield_kwh, 0, ',', '.') . ' kWh/Jahr' : 'Nicht angegeben',
+            
+            // Technische Daten
+            '{{plant_mastr_nr}}' => $solarPlant->mastr_nr ?: 'Nicht angegeben',
+            '{{plant_malo_id}}' => $solarPlant->malo_id ?: 'Nicht angegeben',
+            '{{plant_melo_id}}' => $solarPlant->melo_id ?: 'Nicht angegeben',
+            '{{plant_vnb_process_number}}' => $solarPlant->vnb_process_number ?: 'Nicht angegeben',
+            '{{plant_pv_soll_project_number}}' => $solarPlant->pv_soll_project_number ?: 'Nicht angegeben',
+            
+            // Dynamische Sektionen
+            '{{customers}}' => $this->generateCustomersSection($customers),
+            '{{suppliers}}' => $this->generateSuppliersSection($suppliers),
+            '{{contracts}}' => $this->generateContractsSection($contracts),
+            '{{customer_connections}}' => $this->generateCustomerConnections($customers),
+            '{{supplier_connections}}' => $this->generateSupplierConnections($suppliers, $contracts),
+            '{{billing_connections}}' => $this->generateBillingConnections($customers, $contracts),
+            
+            // Statistiken
+            '{{customer_count}}' => $customers->count(),
+            '{{supplier_count}}' => $suppliers->count(),
+            '{{contract_count}}' => $contracts->count(),
+            '{{total_participation}}' => number_format($customers->sum('percentage'), 1) . '%',
+            
+            // Zeitstempel
+            '{{last_updated}}' => now()->format('d.m.Y H:i'),
+            '{{generation_date}}' => now()->format('d.m.Y'),
+            '{{generation_time}}' => now()->format('H:i:s'),
+        ];
     }
     
     /**

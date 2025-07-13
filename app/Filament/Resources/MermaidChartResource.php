@@ -78,7 +78,7 @@ class MermaidChartResource extends Resource
                             ->rows(20)
                             ->required()
                             ->placeholder('Geben Sie hier Ihr Mermaid-Template ein...')
-                            ->helperText('Verwenden Sie Platzhalter wie {{plant_name}}, {{customers}}, {{suppliers}} für dynamische Inhalte')
+                            ->helperText('Verwenden Sie Platzhalter für automatische Datenaktualisierung. Klicken Sie auf "Template-Hilfe" für alle verfügbaren Platzhalter. Der Code wird bei jeder Generierung mit aktuellen Daten aus der Datenbank gefüllt.')
                             ->columnSpanFull(),
                         
                         Forms\Components\Actions::make([
@@ -93,12 +93,43 @@ class MermaidChartResource extends Resource
                                         
                                         Notification::make()
                                             ->title('Template geladen')
-                                            ->body('Standard-Template für Solaranlagen wurde geladen.')
+                                            ->body('Erweitertes Standard-Template für Solaranlagen wurde geladen. Alle Platzhalter werden automatisch mit aktuellen Daten gefüllt.')
                                             ->success()
                                             ->send();
                                     }
                                 })
                                 ->visible(fn ($get) => $get('chart_type') === 'solar_plant'),
+                            
+                            Forms\Components\Actions\Action::make('show_template_help')
+                                ->label('Template-Hilfe')
+                                ->icon('heroicon-o-question-mark-circle')
+                                ->color('info')
+                                ->modalHeading('Verfügbare Template-Platzhalter')
+                                ->modalContent(function () {
+                                    $documentation = MermaidChart::getTemplateDocumentation();
+                                    $content = '<div class="space-y-4">';
+                                    
+                                    foreach ($documentation as $category => $placeholders) {
+                                        $content .= '<div>';
+                                        $content .= '<h3 class="font-semibold text-lg mb-2">' . $category . '</h3>';
+                                        $content .= '<div class="grid grid-cols-1 gap-2">';
+                                        
+                                        foreach ($placeholders as $placeholder => $description) {
+                                            $content .= '<div class="flex justify-between items-center p-2 bg-gray-50 rounded">';
+                                            $content .= '<code class="text-sm font-mono text-blue-600">' . $placeholder . '</code>';
+                                            $content .= '<span class="text-sm text-gray-600">' . $description . '</span>';
+                                            $content .= '</div>';
+                                        }
+                                        
+                                        $content .= '</div></div>';
+                                    }
+                                    
+                                    $content .= '</div>';
+                                    
+                                    return new \Illuminate\Support\HtmlString($content);
+                                })
+                                ->modalSubmitAction(false)
+                                ->modalCancelActionLabel('Schließen'),
                             
                             Forms\Components\Actions\Action::make('generate_preview')
                                 ->label('Vorschau generieren')
