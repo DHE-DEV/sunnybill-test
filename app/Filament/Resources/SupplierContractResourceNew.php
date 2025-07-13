@@ -381,4 +381,55 @@ class SupplierContractResourceNew extends Resource
                 SoftDeletingScope::class,
             ]);
     }
+
+    // Zugriffskontrolle für Superadmin-Team
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canRestore($record): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canForceDelete($record): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->teams()->where('name', 'Superadmin')->exists() ?? false;
+    }
 }
