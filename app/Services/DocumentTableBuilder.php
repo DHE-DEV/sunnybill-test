@@ -252,14 +252,14 @@ class DocumentTableBuilder
                 ->modalWidth($this->config('modalWidth', '4xl'))
                 ->form($this->getEditForm())
                 ->visible(fn (): bool =>
-                    auth()->user()?->isManagerOrAdmin() ?? false
+                    auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false
                 );
         }
 
         if ($this->config('showDelete', true)) {
             $actions[] = Tables\Actions\DeleteAction::make()
                 ->visible(fn (): bool =>
-                    auth()->user()?->isManagerOrAdmin() ?? false
+                    auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false
                 );
         }
 

@@ -191,11 +191,11 @@ trait DocumentUploadTrait
 
     /**
      * Stelle sicher, dass Create-Aktionen auch im View-Modus angezeigt werden
-     * Berechtigungsprüfung für Manager und Administrator
+     * Berechtigungsprüfung für Administrator, Superadmin und Manager
      */
     public function canCreate(): bool
     {
-        return auth()->user()?->isManagerOrAdmin() ?? false;
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
     /**
@@ -203,7 +203,7 @@ trait DocumentUploadTrait
      */
     public function canEdit($record): bool
     {
-        return auth()->user()?->isManagerOrAdmin() ?? false;
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
     /**
@@ -211,7 +211,7 @@ trait DocumentUploadTrait
      */
     public function canDelete($record): bool
     {
-        return auth()->user()?->isManagerOrAdmin() ?? false;
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
     /**
@@ -219,7 +219,7 @@ trait DocumentUploadTrait
      */
     public function canView($record): bool
     {
-        return auth()->user()?->isManagerOrAdmin() ?? false;
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
     /**
