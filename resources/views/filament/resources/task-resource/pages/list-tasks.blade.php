@@ -190,7 +190,13 @@
 
 <!-- Edit Task Modal -->
 @if($showEditModal)
-            <div class="fixed inset-0 z-[9999] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="z-index: 9999 !important;">
+    <div class="fixed inset-0 z-[9999] overflow-y-auto"
+         aria-labelledby="modal-title"
+         role="dialog"
+         aria-modal="true"
+         style="z-index: 9999 !important;"
+         x-data="{}"
+         x-on:keydown.escape.window="$wire.closeEditModal()">
                 <!-- Background overlay -->
                 <div class="fixed inset-0 transition-opacity" style="background-color: rgba(0, 0, 0, 0.75) !important; z-index: 9998 !important;" wire:click="closeEditModal"></div>
                 
@@ -306,7 +312,13 @@
 
         <!-- Notes Modal -->
         @if($showNotesModal && $notesTask)
-            <div class="fixed inset-0 z-[9999] overflow-y-auto" aria-labelledby="notes-modal-title" role="dialog" aria-modal="true" style="z-index: 9999 !important;">
+            <div class="fixed inset-0 z-[9999] overflow-y-auto"
+                 aria-labelledby="notes-modal-title"
+                 role="dialog"
+                 aria-modal="true"
+                 style="z-index: 9999 !important;"
+                 x-data="{}"
+                 x-on:keydown.escape.window="$wire.closeNotesModal()">
                 <!-- Background overlay -->
                 <div class="fixed inset-0 transition-opacity" style="background-color: rgba(0, 0, 0, 0.75) !important; z-index: 9998 !important;" wire:click="closeNotesModal"></div>
                 
