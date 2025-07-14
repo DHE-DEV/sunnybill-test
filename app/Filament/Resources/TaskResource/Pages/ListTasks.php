@@ -5,6 +5,8 @@ namespace App\Filament\Resources\TaskResource\Pages;
 use App\Filament\Resources\TaskResource;
 use App\Models\Task;
 use App\Models\TaskNote;
+use App\Models\TaskHistory;
+use App\Models\TaskReadStatus;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -42,6 +44,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public bool $showNotesModal = false;
     public ?Task $notesTask = null;
     public string $newNoteContent = '';
+    
+    // History modal properties
+    public bool $showHistoryModal = false;
+    public ?Task $historyTask = null;
 
     public function mount(): void
     {
@@ -373,6 +379,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $task = \App\Models\Task::find($taskId);
 
         if ($task) {
+            $oldStatus = $task->status;
+            
             // Aktualisiere den Status
             $task->status = $newStatus;
             
@@ -384,6 +392,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             }
             
             $task->save();
+            
+            // Historie für Status-Änderung
+            TaskHistory::logFieldChange($task, auth()->id(), 'status', $oldStatus, $newStatus);
 
             // Optional: Logik zur Neuordnung basierend auf $orderedIds
             // ...
@@ -443,6 +454,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public function saveTask()
     {
         if ($this->editingTask) {
+            // Alte Werte für Historie speichern
+            $oldValues = $this->editingTask->getOriginal();
+            
             // Bestehende Task mit Formulardaten aktualisieren
             $this->editingTask->title = $this->editTitle;
             $this->editingTask->description = $this->editDescription;
@@ -454,6 +468,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             $this->editingTask->owner_id = $this->editOwnerId;
             
             $this->editingTask->save();
+            
+            // Historie für geänderte Felder erstellen
+            $this->logTaskChanges($this->editingTask, $oldValues);
         } else {
             // Neue Aufgabe erstellen
             $this->createTask();
@@ -508,6 +525,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'created_by' => auth()->id(),
         ]);
 
+        // Historie für Task-Erstellung
+        TaskHistory::logTaskCreation($task, auth()->id());
+
         $this->closeEditModal();
         
         // Board neu laden
@@ -541,6 +561,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'content' => trim($this->newNoteContent),
         ]);
 
+        // Historie-Eintrag für hinzugefügte Notiz
+        TaskHistory::logNoteAdded($this->notesTask, auth()->id());
+
         // Notizen neu laden
         $this->notesTask = Task::with(['notes.user'])->find($this->notesTask->id);
         $this->newNoteContent = '';
@@ -556,6 +579,188 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             ->with('user')
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    // History Modal Methods
+    public function openHistoryModal($taskId)
+    {
+        $this->historyTask = Task::with(['history.user'])->find($taskId);
+        $this->showHistoryModal = true;
+    }
+
+    public function closeHistoryModal()
+    {
+        $this->showHistoryModal = false;
+        $this->historyTask = null;
+    }
+
+    public function getHistoryProperty()
+    {
+        if (!$this->historyTask) {
+            return collect();
+        }
+
+        return $this->historyTask->history()
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    // Mark as read methods
+    public function markAsRead($taskId)
+    {
+        $task = Task::find($taskId);
+        if ($task) {
+            TaskReadStatus::markAllAsRead($task, auth()->id());
+        }
+    }
+
+    // Helper methods for checking unread status
+    public function hasUnreadNotes($task)
+    {
+        return TaskReadStatus::hasUnreadNotes($task, auth()->id());
+    }
+
+    public function hasUnreadHistory($task)
+    {
+        return TaskReadStatus::hasUnreadHistory($task, auth()->id());
+    }
+
+    // Get due date color based on days remaining
+    public function getDueDateColor($dueDate)
+    {
+        if (!$dueDate) {
+            return 'text-gray-500';
+        }
+
+        $now = now()->startOfDay();
+        $due = \Carbon\Carbon::parse($dueDate)->startOfDay();
+        $diffInDays = $now->diffInDays($due, false);
+
+        if ($diffInDays < 0) {
+            // Overdue - red
+            return 'text-red-500';
+        } elseif ($diffInDays == 0) {
+            // Due today - orange
+            return 'text-orange-500';
+        } elseif ($diffInDays <= 7) {
+            // Due within a week - blue
+            return 'text-blue-500';
+        } else {
+            // Due later - gray
+            return 'text-gray-500';
+        }
+    }
+
+    // Get due date text
+    public function getDueDateText($dueDate)
+    {
+        if (!$dueDate) {
+            return '';
+        }
+
+        $now = now()->startOfDay();
+        $due = \Carbon\Carbon::parse($dueDate)->startOfDay();
+        $diffInDays = $now->diffInDays($due, false);
+
+        if ($diffInDays < 0) {
+            $days = abs($diffInDays);
+            return $days == 1 ? 'Überfällig seit 1 Tag' : "Überfällig seit {$days} Tagen";
+        } elseif ($diffInDays == 0) {
+            return 'Heute fällig';
+        } elseif ($diffInDays == 1) {
+            return 'Morgen fällig';
+        } elseif ($diffInDays <= 7) {
+            return "Fällig in {$diffInDays} Tagen";
+        } else {
+            return $due->format('d.m.Y');
+        }
+    }
+
+    private function logTaskChanges($task, $oldValues)
+    {
+        $fieldsToTrack = [
+            'title' => 'Titel',
+            'description' => 'Beschreibung',
+            'status' => 'Status',
+            'priority' => 'Priorität',
+            'due_date' => 'Fälligkeitsdatum',
+            'task_type_id' => 'Aufgabentyp',
+            'assigned_to' => 'Zugewiesen an',
+            'owner_id' => 'Inhaber'
+        ];
+
+        foreach ($fieldsToTrack as $field => $label) {
+            $oldValue = $oldValues[$field] ?? null;
+            $newValue = $task->$field;
+
+            if ($oldValue != $newValue) {
+                // Formatiere Werte für bessere Lesbarkeit
+                $formattedOldValue = $this->formatHistoryValue($field, $oldValue);
+                $formattedNewValue = $this->formatHistoryValue($field, $newValue);
+
+                TaskHistory::logFieldChange(
+                    $task,
+                    auth()->id(),
+                    $field,
+                    $formattedOldValue,
+                    $formattedNewValue
+                );
+            }
+        }
+    }
+
+    private function formatHistoryValue($field, $value)
+    {
+        if ($value === null) {
+            return 'Nicht gesetzt';
+        }
+
+        switch ($field) {
+            case 'status':
+                $statusLabels = [
+                    'open' => 'Offen',
+                    'in_progress' => 'In Bearbeitung',
+                    'waiting_external' => 'Warte auf Extern',
+                    'waiting_internal' => 'Warte auf Intern',
+                    'completed' => 'Abgeschlossen',
+                    'cancelled' => 'Abgebrochen'
+                ];
+                return $statusLabels[$value] ?? $value;
+
+            case 'priority':
+                $priorityLabels = [
+                    'low' => 'Niedrig',
+                    'medium' => 'Mittel',
+                    'high' => 'Hoch',
+                    'urgent' => 'Dringend'
+                ];
+                return $priorityLabels[$value] ?? $value;
+
+            case 'task_type_id':
+                if ($value) {
+                    $taskType = \App\Models\TaskType::find($value);
+                    return $taskType ? $taskType->name : "ID: $value";
+                }
+                return 'Nicht gesetzt';
+
+            case 'assigned_to':
+            case 'owner_id':
+                if ($value) {
+                    $user = \App\Models\User::find($value);
+                    return $user ? $user->name : "ID: $value";
+                }
+                return 'Nicht gesetzt';
+
+            case 'due_date':
+                if ($value) {
+                    return \Carbon\Carbon::parse($value)->format('d.m.Y');
+                }
+                return 'Nicht gesetzt';
+
+            default:
+                return $value;
+        }
     }
 
 }

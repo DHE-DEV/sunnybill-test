@@ -120,6 +120,16 @@ class Task extends Model
         return $this->hasMany(TaskNote::class);
     }
 
+    public function history(): HasMany
+    {
+        return $this->hasMany(TaskHistory::class);
+    }
+
+    public function readStatuses(): HasMany
+    {
+        return $this->hasMany(TaskReadStatus::class);
+    }
+
     /**
      * Scopes
      */
