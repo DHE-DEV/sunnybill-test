@@ -23,13 +23,26 @@ class ListTasks extends ListRecords implements HasForms, HasActions
 
     public bool $showStatistics = false;
     public bool $showBoard = false;
+    public ?int $selectedTaskId = null;
+    public bool $showEditModal = false;
+    public ?Task $editingTask = null;
+    
+    // Form fields for editing
+    public string $editTitle = '';
+    public string $editDescription = '';
+    public string $editStatus = '';
+    public string $editPriority = '';
+    public ?string $editDueDate = null;
+    public ?int $editTaskTypeId = null;
+    public ?int $editAssignedTo = null;
+    public ?int $editOwnerId = null;
 
     public function mount(): void
     {
         parent::mount();
         // Prüfe URL-Parameter oder Session für den aktuellen Zustand
         $this->showStatistics = request()->get('statistics', false);
-        $this->showBoard = request()->get('board', false);
+        $this->showBoard = request()->get('board', true); // Standardmäßig Board anzeigen
     }
 
     protected function getHeaderActions(): array
@@ -374,16 +387,125 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $this->resetPage();
     }
 
-    public function taskAction(): Actions\Action
+    protected function getActions(): array
     {
-        return Actions\EditAction::make('edit')
-            ->modalWidth('4xl')
-            ->model(Task::class);
+        return [
+            Actions\EditAction::make('editTask')
+                ->record(fn (array $arguments) => Task::find($arguments['record']))
+                ->modalWidth('4xl')
+                ->form(fn (Form $form) => TaskResource::form($form))
+                ->successNotificationTitle('Aufgabe erfolgreich aktualisiert')
+                ->visible(false), // Versteckt, da wir es programmatisch aufrufen
+        ];
     }
 
-    public function mountTaskAction(string $taskId)
+    public function editTaskById($taskId)
     {
-        $this->mountAction('edit', ['record' => $taskId]);
+        $this->editingTask = Task::find($taskId);
+        
+        if ($this->editingTask) {
+            // Formularfelder mit Task-Daten füllen
+            $this->editTitle = $this->editingTask->title ?? '';
+            $this->editDescription = $this->editingTask->description ?? '';
+            $this->editStatus = $this->editingTask->status ?? 'open';
+            $this->editPriority = $this->editingTask->priority ?? 'medium';
+            $this->editDueDate = $this->editingTask->due_date ? $this->editingTask->due_date->format('Y-m-d') : null;
+            $this->editTaskTypeId = $this->editingTask->task_type_id;
+            $this->editAssignedTo = $this->editingTask->assigned_to;
+            $this->editOwnerId = $this->editingTask->owner_id;
+            
+            $this->showEditModal = true;
+        }
+    }
+
+    public function closeEditModal()
+    {
+        $this->showEditModal = false;
+        $this->editingTask = null;
+        
+        // Formularfelder zurücksetzen
+        $this->editTitle = '';
+        $this->editDescription = '';
+        $this->editStatus = '';
+        $this->editPriority = '';
+        $this->editDueDate = null;
+        $this->editTaskTypeId = null;
+        $this->editAssignedTo = null;
+        $this->editOwnerId = null;
+    }
+
+    public function saveTask()
+    {
+        if ($this->editingTask) {
+            // Bestehende Task mit Formulardaten aktualisieren
+            $this->editingTask->title = $this->editTitle;
+            $this->editingTask->description = $this->editDescription;
+            $this->editingTask->status = $this->editStatus;
+            $this->editingTask->priority = $this->editPriority;
+            $this->editingTask->due_date = $this->editDueDate ? \Carbon\Carbon::parse($this->editDueDate) : null;
+            $this->editingTask->task_type_id = $this->editTaskTypeId;
+            $this->editingTask->assigned_to = $this->editAssignedTo;
+            $this->editingTask->owner_id = $this->editOwnerId;
+            
+            $this->editingTask->save();
+        } else {
+            // Neue Aufgabe erstellen
+            $this->createTask();
+            return; // createTask() schließt bereits das Modal
+        }
+
+        $this->closeEditModal();
+        
+        // Board neu laden
+        $this->dispatch('task-updated');
+    }
+
+    public function getTaskTypesProperty()
+    {
+        return \App\Models\TaskType::active()->ordered()->get();
+    }
+
+    public function getUsersProperty()
+    {
+        return \App\Models\User::orderBy('name')->get();
+    }
+
+    public function addTaskToColumn($status)
+    {
+        // Modal für neue Aufgabe öffnen
+        $this->editingTask = null; // Keine bestehende Aufgabe
+        $this->showEditModal = true;
+        
+        // Formularfelder für neue Aufgabe zurücksetzen
+        $this->editTitle = '';
+        $this->editDescription = '';
+        $this->editStatus = $status; // Status der Spalte vorauswählen
+        $this->editPriority = 'medium'; // Standard-Priorität
+        $this->editDueDate = null;
+        $this->editTaskTypeId = null;
+        $this->editAssignedTo = null;
+        $this->editOwnerId = null;
+    }
+
+    public function createTask()
+    {
+        // Neue Aufgabe erstellen
+        $task = \App\Models\Task::create([
+            'title' => $this->editTitle,
+            'description' => $this->editDescription,
+            'status' => $this->editStatus,
+            'priority' => $this->editPriority,
+            'due_date' => $this->editDueDate ? \Carbon\Carbon::parse($this->editDueDate) : null,
+            'task_type_id' => $this->editTaskTypeId ?: null,
+            'assigned_to' => $this->editAssignedTo ?: null,
+            'owner_id' => $this->editOwnerId ?: null,
+            'created_by' => auth()->id(),
+        ]);
+
+        $this->closeEditModal();
+        
+        // Board neu laden
+        $this->dispatch('task-updated');
     }
 
 }
