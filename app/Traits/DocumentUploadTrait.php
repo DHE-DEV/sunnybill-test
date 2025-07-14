@@ -222,7 +222,7 @@ trait DocumentUploadTrait
      */
     public function canView($record): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
+        return true; // Alle Benutzer können Dokumente anzeigen
     }
 
     /**

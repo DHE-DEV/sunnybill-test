@@ -65,4 +65,12 @@ class DocumentsRelationManager extends RelationManager
     {
         return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
+
+    /**
+     * Berechtigungsprüfung für das Anzeigen von Dokumenten - alle Benutzer können Dokumente sehen
+     */
+    public function canView($record): bool
+    {
+        return true; // Alle Benutzer können Dokumente anzeigen
+    }
 }
