@@ -181,6 +181,9 @@ trait DocumentUploadTrait
             ]);
         }
         
+        // Aktiviere Aktionen auch im View-Modus für berechtigte Benutzer
+        $config['enableViewModeActions'] = true;
+        
         $tableBuilder = DocumentTableBuilder::make($config);
         Log::debug('DocumentUploadTrait: TableBuilder erstellt', [
             'builder_class' => get_class($tableBuilder)

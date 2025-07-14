@@ -197,8 +197,8 @@ class DocumentTableBuilder
                         ->send();
                 })
                 ->visible(fn ($livewire): bool =>
-                    // Zeige die Action immer an, auch im View-Modus
-                    true
+                    // Zeige die Action immer an, auch im View-Modus, wenn der User berechtigt ist
+                    auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false
                 );
         }
 
@@ -253,14 +253,18 @@ class DocumentTableBuilder
                 ->form($this->getEditForm())
                 ->visible(fn (): bool =>
                     auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false
-                );
+                )
+                // Aktiviere die Aktion auch im View-Modus für RelationManager
+                ->authorize('update');
         }
 
         if ($this->config('showDelete', true)) {
             $actions[] = Tables\Actions\DeleteAction::make()
                 ->visible(fn (): bool =>
                     auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false
-                );
+                )
+                // Aktiviere die Aktion auch im View-Modus für RelationManager
+                ->authorize('delete');
         }
 
         // Gruppiere Aktionen wenn gewünscht
