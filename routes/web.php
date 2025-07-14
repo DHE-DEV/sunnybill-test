@@ -276,3 +276,9 @@ Route::prefix('admin/uploaded-pdfs')->middleware('auth')->group(function () {
     Route::get('/{uploadedPdf}/analyze', [App\Http\Controllers\UploadedPdfController::class, 'analyze'])
         ->name('uploaded-pdfs.analyze');
 });
+
+// Task Status Update Routes (for Kanban Board)
+Route::middleware('auth')->group(function () {
+    Route::post('/admin/tasks/{task}/update-status', [App\Http\Controllers\TaskStatusController::class, 'updateStatus'])
+        ->name('tasks.update-status');
+});

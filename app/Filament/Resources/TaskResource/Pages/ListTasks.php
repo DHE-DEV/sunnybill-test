@@ -3,33 +3,54 @@
 namespace App\Filament\Resources\TaskResource\Pages;
 
 use App\Filament\Resources\TaskResource;
+use App\Models\Task;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Form;
 
-class ListTasks extends ListRecords
+class ListTasks extends ListRecords implements HasForms, HasActions
 {
+    use InteractsWithForms;
+    use InteractsWithActions;
+
     protected static string $resource = TaskResource::class;
     
     protected static string $view = 'filament.resources.task-resource.pages.list-tasks';
 
     public bool $showStatistics = false;
+    public bool $showBoard = false;
 
     public function mount(): void
     {
         parent::mount();
         // Prüfe URL-Parameter oder Session für den aktuellen Zustand
         $this->showStatistics = request()->get('statistics', false);
+        $this->showBoard = request()->get('board', false);
     }
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('toggleView')
+            Actions\Action::make('toggleBoard')
+                ->label(fn() => $this->showBoard ? 'Liste anzeigen' : 'Board anzeigen')
+                ->icon(fn() => $this->showBoard ? 'heroicon-o-list-bullet' : 'heroicon-o-squares-2x2')
+                ->color('primary')
+                ->action(function () {
+                    $this->showBoard = !$this->showBoard;
+                    $this->showStatistics = false;
+                }),
+                
+            Actions\Action::make('toggleStatistics')
                 ->label(fn() => $this->showStatistics ? 'Aufgaben anzeigen' : 'Statistik anzeigen')
                 ->icon(fn() => $this->showStatistics ? 'heroicon-o-list-bullet' : 'heroicon-o-chart-bar')
-                ->color(fn() => $this->showStatistics ? 'primary' : 'primary')
+                ->color('gray')
                 ->action(function () {
                     $this->showStatistics = !$this->showStatistics;
+                    $this->showBoard = false;
                 }),
             
             Actions\CreateAction::make()
@@ -39,7 +60,45 @@ class ListTasks extends ListRecords
 
     public function getTitle(): string
     {
-        return $this->showStatistics ? 'Aufgaben Statistiken' : 'Aufgaben';
+        if ($this->showStatistics) {
+            return 'Aufgaben Statistiken';
+        } elseif ($this->showBoard) {
+            return 'Aufgaben Board';
+        }
+        return 'Aufgaben';
+    }
+
+    public function getStatusColumns(): array
+    {
+        // Spalten in logischer Workflow-Reihenfolge von links nach rechts
+        $statusConfig = [
+            'open' => ['label' => 'Offen', 'color' => 'gray'],
+            'in_progress' => ['label' => 'In Bearbeitung', 'color' => 'blue'],
+            'waiting_external' => ['label' => 'Warte auf Extern', 'color' => 'yellow'],
+            'waiting_internal' => ['label' => 'Warte auf Intern', 'color' => 'purple'],
+            'completed' => ['label' => 'Abgeschlossen', 'color' => 'green'],
+            'cancelled' => ['label' => 'Abgebrochen', 'color' => 'red'],
+        ];
+
+        $columns = [];
+        
+        foreach ($statusConfig as $status => $config) {
+            $tasks = TaskResource::getEloquentQuery()
+                ->where('status', $status)
+                ->with(['taskType', 'assignedUser', 'customer', 'supplier'])
+                ->orderBy('due_date', 'asc')
+                ->orderBy('priority', 'desc')
+                ->get();
+
+            $columns[$status] = [
+                'label' => $config['label'],
+                'color' => $config['color'],
+                'count' => $tasks->count(),
+                'tasks' => $tasks,
+            ];
+        }
+
+        return $columns;
     }
 
     public function getStatistics(): array
@@ -285,4 +344,46 @@ class ListTasks extends ListRecords
             'top_creators' => $topCreators,
         ];
     }
+
+    /**
+     * Listener für das Livewire-Event, wenn eine Aufgabe verschoben wird.
+     */
+    public function onTaskDropped($taskId, $newStatus, $fromStatus, $orderedIds): void
+    {
+        // Finde die Aufgabe
+        $task = \App\Models\Task::find($taskId);
+
+        if ($task) {
+            // Aktualisiere den Status
+            $task->status = $newStatus;
+            
+            // Setze completed_at, wenn der neue Status 'completed' ist
+            if ($newStatus === 'completed' && $task->completed_at === null) {
+                $task->completed_at = now();
+            } elseif ($newStatus !== 'completed') {
+                $task->completed_at = null;
+            }
+            
+            $task->save();
+
+            // Optional: Logik zur Neuordnung basierend auf $orderedIds
+            // ...
+        }
+
+        // Neu rendern, um die Änderungen zu übernehmen (optional, aber oft nützlich)
+        $this->resetPage();
+    }
+
+    public function taskAction(): Actions\Action
+    {
+        return Actions\EditAction::make('edit')
+            ->modalWidth('4xl')
+            ->model(Task::class);
+    }
+
+    public function mountTaskAction(string $taskId)
+    {
+        $this->mountAction('edit', ['record' => $taskId]);
+    }
+
 }

@@ -1,294 +1,167 @@
 <x-filament-panels::page>
-    @if($this->showStatistics)
-        @php
-            $statistics = $this->getStatistics();
-        @endphp
-
-        <div class="space-y-6">
-            <!-- Übersicht -->
-            <div class="flex flex-wrap gap-4">
-                <div class="flex-1 min-w-64">
-                    <x-filament::section>
-                        <x-slot name="heading">
-                            Gesamt Aufgaben
-                        </x-slot>
-                        <div class="text-3xl font-bold text-primary-600">
-                            {{ $statistics['overview']['total_tasks'] }}
-                        </div>
-                    </x-filament::section>
-                </div>
-
-                <div class="flex-1 min-w-64">
-                    <x-filament::section>
-                        <x-slot name="heading">
-                            Meine Aufgaben
-                        </x-slot>
-                        <div class="text-3xl font-bold text-info-600">
-                            {{ $statistics['overview']['my_tasks'] }}
-                        </div>
-                    </x-filament::section>
-                </div>
-
-                <div class="flex-1 min-w-64">
-                    <x-filament::section>
-                        <x-slot name="heading">
-                            Überfällige Aufgaben
-                        </x-slot>
-                        <div class="text-3xl font-bold text-danger-600">
-                            {{ $statistics['overview']['overdue_tasks'] }}
-                        </div>
-                    </x-filament::section>
-                </div>
-
-                <div class="flex-1 min-w-64">
-                    <x-filament::section>
-                        <x-slot name="heading">
-                            Heute fällig
-                        </x-slot>
-                        <div class="text-3xl font-bold text-warning-600">
-                            {{ $statistics['overview']['due_today'] }}
-                        </div>
-                    </x-filament::section>
-                </div>
-            </div>
-
-            <!-- Meine Aufgaben Details -->
-            <x-filament::section>
-                <x-slot name="heading">
-                    Meine Aufgaben Details
-                </x-slot>
-                <div class="flex flex-wrap gap-4">
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-3xl font-bold text-primary-600">{{ $statistics['my_tasks']['total'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Gesamt</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-3xl font-bold text-gray-600">{{ $statistics['my_tasks']['open'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Offen</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-3xl font-bold text-primary-600">{{ $statistics['my_tasks']['in_progress'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">In Bearbeitung</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-3xl font-bold text-success-600">{{ $statistics['my_tasks']['completed'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Abgeschlossen</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-3xl font-bold text-danger-600">{{ $statistics['my_tasks']['overdue'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Überfällig</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-3xl font-bold text-info-600">{{ $statistics['my_tasks']['assigned_to_me'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Mir zugewiesen</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-3xl font-bold text-warning-600">{{ $statistics['my_tasks']['created_by_me'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Von mir erstellt</div>
-                        </div>
-                    </div>
-                </div>
-            </x-filament::section>
-
-            <!-- Produktivität -->
-            <x-filament::section>
-                <x-slot name="heading">
-                    Produktivität
-                </x-slot>
-                <div class="flex flex-wrap gap-4">
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-2xl font-bold text-success-600">{{ $statistics['productivity']['completed_today'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Heute abgeschlossen</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-2xl font-bold text-primary-600">{{ $statistics['productivity']['completed_this_week'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Diese Woche</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-2xl font-bold text-info-600">{{ $statistics['productivity']['completed_last_30_days'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Letzte 30 Tage</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-2xl font-bold text-warning-600">{{ $statistics['productivity']['completion_rate'] }}%</div>
-                            <div class="text-sm text-gray-600 mt-1">Abschlussrate</div>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-2xl font-bold text-gray-600">{{ $statistics['productivity']['avg_completion_time'] }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Ø Bearbeitungszeit</div>
-                        </div>
-                    </div>
-                </div>
-            </x-filament::section>
-
-            <!-- Zeiterfassung -->
-            <x-filament::section>
-                <x-slot name="heading">
-                    Zeiterfassung
-                </x-slot>
-                <div class="flex flex-wrap gap-4">
-                    <div class="w-64">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-2xl font-bold text-primary-600">{{ $statistics['time_tracking']['total_estimated_hours'] }}h</div>
-                            <div class="text-sm text-gray-600 mt-1">Geschätzte Zeit</div>
-                        </div>
-                    </div>
-                    <div class="w-64">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-2xl font-bold text-success-600">{{ $statistics['time_tracking']['total_actual_hours'] }}h</div>
-                            <div class="text-sm text-gray-600 mt-1">Tatsächliche Zeit</div>
-                        </div>
-                    </div>
-                    <div class="w-64">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-2xl font-bold text-info-600">{{ $statistics['time_tracking']['avg_estimated_minutes'] }} min</div>
-                            <div class="text-sm text-gray-600 mt-1">Ø Schätzung</div>
-                        </div>
-                    </div>
-                    <div class="w-64">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-                            <div class="text-2xl font-bold text-warning-600">{{ $statistics['time_tracking']['estimation_accuracy'] }}%</div>
-                            <div class="text-sm text-gray-600 mt-1">Schätzgenauigkeit</div>
-                        </div>
-                    </div>
-                </div>
-            </x-filament::section>
-
-            <!-- Status und Priorität Verteilung -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Status Verteilung -->
-                <x-filament::section>
-                    <x-slot name="heading">
-                        Status Verteilung
-                    </x-slot>
-                    <div class="space-y-3">
-                        @foreach($statistics['status_distribution'] as $status => $data)
+    <!-- CSRF Token für AJAX -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    @if($this->showBoard)
+        <div class="bg-white dark:bg-gray-900 min-h-screen">
+            <!-- Kanban Board -->
+            <div class="overflow-x-auto">
+                <div class="flex gap-6 p-6" style="min-width: 1800px;">
+                    @foreach($this->getStatusColumns() as $status => $column)
+                        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg flex-shrink-0" 
+                             style="width: 280px;">
+                        
+                        <!-- Column Header -->
+                        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                             <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-sm font-medium">{{ $data['label'] }}</span>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-sm text-gray-600">{{ $data['count'] }}</span>
-                                    <span class="text-xs text-gray-500">({{ $data['percentage'] }}%)</span>
-                                </div>
+                                <h3 class="font-semibold text-gray-900 dark:text-white text-sm">
+                                    {{ $column['label'] }}
+                                </h3>
+                                <span class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium px-2 py-1 rounded">
+                                    {{ $column['count'] }}
+                                </span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-{{ match($status) {
-                                    'open' => 'gray',
-                                    'in_progress' => 'primary',
-                                    'waiting_external' => 'warning',
-                                    'waiting_internal' => 'info',
-                                    'completed' => 'success',
-                                    'cancelled' => 'danger',
-                                    default => 'gray'
-                                } }}-500 h-2 rounded-full" style="width: {{ $data['percentage'] }}%"></div>
-                            </div>
-                        @endforeach
-                    </div>
-                </x-filament::section>
+                        </div>
 
-                <!-- Priorität Verteilung -->
-                <x-filament::section>
-                    <x-slot name="heading">
-                        Priorität Verteilung
-                    </x-slot>
-                    <div class="space-y-3">
-                        @foreach($statistics['priority_distribution'] as $priority => $data)
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-sm font-medium">{{ $data['label'] }}</span>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-sm text-gray-600">{{ $data['count'] }}</span>
-                                    <span class="text-xs text-gray-500">({{ $data['percentage'] }}%)</span>
-                                </div>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-{{ match($priority) {
-                                    'low' => 'gray',
-                                    'medium' => 'primary',
-                                    'high' => 'warning',
-                                    'urgent' => 'danger',
-                                    default => 'gray'
-                                } }}-500 h-2 rounded-full" style="width: {{ $data['percentage'] }}%"></div>
-                            </div>
-                        @endforeach
-                    </div>
-                </x-filament::section>
-            </div>
+                        <!-- Tasks in Column -->
+                        <div wire:key="status-{{ $status }}"
+                             x-data="{
+                                 status: '{{ $status }}',
+                                 handleDrop(event) {
+                                     const taskId = event.dataTransfer.getData('text/plain');
+                                     const fromStatus = event.dataTransfer.getData('application/json');
+                                     
+                                     if (this.status !== fromStatus) {
+                                         // Die Logik zur Neuordnung ist komplex, wir übergeben vorerst nur die notwendigen Daten
+                                         const orderedIds = Array.from(event.currentTarget.querySelectorAll('.task-card')).map(el => el.dataset.taskId);
+                                         @this.call('onTaskDropped', taskId, this.status, fromStatus, orderedIds);
+                                     }
+                                     
+                                     event.currentTarget.classList.remove('bg-blue-100', 'dark:bg-gray-700');
+                                 },
+                                 handleDragOver(event) {
+                                     event.preventDefault();
+                                     event.currentTarget.classList.add('bg-blue-100', 'dark:bg-gray-700');
+                                 },
+                                 handleDragLeave(event) {
+                                     event.currentTarget.classList.remove('bg-blue-100', 'dark:bg-gray-700');
+                                 }
+                             }"
+                             class="p-4 space-y-3 min-h-[600px] drop-zone"
+                             data-status="{{ $status }}"
+                             x-on:drop.prevent="handleDrop($event)"
+                             x-on:dragover.prevent="handleDragOver($event)"
+                             x-on:dragleave.prevent="handleDragLeave($event)">
 
-            <!-- Aufgabentypen und Team Statistiken -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Aufgabentypen -->
-                <x-filament::section>
-                    <x-slot name="heading">
-                        Aufgabentypen
-                    </x-slot>
-                    <div class="space-y-2">
-                        @foreach($statistics['task_types'] as $taskType)
-                            <div class="flex items-center justify-between p-2 rounded-lg bg-gray-50">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-sm font-medium">{{ $taskType['name'] }}</span>
-                                </div>
-                                <span class="text-sm text-gray-600">{{ $taskType['count'] }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </x-filament::section>
+                            @foreach($column['tasks'] as $task)
+                                <div wire:key="task-{{ $task->id }}"
+                                     x-data="{
+                                         handleDragStart(event) {
+                                             event.dataTransfer.setData('text/plain', '{{ $task->id }}');
+                                             event.dataTransfer.setData('application/json', '{{ $task->status }}');
+                                             event.target.classList.add('opacity-50');
+                                         },
+                                         handleDragEnd(event) {
+                                             event.target.classList.remove('opacity-50');
+                                         }
+                                     }"
+                                     class="bg-white dark:bg-gray-700 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-600 cursor-move task-card hover:shadow-md transition-shadow"
+                                     draggable="true"
+                                     x-on:dragstart="handleDragStart($event)"
+                                     x-on:dragend="handleDragEnd($event)"
+                                     data-task-id="{{ $task->id }}">
+                                    
+                                    <!-- Task Content -->
+                                    <div class="flex-grow space-y-2">
+                                        <!-- Task Title -->
+                                        <h4 class="text-sm font-medium text-gray-900 dark:text-white leading-tight">
+                                            {{ $task->title }}
+                                        </h4>
 
-                <!-- Top Zugewiesene -->
-                <x-filament::section>
-                    <x-slot name="heading">
-                        Top Zugewiesene Benutzer
-                    </x-slot>
-                    <div class="space-y-2">
-                        @foreach($statistics['team_stats']['top_assignees'] as $assignee)
-                            <div class="flex items-center justify-between p-2 rounded-lg bg-gray-50">
-                                <span class="text-sm font-medium">{{ $assignee['name'] }}</span>
-                                <span class="text-sm text-gray-600">{{ $assignee['task_count'] }} Aufgaben</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </x-filament::section>
+                                        <!-- Task Description -->
+                                        @if($task->description)
+                                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                                                {{ Str::limit($task->description, 100) }}
+                                            </p>
+                                        @endif
 
-                <!-- Top Ersteller -->
-                <x-filament::section>
-                    <x-slot name="heading">
-                        Top Aufgaben-Ersteller
-                    </x-slot>
-                    <div class="space-y-2">
-                        @foreach($statistics['team_stats']['top_creators'] as $creator)
-                            <div class="flex items-center justify-between p-2 rounded-lg bg-gray-50">
-                                <span class="text-sm font-medium">{{ $creator['name'] }}</span>
-                                <span class="text-sm text-gray-600">{{ $creator['task_count'] }} Aufgaben</span>
-                            </div>
-                        @endforeach
+                                        <!-- Task Meta Info -->
+                                        <div class="flex items-center justify-between text-xs">
+                                            @if($task->task_number)
+                                                <span class="text-gray-500 dark:text-gray-400 font-mono">
+                                                    {{ $task->task_number }}
+                                                </span>
+                                            @endif
+                                            
+                                            @if($task->due_date)
+                                                <span class="text-xs @if($task->is_overdue) text-red-500 @elseif($task->is_due_today) text-orange-500 @else text-gray-500 dark:text-gray-400 @endif">
+                                                    {{ $task->due_date->format('d.m.Y') }}
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        <!-- Task Type and Priority -->
+                                        <div class="flex items-center justify-between">
+                                            @if($task->taskType)
+                                                <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded">
+                                                    {{ $task->taskType->name }}
+                                                </span>
+                                            @endif
+                                            
+                                            @if($task->priority === 'urgent')
+                                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                                                    Dringend
+                                                </span>
+                                            @elseif($task->priority === 'high')
+                                                <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">
+                                                    Hoch
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        <!-- Assigned User -->
+                                        @if($task->assignedUser)
+                                            <div class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                {{ $task->assignedUser->name }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    
+                                     <!-- Edit Action -->
+                                     <div class="flex-shrink-0">
+                                         <button wire:click="mountTaskAction('{{ $task->id }}')" class="text-gray-400 hover:text-gray-600">
+                                             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                 <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                                 <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                                             </svg>
+                                         </button>
+                                     </div>
+                                 </div>
+                            @endforeach
+                            
+                            <!-- Add Task Button -->
+                            <button class="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors text-sm">
+                                + Aufgabe hinzufügen
+                            </button>
+                        </div>
                     </div>
-                </x-filament::section>
+                    @endforeach
+                </div>
             </div>
         </div>
+
+        <!-- Kein zusätzliches JavaScript nötig, alles wird von AlpineJS und Livewire gehandhabt -->
+
+        <x-filament-actions::modals />
+
+    @elseif($this->showStatistics)
+        <!-- Statistik View (bestehend) -->
+        @include('filament.resources.task-resource.pages.statistics')
     @else
+        <!-- Standard Tabellen View -->
         {{ $this->table }}
     @endif
 </x-filament-panels::page>
