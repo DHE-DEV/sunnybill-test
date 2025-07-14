@@ -300,7 +300,8 @@ class DocumentResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (): bool => auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false),
                     Action::make('download')
                         ->label('Herunterladen')
                         ->icon('heroicon-o-arrow-down-tray')
@@ -314,7 +315,8 @@ class DocumentResource extends Resource
                         ->url(fn (Document $record): string => route('documents.preview', $record))
                         ->openUrlInNewTab()
                         ->visible(fn (Document $record): bool => str_contains($record->mime_type, 'image') || str_contains($record->mime_type, 'pdf')),
-                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn (): bool => auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false),
                 ])
                     ->label('Aktionen')
                     ->icon('heroicon-m-ellipsis-vertical')
