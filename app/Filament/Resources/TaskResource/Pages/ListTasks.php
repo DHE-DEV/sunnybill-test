@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TaskResource\Pages;
 
 use App\Filament\Resources\TaskResource;
 use App\Models\Task;
+use App\Models\TaskNote;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -36,6 +37,11 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public ?int $editTaskTypeId = null;
     public ?int $editAssignedTo = null;
     public ?int $editOwnerId = null;
+    
+    // Notes modal properties
+    public bool $showNotesModal = false;
+    public ?Task $notesTask = null;
+    public string $newNoteContent = '';
 
     public function mount(): void
     {
@@ -506,6 +512,50 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         
         // Board neu laden
         $this->dispatch('task-updated');
+    }
+
+    // Notes Modal Methods
+    public function openNotesModal($taskId)
+    {
+        $this->notesTask = Task::with(['notes.user'])->find($taskId);
+        $this->newNoteContent = '';
+        $this->showNotesModal = true;
+    }
+
+    public function closeNotesModal()
+    {
+        $this->showNotesModal = false;
+        $this->notesTask = null;
+        $this->newNoteContent = '';
+    }
+
+    public function addNote()
+    {
+        if (!$this->notesTask || empty(trim($this->newNoteContent))) {
+            return;
+        }
+
+        TaskNote::create([
+            'task_id' => $this->notesTask->id,
+            'user_id' => auth()->id(),
+            'content' => trim($this->newNoteContent),
+        ]);
+
+        // Notizen neu laden
+        $this->notesTask = Task::with(['notes.user'])->find($this->notesTask->id);
+        $this->newNoteContent = '';
+    }
+
+    public function getNotesProperty()
+    {
+        if (!$this->notesTask) {
+            return collect();
+        }
+
+        return $this->notesTask->notes()
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
 }

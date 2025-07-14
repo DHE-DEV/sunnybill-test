@@ -115,6 +115,11 @@ class Task extends Model
         return $this->morphMany(Document::class, 'documentable');
     }
 
+    public function notes(): HasMany
+    {
+        return $this->hasMany(TaskNote::class);
+    }
+
     /**
      * Scopes
      */

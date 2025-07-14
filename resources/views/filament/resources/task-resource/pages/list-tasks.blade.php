@@ -149,8 +149,19 @@
                                             </div>
                                         </div>
                                         
-                                        <!-- Edit Action -->
-                                        <div class="flex-shrink-0">
+                                        <!-- Action Buttons -->
+                                        <div class="flex-shrink-0 flex items-center gap-1">
+                                            <!-- Notes Button -->
+                                            <button wire:click="openNotesModal({{ $task->id }})"
+                                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
+                                                    title="Notizen anzeigen">
+                                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                                                    <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+                                                </svg>
+                                            </button>
+                                            
+                                            <!-- Edit Button -->
                                             <button wire:click="editTaskById({{ $task->id }})"
                                                     class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
                                                     title="Aufgabe bearbeiten">
@@ -287,6 +298,67 @@
                             <button wire:click="saveTask" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none" style="background-color: rgb(217, 119, 6) !important; color: white !important; border: none !important;">
                                 Speichern
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Notes Modal -->
+        @if($showNotesModal && $notesTask)
+            <div class="fixed inset-0 z-[9999] overflow-y-auto" aria-labelledby="notes-modal-title" role="dialog" aria-modal="true" style="z-index: 9999 !important;">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 transition-opacity" style="background-color: rgba(0, 0, 0, 0.75) !important; z-index: 9998 !important;" wire:click="closeNotesModal"></div>
+                
+                <!-- Modal container -->
+                <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center" style="z-index: 9999 !important;">
+                    <!-- Modal panel -->
+                    <div class="relative inline-block bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all" style="width: 90vw !important; max-width: 800px !important; z-index: 9999 !important; padding: 20px !important; max-height: 80vh !important;">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                {{ $notesTask->title }}
+                            </h3>
+                            <button wire:click="closeNotesModal" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- New Note Input -->
+                        <div class="mb-6 pt-4 bg-gray-50 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Neue Notiz hinzufügen</label>
+                            <textarea wire:model="newNoteContent"
+                                      rows="3"
+                                      class="block w-full border-gray-300 rounded-md shadow-sm resize-none"
+                                      placeholder="Notiz eingeben..."></textarea>
+                            <div class="flex justify-end mt-3">
+                                <button wire:click="addNote"
+                                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none"
+                                        style="background-color: rgb(217, 119, 6) !important; color: white !important; border: none !important;">
+                                    Speichern
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Notes List -->
+                        <div class="pt-4 space-y-4" style="max-height: 400px !important; overflow-y: auto !important;">
+                            @forelse($this->notes as $note)
+                                <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex items-center">
+                                            <span class="text-sm font-medium text-gray-900">{{ $note->user->name }}</span>
+                                            <span class="text-sm text-gray-500">&nbsp;&nbsp;&nbsp;{{ $note->created_at->format('d.m.Y H:i') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $note->content }}</div>
+                                </div>
+                            @empty
+                                <div class="text-center py-8 text-gray-500">
+                                    <p>Noch keine Notizen vorhanden</p>
+                                </div>
+                            @endforelse
                         </div>
                     </div>
                 </div>
