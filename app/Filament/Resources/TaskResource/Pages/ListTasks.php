@@ -111,6 +111,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             $tasks = TaskResource::getEloquentQuery()
                 ->where('status', $status)
                 ->with(['taskType', 'assignedUser', 'customer', 'supplier'])
+                ->orderByRaw('CASE WHEN priority = "blocker" THEN 0 ELSE 1 END')
+                ->orderBy('sort_order', 'asc')
                 ->orderBy('due_date', 'asc')
                 ->orderBy('priority', 'desc')
                 ->get();
@@ -187,7 +189,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'low' => 'Niedrig',
             'medium' => 'Mittel',
             'high' => 'Hoch',
-            'urgent' => 'Dringend'
+            'urgent' => 'Dringend',
+            'blocker' => 'Blocker'
         ];
         
         foreach ($priorityLabels as $priority => $label) {
@@ -512,6 +515,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
 
     public function createTask()
     {
+        // Alle anderen Aufgaben im gleichen Status um 1 nach unten verschieben
+        \App\Models\Task::where('status', $this->editStatus)
+            ->increment('sort_order');
+
         // Neue Aufgabe erstellen
         $task = \App\Models\Task::create([
             'title' => $this->editTitle,
@@ -523,6 +530,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'assigned_to' => $this->editAssignedTo ?: null,
             'owner_id' => $this->editOwnerId ?: null,
             'created_by' => auth()->id(),
+            'sort_order' => 1, // Neue Aufgaben immer ganz oben
         ]);
 
         // Historie für Task-Erstellung
@@ -733,7 +741,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                     'low' => 'Niedrig',
                     'medium' => 'Mittel',
                     'high' => 'Hoch',
-                    'urgent' => 'Dringend'
+                    'urgent' => 'Dringend',
+                    'blocker' => 'Blocker'
                 ];
                 return $priorityLabels[$value] ?? $value;
 
@@ -763,4 +772,57 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         }
     }
 
+    // Task sorting within columns via drag & drop
+    public function updateTaskOrder($taskId, $newStatus, $orderedIds)
+    {
+        $task = Task::find($taskId);
+        if (!$task) return;
+
+        $oldStatus = $task->status;
+        
+        // Update task status if changed (Blocker-Tasks können zwischen Spalten verschoben werden)
+        if ($newStatus !== $oldStatus) {
+            $task->status = $newStatus;
+            
+            // Set completed_at if status changed to completed
+            if ($newStatus === 'completed' && $task->completed_at === null) {
+                $task->completed_at = now();
+            } elseif ($newStatus !== 'completed') {
+                $task->completed_at = null;
+            }
+            
+            // Log status change
+            TaskHistory::logFieldChange($task, auth()->id(), 'status', $oldStatus, $newStatus);
+        }
+
+        // Update sort order for all tasks in the target column (exclude blockers from manual sorting)
+        $nonBlockerIds = [];
+        foreach ($orderedIds as $id) {
+            if ($id) {
+                $checkTask = Task::find($id);
+                if ($checkTask && !$checkTask->isBlocker()) {
+                    $nonBlockerIds[] = $id;
+                }
+            }
+        }
+
+        // Nur nicht-Blocker Tasks können manuell sortiert werden
+        if (!$task->isBlocker()) {
+            foreach ($nonBlockerIds as $index => $id) {
+                Task::where('id', $id)
+                    ->where('status', $newStatus)
+                    ->update(['sort_order' => $index + 1]);
+            }
+            
+            // Log position change if within same status
+            if ($newStatus === $oldStatus && count($nonBlockerIds) > 1) {
+                TaskHistory::logFieldChange($task, auth()->id(), 'position', 'Position geändert', 'Neue Reihenfolge in Spalte');
+            }
+        }
+
+        $task->save();
+
+        // Refresh the page to show updated order
+        $this->dispatch('task-updated');
+    }
 }

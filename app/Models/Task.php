@@ -39,6 +39,7 @@ class Task extends Model
         'parent_task_id',
         'completed_at',
         'task_number',
+        'sort_order',
     ];
 
     protected $casts = [
@@ -49,6 +50,7 @@ class Task extends Model
         'estimated_minutes' => 'integer',
         'actual_minutes' => 'integer',
         'order_index' => 'integer',
+        'sort_order' => 'integer',
         'completed_at' => 'datetime',
     ];
 
@@ -162,7 +164,7 @@ class Task extends Model
 
     public function scopeHighPriority($query)
     {
-        return $query->whereIn('priority', ['high', 'urgent']);
+        return $query->whereIn('priority', ['high', 'urgent', 'blocker']);
     }
 
     public function scopeAssignedTo($query, $userId)
@@ -203,6 +205,7 @@ class Task extends Model
             'medium' => 'info',
             'high' => 'warning',
             'urgent' => 'danger',
+            'blocker' => 'danger',
             default => 'gray',
         };
     }
@@ -240,6 +243,29 @@ class Task extends Model
         $completedSubtasks = $this->subtasks()->completed()->count();
         
         return $totalSubtasks > 0 ? round(($completedSubtasks / $totalSubtasks) * 100) : 0;
+    }
+
+    /**
+     * Prüft ob die Aufgabe ein Blocker ist
+     */
+    public function isBlocker(): bool
+    {
+        return $this->priority === 'blocker';
+    }
+
+    /**
+     * Gibt die Prioritätsstufe als Nummer zurück (für Sortierung)
+     */
+    public function getPriorityWeight(): int
+    {
+        return match($this->priority) {
+            'blocker' => 5,
+            'urgent' => 4,
+            'high' => 3,
+            'medium' => 2,
+            'low' => 1,
+            default => 0,
+        };
     }
 
     /**
