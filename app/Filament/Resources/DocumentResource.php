@@ -47,11 +47,27 @@ class DocumentResource extends Resource
                             ->maxLength(65535)
                             ->columnSpanFull(),
 
+                        Forms\Components\Select::make('document_type_id')
+                            ->label('Dokumententyp')
+                            ->relationship('documentType', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Dokumententyp auswählen...')
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Name')
+                                    ->required(),
+                                Forms\Components\TextInput::make('key')
+                                    ->label('Schlüssel')
+                                    ->required(),
+                            ]),
+
                         Forms\Components\Select::make('category')
-                            ->label('Kategorie')
+                            ->label('Legacy Kategorie')
                             ->options(Document::getCategories())
                             ->searchable()
-                            ->placeholder('Kategorie auswählen...'),
+                            ->placeholder('Legacy Kategorie auswählen...')
+                            ->helperText('Wird durch Dokumententyp ersetzt'),
 
                         Forms\Components\FileUpload::make('path')
                             ->label('Datei')
@@ -200,9 +216,16 @@ class DocumentResource extends Resource
                     ->limit(30)
                     ->toggleable(),
 
+                TextColumn::make('documentType.name')
+                    ->label('Dokumententyp')
+                    ->badge()
+                    ->color(fn (Document $record): string => $record->documentType?->color ?? 'gray')
+                    ->icon(fn (Document $record): string => $record->documentType?->icon ?? 'heroicon-o-document')
+                    ->sortable(),
+
                 BadgeColumn::make('category')
-                    ->label('Kategorie')
-                    ->formatStateUsing(fn (string $state): string => Document::getCategories()[$state] ?? $state)
+                    ->label('Legacy Kategorie')
+                    ->formatStateUsing(fn (?string $state): string => $state ? (Document::getCategories()[$state] ?? $state) : 'Keine')
                     ->colors([
                         'primary' => 'planning',
                         'warning' => 'permits',
@@ -211,7 +234,8 @@ class DocumentResource extends Resource
                         'danger' => 'invoices',
                         'secondary' => fn ($state): bool => !in_array($state, ['planning', 'permits', 'installation', 'maintenance', 'invoices']),
                     ])
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('documentable_type')
                     ->label('Typ')
@@ -257,12 +281,18 @@ class DocumentResource extends Resource
                     ->toggleable(),
             ])
             ->filters([
+                SelectFilter::make('document_type_id')
+                    ->label('Dokumententyp')
+                    ->relationship('documentType', 'name')
+                    ->searchable()
+                    ->preload(),
+
                 SelectFilter::make('category')
-                    ->label('Kategorie')
+                    ->label('Legacy Kategorie')
                     ->options(Document::getCategories()),
 
                 SelectFilter::make('documentable_type')
-                    ->label('Dokumenttyp')
+                    ->label('Zuordnungstyp')
                     ->options([
                         'App\Models\SolarPlant' => 'Solaranlage',
                         'App\Models\Customer' => 'Kunde',

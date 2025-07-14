@@ -41,6 +41,7 @@ class Document extends Model
         'mime_type',
         'size',
         'category',
+        'document_type_id',
         'description',
         'documentable_type',
         'documentable_id',
@@ -61,6 +62,11 @@ class Document extends Model
     public function uploadedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function documentType(): BelongsTo
+    {
+        return $this->belongsTo(DocumentType::class);
     }
 
     public function getUrlAttribute(): string
