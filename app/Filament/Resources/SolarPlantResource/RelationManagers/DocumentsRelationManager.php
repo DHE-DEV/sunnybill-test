@@ -47,10 +47,7 @@ class DocumentsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         // Verwende das DocumentUploadTrait für die Basis-Tabelle
-        $table = parent::table($table);
-        
-        // Aktiviere Aktionen auch im View-Modus durch explizite Konfiguration
-        return $table->recordAction(null); // Entferne Standard-Doppelklick-Aktion um Konflikte zu vermeiden
+        return parent::table($table);
     }
 
     /**
