@@ -191,10 +191,35 @@ trait DocumentUploadTrait
 
     /**
      * Stelle sicher, dass Create-Aktionen auch im View-Modus angezeigt werden
+     * Berechtigungsprüfung für Team Manager, Administrator und Superadmin
      */
     public function canCreate(): bool
     {
-        return true;
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+    }
+
+    /**
+     * Berechtigungsprüfung für das Bearbeiten von Dokumenten
+     */
+    public function canEdit($record): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+    }
+
+    /**
+     * Berechtigungsprüfung für das Löschen von Dokumenten
+     */
+    public function canDelete($record): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+    }
+
+    /**
+     * Berechtigungsprüfung für das Anzeigen von Dokumenten
+     */
+    public function canView($record): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
     }
 
     /**

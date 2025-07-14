@@ -62,8 +62,11 @@ class DocumentFormBuilder
         // Name Feld
         $fields[] = $this->createNameField();
 
-        // Kategorie Feld
-        if ($this->config('categories')) {
+        // DocumentType Feld (neue Implementierung)
+        if ($this->config('useDocumentTypes', true)) {
+            $fields[] = $this->createDocumentTypeField();
+        } elseif ($this->config('categories')) {
+            // Legacy Kategorie Feld für Rückwärtskompatibilität
             $fields[] = $this->createCategoryField();
         }
 
@@ -173,7 +176,50 @@ class DocumentFormBuilder
     }
 
     /**
-     * Erstellt das Kategorie-Feld
+     * Erstellt das DocumentType-Feld
+     */
+    protected function createDocumentTypeField(): Forms\Components\Select
+    {
+        return Forms\Components\Select::make('document_type_id')
+            ->label($this->config('documentTypeLabel', 'Dokumententyp'))
+            ->options(\App\Models\DocumentType::getSelectOptions())
+            ->searchable($this->config('documentTypeSearchable', true))
+            ->required($this->config('documentTypeRequired', true))
+            ->placeholder($this->config('documentTypePlaceholder', 'Dokumententyp auswählen...'))
+            ->createOptionForm([
+                Forms\Components\TextInput::make('name')
+                    ->label('Name')
+                    ->required(),
+                Forms\Components\TextInput::make('key')
+                    ->label('Schlüssel')
+                    ->required(),
+                Forms\Components\Select::make('color')
+                    ->label('Farbe')
+                    ->options([
+                        'gray' => 'Grau',
+                        'primary' => 'Primär',
+                        'success' => 'Grün',
+                        'warning' => 'Gelb',
+                        'danger' => 'Rot',
+                        'info' => 'Blau',
+                    ])
+                    ->default('gray')
+                    ->required(),
+                Forms\Components\Select::make('icon')
+                    ->label('Icon')
+                    ->options([
+                        'heroicon-o-document' => 'Dokument',
+                        'heroicon-o-document-text' => 'Dokument Text',
+                        'heroicon-o-folder' => 'Ordner',
+                        'heroicon-o-photo' => 'Foto',
+                    ])
+                    ->default('heroicon-o-document')
+                    ->required(),
+            ]);
+    }
+
+    /**
+     * Erstellt das Kategorie-Feld (Legacy)
      */
     protected function createCategoryField(): Forms\Components\Select
     {
@@ -209,6 +255,7 @@ class DocumentFormBuilder
             Forms\Components\Hidden::make('size'),
             Forms\Components\Hidden::make('mime_type'),
             Forms\Components\Hidden::make('uploaded_by'),
+            Forms\Components\Hidden::make('document_type_id'),
         ];
     }
 

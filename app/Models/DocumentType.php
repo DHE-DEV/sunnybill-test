@@ -55,7 +55,7 @@ class DocumentType extends Model
     public static function getSelectOptions(): array
     {
         return static::active()
-            ->ordered()
+            ->orderBy('name')
             ->pluck('name', 'id')
             ->toArray();
     }

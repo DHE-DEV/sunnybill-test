@@ -49,9 +49,9 @@ class DocumentResource extends Resource
 
                         Forms\Components\Select::make('document_type_id')
                             ->label('Dokumententyp')
-                            ->relationship('documentType', 'name')
+                            ->options(\App\Models\DocumentType::getSelectOptions())
                             ->searchable()
-                            ->preload()
+                            ->required()
                             ->placeholder('Dokumententyp auswählen...')
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
@@ -60,14 +60,29 @@ class DocumentResource extends Resource
                                 Forms\Components\TextInput::make('key')
                                     ->label('Schlüssel')
                                     ->required(),
+                                Forms\Components\Select::make('color')
+                                    ->label('Farbe')
+                                    ->options([
+                                        'gray' => 'Grau',
+                                        'primary' => 'Primär',
+                                        'success' => 'Grün',
+                                        'warning' => 'Gelb',
+                                        'danger' => 'Rot',
+                                        'info' => 'Blau',
+                                    ])
+                                    ->default('gray')
+                                    ->required(),
+                                Forms\Components\Select::make('icon')
+                                    ->label('Icon')
+                                    ->options([
+                                        'heroicon-o-document' => 'Dokument',
+                                        'heroicon-o-document-text' => 'Dokument Text',
+                                        'heroicon-o-folder' => 'Ordner',
+                                        'heroicon-o-photo' => 'Foto',
+                                    ])
+                                    ->default('heroicon-o-document')
+                                    ->required(),
                             ]),
-
-                        Forms\Components\Select::make('category')
-                            ->label('Legacy Kategorie')
-                            ->options(Document::getCategories())
-                            ->searchable()
-                            ->placeholder('Legacy Kategorie auswählen...')
-                            ->helperText('Wird durch Dokumententyp ersetzt'),
 
                         Forms\Components\FileUpload::make('path')
                             ->label('Datei')
@@ -223,20 +238,6 @@ class DocumentResource extends Resource
                     ->icon(fn (Document $record): string => $record->documentType?->icon ?? 'heroicon-o-document')
                     ->sortable(),
 
-                BadgeColumn::make('category')
-                    ->label('Legacy Kategorie')
-                    ->formatStateUsing(fn (?string $state): string => $state ? (Document::getCategories()[$state] ?? $state) : 'Keine')
-                    ->colors([
-                        'primary' => 'planning',
-                        'warning' => 'permits',
-                        'success' => 'installation',
-                        'info' => 'maintenance',
-                        'danger' => 'invoices',
-                        'secondary' => fn ($state): bool => !in_array($state, ['planning', 'permits', 'installation', 'maintenance', 'invoices']),
-                    ])
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
                 TextColumn::make('documentable_type')
                     ->label('Typ')
                     ->formatStateUsing(fn (string $state): string => match ($state) {
@@ -283,13 +284,8 @@ class DocumentResource extends Resource
             ->filters([
                 SelectFilter::make('document_type_id')
                     ->label('Dokumententyp')
-                    ->relationship('documentType', 'name')
-                    ->searchable()
-                    ->preload(),
-
-                SelectFilter::make('category')
-                    ->label('Legacy Kategorie')
-                    ->options(Document::getCategories()),
+                    ->options(\App\Models\DocumentType::getSelectOptions())
+                    ->searchable(),
 
                 SelectFilter::make('documentable_type')
                     ->label('Zuordnungstyp')
@@ -354,6 +350,37 @@ class DocumentResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+
+    // Zugriffskontrolle für Dokumente (Administrator, Superadmin und Team Manager)
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
     }
 
     /**
