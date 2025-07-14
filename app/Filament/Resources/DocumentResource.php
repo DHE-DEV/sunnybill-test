@@ -301,7 +301,7 @@ class DocumentResource extends Resource
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make()
-                        ->visible(fn (): bool => auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false),
+                        ->visible(fn (): bool => auth()->user()?->isManagerOrAdmin() ?? false),
                     Action::make('download')
                         ->label('Herunterladen')
                         ->icon('heroicon-o-arrow-down-tray')
@@ -316,7 +316,7 @@ class DocumentResource extends Resource
                         ->openUrlInNewTab()
                         ->visible(fn (Document $record): bool => str_contains($record->mime_type, 'image') || str_contains($record->mime_type, 'pdf')),
                     Tables\Actions\DeleteAction::make()
-                        ->visible(fn (): bool => auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false),
+                        ->visible(fn (): bool => auth()->user()?->isManagerOrAdmin() ?? false),
                 ])
                     ->label('Aktionen')
                     ->icon('heroicon-m-ellipsis-vertical')
@@ -354,35 +354,35 @@ class DocumentResource extends Resource
         return static::getModel()::count();
     }
 
-    // Zugriffskontrolle für Dokumente (Administrator, Superadmin und Team Manager)
+    // Zugriffskontrolle für Dokumente (Manager und Administrator)
     public static function canViewAny(): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canDeleteAny(): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canView($record): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     /**

@@ -242,34 +242,34 @@ class DocumentTypeResource extends Resource
         return static::getModel()::count();
     }
 
-    // Zugriffskontrolle für System-Ressourcen (Administrator, Superadmin und Team Manager)
+    // Zugriffskontrolle für System-Ressourcen (Manager und Administrator)
     public static function canViewAny(): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canDeleteAny(): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 
     public static function canView($record): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Team Manager'])->exists() ?? false;
+        return auth()->user()?->isManagerOrAdmin() ?? false;
     }
 }
