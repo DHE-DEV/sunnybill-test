@@ -18,6 +18,11 @@ class MonthlyResultsRelationManager extends RelationManager
 
     protected static ?string $title = 'Abrechnungen';
     
+    public function isReadOnly(): bool
+    {
+        return false; // Erlaube Aktionen auch im View-Modus
+    }
+    
     public function canCreate(): bool
     {
         return true;
@@ -137,7 +142,8 @@ class MonthlyResultsRelationManager extends RelationManager
                     ->disabled()
                     ->dehydrated()
                     ->prefix('€')
-                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') : '0,000000')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') : '0.000000')
+                    ->dehydrateStateUsing(fn ($state) => $state ? (float) str_replace(',', '.', str_replace('.', '', $state)) : 0)
                     ->helperText('Wird automatisch berechnet: Produzierte Energie × Einspeisevergütung'),
                 Forms\Components\Select::make('billing_type')
                     ->label('Abrechnungstyp')
@@ -241,16 +247,16 @@ class MonthlyResultsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('Ergebnis hinzufügen')
+                    ->label('Abrechnung hinzufügen')
                     ->icon('heroicon-o-plus')
-                    ->color('success')
-                    ->modalHeading('Neues monatliches Ergebnis')
+                    ->color('warning')
+                    ->modalHeading('Neue monatliche Abrechnung')
                     ->modalDescription('Erfassen Sie die produzierte Energie für einen bestimmten Monat.')
-                    ->modalSubmitActionLabel('Ergebnis speichern')
+                    ->modalSubmitActionLabel('Abrechnung speichern')
                     ->modalCancelActionLabel('Abbrechen')
                     ->after(function ($record) {
                         Notification::make()
-                            ->title('Monatsergebnis gespeichert')
+                            ->title('Monatliche Abrechnung gespeichert')
                             ->body('Die Kundengutschriften wurden automatisch berechnet und erstellt.')
                             ->success()
                             ->send();
@@ -287,16 +293,16 @@ class MonthlyResultsRelationManager extends RelationManager
             ->emptyStateIcon('heroicon-o-chart-bar')
             ->emptyStateActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('Erstes Ergebnis hinzufügen')
+                    ->label('Erste Abrechnung hinzufügen')
                     ->icon('heroicon-o-plus')
-                    ->color('success')
-                    ->modalHeading('Neues monatliches Ergebnis')
+                    ->color('warning')
+                    ->modalHeading('Neue monatliche Abrechnung')
                     ->modalDescription('Erfassen Sie die produzierte Energie für einen bestimmten Monat.')
-                    ->modalSubmitActionLabel('Ergebnis speichern')
+                    ->modalSubmitActionLabel('Abrechnung speichern')
                     ->modalCancelActionLabel('Abbrechen')
                     ->after(function ($record) {
                         Notification::make()
-                            ->title('Monatsergebnis gespeichert')
+                            ->title('Monatliche Abrechnung gespeichert')
                             ->body('Die Kundengutschriften wurden automatisch berechnet und erstellt.')
                             ->success()
                             ->send();

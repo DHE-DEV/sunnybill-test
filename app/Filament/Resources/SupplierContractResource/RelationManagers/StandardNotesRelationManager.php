@@ -14,7 +14,7 @@ class StandardNotesRelationManager extends RelationManager
 {
     protected static string $relationship = 'contractNotes';
 
-    protected static ?string $title = 'Notizen - Standard';
+    protected static ?string $title = 'Notizen';
 
     protected static ?string $modelLabel = 'Standard-Notiz';
 

@@ -571,32 +571,11 @@ class DocumentUploadConfig
             'sectionTitle' => 'Solaranlagen-Dokumente',
             'preserveFilenames' => false,
             'timestampFilenames' => true,
-            'categories' => [
-                'planning' => 'Planung',
-                'permits' => 'Genehmigungen',
-                'installation' => 'Installation',
-                'commissioning' => 'Inbetriebnahme',
-                'maintenance' => 'Wartung',
-                'monitoring' => 'Überwachung',
-                'insurance' => 'Versicherung',
-                'technical' => 'Technische Unterlagen',
-                'financial' => 'Finanzielle Unterlagen',
-                'legal' => 'Rechtsdokumente',
-                'other' => 'Sonstiges',
-            ],
-            'categoryColors' => [
-                'planning' => 'info',
-                'permits' => 'success',
-                'installation' => 'warning',
-                'commissioning' => 'primary',
-                'maintenance' => 'orange',
-                'monitoring' => 'blue',
-                'insurance' => 'purple',
-                'technical' => 'cyan',
-                'financial' => 'yellow',
-                'legal' => 'red',
-                'other' => 'gray',
-            ],
+            // Entferne hardcodierte Kategorien - verwende DocumentTypes stattdessen
+            'categories' => [],
+            'categoryColors' => [],
+            'showCategory' => true, // Aktiviere DocumentType-Anzeige
+            'defaultSort' => ['name', 'desc'], // Sortierung nach Name absteigend
         ]);
     }
 

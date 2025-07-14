@@ -73,7 +73,6 @@ class SupplierContractResource extends Resource
                             ->placeholder('z.B. KR-12345'),
                         Forms\Components\TextInput::make('contract_number')
                             ->label('Vertragsnummer intern')
-                            ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
                         Forms\Components\TextInput::make('external_contract_number')

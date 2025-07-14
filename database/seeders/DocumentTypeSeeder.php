@@ -94,6 +94,30 @@ class DocumentTypeSeeder extends Seeder
                 'icon' => 'heroicon-o-photo',
                 'sort_order' => 100,
             ],
+            [
+                'name' => 'Inbetriebnahme',
+                'key' => 'commissioning',
+                'description' => 'Inbetriebnahme-Dokumente und Protokolle',
+                'color' => 'warning',
+                'icon' => 'heroicon-o-play',
+                'sort_order' => 110,
+            ],
+            [
+                'name' => 'Rechtsdokumente',
+                'key' => 'legal',
+                'description' => 'Rechtliche Dokumente und Vereinbarungen',
+                'color' => 'danger',
+                'icon' => 'heroicon-o-scale',
+                'sort_order' => 120,
+            ],
+            [
+                'name' => 'Sonstiges',
+                'key' => 'other',
+                'description' => 'Sonstige Dokumente',
+                'color' => 'gray',
+                'icon' => 'heroicon-o-document',
+                'sort_order' => 130,
+            ],
         ];
 
         foreach ($documentTypes as $documentType) {

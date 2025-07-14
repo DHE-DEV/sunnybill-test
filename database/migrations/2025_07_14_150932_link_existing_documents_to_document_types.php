@@ -22,6 +22,9 @@ return new class extends Migration
             'correspondence' => 'correspondence',
             'technical' => 'technical',
             'photos' => 'photos',
+            'other' => 'other',
+            'commissioning' => 'commissioning',
+            'legal' => 'legal',
         ];
 
         // Lade alle DocumentTypes

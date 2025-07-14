@@ -5,7 +5,7 @@ namespace App\Filament\Resources\SolarPlantResource\RelationManagers;
 use App\Traits\DocumentUploadTrait;
 use App\Services\DocumentUploadConfig;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class DocumentsRelationManager extends RelationManager
 {
@@ -23,10 +23,9 @@ class DocumentsRelationManager extends RelationManager
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    public static function getBadge(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): ?string
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
-        $count = $ownerRecord->documents()->count();
-        return $count > 0 ? (string) $count : null;
+        return $ownerRecord->documents()->count();
     }
 
     /**
@@ -36,41 +35,63 @@ class DocumentsRelationManager extends RelationManager
     {
         // Aktuelle SolarPlant aus dem Record
         $solarPlant = $this->getOwnerRecord();
-        
+
         // Verwende die forSolarPlants() Factory-Methode mit dynamischen Pfaden
         return DocumentUploadConfig::forSolarPlants($solarPlant);
     }
 
     /**
-     * Überschreibe die table Methode um sicherzustellen, dass Aktionen auch im View-Modus verfügbar sind
+     * Überschreibe Berechtigungen für View-Modus
      */
-    public function table(Table $table): Table
+    public function canCreate(): bool
     {
-        // Verwende das DocumentUploadTrait für die Basis-Tabelle
-        return parent::table($table);
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
-    /**
-     * Berechtigungsprüfung für das Bearbeiten von Dokumenten - auch im View-Modus
-     */
     public function canEdit($record): bool
     {
         return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
-    /**
-     * Berechtigungsprüfung für das Löschen von Dokumenten - auch im View-Modus
-     */
     public function canDelete($record): bool
     {
         return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
-    /**
-     * Berechtigungsprüfung für das Anzeigen von Dokumenten - alle Benutzer können Dokumente sehen
-     */
     public function canView($record): bool
     {
-        return true; // Alle Benutzer können Dokumente anzeigen
+        return true; // Alle können Dokumente anzeigen
+    }
+
+    /**
+     * Aktiviere Aktionen auch im View-Modus
+     */
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        return true;
+    }
+
+    /**
+     * Überschreibe isReadOnly um Aktionen im View-Modus zu erlauben
+     */
+    public function isReadOnly(): bool
+    {
+        return false; // Erlaube Aktionen auch im View-Modus
+    }
+
+    /**
+     * Überschreibe canDeleteAny für Bulk-Aktionen
+     */
+    public function canDeleteAny(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
+    }
+
+    /**
+     * Überschreibe canEditAny für Bulk-Aktionen
+     */
+    public function canEditAny(): bool
+    {
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 }

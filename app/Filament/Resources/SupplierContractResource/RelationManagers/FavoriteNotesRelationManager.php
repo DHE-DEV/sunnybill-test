@@ -14,7 +14,7 @@ class FavoriteNotesRelationManager extends RelationManager
 {
     protected static string $relationship = 'contractNotes';
 
-    protected static ?string $title = 'Notizen - Favoriten';
+    protected static ?string $title = 'Notizen';
 
     protected static ?string $modelLabel = 'Favoriten-Notiz';
 

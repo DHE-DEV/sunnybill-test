@@ -28,6 +28,12 @@ class BillingsRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'billing_number';
 
+    public static function getBadge(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): ?string
+    {
+        $count = $ownerRecord->billings()->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
     public function form(Form $form): Form
     {
         return $form
@@ -772,7 +778,8 @@ class BillingsRelationManager extends RelationManager
      */
     protected function getTableQuery(): Builder
     {
-        return parent::getTableQuery()
+        return $this->getRelationship()
+            ->getQuery()
             ->with([
                 'supplierContract.supplier',
                 'allocations.solarPlant',

@@ -47,4 +47,24 @@ class DocumentsRelationManager extends RelationManager
     {
         return true;
     }
+
+    public function isReadOnly(): bool
+    {
+        return false; // Erlaubt Aktionen auch im View-Modus
+    }
+
+    public function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return true;
+    }
+
+    public function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return true;
+    }
+
+    public function canView(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return true;
+    }
 }

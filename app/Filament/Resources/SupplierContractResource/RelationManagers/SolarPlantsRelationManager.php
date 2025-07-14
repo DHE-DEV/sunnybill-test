@@ -25,6 +25,12 @@ class SolarPlantsRelationManager extends RelationManager
 
     protected static ?string $icon = 'heroicon-o-sun';
 
+    public static function getBadge(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): ?string
+    {
+        $count = $ownerRecord->solarPlantAssignments()->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
     public function form(Form $form): Form
     {
         return $form

@@ -185,37 +185,7 @@ class DocumentFormBuilder
             ->options(\App\Models\DocumentType::getSelectOptions())
             ->searchable($this->config('documentTypeSearchable', true))
             ->required($this->config('documentTypeRequired', true))
-            ->placeholder($this->config('documentTypePlaceholder', 'Dokumententyp auswählen...'))
-            ->createOptionForm([
-                Forms\Components\TextInput::make('name')
-                    ->label('Name')
-                    ->required(),
-                Forms\Components\TextInput::make('key')
-                    ->label('Schlüssel')
-                    ->required(),
-                Forms\Components\Select::make('color')
-                    ->label('Farbe')
-                    ->options([
-                        'gray' => 'Grau',
-                        'primary' => 'Primär',
-                        'success' => 'Grün',
-                        'warning' => 'Gelb',
-                        'danger' => 'Rot',
-                        'info' => 'Blau',
-                    ])
-                    ->default('gray')
-                    ->required(),
-                Forms\Components\Select::make('icon')
-                    ->label('Icon')
-                    ->options([
-                        'heroicon-o-document' => 'Dokument',
-                        'heroicon-o-document-text' => 'Dokument Text',
-                        'heroicon-o-folder' => 'Ordner',
-                        'heroicon-o-photo' => 'Foto',
-                    ])
-                    ->default('heroicon-o-document')
-                    ->required(),
-            ]);
+            ->placeholder($this->config('documentTypePlaceholder', 'Dokumententyp auswählen...'));
     }
 
     /**

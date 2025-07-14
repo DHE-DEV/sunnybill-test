@@ -30,7 +30,7 @@ class ContractsRelationManager extends RelationManager
 
     public function isReadOnly(): bool
     {
-        return true; // Nur Anzeige, da Verträge über SupplierContract verwaltet werden
+        return false; // Erlaube Aktionen auch im View-Modus
     }
 
     public function table(Table $table): Table
@@ -171,17 +171,182 @@ class ContractsRelationManager extends RelationManager
                     ),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->url(fn ($record) => route('filament.admin.resources.supplier-contracts.view', $record))
-                    ->openUrlInNewTab(),
-                Tables\Actions\EditAction::make()
-                    ->url(fn ($record) => route('filament.admin.resources.supplier-contracts.edit', $record))
-                    ->openUrlInNewTab(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->url(fn ($record) => route('filament.admin.resources.supplier-contracts.view', $record))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\EditAction::make()
+                        ->url(fn ($record) => route('filament.admin.resources.supplier-contracts.edit', $record))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\Action::make('create_billing')
+                        ->label('Abrechnung erfassen')
+                        ->icon('heroicon-o-calculator')
+                        ->color('warning')
+                        ->modalWidth('7xl')
+                        ->modalHeading('Neue Abrechnung erfassen')
+                        ->modalDescription('Erstellen Sie eine neue Abrechnung für diesen Vertrag.')
+                        ->form([
+                            Forms\Components\Section::make('Abrechnungsdetails')
+                                ->schema([
+                                    Forms\Components\Hidden::make('supplier_contract_id')
+                                        ->default(fn ($record) => $record->id),
+                                    
+                                    Forms\Components\TextInput::make('supplier_invoice_number')
+                                        ->label('Anbieter-Rechnungsnummer')
+                                        ->maxLength(255)
+                                        ->placeholder('Rechnungsnummer des Anbieters'),
+
+                                    Forms\Components\Select::make('billing_type')
+                                        ->label('Abrechnungstyp')
+                                        ->options([
+                                            'invoice' => 'Rechnung',
+                                            'credit_note' => 'Gutschrift',
+                                        ])
+                                        ->default('invoice')
+                                        ->required(),
+
+                                    Forms\Components\Select::make('billing_year')
+                                        ->label('Abrechnungsjahr')
+                                        ->options(function () {
+                                            $currentYear = now()->year;
+                                            $years = [];
+                                            for ($year = $currentYear - 5; $year <= $currentYear + 2; $year++) {
+                                                $years[$year] = $year;
+                                            }
+                                            return $years;
+                                        })
+                                        ->default(function () {
+                                            $lastMonth = now()->subMonth();
+                                            return $lastMonth->year;
+                                        })
+                                        ->searchable(),
+
+                                    Forms\Components\Select::make('billing_month')
+                                        ->label('Abrechnungsmonat')
+                                        ->options([
+                                            1 => 'Januar',
+                                            2 => 'Februar',
+                                            3 => 'März',
+                                            4 => 'April',
+                                            5 => 'Mai',
+                                            6 => 'Juni',
+                                            7 => 'Juli',
+                                            8 => 'August',
+                                            9 => 'September',
+                                            10 => 'Oktober',
+                                            11 => 'November',
+                                            12 => 'Dezember',
+                                        ])
+                                        ->default(function () {
+                                            $lastMonth = now()->subMonth();
+                                            return $lastMonth->month;
+                                        })
+                                        ->searchable(),
+
+                                    Forms\Components\TextInput::make('title')
+                                        ->label('Titel')
+                                        ->required()
+                                        ->maxLength(255),
+
+                                    Forms\Components\Textarea::make('description')
+                                        ->label('Beschreibung')
+                                        ->rows(3)
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\DatePicker::make('billing_date')
+                                        ->label('Abrechnungsdatum')
+                                        ->required()
+                                        ->default(now()),
+
+                                    Forms\Components\DatePicker::make('due_date')
+                                        ->label('Fälligkeitsdatum')
+                                        ->after('billing_date'),
+
+                                    Forms\Components\TextInput::make('total_amount')
+                                        ->label('Gesamtbetrag')
+                                        ->required()
+                                        ->numeric()
+                                        ->step(0.01)
+                                        ->prefix('€')
+                                        ->minValue(0),
+
+                                    Forms\Components\Select::make('currency')
+                                        ->label('Währung')
+                                        ->options([
+                                            'EUR' => 'Euro (€)',
+                                            'USD' => 'US-Dollar ($)',
+                                            'CHF' => 'Schweizer Franken (CHF)',
+                                        ])
+                                        ->default('EUR')
+                                        ->required(),
+
+                                    Forms\Components\Select::make('status')
+                                        ->label('Status')
+                                        ->options([
+                                            'draft' => 'Entwurf',
+                                            'pending' => 'Ausstehend',
+                                            'approved' => 'Genehmigt',
+                                            'paid' => 'Bezahlt',
+                                            'cancelled' => 'Storniert',
+                                        ])
+                                        ->default('draft')
+                                        ->required(),
+
+                                    Forms\Components\Textarea::make('notes')
+                                        ->label('Notizen')
+                                        ->rows(3)
+                                        ->columnSpanFull(),
+                                ])
+                                ->columns(2),
+                        ])
+                        ->action(function (array $data, $record) {
+                            // Erstelle die Abrechnung
+                            $billing = \App\Models\SupplierContractBilling::create($data);
+                            
+                            // Benachrichtigung
+                            \Filament\Notifications\Notification::make()
+                                ->title('Abrechnung erfolgreich erstellt')
+                                ->body("Die Abrechnung wurde erstellt und kann unter Lieferanten → Abrechnungen bearbeitet werden.")
+                                ->success()
+                                ->actions([
+                                    \Filament\Notifications\Actions\Action::make('view')
+                                        ->label('Anzeigen')
+                                        ->url(route('filament.admin.resources.supplier-contract-billings.view', $billing))
+                                        ->button(),
+                                ])
+                                ->send();
+                        }),
+                    Tables\Actions\Action::make('show_billings')
+                        ->label('Abrechnungen anzeigen')
+                        ->icon('heroicon-o-document-text')
+                        ->color('info')
+                        ->modalWidth('7xl')
+                        ->modalHeading(fn ($record) => "Abrechnungen für Vertrag: {$record->contract_number}")
+                        ->modalContent(function ($record) {
+                            return view('filament.components.billings-table-modal', [
+                                'contract' => $record
+                            ]);
+                        })
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Schließen'),
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button(),
             ])
             ->defaultSort('start_date', 'desc')
             ->emptyStateHeading('Keine Verträge zugeordnet')
             ->emptyStateDescription('Dieser Solaranlage sind noch keine Verträge zugeordnet. Verträge können über die Lieferantenverwaltung erstellt und zugeordnet werden.')
             ->emptyStateIcon('heroicon-o-document-text')
+            ->headerActions([
+                Tables\Actions\Action::make('create_contract')
+                    ->label('Neuen Vertrag erstellen')
+                    ->icon('heroicon-o-plus')
+                    ->url(route('filament.admin.resources.supplier-contracts.create'))
+                    ->openUrlInNewTab(),
+            ])
             ->emptyStateActions([
                 Tables\Actions\Action::make('create_contract')
                     ->label('Neuen Vertrag erstellen')

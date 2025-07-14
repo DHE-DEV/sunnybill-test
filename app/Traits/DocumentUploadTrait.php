@@ -81,6 +81,9 @@ trait DocumentUploadTrait
             'emptyStateDescription' => 'Fügen Sie das erste Dokument hinzu.',
             'createButtonLabel' => 'Dokument hinzufügen',
             'enableCreate' => true, // Explizit aktivieren
+            'showEdit' => true, // Bearbeiten-Aktion aktivieren
+            'showDelete' => true, // Löschen-Aktion aktivieren
+            'showView' => true, // Anzeigen-Aktion aktivieren
         ];
     }
 
