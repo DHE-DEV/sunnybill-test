@@ -175,7 +175,7 @@ class SupplierContractBilling extends Model
     public static function generateBillingNumber(): string
     {
         $year = now()->year;
-        $lastBilling = static::whereYear('created_at', $year)
+        $lastBilling = static::withTrashed()->whereYear('created_at', $year)
             ->orderBy('billing_number', 'desc')
             ->first();
 

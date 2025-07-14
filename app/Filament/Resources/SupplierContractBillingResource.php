@@ -621,8 +621,8 @@ class SupplierContractBillingResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\AllocationsRelationManager::class,
             RelationManagers\DocumentsRelationManager::class,
+            RelationManagers\AllocationsRelationManager::class,
         ];
     }
 

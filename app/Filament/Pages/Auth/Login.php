@@ -7,9 +7,21 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\Auth\Login as BaseLogin;
 use Illuminate\Contracts\Support\Htmlable;
+use Filament\Http\Responses\Auth\Contracts\LoginResponse;
+use Illuminate\Support\Facades\Auth;
 
 class Login extends BaseLogin
 {
+    public function authenticate(): ?LoginResponse
+    {
+        $response = parent::authenticate();
+
+        if (Auth::check()) {
+            Auth::user()->update(['last_login_at' => now()]);
+        }
+
+        return $response;
+    }
     protected static string $view = 'filament.pages.auth.login';
     public function form(Form $form): Form
     {

@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             ContractMatchingRuleSeeder::class,
             MaloIdFieldConfigSeeder::class,
             EpIdFieldConfigSeeder::class,
+            ExternalBillingWorkflowChartSeeder::class,
         ]);
     }
 }

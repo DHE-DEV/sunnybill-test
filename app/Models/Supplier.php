@@ -332,22 +332,32 @@ class Supplier extends Model
     public static function generateUniqueSupplierNumber(): string
     {
         $companySettings = CompanySetting::current();
-        $maxAttempts = 1000; // Genug Versuche für fortlaufende Nummerierung
+        $prefix = $companySettings->supplier_number_prefix ?? 'LF';
         
-        // Starte bei 1 und suche die erste verfügbare Nummer
-        for ($number = 1; $number <= $maxAttempts; $number++) {
-            $testNumber = $companySettings->generateSupplierNumber($number);
+        // Ermittle die höchste existierende Nummer, auch für soft-deleted Einträge
+        $lastSupplier = static::withTrashed()
+            ->where('supplier_number', 'like', $prefix . '-%')
+            ->orderBy('supplier_number', 'desc')
+            ->first();
             
-            // Prüfe ob diese Nummer bereits existiert (aktive + soft-deleted)
-            $exists = static::withTrashed()->where('supplier_number', $testNumber)->exists();
-            
-            if (!$exists) {
-                return $testNumber; // Erste verfügbare Nummer gefunden
+        $nextNumber = 1;
+        if ($lastSupplier) {
+            // Extrahiere die letzte Nummer und erhöhe sie um 1
+            $lastNumStr = preg_replace('/^' . preg_quote($prefix, '/') . '-/', '', $lastSupplier->supplier_number);
+            if (is_numeric($lastNumStr)) {
+                $nextNumber = (int)$lastNumStr + 1;
             }
         }
-        
-        // Fallback: Verwende Timestamp wenn alle Versuche fehlschlagen
-        $timestamp = time();
-        return ($companySettings->supplier_number_prefix ?? 'LF') . '-' . $timestamp;
+
+        // Suche die nächste freie Nummer
+        do {
+            $newNumberStr = $prefix . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $exists = static::withTrashed()->where('supplier_number', $newNumberStr)->exists();
+            if ($exists) {
+                $nextNumber++;
+            }
+        } while ($exists);
+
+        return $prefix . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 }
