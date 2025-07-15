@@ -229,6 +229,9 @@ class GmailService
                 $fromEmail = $userInfo['email'];
             }
 
+            // Standardmäßig HTML aktivieren für Task-Notizen
+            $options['html'] = $options['html'] ?? true;
+
             // Erstelle die E-Mail im RFC 2822 Format
             $emailContent = $this->createEmailMessage($fromEmail, $to, $subject, $body, $options);
             
@@ -240,9 +243,10 @@ class GmailService
                 'raw' => $encodedEmail
             ]);
             
-            Log::info('Gmail: Test-E-Mail gesendet', [
+            Log::info('Gmail: E-Mail gesendet', [
                 'to' => $to,
                 'subject' => $subject,
+                'html' => $options['html'] ?? false,
                 'message_id' => $response['id'] ?? null,
                 'thread_id' => $response['threadId'] ?? null
             ]);
@@ -276,6 +280,9 @@ class GmailService
         $bcc = $options['bcc'] ?? null;
         $isHtml = $options['html'] ?? false;
         
+        // UTF-8 Kodierung für den Betreff (RFC 2047)
+        $encodedSubject = $this->encodeSubject($subject);
+        
         $headers = [];
         $headers[] = "From: {$from}";
         $headers[] = "To: {$to}";
@@ -288,9 +295,10 @@ class GmailService
             $headers[] = "Bcc: {$bcc}";
         }
         
-        $headers[] = "Subject: {$subject}";
+        $headers[] = "Subject: {$encodedSubject}";
         $headers[] = "Date: " . date('r');
         $headers[] = "Message-ID: <" . uniqid() . "@" . parse_url($from, PHP_URL_HOST) . ">";
+        $headers[] = "MIME-Version: 1.0";
         
         if ($isHtml) {
             $headers[] = "Content-Type: text/html; charset=UTF-8";
@@ -298,12 +306,29 @@ class GmailService
             $headers[] = "Content-Type: text/plain; charset=UTF-8";
         }
         
-        $headers[] = "Content-Transfer-Encoding: 8bit";
+        $headers[] = "Content-Transfer-Encoding: base64";
+        
+        // Body in Base64 kodieren für korrekte UTF-8 Übertragung
+        $encodedBody = base64_encode($body);
         
         // Kombiniere Headers und Body
-        $email = implode("\r\n", $headers) . "\r\n\r\n" . $body;
+        $email = implode("\r\n", $headers) . "\r\n\r\n" . $encodedBody;
         
         return $email;
+    }
+
+    /**
+     * Kodiert den E-Mail-Betreff für UTF-8 Zeichen (RFC 2047)
+     */
+    private function encodeSubject(string $subject): string
+    {
+        // Prüfe ob der Betreff Non-ASCII Zeichen enthält
+        if (mb_check_encoding($subject, 'ASCII')) {
+            return $subject;
+        }
+        
+        // Kodiere den Betreff mit RFC 2047 (quoted-printable)
+        return '=?UTF-8?B?' . base64_encode($subject) . '?=';
     }
 
     /**
