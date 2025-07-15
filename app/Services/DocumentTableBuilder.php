@@ -86,30 +86,32 @@ class DocumentTableBuilder
                 });
         }
 
-        // Dateityp Spalte (Dateiendung)
+        // Dateityp Spalte (wie in admin/documents)
         if ($this->config('showFileType', true)) {
-            $columns[] = Tables\Columns\TextColumn::make('path')
+            $columns[] = Tables\Columns\TextColumn::make('mime_type')
                 ->label($this->config('fileTypeLabel', 'Dateityp'))
-                ->formatStateUsing(function (?string $state): string {
-                    if (!$state) return '-';
-                    $extension = pathinfo($state, PATHINFO_EXTENSION);
-                    return $extension ? strtoupper($extension) : '-';
+                ->formatStateUsing(fn (string $state): string => match (true) {
+                    str_contains($state, 'pdf') => 'PDF',
+                    str_contains($state, 'image/jpeg') || str_contains($state, 'image/jpg') => 'JPEG',
+                    str_contains($state, 'image/png') => 'PNG',
+                    str_contains($state, 'image/gif') => 'GIF',
+                    str_contains($state, 'image') => 'Bild',
+                    str_contains($state, 'word') || str_contains($state, 'document') => 'Word',
+                    str_contains($state, 'excel') || str_contains($state, 'spreadsheet') => 'Excel',
+                    str_contains($state, 'zip') => 'ZIP',
+                    str_contains($state, 'rar') => 'RAR',
+                    default => strtoupper(pathinfo($state, PATHINFO_EXTENSION) ?: 'Unbekannt'),
                 })
                 ->badge()
-                ->color(function (?string $state): string {
-                    if (!$state) return 'gray';
-                    $extension = strtolower(pathinfo($state, PATHINFO_EXTENSION));
-                    
-                    if ($extension === 'pdf') return 'danger';
-                    if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif'])) return 'success';
-                    if (in_array($extension, ['doc', 'docx'])) return 'info';
-                    if (in_array($extension, ['xls', 'xlsx'])) return 'warning';
-                    if (in_array($extension, ['zip', 'rar'])) return 'purple';
-                    
-                    return 'gray';
+                ->color(fn (string $state): string => match (true) {
+                    str_contains($state, 'pdf') => 'danger',
+                    str_contains($state, 'image') => 'success',
+                    str_contains($state, 'word') || str_contains($state, 'document') => 'info',
+                    str_contains($state, 'excel') || str_contains($state, 'spreadsheet') => 'warning',
+                    str_contains($state, 'zip') || str_contains($state, 'rar') => 'gray',
+                    default => 'primary',
                 })
-                ->sortable(false)
-                ->searchable(false);
+                ->sortable();
         }
 
         // MIME-Type Spalte (optional)
@@ -155,6 +157,7 @@ class DocumentTableBuilder
                 ->tooltip(fn (?string $state): string => $state ? "Vollständiger Pfad: {$state}" : 'Kein Pfad verfügbar')
                 ->sortable($this->config('storagePathSortable', true))
                 ->toggleable($this->config('storagePathToggleable', true))
+                ->toggledHiddenByDefault($this->config('storagePathHiddenByDefault', true))
                 ->searchable($this->config('storagePathSearchable', true));
         }
 

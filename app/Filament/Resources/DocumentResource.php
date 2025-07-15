@@ -232,7 +232,8 @@ class DocumentResource extends Resource
                     ->badge()
                     ->color('gray')
                     ->limit(30)
-                    ->toggleable(),
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
 
                 TextColumn::make('documentType.name')
                     ->label('Dokumententyp')
@@ -273,16 +274,43 @@ class DocumentResource extends Resource
                     ->label('Größe')
                     ->sortable(['size']),
 
+                TextColumn::make('mime_type')
+                    ->label('Dateityp')
+                    ->formatStateUsing(fn (string $state): string => match (true) {
+                        str_contains($state, 'pdf') => 'PDF',
+                        str_contains($state, 'image/jpeg') || str_contains($state, 'image/jpg') => 'JPEG',
+                        str_contains($state, 'image/png') => 'PNG',
+                        str_contains($state, 'image/gif') => 'GIF',
+                        str_contains($state, 'image') => 'Bild',
+                        str_contains($state, 'word') || str_contains($state, 'document') => 'Word',
+                        str_contains($state, 'excel') || str_contains($state, 'spreadsheet') => 'Excel',
+                        str_contains($state, 'zip') => 'ZIP',
+                        str_contains($state, 'rar') => 'RAR',
+                        default => strtoupper(pathinfo($state, PATHINFO_EXTENSION) ?: 'Unbekannt'),
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match (true) {
+                        str_contains($state, 'pdf') => 'danger',
+                        str_contains($state, 'image') => 'success',
+                        str_contains($state, 'word') || str_contains($state, 'document') => 'info',
+                        str_contains($state, 'excel') || str_contains($state, 'spreadsheet') => 'warning',
+                        str_contains($state, 'zip') || str_contains($state, 'rar') => 'gray',
+                        default => 'primary',
+                    })
+                    ->sortable(),
+
                 TextColumn::make('uploadedBy.name')
                     ->label('Hochgeladen von')
                     ->searchable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
 
                 TextColumn::make('created_at')
                     ->label('Hochgeladen am')
                     ->dateTime('d.m.Y H:i')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
             ])
             ->filters([
                 SelectFilter::make('document_type_id')
