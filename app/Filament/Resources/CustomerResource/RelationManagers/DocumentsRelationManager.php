@@ -135,7 +135,7 @@ class DocumentsRelationManager extends RelationManager
 
                 // Labels
                 'actionsLabel' => 'Aktionen',
-                'previewLabel' => 'Vorschauuuu',
+                'previewLabel' => 'Vorschau',
                 'downloadLabel' => 'Herunterladen',
                 'viewLabel' => 'Anzeigen',
                 'editLabel' => 'Bearbeiten',

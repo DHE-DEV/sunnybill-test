@@ -281,9 +281,9 @@ class SolarPlantBilling extends Model
             
             // Prüfe ob es sich um Kosten oder Gutschriften handelt
             // Gutschriften werden erkannt durch:
-            // 1. Vertragstitel enthält "gutschrift" ODER
+            // 1. billing_type ist 'credit_note' ODER
             // 2. Der Betrag ist negativ
-            $isCredit = stripos($contract->title, 'gutschrift') !== false || $billing->total_amount < 0;
+            $isCredit = $billing->billing_type === 'credit_note' || $billing->total_amount < 0;
             
             if ($isCredit) {
                 // Gutschriften - verwende den absoluten Betrag für die Berechnung
