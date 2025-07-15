@@ -279,12 +279,15 @@ class SolarPlantBilling extends Model
             $customerShare = ($percentage / 100);
             $finalShare = $solarPlantShare * $customerShare;
             
-            // Prüfe ob es sich um Kosten oder Gutschriften handelt basierend auf dem Vertragstitel
-            $isCredit = stripos($contract->title, 'gutschrift') !== false;
+            // Prüfe ob es sich um Kosten oder Gutschriften handelt
+            // Gutschriften werden erkannt durch:
+            // 1. Vertragstitel enthält "gutschrift" ODER
+            // 2. Der Betrag ist negativ
+            $isCredit = stripos($contract->title, 'gutschrift') !== false || $billing->total_amount < 0;
             
             if ($isCredit) {
-                // Gutschriften - positive Beträge werden als Gutschriften behandelt
-                $customerCredit = $billing->total_amount * $finalShare;
+                // Gutschriften - verwende den absoluten Betrag für die Berechnung
+                $customerCredit = abs($billing->total_amount) * $finalShare;
                 $totalCredits += $customerCredit;
                 
                 $creditBreakdown[] = [
@@ -297,19 +300,21 @@ class SolarPlantBilling extends Model
                     'customer_share' => $customerCredit,
                 ];
             } else {
-                // Kosten - alle anderen Verträge
-                $customerCost = $billing->total_amount * $finalShare;
-                $totalCosts += $customerCost;
-                
-                $costBreakdown[] = [
-                    'contract_id' => $contract->id,
-                    'contract_title' => $contract->title,
-                    'supplier_name' => $contract->supplier->company_name ?? $contract->supplier->name ?? 'Unbekannt',
-                    'total_amount' => $billing->total_amount,
-                    'solar_plant_percentage' => $solarPlantPercentage,
-                    'customer_percentage' => $percentage,
-                    'customer_share' => $customerCost,
-                ];
+                // Kosten - alle anderen Verträge (nur positive Beträge)
+                if ($billing->total_amount > 0) {
+                    $customerCost = $billing->total_amount * $finalShare;
+                    $totalCosts += $customerCost;
+                    
+                    $costBreakdown[] = [
+                        'contract_id' => $contract->id,
+                        'contract_title' => $contract->title,
+                        'supplier_name' => $contract->supplier->company_name ?? $contract->supplier->name ?? 'Unbekannt',
+                        'total_amount' => $billing->total_amount,
+                        'solar_plant_percentage' => $solarPlantPercentage,
+                        'customer_percentage' => $percentage,
+                        'customer_share' => $customerCost,
+                    ];
+                }
             }
         }
 
