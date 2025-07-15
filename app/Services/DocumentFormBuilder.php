@@ -197,7 +197,8 @@ class DocumentFormBuilder
             ->options(\App\Models\DocumentType::getSelectOptions())
             ->searchable($this->config('documentTypeSearchable', true))
             ->required($this->config('documentTypeRequired', true))
-            ->placeholder($this->config('documentTypePlaceholder', 'Dokumententyp auswählen...'));
+            ->placeholder($this->config('documentTypePlaceholder', 'Dokumententyp auswählen...'))
+            ->live(); // Aktiviert Live-Updates für die Pfad-Vorschau
     }
 
     /**
@@ -274,6 +275,7 @@ class DocumentFormBuilder
                 }
             })
             ->helperText($this->config('pathPreviewHelperText', 'Hier wird das Dokument gespeichert. Der Pfad ändert sich automatisch basierend auf dem ausgewählten Dokumenttyp.'))
+            ->live() // Aktiviert Live-Updates
             ->columnSpanFull();
     }
 
