@@ -75,6 +75,11 @@ class DocumentFormBuilder
             $fields[] = $this->createDescriptionField();
         }
 
+        // Pfad-Vorschau Feld (für Upload-Modus)
+        if ($this->config('showPathPreview', true) && !$this->config('showStoragePath', false)) {
+            $fields[] = $this->createPathPreviewField();
+        }
+
         // Speicherort Feld (nur für View-Modus)
         if ($this->config('showStoragePath', false)) {
             $fields[] = $this->createStoragePathField();
@@ -218,6 +223,57 @@ class DocumentFormBuilder
             ->rows($this->config('descriptionRows', 3))
             ->maxLength($this->config('descriptionMaxLength', 1000))
             ->placeholder($this->config('descriptionPlaceholder', 'Optionale Beschreibung des Dokuments'))
+            ->columnSpanFull();
+    }
+
+    /**
+     * Erstellt das Pfad-Vorschau-Feld (für Upload-Modus)
+     */
+    protected function createPathPreviewField(): Forms\Components\Placeholder
+    {
+        return Forms\Components\Placeholder::make('path_preview')
+            ->label($this->config('pathPreviewLabel', 'Speicherort'))
+            ->content(function (Forms\Get $get): string {
+                // Prüfe sowohl category als auch document_type_id
+                $category = $get('category');
+                $documentTypeId = $get('document_type_id');
+                
+                // Wenn DocumentType verwendet wird, hole die Kategorie vom DocumentType
+                if ($documentTypeId && !$category) {
+                    try {
+                        $documentType = \App\Models\DocumentType::find($documentTypeId);
+                        $category = $documentType?->slug;
+                    } catch (\Exception $e) {
+                        // Fallback wenn DocumentType nicht gefunden wird
+                        $category = null;
+                    }
+                }
+                
+                // Generiere Pfad-Vorschau
+                if ($this->config('pathType') && $this->config('model')) {
+                    $pathType = $this->config('pathType');
+                    $model = $this->config('model');
+                    $additionalData = array_merge(
+                        $this->config('additionalData', []),
+                        $category ? ['category' => $category] : []
+                    );
+                    
+                    try {
+                        $previewPath = DocumentStorageService::getUploadDirectoryForModel(
+                            $pathType,
+                            $model,
+                            $additionalData
+                        );
+                        
+                        return "📁 {$previewPath}/";
+                    } catch (\Exception $e) {
+                        return "📁 " . $this->getUploadDirectory() . "/";
+                    }
+                } else {
+                    return "📁 " . $this->getUploadDirectory() . "/";
+                }
+            })
+            ->helperText($this->config('pathPreviewHelperText', 'Hier wird das Dokument gespeichert. Der Pfad ändert sich automatisch basierend auf dem ausgewählten Dokumenttyp.'))
             ->columnSpanFull();
     }
 
