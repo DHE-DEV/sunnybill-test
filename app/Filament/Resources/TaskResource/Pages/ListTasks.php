@@ -563,17 +563,49 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public function addNote()
     {
         if (!$this->notesTask || empty(trim($this->newNoteContent))) {
+            \Log::info('ℹ️ Kanban: addNote abgebrochen - leerer Inhalt oder keine Task', [
+                'has_task' => !!$this->notesTask,
+                'content_empty' => empty(trim($this->newNoteContent)),
+                'content_length' => strlen(trim($this->newNoteContent ?? ''))
+            ]);
             return;
         }
 
         $content = trim($this->newNoteContent);
         
+        \Log::info('📝 Kanban: Neue Notiz wird erstellt', [
+            'task_id' => $this->notesTask->id,
+            'task_title' => $this->notesTask->title,
+            'content' => $content,
+            'author_id' => auth()->id(),
+            'author_name' => auth()->user()->name
+        ]);
+        
         // @mentions extrahieren
         $mentionedUsernames = $this->extractMentions($content);
         $mentionedUsers = [];
         
+        \Log::info('🔍 Kanban: @mentions extrahiert', [
+            'task_id' => $this->notesTask->id,
+            'mentioned_usernames' => $mentionedUsernames,
+            'count' => count($mentionedUsernames)
+        ]);
+        
         if (!empty($mentionedUsernames)) {
             $mentionedUsers = User::whereIn('name', $mentionedUsernames)->get();
+            
+            \Log::info('👥 Kanban: Gefundene Benutzer für @mentions', [
+                'task_id' => $this->notesTask->id,
+                'mentioned_usernames' => $mentionedUsernames,
+                'found_users' => $mentionedUsers->map(function($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email
+                    ];
+                })->toArray(),
+                'found_count' => $mentionedUsers->count()
+            ]);
         }
 
         // Notiz erstellen
@@ -584,9 +616,25 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'mentioned_users' => $mentionedUsers->pluck('id')->toArray(),
         ]);
 
+        \Log::info('✅ Kanban: Notiz erfolgreich erstellt', [
+            'note_id' => $note->id,
+            'task_id' => $this->notesTask->id,
+            'mentioned_users_count' => $mentionedUsers->count()
+        ]);
+
         // E-Mail-Benachrichtigungen an erwähnte Benutzer senden
         if ($mentionedUsers->isNotEmpty()) {
+            \Log::info('📧 Kanban: Starte E-Mail-Benachrichtigungen', [
+                'note_id' => $note->id,
+                'task_id' => $this->notesTask->id,
+                'users_to_notify' => $mentionedUsers->count()
+            ]);
             $this->sendMentionNotifications($note, $mentionedUsers);
+        } else {
+            \Log::info('ℹ️ Kanban: Keine E-Mail-Benachrichtigungen erforderlich', [
+                'note_id' => $note->id,
+                'task_id' => $this->notesTask->id
+            ]);
         }
 
         // Historie-Eintrag für hinzugefügte Notiz
@@ -595,6 +643,11 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         // Notizen neu laden
         $this->notesTask = Task::with(['notes.user'])->find($this->notesTask->id);
         $this->newNoteContent = '';
+        
+        \Log::info('🔄 Kanban: Notiz-Verarbeitung abgeschlossen', [
+            'note_id' => $note->id,
+            'task_id' => $this->notesTask->id
+        ]);
     }
     
     /**
@@ -612,23 +665,100 @@ class ListTasks extends ListRecords implements HasForms, HasActions
      */
     private function sendMentionNotifications(TaskNote $note, $mentionedUsers): void
     {
+        \Log::info('📧 Kanban: Versuche E-Mail-Benachrichtigungen zu senden', [
+            'note_id' => $note->id,
+            'task_id' => $note->task_id,
+            'mentioned_users_count' => $mentionedUsers->count(),
+            'author_id' => auth()->id(),
+            'author_name' => auth()->user()->name
+        ]);
+
         foreach ($mentionedUsers as $user) {
             // Nicht an sich selbst senden
             if ($user->id === auth()->id()) {
+                \Log::info('⏭️ Kanban: Überspringe Selbst-Benachrichtigung', [
+                    'note_id' => $note->id,
+                    'author_id' => auth()->id()
+                ]);
                 continue;
             }
             
             try {
-                Mail::to($user->email)->send(new TaskNoteMention($note, $user));
-            } catch (\Exception $e) {
-                // Log error but don't break the flow
-                \Log::error('Failed to send mention notification', [
+                \Log::info('📧 Kanban: Versuche E-Mail-Benachrichtigung zu senden', [
                     'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'user_name' => $user->name,
                     'note_id' => $note->id,
-                    'error' => $e->getMessage()
+                    'task_id' => $note->task_id
+                ]);
+
+                // E-Mail-Adresse validieren
+                if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+                    \Log::warning('❌ Kanban: Ungültige E-Mail-Adresse für Mention-Benachrichtigung', [
+                        'user_id' => $user->id,
+                        'email' => $user->email
+                    ]);
+                    continue;
+                }
+
+                // Gmail Service verwenden
+                $gmailService = app(\App\Services\GmailService::class);
+                
+                // E-Mail-Inhalt rendern
+                $emailContent = view('emails.task-note-mention', [
+                    'user' => $user,
+                    'note' => $note,
+                    'task' => $note->task,
+                    'author' => auth()->user(),
+                    'mentionedUser' => $user,
+                    'taskUrl' => route('filament.admin.resources.tasks.index', [
+                        'openNotes' => $note->task_id
+                    ])
+                ])->render();
+
+                $subject = "Neue Notiz - Aufgabe - {$note->task->title}";
+
+                // E-Mail über Gmail Service senden
+                $result = $gmailService->sendEmail(
+                    $user->email,
+                    $subject,
+                    $emailContent
+                );
+
+                if ($result) {
+                    \Log::info('✅ Kanban: Task-Notiz Mention E-Mail erfolgreich gesendet', [
+                        'user_id' => $user->id,
+                        'user_email' => $user->email,
+                        'note_id' => $note->id,
+                        'task_id' => $note->task_id,
+                        'subject' => $subject
+                    ]);
+                } else {
+                    \Log::error('❌ Kanban: Task-Notiz Mention E-Mail konnte nicht gesendet werden', [
+                        'user_id' => $user->id,
+                        'user_email' => $user->email,
+                        'note_id' => $note->id,
+                        'task_id' => $note->task_id
+                    ]);
+                }
+
+            } catch (\Exception $e) {
+                \Log::error('❌ Kanban: Fehler beim Senden der Task-Notiz Mention E-Mail', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'note_id' => $note->id,
+                    'task_id' => $note->task_id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
             }
         }
+
+        \Log::info('✅ Kanban: @mentions Verarbeitung abgeschlossen', [
+            'note_id' => $note->id,
+            'total_users' => $mentionedUsers->count(),
+            'notifications_sent' => $mentionedUsers->where('id', '!=', auth()->id())->count()
+        ]);
     }
 
     public function getNotesProperty()
