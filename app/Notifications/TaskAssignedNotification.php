@@ -4,10 +4,12 @@ namespace App\Notifications;
 
 use App\Models\Task;
 use App\Models\User;
+use App\Services\GmailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 
 class TaskAssignedNotification extends Notification implements ShouldQueue
 {
@@ -48,6 +50,60 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        // Sende E-Mail über Gmail-Service
+        try {
+            $gmailService = new GmailService();
+            
+            $subject = "Neue Aufgabe zugewiesen: {$this->task->title}";
+            $taskUrl = url("/admin/tasks/{$this->task->id}");
+            
+            // Erstelle HTML-E-Mail-Body
+            $body = "<h2>Hallo {$notifiable->name}!</h2>";
+            $body .= "<p>Ihnen wurde eine neue Aufgabe zugewiesen.</p>";
+            $body .= "<p><strong>Aufgabe:</strong> {$this->task->title}</p>";
+            
+            if ($this->task->description) {
+                $body .= "<p><strong>Beschreibung:</strong> {$this->task->description}</p>";
+            }
+            
+            if ($this->task->due_date) {
+                $body .= "<p><strong>Fälligkeitsdatum:</strong> {$this->task->due_date->format('d.m.Y')}</p>";
+            }
+            
+            $body .= "<p><strong>Priorität:</strong> " . $this->getPriorityLabel($this->task->priority) . "</p>";
+            $body .= "<p><strong>Zugewiesen von:</strong> {$this->assignedBy->name}</p>";
+            $body .= "<p><a href='{$taskUrl}' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Aufgabe anzeigen</a></p>";
+            $body .= "<p>Vielen Dank für Ihre Aufmerksamkeit!</p>";
+            $body .= "<p>Ihr SunnyBill Team</p>";
+            
+            $result = $gmailService->sendEmail($notifiable->email, $subject, $body, ['html' => true]);
+            
+            if ($result['success']) {
+                Log::info('TaskAssignedNotification: E-Mail erfolgreich gesendet', [
+                    'to' => $notifiable->email,
+                    'task_id' => $this->task->id,
+                    'task_title' => $this->task->title,
+                    'message_id' => $result['message_id'] ?? null
+                ]);
+            } else {
+                Log::error('TaskAssignedNotification: E-Mail-Versendung fehlgeschlagen', [
+                    'to' => $notifiable->email,
+                    'task_id' => $this->task->id,
+                    'error' => $result['error'] ?? 'Unbekannter Fehler'
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('TaskAssignedNotification: Exception beim E-Mail-Versand', [
+                'to' => $notifiable->email,
+                'task_id' => $this->task->id,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+        }
+        
+        // Fallback: Gib trotzdem eine MailMessage zurück für Kompatibilität
         $taskUrl = url("/admin/tasks/{$this->task->id}");
         
         return (new MailMessage)
