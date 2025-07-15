@@ -104,29 +104,39 @@ class ViewSolarPlant extends ViewRecord
                                                     ->trueColor('success')
                                                     ->falseColor('danger'),
                                             ]),
-                                        Infolists\Components\Grid::make(3)
+                                        Infolists\Components\Grid::make(4)
                                             ->schema([
-                                                Infolists\Components\TextEntry::make('mastr_number')
-                                                    ->label('MaStR-Nr.')
+                                                Infolists\Components\TextEntry::make('mastr_number_unit')
+                                                    ->label('MaStR-Nr. der Einheit')
                                                     ->placeholder('Nicht hinterlegt')
                                                     ->copyable()
                                                     ->badge()
                                                     ->color('info'),
-                                                Infolists\Components\TextEntry::make('mastr_registration_date')
-                                                    ->label('MaStR Registrierungsdatum')
+                                                Infolists\Components\TextEntry::make('mastr_registration_date_unit')
+                                                    ->label('Registrierungsdatum der Einheit')
                                                     ->date('d.m.Y')
                                                     ->placeholder('Nicht hinterlegt'),
-                                                Infolists\Components\TextEntry::make('malo_id')
-                                                    ->label('MaLo-ID')
+                                                Infolists\Components\TextEntry::make('mastr_number_eeg_plant')
+                                                    ->label('MaStR-Nr. der EEG-Anlage')
+                                                    ->placeholder('Nicht hinterlegt')
+                                                    ->copyable()
+                                                    ->badge()
+                                                    ->color('success'),
+                                                Infolists\Components\TextEntry::make('commissioning_date_eeg_plant')
+                                                    ->label('Inbetriebnahme der EEG-Anlage')
+                                                    ->date('d.m.Y')
+                                                    ->placeholder('Nicht hinterlegt'),
+                                            ]),
+                                        Infolists\Components\Grid::make(4)
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('melo_id')
+                                                    ->label('MeLo-ID')
                                                     ->placeholder('Nicht hinterlegt')
                                                     ->copyable()
                                                     ->badge()
                                                     ->color('primary'),
-                                            ]),
-                                        Infolists\Components\Grid::make(3)
-                                            ->schema([
-                                                Infolists\Components\TextEntry::make('melo_id')
-                                                    ->label('MeLo-ID')
+                                                Infolists\Components\TextEntry::make('malo_id')
+                                                    ->label('MaLo-ID')
                                                     ->placeholder('Nicht hinterlegt')
                                                     ->copyable()
                                                     ->badge()
@@ -144,8 +154,35 @@ class ViewSolarPlant extends ViewRecord
                                                     ->badge()
                                                     ->color('success'),
                                             ]),
+                                        Infolists\Components\Grid::make(4)
+                                            ->schema([
+                                                Infolists\Components\TextEntry::make('commissioning_date_unit')
+                                                    ->label('Datum der Inbetriebsetzung')
+                                                    ->date('d.m.Y')
+                                                    ->placeholder('Nicht hinterlegt'),
+                                            ]),
                                     ])
                                     ->headerActions([
+                                        Infolists\Components\Actions\Action::make('calculate_route')
+                                            ->label('Route berechnen')
+                                            ->icon('heroicon-o-map')
+                                            ->color('success')
+                                            ->url(function ($record) {
+                                                // Verwende Adresse wenn vorhanden, sonst Koordinaten
+                                                if (!empty($record->location)) {
+                                                    $destination = urlencode($record->location);
+                                                    return 'https://www.google.com/maps/dir//' . $destination;
+                                                } elseif ($record->hasCoordinates()) {
+                                                    $destination = $record->latitude . ',' . $record->longitude;
+                                                    return 'https://www.google.com/maps/dir//' . $destination;
+                                                } else {
+                                                    // Fallback: Verwende den Namen der Anlage für die Suche
+                                                    $destination = urlencode($record->name);
+                                                    return 'https://www.google.com/maps/search/' . $destination;
+                                                }
+                                            })
+                                            ->openUrlInNewTab()
+                                            ->visible(true),
                                         Infolists\Components\Actions\Action::make('show_map')
                                             ->label('Karte anzeigen')
                                             ->icon('heroicon-o-map-pin')

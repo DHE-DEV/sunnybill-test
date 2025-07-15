@@ -50,15 +50,25 @@ class SolarPlantResource extends Resource
                                             ->required()
                                             ->maxLength(255)
                                             ->placeholder('z.B. Musterstraße 1, 12345 Musterstadt'),
+                                        Forms\Components\TextInput::make('plot_number')
+                                            ->label('Flurstück')
+                                            ->maxLength(255)
+                                            ->placeholder('z.B. Flur 1, Flurstück 123/4'),
                                     ]),
                                 Forms\Components\Grid::make(2)
                                     ->schema([
-                                        Forms\Components\TextInput::make('mastr_number')
-                                            ->label('MaStR-Nr.')
-                                            ->helperText('Marktstammdatenregister'),
-                                        Forms\Components\DatePicker::make('mastr_registration_date')
-                                            ->label('MaStR Registrierungsdatum')
-                                            ->helperText('Registrierungsdatum des Marktstammdatenregisters'),
+                                        Forms\Components\TextInput::make('mastr_number_unit')
+                                            ->label('MaStR-Nr. der Einheit')
+                                            ->helperText('Marktstammdatenregister der Einheit'),
+                                        Forms\Components\DatePicker::make('mastr_registration_date_unit')
+                                            ->label('MaStR Registrierungsdatum der Einheit')
+                                            ->helperText('Registrierungsdatum des Marktstammdatenregisters der Einheit'),
+                                        Forms\Components\TextInput::make('mastr_number_eeg_plant')
+                                            ->label('MaStR-Nr. der EEG-Anlage')
+                                            ->helperText('Marktstammdatenregister der EEG-Anlage'),
+                                        Forms\Components\DatePicker::make('commissioning_date_eeg_plant')
+                                            ->label('Inbetriebnahme der EEG-Anlage')
+                                            ->helperText('Inbetriebnahmedatum der EEG-Anlage'),
                                         Forms\Components\TextInput::make('malo_id')
                                             ->label('MaLo-ID')
                                             ->helperText('Marktlokations ID'),
@@ -67,6 +77,9 @@ class SolarPlantResource extends Resource
                                             ->helperText('Messlokations ID'),
                                         Forms\Components\TextInput::make('vnb_process_number')
                                             ->label('VNB-Vorgangsnummer'),
+                                        Forms\Components\DatePicker::make('commissioning_date_unit')
+                                            ->label('Datum der Inbetriebsetzung')
+                                            ->helperText('Datum der Inbetriebsetzung'),
                                         Forms\Components\DatePicker::make('unit_commissioning_date')
                                             ->label('Inbetriebnahmedatum der Einheit'),
                                         Forms\Components\DatePicker::make('pv_soll_planning_date')
@@ -77,23 +90,65 @@ class SolarPlantResource extends Resource
                                 Forms\Components\Section::make('Geokoordinaten')
                                     ->description('Genaue Position der Solaranlage für Kartendarstellung')
                                     ->schema([
+                                        Forms\Components\TextInput::make('coordinates_input')
+                                            ->label('Koordinaten einfügen')
+                                            ->placeholder('Koordinaten hier einfügen (z.B. 51.419, 7.041)')
+                                            ->helperText(new \Illuminate\Support\HtmlString('Kopieren Sie Koordinaten von <a href="https://www.google.com/maps" target="_blank" class="text-primary-600 hover:text-primary-500 underline">Google Maps</a> und fügen Sie sie hier ein. Die Werte werden automatisch aufgeteilt.'))
+                                            ->live(onBlur: true)
+                                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                                if (empty($state)) {
+                                                    return;
+                                                }
+                                                
+                                                // Parse verschiedene Koordinatenformate
+                                                $coords = trim($state);
+                                                
+                                                // Format: '51.41912928171562, 7.040672038175363'
+                                                if (preg_match('/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/', $coords, $matches)) {
+                                                    $latitude = (float) $matches[1];
+                                                    $longitude = (float) $matches[2];
+                                                    
+                                                    $set('latitude', $latitude);
+                                                    $set('longitude', $longitude);
+                                                    
+                                                    // Leere das Eingabefeld nach erfolgreicher Übertragung
+                                                    $set('coordinates_input', '');
+                                                    
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('Koordinaten übertragen')
+                                                        ->body("Breitengrad: {$latitude}, Längengrad: {$longitude}")
+                                                        ->success()
+                                                        ->send();
+                                                } else {
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('Ungültiges Format')
+                                                        ->body('Bitte verwenden Sie das Format: Breitengrad, Längengrad (z.B. 51.419, 7.041)')
+                                                        ->danger()
+                                                        ->send();
+                                                }
+                                            })
+                                            ->columnSpanFull(),
                                         Forms\Components\Grid::make(2)
                                             ->schema([
                                                 Forms\Components\TextInput::make('latitude')
                                                     ->label('Breitengrad (Latitude)')
                                                     ->numeric()
-                                                    ->step(0.00000001)
+                                                    ->step('any')
                                                     ->placeholder('z.B. 52.520008')
                                                     ->suffix('°N')
                                                     ->helperText('Dezimalgrad (WGS84)'),
                                                 Forms\Components\TextInput::make('longitude')
                                                     ->label('Längengrad (Longitude)')
                                                     ->numeric()
-                                                    ->step(0.00000001)
+                                                    ->step('any')
                                                     ->placeholder('z.B. 13.404954')
                                                     ->suffix('°E')
                                                     ->helperText('Dezimalgrad (WGS84)'),
                                             ]),
+                                        Forms\Components\Placeholder::make('coordinate_help')
+                                            ->label('')
+                                            ->content('💡 **Tipp:** Kopieren Sie Koordinaten von Google Maps (Format: 51.419, 7.041) und klicken Sie auf "Koordinaten aus Zwischenablage einfügen"')
+                                            ->extraAttributes(['class' => 'text-sm text-gray-600']),
                                     ]),
                                 Forms\Components\Grid::make(3)
                                     ->schema([
@@ -250,29 +305,55 @@ class SolarPlantResource extends Resource
             ->schema([
                 \Filament\Infolists\Components\Section::make('Grunddaten')
                     ->schema([
-                        \Filament\Infolists\Components\Grid::make(2)
+                        \Filament\Infolists\Components\Grid::make(4)
                             ->schema([
                                 \Filament\Infolists\Components\TextEntry::make('name')
                                     ->label('Anlagenname')
                                     ->weight('bold')
-                                    ->size('lg'),
+                                    ->size('lg')
+                                    ->columnSpan(2),
                                 \Filament\Infolists\Components\TextEntry::make('location')
                                     ->label('Standort')
-                                    ->size('lg'),
+                                    ->size('lg')
+                                    ->columnSpan(2),
+                                \Filament\Infolists\Components\TextEntry::make('plot_number')
+                                    ->label('Flurstück')
+                                    ->placeholder('Nicht hinterlegt')
+                                    ->columnSpan(2),
                             ]),
                         
-                        \Filament\Infolists\Components\Grid::make(3)
+                        \Filament\Infolists\Components\Grid::make(4)
                             ->schema([
-                                \Filament\Infolists\Components\TextEntry::make('mastr_number')
-                                    ->label('MaStR-Nr.')
+                                \Filament\Infolists\Components\TextEntry::make('mastr_number_unit')
+                                    ->label('MaStR-Nr. der Einheit')
                                     ->placeholder('Nicht hinterlegt')
                                     ->copyable()
                                     ->badge()
                                     ->color('info'),
-                                \Filament\Infolists\Components\TextEntry::make('mastr_registration_date')
-                                    ->label('MaStR Registrierungsdatum')
+                                \Filament\Infolists\Components\TextEntry::make('mastr_registration_date_unit')
+                                    ->label('MaStR Registrierungsdatum der Einheit')
                                     ->date('d.m.Y')
                                     ->placeholder('Nicht hinterlegt'),
+                            ]),
+                        
+                        \Filament\Infolists\Components\Grid::make(4)
+                            ->schema([
+                                \Filament\Infolists\Components\TextEntry::make('mastr_number_eeg_plant')
+                                    ->label('MaStR-Nr. der EEG-Anlage')
+                                    ->placeholder('Nicht hinterlegt')
+                                    ->copyable()
+                                    ->badge()
+                                    ->color('success'),
+                                \Filament\Infolists\Components\TextEntry::make('commissioning_date_eeg_plant')
+                                    ->label('Inbetriebnahme der EEG-Anlage')
+                                    ->date('d.m.Y')
+                                    ->placeholder('Nicht hinterlegt'),
+                                \Filament\Infolists\Components\TextEntry::make('melo_id')
+                                    ->label('MeLo-ID')
+                                    ->placeholder('Nicht hinterlegt')
+                                    ->copyable()
+                                    ->badge()
+                                    ->color('primary'),
                                 \Filament\Infolists\Components\TextEntry::make('malo_id')
                                     ->label('MaLo-ID')
                                     ->placeholder('Nicht hinterlegt')
@@ -281,30 +362,28 @@ class SolarPlantResource extends Resource
                                     ->color('primary'),
                             ]),
                         
-                        \Filament\Infolists\Components\Grid::make(3)
+                        \Filament\Infolists\Components\Grid::make(4)
                             ->schema([
-                                \Filament\Infolists\Components\TextEntry::make('melo_id')
-                                    ->label('MeLo-ID')
-                                    ->placeholder('Nicht hinterlegt')
-                                    ->copyable()
-                                    ->badge()
-                                    ->color('primary'),
                                 \Filament\Infolists\Components\TextEntry::make('vnb_process_number')
                                     ->label('VNB-Vorgangsnummer')
                                     ->placeholder('Nicht hinterlegt')
                                     ->copyable()
                                     ->badge()
                                     ->color('warning'),
+                                \Filament\Infolists\Components\TextEntry::make('commissioning_date_unit')
+                                    ->label('Datum der Inbetriebsetzung')
+                                    ->date('d.m.Y')
+                                    ->placeholder('Nicht hinterlegt'),
+                            ]),
+                        
+                        \Filament\Infolists\Components\Grid::make(4)
+                            ->schema([
                                 \Filament\Infolists\Components\TextEntry::make('pv_soll_project_number')
                                     ->label('PV-Soll Projektnummer')
                                     ->placeholder('Nicht hinterlegt')
                                     ->copyable()
                                     ->badge()
                                     ->color('success'),
-                            ]),
-                        
-                        \Filament\Infolists\Components\Grid::make(3)
-                            ->schema([
                                 \Filament\Infolists\Components\TextEntry::make('status')
                                     ->label('Status')
                                     ->formatStateUsing(fn ($state) => match($state) {
@@ -344,8 +423,28 @@ class SolarPlantResource extends Resource
                             ->placeholder('Keine Beschreibung hinterlegt')
                             ->columnSpanFull(),
                     ])
-                    ->columns(2)
+                    ->columns(4)
                     ->headerActions([
+                        \Filament\Infolists\Components\Actions\Action::make('calculate_route')
+                            ->label('Route berechnen')
+                            ->icon('heroicon-o-map')
+                            ->color('success')
+                            ->url(function ($record) {
+                                // Verwende Adresse wenn vorhanden, sonst Koordinaten
+                                if (!empty($record->location)) {
+                                    $destination = urlencode($record->location);
+                                    return 'https://www.google.com/maps/dir//' . $destination;
+                                } elseif ($record->hasCoordinates()) {
+                                    $destination = $record->latitude . ',' . $record->longitude;
+                                    return 'https://www.google.com/maps/dir//' . $destination;
+                                } else {
+                                    // Fallback: Verwende den Namen der Anlage für die Suche
+                                    $destination = urlencode($record->name);
+                                    return 'https://www.google.com/maps/search/' . $destination;
+                                }
+                            })
+                            ->openUrlInNewTab()
+                            ->visible(true), // Immer anzeigen für Debugging
                         \Filament\Infolists\Components\Actions\Action::make('show_map')
                             ->label('Karte anzeigen')
                             ->icon('heroicon-o-map-pin')
@@ -480,6 +579,10 @@ class SolarPlantResource extends Resource
                     ->label('Standort')
                     ->searchable()
                     ->limit(30),
+                Tables\Columns\TextColumn::make('plot_number')
+                    ->label('Flurstück')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('total_capacity_kw')
                     ->label('Leistung')
                     ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . ' kWp')
@@ -526,6 +629,24 @@ class SolarPlantResource extends Resource
                     ->label('Tatsächliche Inbetriebnahme')
                     ->date('d.m.Y')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('commissioning_date_unit')
+                    ->label('Datum der Inbetriebsetzung')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('commissioning_date_eeg_plant')
+                    ->label('Inbetriebnahme der EEG-Anlage')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('mastr_number_unit')
+                    ->label('MaStR-Nr. der Einheit')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('mastr_number_eeg_plant')
+                    ->label('MaStR-Nr. der EEG-Anlage')
+                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('total_investment')
                     ->label('Gesamtinvestition')
