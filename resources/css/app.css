@@ -143,3 +143,89 @@
     color: #475569 !important; /* Slate-600 */
     margin-bottom: 0.5rem !important;
 }
+
+/* Contract Creation Modal Styling */
+.contract-creation-modal {
+    backdrop-filter: blur(4px) !important;
+}
+
+.contract-creation-modal .fi-modal-content {
+    background-color: #f8fafc !important; /* Slate-50 */
+    border: 1px solid #cbd5e1 !important; /* Slate-300 */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.contract-creation-modal .fi-modal-header {
+    background-color: #1e293b !important; /* Slate-800 */
+    color: white !important;
+    border-bottom: 1px solid #334155 !important; /* Slate-700 */
+}
+
+.contract-creation-modal .fi-modal-header-heading {
+    color: white !important;
+    font-weight: 700 !important;
+}
+
+.contract-creation-modal .fi-modal-header-subheading {
+    color: #cbd5e1 !important; /* Slate-300 */
+}
+
+.contract-creation-modal .fi-section {
+    background-color: white !important;
+    border: 1px solid #e2e8f0 !important; /* Slate-200 */
+    border-radius: 0.75rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.contract-creation-modal .fi-section-header {
+    background-color: #f1f5f9 !important; /* Slate-100 */
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    padding: 1rem 1.5rem !important;
+}
+
+.contract-creation-modal .fi-section-header-heading {
+    font-weight: 600 !important;
+    color: #334155 !important; /* Slate-700 */
+}
+
+.contract-creation-modal .fi-section-content {
+    background-color: white !important;
+    padding: 1.5rem !important;
+    border-radius: 0 0 0.75rem 0.75rem !important;
+}
+
+.contract-creation-modal .fi-modal-footer {
+    background-color: #f8fafc !important; /* Slate-50 */
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 1rem 1.5rem !important;
+}
+
+.contract-creation-modal .fi-btn-primary {
+    background-color: #059669 !important; /* Emerald-600 */
+    border-color: #059669 !important;
+    color: white !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.contract-creation-modal .fi-btn-primary:hover {
+    background-color: #047857 !important; /* Emerald-700 */
+    border-color: #047857 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.contract-creation-modal .fi-input-wrapper {
+    border-radius: 0.5rem !important;
+    border: 1px solid #d1d5db !important; /* Gray-300 */
+    transition: all 0.2s ease-in-out !important;
+}
+
+.contract-creation-modal .fi-input-wrapper:focus-within {
+    border-color: #059669 !important; /* Emerald-600 */
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1) !important;
+}

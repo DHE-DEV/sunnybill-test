@@ -9,6 +9,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Supplier;
+use App\Models\SupplierContract;
+use App\Models\DummyFieldConfig;
+use Filament\Notifications\Notification;
 
 class ContractsRelationManager extends RelationManager
 {
@@ -344,15 +348,212 @@ class ContractsRelationManager extends RelationManager
                 Tables\Actions\Action::make('create_contract')
                     ->label('Neuen Vertrag erstellen')
                     ->icon('heroicon-o-plus')
-                    ->url(route('filament.admin.resources.supplier-contracts.create'))
-                    ->openUrlInNewTab(),
+                    ->color('primary')
+                    ->modalWidth('7xl')
+                    ->modalHeading('Neuen Vertrag erstellen')
+                    ->modalDescription('Erstellen Sie einen neuen Lieferantenvertrag für diese Solaranlage.')
+                    ->extraModalWindowAttributes(['class' => 'contract-creation-modal'])
+                    ->form($this->getContractForm())
+                    ->action(function (array $data, $livewire) {
+                        // Erstelle den neuen Vertrag
+                        $contract = SupplierContract::create($data);
+                        
+                        // Erstelle automatisch die Zuordnung zur Solaranlage
+                        $contract->solarPlantAssignments()->create([
+                            'solar_plant_id' => $this->getOwnerRecord()->id,
+                            'percentage' => 100.00,
+                            'is_active' => true,
+                        ]);
+                        
+                        // Benachrichtigung
+                        Notification::make()
+                            ->title('Vertrag erfolgreich erstellt')
+                            ->body("Der Vertrag '{$contract->contract_number}' wurde erstellt und der Solaranlage zugeordnet.")
+                            ->success()
+                            ->actions([
+                                \Filament\Notifications\Actions\Action::make('view')
+                                    ->label('Anzeigen')
+                                    ->url(route('filament.admin.resources.supplier-contracts.view', $contract))
+                                    ->openUrlInNewTab()
+                                    ->button(),
+                            ])
+                            ->send();
+                        
+                        // Aktualisiere die Tabelle
+                        $livewire->dispatch('$refresh');
+                    })
+                    ->modalSubmitActionLabel('Vertrag erstellen'),
             ])
             ->emptyStateActions([
                 Tables\Actions\Action::make('create_contract')
                     ->label('Neuen Vertrag erstellen')
                     ->icon('heroicon-o-plus')
-                    ->url(route('filament.admin.resources.supplier-contracts.create'))
-                    ->openUrlInNewTab(),
+                    ->color('primary')
+                    ->modalWidth('7xl')
+                    ->modalHeading('Neuen Vertrag erstellen')
+                    ->modalDescription('Erstellen Sie einen neuen Lieferantenvertrag für diese Solaranlage.')
+                    ->extraModalWindowAttributes(['class' => 'contract-creation-modal'])
+                    ->form($this->getContractForm())
+                    ->action(function (array $data, $livewire) {
+                        // Erstelle den neuen Vertrag
+                        $contract = SupplierContract::create($data);
+                        
+                        // Erstelle automatisch die Zuordnung zur Solaranlage
+                        $contract->solarPlantAssignments()->create([
+                            'solar_plant_id' => $this->getOwnerRecord()->id,
+                            'percentage' => 100.00,
+                            'is_active' => true,
+                        ]);
+                        
+                        // Benachrichtigung
+                        Notification::make()
+                            ->title('Vertrag erfolgreich erstellt')
+                            ->body("Der Vertrag '{$contract->contract_number}' wurde erstellt und der Solaranlage zugeordnet.")
+                            ->success()
+                            ->actions([
+                                \Filament\Notifications\Actions\Action::make('view')
+                                    ->label('Anzeigen')
+                                    ->url(route('filament.admin.resources.supplier-contracts.view', $contract))
+                                    ->openUrlInNewTab()
+                                    ->button(),
+                            ])
+                            ->send();
+                        
+                        // Aktualisiere die Tabelle
+                        $livewire->dispatch('$refresh');
+                    })
+                    ->modalSubmitActionLabel('Vertrag erstellen'),
             ]);
+    }
+
+    protected function getContractForm(): array
+    {
+        return [
+            Forms\Components\Section::make('Vertragsdaten')
+                ->schema([
+                    // Titel in separater Zeile über komplette Breite
+                    Forms\Components\TextInput::make('title')
+                        ->label('Titel')
+                        ->required()
+                        ->maxLength(255)
+                        ->helperText('Beliebiger Kurztext zur Erkennung in Listen')
+                        ->columnSpanFull(),
+                    
+                    // Beschreibung unter Titel über komplette Breite
+                    Forms\Components\Textarea::make('description')
+                        ->label('Beschreibung')
+                        ->rows(3)
+                        ->maxLength(1000)
+                        ->columnSpanFull(),
+                    
+                    // Restliche Felder im Grid
+                    Forms\Components\Select::make('supplier_id')
+                        ->label('Lieferant')
+                        ->options(Supplier::active()->orderBy('company_name')->pluck('company_name', 'id'))
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->columnSpanFull(),
+                    
+                    // Status nach Lieferant
+                    Forms\Components\Select::make('status')
+                        ->label('Status')
+                        ->options([
+                            'draft' => 'Entwurf',
+                            'active' => 'Aktiv',
+                            'expired' => 'Abgelaufen',
+                            'terminated' => 'Gekündigt',
+                            'completed' => 'Abgeschlossen',
+                        ])
+                        ->default('draft')
+                        ->required(),
+                    
+                    Forms\Components\TextInput::make('creditor_number')
+                        ->label('Eigene Kundennummer bei Lieferant')
+                        ->maxLength(255)
+                        ->placeholder('z.B. KR-12345'),
+                    
+                    Forms\Components\TextInput::make('contract_number')
+                        ->label('Vertragsnummer intern')
+                        ->maxLength(255)
+                        ->unique(ignoreRecord: true),
+                    
+                    Forms\Components\TextInput::make('external_contract_number')
+                        ->label('Vertragsnummer extern')
+                        ->maxLength(255)
+                        ->placeholder('z.B. EXT-2024-001'),
+                    
+                    Forms\Components\TextInput::make('malo_id')
+                        ->label('MaLo-ID')
+                        ->helperText('Marktlokations-ID')
+                        ->maxLength(255),
+                    
+                    Forms\Components\TextInput::make('ep_id')
+                        ->label('EP-ID')
+                        ->helperText('Einspeisepunkt-ID')
+                        ->maxLength(255),
+                    
+                    // Dummy Fields in Spalte 2 unten nacheinander
+                    ...DummyFieldConfig::getDummyFieldsSchema('supplier_contract'),
+                ])->columns(2),
+
+            Forms\Components\Section::make('Laufzeit & Wert')
+                ->schema([
+                    Forms\Components\DatePicker::make('start_date')
+                        ->label('Startdatum'),
+                    
+                    Forms\Components\DatePicker::make('end_date')
+                        ->label('Enddatum'),
+                    
+                    Forms\Components\TextInput::make('contract_value')
+                        ->label('Vertragswert')
+                        ->numeric()
+                        ->step(0.01)
+                        ->prefix('€'),
+                    
+                    Forms\Components\Select::make('currency')
+                        ->label('Währung')
+                        ->options([
+                            'EUR' => 'Euro (EUR)',
+                            'USD' => 'US-Dollar (USD)',
+                            'CHF' => 'Schweizer Franken (CHF)',
+                        ])
+                        ->default('EUR'),
+                ])->columns(2),
+
+            Forms\Components\Section::make('Vertragserkennung')
+                ->description('Diese Informationen werden zur automatischen Vertragserkennung benötigt. Es müssen nicht alle Felder befüllt werden.')
+                ->schema([
+                    Forms\Components\TextInput::make('contract_recognition_1')
+                        ->label('Vertragserkennung 1')
+                        ->maxLength(255)
+                        ->placeholder('z.B. Erkennungsmerkmal 1'),
+                    
+                    Forms\Components\TextInput::make('contract_recognition_2')
+                        ->label('Vertragserkennung 2')
+                        ->maxLength(255)
+                        ->placeholder('z.B. Erkennungsmerkmal 2'),
+                    
+                    Forms\Components\TextInput::make('contract_recognition_3')
+                        ->label('Vertragserkennung 3')
+                        ->maxLength(255)
+                        ->placeholder('z.B. Erkennungsmerkmal 3'),
+                ])->columns(2),
+
+            Forms\Components\Section::make('Zusätzliche Informationen')
+                ->schema([
+                    Forms\Components\Textarea::make('payment_terms')
+                        ->label('Zahlungsbedingungen')
+                        ->rows(3),
+                    
+                    Forms\Components\Textarea::make('notes')
+                        ->label('Notizen')
+                        ->rows(3),
+                    
+                    Forms\Components\Toggle::make('is_active')
+                        ->label('Aktiv')
+                        ->default(true),
+                ]),
+        ];
     }
 }
