@@ -620,7 +620,7 @@ class DocumentUploadConfig
 
     /**
      * Erstellt eine Konfiguration für Lieferantenvertrags-Dokumente
-     * Verwendet die Struktur: suppliers/{supplier_id}/contracts/{contract_internal_number}/
+     * Verwendet DocumentTypes statt hardcodierte Kategorien
      */
     public static function forSupplierContracts($supplierContract = null): self
     {
@@ -631,28 +631,11 @@ class DocumentUploadConfig
             'sectionTitle' => 'Vertrags-Dokumente',
             'preserveFilenames' => false,
             'timestampFilenames' => true,
-            'categories' => [
-                'contract' => 'Hauptvertrag',
-                'amendment' => 'Nachtrag',
-                'annex' => 'Anlage',
-                'invoice' => 'Rechnung',
-                'correspondence' => 'Korrespondenz',
-                'technical' => 'Technische Unterlagen',
-                'legal' => 'Rechtsdokumente',
-                'termination' => 'Kündigung',
-                'other' => 'Sonstiges',
-            ],
-            'categoryColors' => [
-                'contract' => 'success',
-                'amendment' => 'warning',
-                'annex' => 'info',
-                'invoice' => 'orange',
-                'correspondence' => 'green',
-                'technical' => 'blue',
-                'legal' => 'purple',
-                'termination' => 'danger',
-                'other' => 'gray',
-            ],
+            // Entferne hardcodierte Kategorien - verwende DocumentTypes stattdessen
+            'categories' => [],
+            'categoryColors' => [],
+            'showCategory' => true, // Aktiviere DocumentType-Anzeige
+            'defaultSort' => ['name', 'desc'], // Sortierung nach Name absteigend
         ]);
     }
 
