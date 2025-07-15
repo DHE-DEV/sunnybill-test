@@ -641,8 +641,7 @@ class DocumentUploadConfig
 
     /**
      * Erstellt eine Konfiguration für Lieferanten-Abrechnungs-Dokumente
-     * Verwendet die DocumentPathSetting-Integration für SupplierContractBilling
-     * WICHTIG: Kategorie-Namen müssen mit DocumentPathSetting-Kategorien übereinstimmen!
+     * Verwendet DocumentTypes statt hardcodierte Kategorien
      */
     public static function forSupplierContractBillings($supplierContractBilling = null): self
     {
@@ -653,26 +652,11 @@ class DocumentUploadConfig
             'sectionTitle' => 'Abrechnungs-Dokumente',
             'preserveFilenames' => false,
             'timestampFilenames' => true,
-            'categories' => [
-                'invoices' => 'Rechnung',           // Entspricht DocumentPathSetting 'invoices'
-                'credit_note' => 'Gutschrift',
-                'statement' => 'Abrechnung',
-                'correspondence' => 'Korrespondenz', // Entspricht DocumentPathSetting 'correspondence'
-                'technical' => 'Technische Unterlagen', // Entspricht DocumentPathSetting 'technical'
-                'certificates' => 'Nachweise',      // Entspricht DocumentPathSetting 'certificates'
-                'supporting_documents' => 'Belege',
-                'other' => 'Sonstiges',
-            ],
-            'categoryColors' => [
-                'invoices' => 'warning',
-                'credit_note' => 'info',
-                'statement' => 'success',
-                'correspondence' => 'green',
-                'technical' => 'blue',
-                'certificates' => 'purple',
-                'supporting_documents' => 'orange',
-                'other' => 'gray',
-            ],
+            // Entferne hardcodierte Kategorien - verwende DocumentTypes stattdessen
+            'categories' => [],
+            'categoryColors' => [],
+            'showCategory' => true, // Aktiviere DocumentType-Anzeige
+            'defaultSort' => ['name', 'desc'], // Sortierung nach Name absteigend
         ]);
     }
 
