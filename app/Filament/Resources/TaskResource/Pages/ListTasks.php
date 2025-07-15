@@ -563,31 +563,17 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public function addNote()
     {
         if (!$this->notesTask || empty(trim($this->newNoteContent))) {
-            \Log::info('🚫 Kanban addNote: Abgebrochen - Keine Task oder leerer Inhalt');
             return;
         }
 
         $content = trim($this->newNoteContent);
-        \Log::info('📝 Kanban addNote: Starte Verarbeitung', [
-            'task_id' => $this->notesTask->id,
-            'content' => $content,
-            'user_id' => auth()->id()
-        ]);
         
         // @mentions extrahieren
         $mentionedUsernames = $this->extractMentions($content);
-        \Log::info('🔍 Kanban addNote: Mentions extrahiert', [
-            'mentioned_usernames' => $mentionedUsernames
-        ]);
-        
         $mentionedUsers = [];
         
         if (!empty($mentionedUsernames)) {
             $mentionedUsers = User::whereIn('name', $mentionedUsernames)->get();
-            \Log::info('👥 Kanban addNote: Benutzer gefunden', [
-                'found_users' => $mentionedUsers->pluck('name')->toArray(),
-                'user_ids' => $mentionedUsers->pluck('id')->toArray()
-            ]);
         }
 
         // Notiz erstellen
@@ -597,20 +583,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'content' => $content,
             'mentioned_users' => $mentionedUsers->pluck('id')->toArray(),
         ]);
-        
-        \Log::info('✅ Kanban addNote: Notiz erstellt', [
-            'note_id' => $note->id,
-            'mentioned_users_saved' => $note->mentioned_users
-        ]);
 
         // E-Mail-Benachrichtigungen an erwähnte Benutzer senden
         if ($mentionedUsers->isNotEmpty()) {
-            \Log::info('📧 Kanban addNote: Starte E-Mail-Versendung', [
-                'recipient_count' => $mentionedUsers->count()
-            ]);
             $this->sendMentionNotifications($note, $mentionedUsers);
-        } else {
-            \Log::info('📧 Kanban addNote: Keine E-Mails zu versenden - keine erwähnten Benutzer');
         }
 
         // Historie-Eintrag für hinzugefügte Notiz
@@ -619,8 +595,6 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         // Notizen neu laden
         $this->notesTask = Task::with(['notes.user'])->find($this->notesTask->id);
         $this->newNoteContent = '';
-        
-        \Log::info('🏁 Kanban addNote: Verarbeitung abgeschlossen');
     }
     
     /**
@@ -630,15 +604,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     {
         // Verbesserte Regex für vollständige Namen mit Leerzeichen
         preg_match_all('/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)*)/u', $content, $matches);
-        $mentions = array_map('trim', $matches[1]);
-        
-        \Log::info('🔍 Kanban extractMentions: Regex Details', [
-            'content' => $content,
-            'raw_matches' => $matches[0] ?? [],
-            'extracted_names' => $mentions
-        ]);
-        
-        return $mentions;
+        return array_map('trim', $matches[1]);
     }
     
     /**
@@ -646,49 +612,23 @@ class ListTasks extends ListRecords implements HasForms, HasActions
      */
     private function sendMentionNotifications(TaskNote $note, $mentionedUsers): void
     {
-        \Log::info('📧 Kanban sendMentionNotifications: Starte E-Mail-Versendung', [
-            'note_id' => $note->id,
-            'mentioned_users_count' => $mentionedUsers->count(),
-            'current_user_id' => auth()->id()
-        ]);
-        
         foreach ($mentionedUsers as $user) {
-            \Log::info('📧 Kanban sendMentionNotifications: Verarbeite Benutzer', [
-                'user_id' => $user->id,
-                'user_name' => $user->name,
-                'user_email' => $user->email
-            ]);
-            
             // Nicht an sich selbst senden
             if ($user->id === auth()->id()) {
-                \Log::info('📧 Kanban sendMentionNotifications: Überspringe - Benutzer ist der Autor');
                 continue;
             }
             
             try {
-                \Log::info('📧 Kanban sendMentionNotifications: Sende E-Mail', [
-                    'to' => $user->email,
-                    'user_name' => $user->name
-                ]);
-                
                 Mail::to($user->email)->send(new TaskNoteMention($note, $user));
-                
-                \Log::info('✅ Kanban sendMentionNotifications: E-Mail erfolgreich gesendet', [
-                    'to' => $user->email
-                ]);
             } catch (\Exception $e) {
                 // Log error but don't break the flow
-                \Log::error('❌ Kanban sendMentionNotifications: E-Mail-Versendung fehlgeschlagen', [
+                \Log::error('Failed to send mention notification', [
                     'user_id' => $user->id,
-                    'user_email' => $user->email,
                     'note_id' => $note->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'error' => $e->getMessage()
                 ]);
             }
         }
-        
-        \Log::info('🏁 Kanban sendMentionNotifications: E-Mail-Versendung abgeschlossen');
     }
 
     public function getNotesProperty()
