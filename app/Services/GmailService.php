@@ -306,13 +306,10 @@ class GmailService
             $headers[] = "Content-Type: text/plain; charset=UTF-8";
         }
         
-        $headers[] = "Content-Transfer-Encoding: base64";
+        $headers[] = "Content-Transfer-Encoding: 8bit";
         
-        // Body in Base64 kodieren für korrekte UTF-8 Übertragung
-        $encodedBody = base64_encode($body);
-        
-        // Kombiniere Headers und Body
-        $email = implode("\r\n", $headers) . "\r\n\r\n" . $encodedBody;
+        // Kombiniere Headers und Body (ohne zusätzliche Kodierung)
+        $email = implode("\r\n", $headers) . "\r\n\r\n" . $body;
         
         return $email;
     }
