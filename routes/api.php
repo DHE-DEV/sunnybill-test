@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use App\Models\CreditNote;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use App\Http\Controllers\Api\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,12 @@ use Illuminate\Validation\ValidationException;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// User search for mention autocomplete
+Route::middleware('web')->group(function () {
+    Route::get('/users/search', [UserController::class, 'search']);
+    Route::get('/users/all', [UserController::class, 'all']);
 });
 
 // Mobile App API Routes

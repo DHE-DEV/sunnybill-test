@@ -552,6 +552,7 @@ class TaskResource extends Resource
     {
         return [
             RelationManagers\SubtasksRelationManager::class,
+            RelationManagers\NotesRelationManager::class,
             RelationManagers\DocumentsRelationManager::class,
         ];
     }

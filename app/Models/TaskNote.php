@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class TaskNote extends Model
 {
@@ -11,6 +12,11 @@ class TaskNote extends Model
         'task_id',
         'user_id',
         'content',
+        'mentioned_users',
+    ];
+
+    protected $casts = [
+        'mentioned_users' => 'array',
     ];
 
     /**
@@ -27,5 +33,43 @@ class TaskNote extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the mentioned users.
+     */
+    public function mentionedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'task_note_mentions', 'task_note_id', 'user_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Extract mentioned usernames from content
+     */
+    public function extractMentionedUsernames(): array
+    {
+        preg_match_all('/@(\w+)/', $this->content, $matches);
+        return array_unique($matches[1]);
+    }
+
+    /**
+     * Get mentioned users by parsing content
+     */
+    public function getMentionedUsersFromContent()
+    {
+        $usernames = $this->extractMentionedUsernames();
+        
+        if (empty($usernames)) {
+            return collect();
+        }
+
+        return User::whereIn('name', $usernames)
+            ->orWhere(function ($query) use ($usernames) {
+                foreach ($usernames as $username) {
+                    $query->orWhereRaw('LOWER(name) LIKE ?', ['%' . strtolower($username) . '%']);
+                }
+            })
+            ->get();
     }
 }

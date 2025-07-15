@@ -385,12 +385,28 @@
                             </div>
                             
                             <!-- New Note Input -->
-                            <div class="mb-6 pt-4 bg-gray-50 rounded-lg">
+                            <div class="mb-6 pt-4 bg-gray-50 rounded-lg" style="padding: 16px;">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Neue Notiz hinzufügen</label>
                                 <textarea wire:model="newNoteContent"
-                                          rows="3"
+                                          id="kanban-note-content"
+                                          rows="4"
                                           class="block w-full border-gray-300 rounded-md shadow-sm resize-none"
-                                          placeholder="Notiz eingeben..."></textarea>
+                                          placeholder="Notiz eingeben... Verwenden Sie @benutzername um Benutzer zu erwähnen."
+                                          style="border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.5;"
+                                          oninput="handleKanbanMentionInput(this, event);"
+                                          onkeydown="handleKanbanMentionKeydown(this, event);"
+                                          onfocus="console.log('🎯 Kanban Textarea focused:', this.id); initializeKanbanMentionSystem();"></textarea>
+                                
+                                <!-- Benutzer-Auswahl-Komponente -->
+                                <div class="user-mention-selector mt-3" style="padding: 12px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;">
+                                    <div style="margin-bottom: 8px;">
+                                        <span style="font-size: 13px; font-weight: 500; color: #374151;">💡 Klicken Sie auf einen Benutzer, um ihn zu erwähnen:</span>
+                                    </div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="kanban-user-buttons">
+                                        <!-- Benutzer-Buttons werden hier dynamisch eingefügt -->
+                                    </div>
+                                </div>
+                                
                                 <div class="flex justify-end mt-3">
                                     <button wire:click="addNote"
                                             class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none"
@@ -494,4 +510,430 @@
             <p class="p-6 text-gray-500">List View ist noch nicht implementiert. Verwenden Sie die Board-Ansicht.</p>
         </div>
     @endif
+
+    <!-- Kanban @mention JavaScript -->
+    <script>
+    // Globale Variablen für Kanban @mentions
+    window.kanbanMentionUsers = [];
+    window.kanbanFilteredUsers = [];
+    window.kanbanMentionDropdown = null;
+
+    // Kanban Mention System initialisieren
+    window.initializeKanbanMentionSystem = function() {
+        console.log('🔧 Kanban: Initialisiere Mention System...');
+        
+        // Benutzer laden falls noch nicht geschehen
+        if (window.kanbanMentionUsers.length === 0) {
+            fetch('/api/users/all')
+                .then(response => response.json())
+                .then(users => {
+                    window.kanbanMentionUsers = users;
+                    console.log('👥 Kanban: Benutzer geladen:', users.length);
+                    createKanbanUserButtons();
+                })
+                .catch(error => {
+                    console.error('❌ Kanban: Fehler beim Laden der Benutzer:', error);
+                });
+        } else {
+            createKanbanUserButtons();
+        }
+        
+        // CSS hinzufügen
+        if (!document.getElementById('kanban-mention-styles')) {
+            const style = document.createElement('style');
+            style.id = 'kanban-mention-styles';
+            style.textContent = `
+                #kanban-mention-dropdown {
+                    position: absolute;
+                    background: white;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                    max-height: 200px;
+                    overflow-y: auto;
+                    z-index: 99999 !important;
+                    display: none;
+                    min-width: 250px;
+                    font-family: system-ui, -apple-system, sans-serif;
+                }
+                .kanban-mention-item {
+                    padding: 12px 16px;
+                    cursor: pointer;
+                    border-bottom: 1px solid #f3f4f6;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    transition: background-color 0.15s ease;
+                }
+                .kanban-mention-item:hover,
+                .kanban-mention-item.selected {
+                    background-color: #eff6ff !important;
+                }
+                .kanban-mention-avatar {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    background-color: #3b82f6;
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+                .kanban-mention-name {
+                    font-weight: 600;
+                    font-size: 14px;
+                    color: #111827;
+                }
+                .kanban-user-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 6px 10px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 4px;
+                    background: white;
+                    cursor: pointer;
+                    font-size: 12px;
+                    gap: 6px;
+                    transition: all 0.2s;
+                }
+                .kanban-user-btn:hover {
+                    background-color: #f3f4f6;
+                    transform: translateY(-1px);
+                }
+                .kanban-user-avatar {
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    background-color: #3b82f6;
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 10px;
+                    font-weight: bold;
+                }
+            `;
+            document.head.appendChild(style);
+            console.log('✅ Kanban: Mention Styles hinzugefügt');
+        }
+    };
+
+    // Benutzer-Buttons erstellen
+    function createKanbanUserButtons() {
+        const container = document.getElementById('kanban-user-buttons');
+        if (!container || window.kanbanMentionUsers.length === 0) return;
+        
+        container.innerHTML = '';
+        
+        window.kanbanMentionUsers.forEach(user => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'kanban-user-btn';
+            button.onclick = () => insertKanbanUserMention(user.name);
+            button.title = `@${user.name} erwähnen`;
+            
+            const initial = user.name.charAt(0).toUpperCase();
+            button.innerHTML = `
+                <div class="kanban-user-avatar">${initial}</div>
+                <span>${user.name}</span>
+            `;
+            
+            container.appendChild(button);
+        });
+        
+        console.log('✅ Kanban: Benutzer-Buttons erstellt:', window.kanbanMentionUsers.length);
+    }
+
+    // Benutzer-Mention einfügen (Button-Klick)
+    function insertKanbanUserMention(username) {
+        console.log('👤 Kanban: Benutzer-Button geklickt:', username);
+        
+        const textarea = document.getElementById('kanban-note-content');
+        if (!textarea) {
+            console.error('❌ Kanban: Textarea nicht gefunden');
+            return;
+        }
+        
+        const cursorPos = textarea.selectionStart;
+        const currentText = textarea.value;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(cursorPos);
+        const mentionText = ' @' + username + ' ';
+        const newText = textBefore + mentionText + textAfter;
+        
+        textarea.value = newText;
+        const newCursorPos = cursorPos + mentionText.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        textarea.focus();
+        
+        // Livewire Event triggern
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        console.log('✅ Kanban: Mention eingefügt:', mentionText);
+        
+        // Visuelles Feedback
+        const button = event.target.closest('.kanban-user-btn');
+        if (button) {
+            const originalBg = button.style.backgroundColor;
+            button.style.backgroundColor = '#10b981';
+            button.style.color = 'white';
+            setTimeout(() => {
+                button.style.backgroundColor = originalBg;
+                button.style.color = '';
+            }, 300);
+        }
+    }
+
+    // Input Handler für Autovervollständigung
+    window.handleKanbanMentionInput = function(textarea, event) {
+        console.log('📝 Kanban: Input Event:', textarea.value);
+        
+        const cursorPos = textarea.selectionStart;
+        const text = textarea.value;
+        
+        let mentionStart = -1;
+        for (let i = cursorPos - 1; i >= 0; i--) {
+            if (text[i] === '@') {
+                if (i === 0 || /\s/.test(text[i - 1])) {
+                    mentionStart = i;
+                    break;
+                }
+            } else if (/\s/.test(text[i])) {
+                break;
+            }
+        }
+
+        if (mentionStart !== -1) {
+            const query = text.substring(mentionStart + 1, cursorPos);
+            if (!/\s/.test(query)) {
+                console.log('🔍 Kanban: Zeige Dropdown für:', query);
+                showKanbanMentionDropdown(textarea, query, mentionStart);
+                return;
+            }
+        }
+        hideKanbanMentionDropdown();
+    };
+
+    // Keydown Handler für Navigation
+    window.handleKanbanMentionKeydown = function(textarea, event) {
+        console.log('⌨️ Kanban: Keydown:', event.key);
+        
+        const dropdown = document.getElementById('kanban-mention-dropdown');
+        if (!dropdown || dropdown.style.display === 'none') return;
+        
+        const items = dropdown.querySelectorAll('.kanban-mention-item');
+        let selectedIndex = Array.from(items).findIndex(item => item.classList.contains('selected'));
+        
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                updateKanbanSelection(items, selectedIndex);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, 0);
+                updateKanbanSelection(items, selectedIndex);
+                break;
+            case 'Tab':
+            case 'Enter':
+                event.preventDefault();
+                if (selectedIndex >= 0 && items[selectedIndex]) {
+                    selectKanbanMention(items[selectedIndex], textarea);
+                }
+                break;
+            case 'Escape':
+                hideKanbanMentionDropdown();
+                break;
+        }
+    };
+
+    // Dropdown anzeigen
+    function showKanbanMentionDropdown(textarea, query, mentionStart) {
+        console.log('🔍 Kanban: Suche nach Benutzern mit Query:', query);
+        
+        // API-Suche verwenden für bessere Ergebnisse
+        fetch(`/api/users/search?q=${encodeURIComponent(query)}`)
+            .then(response => {
+                console.log('📡 Kanban: API Response Status:', response.status);
+                return response.json();
+            })
+            .then(users => {
+                console.log('👥 Kanban: API Suchergebnis:', users.length, 'Benutzer');
+                
+                if (users.length === 0) {
+                    console.log('❌ Kanban: Keine Benutzer gefunden für:', query);
+                    hideKanbanMentionDropdown();
+                    return;
+                }
+
+                hideKanbanMentionDropdown();
+
+                const dropdown = document.createElement('div');
+                dropdown.id = 'kanban-mention-dropdown';
+                
+                // Speichere gefilterte Benutzer für Auswahl
+                window.kanbanFilteredUsers = users.slice(0, 5);
+                
+                window.kanbanFilteredUsers.forEach((user, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'kanban-mention-item' + (index === 0 ? ' selected' : '');
+                    item.dataset.userIndex = index;
+                    item.dataset.mentionStart = mentionStart;
+                    
+                    const initial = user.name.charAt(0).toUpperCase();
+                    item.innerHTML = `
+                        <div class="kanban-mention-avatar">${initial}</div>
+                        <div class="kanban-mention-name">${user.name}</div>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        selectKanbanMention(item, textarea);
+                    });
+                    
+                    dropdown.appendChild(item);
+                });
+
+                const rect = textarea.getBoundingClientRect();
+                dropdown.style.left = rect.left + 'px';
+                dropdown.style.top = (rect.bottom + 5) + 'px';
+                dropdown.style.display = 'block';
+                
+                document.body.appendChild(dropdown);
+                window.kanbanMentionDropdown = dropdown;
+                
+                console.log('✅ Kanban: Dropdown angezeigt mit', window.kanbanFilteredUsers.length, 'Benutzern');
+            })
+            .catch(error => {
+                console.error('❌ Kanban: Fehler bei API-Suche:', error);
+                // Fallback auf lokale Filterung
+                const filteredUsers = window.kanbanMentionUsers.filter(user =>
+                    user.name.toLowerCase().includes(query.toLowerCase())
+                ).slice(0, 5);
+                
+                if (filteredUsers.length > 0) {
+                    console.log('🔄 Kanban: Fallback auf lokale Filterung:', filteredUsers.length);
+                    showKanbanMentionDropdownLocal(textarea, filteredUsers, mentionStart);
+                } else {
+                    hideKanbanMentionDropdown();
+                }
+            });
+    }
+    
+    // Lokale Dropdown-Anzeige (Fallback)
+    function showKanbanMentionDropdownLocal(textarea, users, mentionStart) {
+        hideKanbanMentionDropdown();
+
+        const dropdown = document.createElement('div');
+        dropdown.id = 'kanban-mention-dropdown';
+        
+        window.kanbanFilteredUsers = users;
+        
+        users.forEach((user, index) => {
+            const item = document.createElement('div');
+            item.className = 'kanban-mention-item' + (index === 0 ? ' selected' : '');
+            item.dataset.userIndex = index;
+            item.dataset.mentionStart = mentionStart;
+            
+            const initial = user.name.charAt(0).toUpperCase();
+            item.innerHTML = `
+                <div class="kanban-mention-avatar">${initial}</div>
+                <div class="kanban-mention-name">${user.name}</div>
+            `;
+            
+            item.addEventListener('click', () => {
+                selectKanbanMention(item, textarea);
+            });
+            
+            dropdown.appendChild(item);
+        });
+
+        const rect = textarea.getBoundingClientRect();
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.top = (rect.bottom + 5) + 'px';
+        dropdown.style.display = 'block';
+        
+        document.body.appendChild(dropdown);
+        window.kanbanMentionDropdown = dropdown;
+        
+        console.log('✅ Kanban: Lokaler Dropdown angezeigt mit', users.length, 'Benutzern');
+    }
+
+    // Dropdown verstecken
+    function hideKanbanMentionDropdown() {
+        const dropdown = document.getElementById('kanban-mention-dropdown');
+        if (dropdown) {
+            dropdown.remove();
+        }
+        window.kanbanMentionDropdown = null;
+    }
+
+    // Auswahl aktualisieren
+    function updateKanbanSelection(items, selectedIndex) {
+        items.forEach((item, index) => {
+            item.classList.toggle('selected', index === selectedIndex);
+        });
+    }
+
+    // Mention auswählen
+    function selectKanbanMention(item, textarea) {
+        const userIndex = parseInt(item.dataset.userIndex);
+        const mentionStart = parseInt(item.dataset.mentionStart);
+        
+        // Verwende gefilterte Benutzer falls vorhanden, sonst alle Benutzer
+        const users = window.kanbanFilteredUsers || window.kanbanMentionUsers;
+        const user = users[userIndex];
+        
+        console.log('🎯 Kanban: Auswahl - Index:', userIndex, 'User:', user?.name);
+        
+        if (user) {
+            const text = textarea.value;
+            const cursorPos = textarea.selectionStart;
+            const beforeMention = text.substring(0, mentionStart);
+            const afterCursor = text.substring(cursorPos);
+            const newText = beforeMention + '@' + user.name + ' ' + afterCursor;
+            
+            textarea.value = newText;
+            textarea.setSelectionRange(beforeMention.length + user.name.length + 2, beforeMention.length + user.name.length + 2);
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            console.log('✅ Kanban: Mention eingefügt:', user.name);
+        } else {
+            console.error('❌ Kanban: Benutzer nicht gefunden für Index:', userIndex);
+        }
+        
+        hideKanbanMentionDropdown();
+        textarea.focus();
+    }
+
+    // Debug-Funktion
+    window.debugKanbanMentions = function() {
+        console.log('🔧 Kanban Debug Info:');
+        console.log('- Textarea gefunden:', !!document.getElementById('kanban-note-content'));
+        console.log('- Benutzer geladen:', window.kanbanMentionUsers.length);
+        console.log('- Gefilterte Benutzer:', window.kanbanFilteredUsers.length);
+        console.log('- Benutzer-Buttons:', document.querySelectorAll('.kanban-user-btn').length);
+        console.log('- Dropdown vorhanden:', !!document.getElementById('kanban-mention-dropdown'));
+        console.log('- Alle Benutzer:', window.kanbanMentionUsers);
+        
+        // API-Test
+        console.log('🧪 Teste API-Endpunkt...');
+        fetch('/api/users/search?q=Tho')
+            .then(response => {
+                console.log('📡 API Response Status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ API Test erfolgreich:', data);
+            })
+            .catch(error => {
+                console.error('❌ API Test fehlgeschlagen:', error);
+            });
+    };
+
+    console.log('✅ Kanban @mention System geladen');
+    console.log('💡 Verwende window.debugKanbanMentions() für Debug-Infos');
+    </script>
 </x-filament-panels::page>
