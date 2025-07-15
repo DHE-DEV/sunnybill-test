@@ -221,7 +221,10 @@ class DocumentResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
-                    ->limit(50),
+                    ->limit(50)
+                    ->description(fn (Document $record): ?string => $record->description ?
+                        \Illuminate\Support\Str::limit($record->description, 80) : null
+                    ),
 
                 TextColumn::make('path')
                     ->label('Speicherort')
