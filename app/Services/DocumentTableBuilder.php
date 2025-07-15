@@ -130,6 +130,34 @@ class DocumentTableBuilder
                 ->toggleable($this->config('uploadedByToggleable', true));
         }
 
+        // Speicherort Spalte
+        if ($this->config('showStoragePath', true)) {
+            $columns[] = Tables\Columns\TextColumn::make('path')
+                ->label($this->config('storagePathLabel', 'Speicherort'))
+                ->formatStateUsing(function (?string $state): string {
+                    if (!$state) return '-';
+                    
+                    // Zeige nur den Ordnerpfad ohne Dateiname
+                    $directory = dirname($state);
+                    
+                    // Entferne führende Slashes und zeige relativen Pfad
+                    $directory = ltrim($directory, '/\\');
+                    
+                    // Wenn es der Root-Ordner ist, zeige "Root"
+                    if ($directory === '.' || $directory === '') {
+                        return 'Root';
+                    }
+                    
+                    return $directory;
+                })
+                ->copyable()
+                ->copyMessage('Speicherort kopiert')
+                ->tooltip(fn (?string $state): string => $state ? "Vollständiger Pfad: {$state}" : 'Kein Pfad verfügbar')
+                ->sortable($this->config('storagePathSortable', true))
+                ->toggleable($this->config('storagePathToggleable', true))
+                ->searchable($this->config('storagePathSearchable', true));
+        }
+
         // Erstellt am Spalte
         if ($this->config('showCreatedAt', true)) {
             $columns[] = Tables\Columns\TextColumn::make('created_at')
@@ -393,7 +421,9 @@ class DocumentTableBuilder
         return DocumentFormBuilder::make(array_merge($this->config, [
             'required' => false,
             'showSection' => true,
-            'sectionTitle' => 'Dokument Details'
+            'sectionTitle' => 'Dokument Details',
+            'showStoragePath' => true, // Zeige Speicherort im View-Modal
+            'storagePathLabel' => 'Speicherort'
         ]))->getFormSchema();
     }
 

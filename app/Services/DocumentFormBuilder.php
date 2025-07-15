@@ -75,6 +75,11 @@ class DocumentFormBuilder
             $fields[] = $this->createDescriptionField();
         }
 
+        // Speicherort Feld (nur für View-Modus)
+        if ($this->config('showStoragePath', false)) {
+            $fields[] = $this->createStoragePathField();
+        }
+
         // Versteckte Metadaten-Felder
         $fields = array_merge($fields, $this->createHiddenFields());
 
@@ -99,29 +104,31 @@ class DocumentFormBuilder
                 $this->handleFileUpload($set, $state);
             });
 
-        // Dynamisches Directory basierend auf Kategorie-Auswahl
+        // Dynamisches Directory basierend auf Kategorie-Auswahl oder DocumentType
         if ($this->config('pathType') && $this->config('model')) {
             $field->directory(function (Forms\Get $get) {
+                // Prüfe sowohl category als auch document_type_id
                 $category = $get('category');
+                $documentTypeId = $get('document_type_id');
                 
-                // Wenn eine Kategorie ausgewählt ist, verwende kategorie-spezifischen Pfad
-                if ($category) {
-                    $pathType = $this->config('pathType');
-                    $model = $this->config('model');
-                    $additionalData = array_merge(
-                        $this->config('additionalData', []),
-                        ['category' => $category]
-                    );
-                    
-                    return DocumentStorageService::getUploadDirectoryForModel(
-                        $pathType,
-                        $model,
-                        $additionalData
-                    );
+                // Wenn DocumentType verwendet wird, hole die Kategorie vom DocumentType
+                if ($documentTypeId && !$category) {
+                    $documentType = \App\Models\DocumentType::find($documentTypeId);
+                    $category = $documentType?->slug;
                 }
                 
-                // Fallback auf Standard-Pfad
-                return $this->getUploadDirectory();
+                $pathType = $this->config('pathType');
+                $model = $this->config('model');
+                $additionalData = array_merge(
+                    $this->config('additionalData', []),
+                    $category ? ['category' => $category] : []
+                );
+                
+                return DocumentStorageService::getUploadDirectoryForModel(
+                    $pathType,
+                    $model,
+                    $additionalData
+                );
             });
         } else {
             // Statisches Directory für Rückwärtskompatibilität
@@ -211,6 +218,66 @@ class DocumentFormBuilder
             ->rows($this->config('descriptionRows', 3))
             ->maxLength($this->config('descriptionMaxLength', 1000))
             ->placeholder($this->config('descriptionPlaceholder', 'Optionale Beschreibung des Dokuments'))
+            ->columnSpanFull();
+    }
+
+    /**
+     * Erstellt das Speicherort-Feld (nur für View-Modus)
+     */
+    protected function createStoragePathField(): Forms\Components\TextInput
+    {
+        return Forms\Components\TextInput::make('storage_path_display')
+            ->label($this->config('storagePathLabel', 'Speicherort'))
+            ->disabled()
+            ->dehydrated(false)
+            ->formatStateUsing(function ($state, $record): string {
+                // Verwende den path vom Record, nicht vom State
+                $path = $record?->path ?? null;
+                
+                // Handle both string and array values
+                if (is_array($path)) {
+                    $path = $path[0] ?? null;
+                }
+                
+                if (!$path || empty($path)) {
+                    return 'Kein Pfad verfügbar';
+                }
+                
+                return (string) $path;
+            })
+            ->suffixAction(
+                Forms\Components\Actions\Action::make('copy_path')
+                    ->icon('heroicon-m-clipboard')
+                    ->tooltip('Pfad kopieren')
+                    ->action(function ($state) {
+                        // JavaScript wird automatisch generiert um den Wert zu kopieren
+                    })
+                    ->extraAttributes([
+                        'onclick' => 'navigator.clipboard.writeText(this.closest(".fi-fo-text-input").querySelector("input").value);
+                                     window.$wireui?.notify({title: "Pfad kopiert", description: "Der Speicherort wurde in die Zwischenablage kopiert.", icon: "success"});'
+                    ])
+            )
+            ->helperText(function ($state, $record): string {
+                // Verwende den path vom Record, nicht vom State
+                $path = $record?->path ?? null;
+                
+                // Handle both string and array values
+                if (is_array($path)) {
+                    $path = $path[0] ?? null;
+                }
+                
+                if (!$path || empty($path)) {
+                    return '';
+                }
+                
+                $path = (string) $path;
+                
+                // Zeige zusätzliche Informationen über den Pfad
+                $directory = dirname($path);
+                $filename = basename($path);
+                
+                return "Ordner: {$directory} | Datei: {$filename}";
+            })
             ->columnSpanFull();
     }
 
