@@ -178,11 +178,28 @@ class NotesRelationManager extends RelationManager
      */
     protected function processMentions(TaskNote $note): void
     {
+        \Log::info('🔍 Verarbeite @mentions in Task-Notiz', [
+            'note_id' => $note->id,
+            'task_id' => $note->task_id,
+            'content' => $note->content,
+            'author_id' => auth()->id(),
+            'author_name' => auth()->user()->name
+        ]);
+
         // Extract @mentions from content
         preg_match_all('/@(\w+)/', $note->content, $matches);
         $mentionedUsernames = array_unique($matches[1]);
 
+        \Log::info('📝 Gefundene @mentions', [
+            'note_id' => $note->id,
+            'mentioned_usernames' => $mentionedUsernames,
+            'count' => count($mentionedUsernames)
+        ]);
+
         if (empty($mentionedUsernames)) {
+            \Log::info('ℹ️ Keine @mentions gefunden in Task-Notiz', [
+                'note_id' => $note->id
+            ]);
             return;
         }
 
@@ -195,12 +212,42 @@ class NotesRelationManager extends RelationManager
             })
             ->get();
 
+        \Log::info('👥 Gefundene Benutzer für @mentions', [
+            'note_id' => $note->id,
+            'mentioned_usernames' => $mentionedUsernames,
+            'found_users' => $mentionedUsers->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email
+                ];
+            })->toArray(),
+            'found_count' => $mentionedUsers->count()
+        ]);
+
         // Send email notifications to mentioned users
         foreach ($mentionedUsers as $user) {
             if ($user->id !== auth()->id()) { // Don't notify the author
+                \Log::info('📧 Sende Mention-Benachrichtigung', [
+                    'note_id' => $note->id,
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'user_email' => $user->email
+                ]);
                 $this->sendMentionNotification($user, $note);
+            } else {
+                \Log::info('⏭️ Überspringe Selbst-Benachrichtigung', [
+                    'note_id' => $note->id,
+                    'author_id' => auth()->id()
+                ]);
             }
         }
+
+        \Log::info('✅ @mentions Verarbeitung abgeschlossen', [
+            'note_id' => $note->id,
+            'total_mentions' => count($mentionedUsernames),
+            'notifications_sent' => $mentionedUsers->where('id', '!=', auth()->id())->count()
+        ]);
     }
 
     /**
@@ -1044,24 +1091,75 @@ console.log('✅ Direct Mention Script geladen');
     protected function sendMentionNotification(User $user, TaskNote $note): void
     {
         try {
-            \Mail::send('emails.task-note-mention', [
+            \Log::info('📧 Versuche E-Mail-Benachrichtigung zu senden', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'user_name' => $user->name,
+                'note_id' => $note->id,
+                'task_id' => $note->task_id,
+                'task_title' => $note->task->title,
+                'author' => auth()->user()->name
+            ]);
+
+            // E-Mail-Adresse validieren
+            if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+                \Log::warning('❌ Ungültige E-Mail-Adresse für Mention-Benachrichtigung', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]);
+                return;
+            }
+
+            // Gmail Service verwenden
+            $gmailService = app(\App\Services\GmailService::class);
+            
+            // E-Mail-Inhalt rendern
+            $emailContent = view('emails.task-note-mention', [
                 'user' => $user,
                 'note' => $note,
                 'task' => $note->task,
                 'author' => auth()->user(),
+                'mentionedUser' => $user,
                 'taskUrl' => route('filament.admin.resources.tasks.view', [
                     'record' => $note->task_id,
                     'activeRelationManager' => 'notes'
                 ])
-            ], function ($message) use ($user, $note) {
-                $message->to($user->email)
-                    ->subject("Neue Notiz - Aufgabe - {$note->task->title}");
-            });
+            ])->render();
+
+            $subject = "Neue Notiz - Aufgabe - {$note->task->title}";
+
+            // E-Mail über Gmail Service senden
+            $result = $gmailService->sendEmail(
+                $user->email,
+                $subject,
+                $emailContent
+            );
+
+            if ($result) {
+                \Log::info('✅ Task-Notiz Mention E-Mail erfolgreich gesendet', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'note_id' => $note->id,
+                    'task_id' => $note->task_id,
+                    'subject' => $subject
+                ]);
+            } else {
+                \Log::error('❌ Task-Notiz Mention E-Mail konnte nicht gesendet werden', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'note_id' => $note->id,
+                    'task_id' => $note->task_id
+                ]);
+            }
+
         } catch (\Exception $e) {
-            \Log::error('Failed to send mention notification', [
+            \Log::error('❌ Fehler beim Senden der Task-Notiz Mention E-Mail', [
                 'user_id' => $user->id,
+                'user_email' => $user->email,
                 'note_id' => $note->id,
-                'error' => $e->getMessage()
+                'task_id' => $note->task_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
     }
