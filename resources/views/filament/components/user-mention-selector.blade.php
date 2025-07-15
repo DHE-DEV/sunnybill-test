@@ -1,6 +1,6 @@
 <div class="user-mention-selector">
     <div class="mb-2">
-        <span class="text-sm font-medium text-gray-700">Klicken Sie auf einen Benutzer, um ihn zu erwähnen:</span>
+        <span class="text-sm font-medium text-gray-700">Klicken Sie auf einen Benutzer, um ihn zu erwähnennnn:</span>
     </div>
     
     <div class="flex flex-wrap gap-2">

@@ -4,10 +4,22 @@ namespace App\Observers;
 
 use App\Models\Task;
 use App\Models\User;
-use Filament\Notifications\Notification;
+use App\Notifications\TaskAssignedNotification;
+use Illuminate\Support\Facades\Log;
 
 class TaskObserver
 {
+    /**
+     * Handle the Task "created" event.
+     */
+    public function created(Task $task): void
+    {
+        // Sende Benachrichtigung wenn eine neue Task mit assigned_to erstellt wird
+        if ($task->assigned_to && $task->assigned_to !== $task->created_by) {
+            $this->sendTaskAssignedNotification($task, $task->assigned_to, $task->created_by);
+        }
+    }
+
     /**
      * Handle the Task "updated" event.
      */
@@ -15,154 +27,95 @@ class TaskObserver
     {
         // Prüfe ob assigned_to geändert wurde
         if ($task->isDirty('assigned_to')) {
-            $this->handleAssignedToChange($task);
-        }
-
-        // Prüfe ob owner_id geändert wurde
-        if ($task->isDirty('owner_id')) {
-            $this->handleOwnerChange($task);
-        }
-    }
-
-    /**
-     * Handle the Task "created" event.
-     */
-    public function created(Task $task): void
-    {
-        // Benachrichtigung bei Erstellung mit Zuweisung
-        if ($task->assigned_to) {
-            $this->sendAssignmentNotification($task, $task->assigned_to, 'zugewiesen');
-        }
-
-        // Benachrichtigung bei Erstellung mit Inhaber
-        if ($task->owner_id && $task->owner_id !== $task->assigned_to) {
-            $this->sendOwnerNotification($task, $task->owner_id, 'als Inhaber gesetzt');
+            $oldAssignedTo = $task->getOriginal('assigned_to');
+            $newAssignedTo = $task->assigned_to;
+            
+            // Sende Benachrichtigung nur wenn:
+            // 1. Eine neue Person zugewiesen wurde (nicht null)
+            // 2. Es sich um eine andere Person handelt
+            // 3. Die Person sich nicht selbst zuweist
+            if ($newAssignedTo && 
+                $newAssignedTo !== $oldAssignedTo && 
+                $newAssignedTo !== auth()->id()) {
+                
+                $assignedBy = auth()->user() ?? $task->creator;
+                $this->sendTaskAssignedNotification($task, $newAssignedTo, $assignedBy->id);
+            }
         }
     }
 
     /**
-     * Behandelt Änderungen bei assigned_to
+     * Sende Task-Zuweisungs-Benachrichtigung
      */
-    private function handleAssignedToChange(Task $task): void
+    private function sendTaskAssignedNotification(Task $task, int $assignedToUserId, int $assignedByUserId): void
     {
-        $oldAssignedTo = $task->getOriginal('assigned_to');
-        $newAssignedTo = $task->assigned_to;
-
-        // Benachrichtigung an neuen zugewiesenen Benutzer
-        if ($newAssignedTo && $newAssignedTo !== $oldAssignedTo) {
-            $this->sendAssignmentNotification($task, $newAssignedTo, 'zugewiesen');
-        }
-
-        // Optional: Benachrichtigung an vorherigen Benutzer über Entfernung der Zuweisung
-        if ($oldAssignedTo && $oldAssignedTo !== $newAssignedTo) {
-            $this->sendAssignmentRemovedNotification($task, $oldAssignedTo);
+        try {
+            $assignedToUser = User::find($assignedToUserId);
+            $assignedByUser = User::find($assignedByUserId);
+            
+            if (!$assignedToUser || !$assignedByUser) {
+                Log::warning('TaskObserver: Benutzer nicht gefunden', [
+                    'assigned_to' => $assignedToUserId,
+                    'assigned_by' => $assignedByUserId,
+                    'task_id' => $task->id
+                ]);
+                return;
+            }
+            
+            // Prüfe ob der Benutzer eine gültige E-Mail-Adresse hat
+            if (!$assignedToUser->email || !filter_var($assignedToUser->email, FILTER_VALIDATE_EMAIL)) {
+                Log::info('TaskObserver: Keine gültige E-Mail-Adresse für Benutzer', [
+                    'user_id' => $assignedToUser->id,
+                    'user_name' => $assignedToUser->name,
+                    'email' => $assignedToUser->email,
+                    'task_id' => $task->id
+                ]);
+                return;
+            }
+            
+            // Sende Benachrichtigung
+            $assignedToUser->notify(new TaskAssignedNotification($task, $assignedByUser));
+            
+            Log::info('TaskObserver: Task-Zuweisungs-Benachrichtigung gesendet', [
+                'task_id' => $task->id,
+                'task_title' => $task->title,
+                'assigned_to' => $assignedToUser->name,
+                'assigned_to_email' => $assignedToUser->email,
+                'assigned_by' => $assignedByUser->name
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('TaskObserver: Fehler beim Senden der Task-Benachrichtigung', [
+                'task_id' => $task->id,
+                'assigned_to' => $assignedToUserId,
+                'assigned_by' => $assignedByUserId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
     /**
-     * Behandelt Änderungen bei owner_id
+     * Handle the Task "deleted" event.
      */
-    private function handleOwnerChange(Task $task): void
+    public function deleted(Task $task): void
     {
-        $oldOwnerId = $task->getOriginal('owner_id');
-        $newOwnerId = $task->owner_id;
-
-        // Benachrichtigung an neuen Inhaber
-        if ($newOwnerId && $newOwnerId !== $oldOwnerId) {
-            $this->sendOwnerNotification($task, $newOwnerId, 'als Inhaber gesetzt');
-        }
-
-        // Optional: Benachrichtigung an vorherigen Inhaber über Entfernung
-        if ($oldOwnerId && $oldOwnerId !== $newOwnerId) {
-            $this->sendOwnerRemovedNotification($task, $oldOwnerId);
-        }
+        // Hier könnten wir in Zukunft Benachrichtigungen für gelöschte Tasks hinzufügen
     }
 
     /**
-     * Sendet Benachrichtigung für Aufgaben-Zuweisung
+     * Handle the Task "restored" event.
      */
-    private function sendAssignmentNotification(Task $task, int $userId, string $action): void
+    public function restored(Task $task): void
     {
-        $user = User::find($userId);
-        
-        if (!$user) {
-            return;
-        }
-
-        Notification::make()
-            ->title('Neue Aufgabe ' . $action)
-            ->body("Ihnen wurde die Aufgabe \"{$task->title}\" {$action}.")
-            ->icon('heroicon-o-clipboard-document-list')
-            ->iconColor('info')
-            ->actions([
-                \Filament\Notifications\Actions\Action::make('view')
-                    ->label('Aufgabe anzeigen')
-                    ->url(route('filament.admin.resources.tasks.view', $task))
-                    ->button(),
-            ])
-            ->sendToDatabase($user);
+        // Hier könnten wir in Zukunft Benachrichtigungen für wiederhergestellte Tasks hinzufügen
     }
 
     /**
-     * Sendet Benachrichtigung für Inhaber-Zuweisung
+     * Handle the Task "force deleted" event.
      */
-    private function sendOwnerNotification(Task $task, int $userId, string $action): void
+    public function forceDeleted(Task $task): void
     {
-        $user = User::find($userId);
-        
-        if (!$user) {
-            return;
-        }
-
-        Notification::make()
-            ->title('Aufgaben-Inhaberschaft')
-            ->body("Sie wurden für die Aufgabe \"{$task->title}\" {$action}.")
-            ->icon('heroicon-o-user-circle')
-            ->iconColor('warning')
-            ->actions([
-                \Filament\Notifications\Actions\Action::make('view')
-                    ->label('Aufgabe anzeigen')
-                    ->url(route('filament.admin.resources.tasks.view', $task))
-                    ->button(),
-            ])
-            ->sendToDatabase($user);
-    }
-
-    /**
-     * Sendet Benachrichtigung über entfernte Zuweisung
-     */
-    private function sendAssignmentRemovedNotification(Task $task, int $userId): void
-    {
-        $user = User::find($userId);
-        
-        if (!$user) {
-            return;
-        }
-
-        Notification::make()
-            ->title('Aufgaben-Zuweisung entfernt')
-            ->body("Die Zuweisung für die Aufgabe \"{$task->title}\" wurde entfernt.")
-            ->icon('heroicon-o-x-circle')
-            ->iconColor('gray')
-            ->sendToDatabase($user);
-    }
-
-    /**
-     * Sendet Benachrichtigung über entfernte Inhaberschaft
-     */
-    private function sendOwnerRemovedNotification(Task $task, int $userId): void
-    {
-        $user = User::find($userId);
-        
-        if (!$user) {
-            return;
-        }
-
-        Notification::make()
-            ->title('Aufgaben-Inhaberschaft entfernt')
-            ->body("Die Inhaberschaft für die Aufgabe \"{$task->title}\" wurde entfernt.")
-            ->icon('heroicon-o-x-circle')
-            ->iconColor('gray')
-            ->sendToDatabase($user);
+        // Hier könnten wir in Zukunft Benachrichtigungen für endgültig gelöschte Tasks hinzufügen
     }
 }
