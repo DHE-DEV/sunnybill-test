@@ -98,6 +98,27 @@ class Article extends Model
     }
 
     /**
+     * Beziehung zu Lieferantenverträgen über Pivot-Tabelle
+     */
+    public function supplierContracts()
+    {
+        return $this->belongsToMany(SupplierContract::class, 'supplier_contract_articles')
+            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Aktive Lieferantenverträge
+     */
+    public function activeSupplierContracts()
+    {
+        return $this->belongsToMany(SupplierContract::class, 'supplier_contract_articles')
+            ->wherePivot('is_active', true)
+            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
      * Preis formatiert für Anzeige mit artikelspezifischen Nachkommastellen
      */
     public function getFormattedPriceAttribute(): string

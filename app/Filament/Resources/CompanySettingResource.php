@@ -873,6 +873,53 @@ class CompanySettingResource extends Resource
                                            $record->getGmailRefreshToken();
                                 }),
                             
+                            Forms\Components\Actions\Action::make('send_test_email')
+                                ->label('Testmail senden')
+                                ->icon('heroicon-o-envelope')
+                                ->color('success')
+                                ->action(function ($record) {
+                                    if (!$record) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Fehler')
+                                            ->body('Bitte speichern Sie zuerst die Einstellungen.')
+                                            ->danger()
+                                            ->send();
+                                        return;
+                                    }
+                                    
+                                    try {
+                                        $gmailService = new \App\Services\GmailService();
+                                        
+                                        // Test-E-Mail Daten
+                                        $to = 'dh@dhe.de';
+                                        $subject = 'SunnyBill Gmail-Integration Test';
+                                        $body = "Hallo,\n\ndies ist eine Test-E-Mail von der SunnyBill Gmail-Integration.\n\nGesendet am: " . now()->format('d.m.Y H:i:s') . "\n\nMit freundlichen Grüßen\nIhr SunnyBill Team";
+                                        
+                                        $result = $gmailService->sendEmail($to, $subject, $body);
+                                        
+                                        if ($result['success']) {
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Testmail gesendet')
+                                                ->body("Test-E-Mail wurde erfolgreich an {$to} gesendet.")
+                                                ->success()
+                                                ->send();
+                                        } else {
+                                            throw new \Exception($result['error']);
+                                        }
+                                    } catch (\Exception $e) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Testmail fehlgeschlagen')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                    }
+                                })
+                                ->visible(function ($record) {
+                                    if (!$record) return false;
+                                    return $record->isGmailEnabled() &&
+                                           $record->getGmailRefreshToken();
+                                }),
+                            
                             Forms\Components\Actions\Action::make('revoke_gmail_access')
                                 ->label('Zugriff widerrufen')
                                 ->icon('heroicon-o-x-mark')
@@ -901,7 +948,7 @@ class CompanySettingResource extends Resource
                                 })
                                 ->visible(function ($record) {
                                     if (!$record) return false;
-                                    return $record->isGmailEnabled() && 
+                                    return $record->isGmailEnabled() &&
                                            $record->getGmailRefreshToken();
                                 }),
                         ])

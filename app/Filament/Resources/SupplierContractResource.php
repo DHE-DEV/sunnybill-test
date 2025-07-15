@@ -422,6 +422,7 @@ class SupplierContractResource extends Resource
             RelationManagers\FavoriteNotesRelationManager::class,
             RelationManagers\StandardNotesRelationManager::class,
             RelationManagers\DocumentsRelationManager::class,
+            RelationManagers\ArticlesRelationManager::class,
         ];
     }
 

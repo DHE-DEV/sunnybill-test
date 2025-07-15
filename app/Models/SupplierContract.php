@@ -152,6 +152,27 @@ class SupplierContract extends Model
     }
 
     /**
+     * Beziehung zu Artikeln über Pivot-Tabelle
+     */
+    public function articles(): BelongsToMany
+    {
+        return $this->belongsToMany(Article::class, 'supplier_contract_articles')
+            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Aktive Artikel
+     */
+    public function activeArticles(): BelongsToMany
+    {
+        return $this->belongsToMany(Article::class, 'supplier_contract_articles')
+            ->wherePivot('is_active', true)
+            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
      * Scope für aktive Verträge
      */
     public function scopeActive($query)
