@@ -119,7 +119,7 @@ class DocumentFormBuilder
                 // Wenn DocumentType verwendet wird, hole die Kategorie vom DocumentType
                 if ($documentTypeId && !$category) {
                     $documentType = \App\Models\DocumentType::find($documentTypeId);
-                    $category = $documentType?->slug;
+                    $category = $documentType?->key;
                 }
                 
                 $pathType = $this->config('pathType');
@@ -243,7 +243,7 @@ class DocumentFormBuilder
                 if ($documentTypeId && !$category) {
                     try {
                         $documentType = \App\Models\DocumentType::find($documentTypeId);
-                        $category = $documentType?->slug;
+                        $category = $documentType?->key;
                     } catch (\Exception $e) {
                         // Fallback wenn DocumentType nicht gefunden wird
                         $category = null;
