@@ -203,6 +203,110 @@ class GmailService
     }
 
     /**
+     * Sendet eine E-Mail über Gmail
+     */
+    public function sendEmail(string $to, string $subject, string $body, array $options = []): array
+    {
+        try {
+            if (!$this->isConfigured()) {
+                return [
+                    'success' => false,
+                    'error' => 'Gmail ist nicht konfiguriert.'
+                ];
+            }
+            
+            if (!$this->settings->getGmailRefreshToken()) {
+                return [
+                    'success' => false,
+                    'error' => 'Keine Autorisierung vorhanden. Bitte autorisieren Sie Gmail zuerst.'
+                ];
+            }
+
+            // Hole die E-Mail-Adresse des verbundenen Kontos
+            $fromEmail = $this->settings->gmail_email_address;
+            if (!$fromEmail) {
+                $userInfo = $this->getUserInfo();
+                $fromEmail = $userInfo['email'];
+            }
+
+            // Erstelle die E-Mail im RFC 2822 Format
+            $emailContent = $this->createEmailMessage($fromEmail, $to, $subject, $body, $options);
+            
+            // Base64url encode der E-Mail
+            $encodedEmail = rtrim(strtr(base64_encode($emailContent), '+/', '-_'), '=');
+            
+            // Sende die E-Mail über Gmail API
+            $response = $this->makeApiPostRequest('/messages/send', [
+                'raw' => $encodedEmail
+            ]);
+            
+            Log::info('Gmail: Test-E-Mail gesendet', [
+                'to' => $to,
+                'subject' => $subject,
+                'message_id' => $response['id'] ?? null,
+                'thread_id' => $response['threadId'] ?? null
+            ]);
+            
+            return [
+                'success' => true,
+                'message_id' => $response['id'] ?? null,
+                'thread_id' => $response['threadId'] ?? null
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Gmail: E-Mail senden fehlgeschlagen', [
+                'to' => $to,
+                'subject' => $subject,
+                'error' => $e->getMessage()
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Erstellt eine E-Mail-Nachricht im RFC 2822 Format
+     */
+    private function createEmailMessage(string $from, string $to, string $subject, string $body, array $options = []): string
+    {
+        $cc = $options['cc'] ?? null;
+        $bcc = $options['bcc'] ?? null;
+        $isHtml = $options['html'] ?? false;
+        
+        $headers = [];
+        $headers[] = "From: {$from}";
+        $headers[] = "To: {$to}";
+        
+        if ($cc) {
+            $headers[] = "Cc: {$cc}";
+        }
+        
+        if ($bcc) {
+            $headers[] = "Bcc: {$bcc}";
+        }
+        
+        $headers[] = "Subject: {$subject}";
+        $headers[] = "Date: " . date('r');
+        $headers[] = "Message-ID: <" . uniqid() . "@" . parse_url($from, PHP_URL_HOST) . ">";
+        
+        if ($isHtml) {
+            $headers[] = "Content-Type: text/html; charset=UTF-8";
+        } else {
+            $headers[] = "Content-Type: text/plain; charset=UTF-8";
+        }
+        
+        $headers[] = "Content-Transfer-Encoding: 8bit";
+        
+        // Kombiniere Headers und Body
+        $email = implode("\r\n", $headers) . "\r\n\r\n" . $body;
+        
+        return $email;
+    }
+
+    /**
      * Führt eine authentifizierte Gmail API-Anfrage aus
      */
     private function makeApiRequest(string $endpoint, array $params = []): array
