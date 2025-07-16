@@ -25,13 +25,77 @@ class ArticlesRelationManager extends RelationManager
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('article_group')
+                    ->label('Artikelgruppe')
+                    ->options([
+                        'supplier' => 'Lieferantengebundene Artikel',
+                        'contract' => 'Vertragsgebundene Artikel',
+                        'customer' => 'Kundengebundene Artikel', 
+                        'solar_plant' => 'Solaranlagengebundene Artikel',
+                    ])
+                    ->placeholder('Wählen Sie eine Artikelgruppe')
+                    ->reactive()
+                    ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                        // Reset article selection when group changes
+                        $set('article_id', null);
+                        $set('unit_price', null);
+                        $set('description', null);
+                        $set('total_price', null);
+                    })
+                    ->columnSpanFull(),
+
                 Forms\Components\Select::make('article_id')
                     ->label('Artikel')
-                    ->relationship('article', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
                     ->reactive()
+                    ->visible(fn (callable $get) => $get('article_group'))
+                    ->options(function (callable $get) {
+                        $group = $get('article_group');
+                        $ownerRecord = $this->getOwnerRecord();
+                        
+                        if (!$group || !$ownerRecord) {
+                            return [];
+                        }
+
+                        $supplierId = $ownerRecord->supplierContract->supplier_id;
+                        $contractId = $ownerRecord->supplier_contract_id;
+                        
+                        return match ($group) {
+                            'supplier' => Article::whereHas('suppliers', function ($query) use ($supplierId) {
+                                $query->where('supplier_article.supplier_id', $supplierId)
+                                      ->where('supplier_article.billing_requirement', true);
+                            })->pluck('name', 'id'),
+                            
+                            'contract' => Article::whereHas('supplierContracts', function ($query) use ($contractId) {
+                                $query->where('supplier_contract_articles.supplier_contract_id', $contractId)
+                                      ->where('supplier_contract_articles.billing_requirement', true);
+                            })->pluck('name', 'id'),
+                            
+                            'customer' => Article::whereHas('customers', function ($query) use ($ownerRecord) {
+                                // Get all customers related to this supplier contract's solar plants
+                                $customerIds = $ownerRecord->supplierContract->solarPlants()
+                                    ->with('customers')
+                                    ->get()
+                                    ->pluck('customers')
+                                    ->flatten()
+                                    ->pluck('id')
+                                    ->unique();
+                                
+                                $query->whereIn('customer_article.customer_id', $customerIds)
+                                      ->where('customer_article.billing_requirement', true);
+                            })->pluck('name', 'id'),
+                            
+                            'solar_plant' => Article::whereHas('solarPlants', function ($query) use ($ownerRecord) {
+                                $solarPlantIds = $ownerRecord->supplierContract->solarPlants()->pluck('id');
+                                $query->whereIn('solar_plant_article.solar_plant_id', $solarPlantIds)
+                                      ->where('solar_plant_article.billing_requirement', true);
+                            })->pluck('name', 'id'),
+                            
+                            default => [],
+                        };
+                    })
                     ->afterStateUpdated(function (callable $get, callable $set, $state) {
                         if ($state) {
                             $article = Article::find($state);

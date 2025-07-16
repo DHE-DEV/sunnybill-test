@@ -10,6 +10,18 @@ class EditSupplierContractBilling extends EditRecord
 {
     protected static string $resource = SupplierContractBillingResource::class;
 
+    public function getTitle(): string
+    {
+        $record = $this->getRecord();
+        $contract = $record->supplierContract;
+        
+        if ($contract) {
+            return "Abrechnung bearbeiten - {$contract->contract_number} - {$contract->title}";
+        }
+        
+        return 'Abrechnung bearbeiten';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

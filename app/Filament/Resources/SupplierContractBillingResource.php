@@ -40,10 +40,10 @@ class SupplierContractBillingResource extends Resource
                             ->label('Lieferantenvertrag')
                             ->relationship('supplierContract', 'title')
                             ->getOptionLabelFromRecordUsing(function (SupplierContract $record): string {
-                                $supplierName = $record->supplier && !empty($record->supplier->name)
-                                    ? (string) $record->supplier->name
+                                $supplierNumber = $record->supplier && !empty($record->supplier->supplier_number)
+                                    ? (string) $record->supplier->supplier_number
                                     : 'Unbekannt';
-                                return "{$record->contract_number} - {$record->title} ({$supplierName})";
+                                return "{$record->contract_number} - {$record->title} ({$supplierNumber})";
                             })
                             ->searchable(['contract_number', 'title'])
                             ->preload()

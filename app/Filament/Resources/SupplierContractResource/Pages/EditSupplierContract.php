@@ -10,6 +10,17 @@ class EditSupplierContract extends EditRecord
 {
     protected static string $resource = SupplierContractResource::class;
 
+    public function getTitle(): string
+    {
+        $record = $this->getRecord();
+        
+        if ($record) {
+            return "Lieferant Vertrag bearbeiten - {$record->contract_number} - {$record->title}";
+        }
+        
+        return 'Lieferant Vertrag bearbeiten';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

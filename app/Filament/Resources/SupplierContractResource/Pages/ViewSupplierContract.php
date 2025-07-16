@@ -13,6 +13,17 @@ class ViewSupplierContract extends ViewRecord
 {
     protected static string $resource = SupplierContractResource::class;
 
+    public function getTitle(): string
+    {
+        $record = $this->getRecord();
+        
+        if ($record) {
+            return "Lieferant Vertrag ansehen - {$record->contract_number} - {$record->title}";
+        }
+        
+        return 'Lieferant Vertrag ansehen';
+    }
+
     public function form(Form $form): Form
     {
         // We get the form schema from the resource and disable it.

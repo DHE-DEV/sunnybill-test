@@ -63,14 +63,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->brandName(function () {
-                try {
-                    $settings = CompanySetting::current();
-                    return $settings->company_name ?? 'VoltMaster';
-                } catch (\Exception $e) {
-                    return 'VoltMaster';
-                }
-            })
+            ->brandName('')
             ->brandLogo(function () {
                 try {
                     $settings = CompanySetting::current();
