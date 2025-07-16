@@ -37,8 +37,8 @@ class SolarPlantsRelationManager extends RelationManager
                 Forms\Components\TextInput::make('percentage')
                     ->label('Beteiligung (%)')
                     ->numeric()
-                    ->min(0)
-                    ->max(100)
+                    ->minValue(0)
+                    ->maxValue(100)
                     ->step(0.01)
                     ->required()
                     ->suffix('%'),
