@@ -65,12 +65,12 @@ class ArticlesRelationManager extends RelationManager
                         return match ($group) {
                             'supplier' => Article::whereHas('suppliers', function ($query) use ($supplierId) {
                                 $query->where('supplier_article.supplier_id', $supplierId)
-                                      ->where('supplier_article.billing_requirement', true);
+                                      ->where('supplier_article.billing_requirement', 'mandatory');
                             })->pluck('name', 'id'),
                             
                             'contract' => Article::whereHas('supplierContracts', function ($query) use ($contractId) {
                                 $query->where('supplier_contract_articles.supplier_contract_id', $contractId)
-                                      ->where('supplier_contract_articles.billing_requirement', true);
+                                      ->where('supplier_contract_articles.billing_requirement', 'mandatory');
                             })->pluck('name', 'id'),
                             
                             'customer' => Article::whereHas('customers', function ($query) use ($ownerRecord) {
@@ -84,13 +84,13 @@ class ArticlesRelationManager extends RelationManager
                                     ->unique();
                                 
                                 $query->whereIn('customer_article.customer_id', $customerIds)
-                                      ->where('customer_article.billing_requirement', true);
+                                      ->where('customer_article.billing_requirement', 'mandatory');
                             })->pluck('name', 'id'),
                             
                             'solar_plant' => Article::whereHas('solarPlants', function ($query) use ($ownerRecord) {
                                 $solarPlantIds = $ownerRecord->supplierContract->solarPlants()->pluck('id');
                                 $query->whereIn('solar_plant_article.solar_plant_id', $solarPlantIds)
-                                      ->where('solar_plant_article.billing_requirement', true);
+                                      ->where('solar_plant_article.billing_requirement', 'mandatory');
                             })->pluck('name', 'id'),
                             
                             default => [],
