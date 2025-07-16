@@ -10,6 +10,12 @@ class EditSolarPlant extends EditRecord
 {
     protected static string $resource = SolarPlantResource::class;
 
+    public function getTitle(): string
+    {
+        $plant = $this->record;
+        return ($plant->plant_number ? $plant->plant_number . ' - ' : '') . $plant->name;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

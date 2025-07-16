@@ -23,6 +23,12 @@ class ViewSolarPlant extends ViewRecord
         return $data;
     }
 
+    public function getTitle(): string
+    {
+        $plant = $this->record;
+        return ($plant->plant_number ? $plant->plant_number . ' - ' : '') . $plant->name;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
