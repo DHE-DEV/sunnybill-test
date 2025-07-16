@@ -37,6 +37,7 @@ class Supplier extends Model
         'contract_recognition_3',
         'company_name',
         'supplier_type_id',
+        'ranking',
         'contact_person',
         'department',
         'email',

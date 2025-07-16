@@ -52,6 +52,18 @@ class CustomerResource extends Resource
                             ->required()
                             ->live()
                             ->columnSpanFull(),
+                        Forms\Components\Select::make('ranking')
+                            ->label('Ranking')
+                            ->options([
+                                'A' => 'A Kunde',
+                                'B' => 'B Kunde',
+                                'C' => 'C Kunde',
+                                'D' => 'D Kunde',
+                                'E' => 'E Kunde',
+                            ])
+                            ->placeholder('Ranking auswählen')
+                            ->helperText('Klassifizierung der Kundenwichtigkeit')
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('customer_number')
                             ->label('Kundennummer')
                             ->maxLength(255)
@@ -1043,6 +1055,19 @@ class CustomerResource extends Resource
                         'private' => 'info',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('ranking')
+                    ->label('Ranking')
+                    ->formatStateUsing(fn (?string $state): string => $state ? $state . ' Kunde' : '-')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'A' => 'success',
+                        'B' => 'info',
+                        'C' => 'warning',
+                        'D' => 'danger',
+                        'E' => 'gray',
+                        default => 'gray',
+                    })
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-Mail')
                     ->searchable()

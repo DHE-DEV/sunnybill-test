@@ -69,6 +69,7 @@ class Customer extends Model
         'is_active',
         'deactivated_at',
         'customer_type',
+        'ranking',
         'lexware_version',
         'lexware_json',
         'custom_field_1',

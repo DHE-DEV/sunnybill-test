@@ -45,6 +45,17 @@ class SupplierResource extends Resource
                             ->options(SupplierType::active()->ordered()->pluck('name', 'id'))
                             ->searchable()
                             ->preload(),
+                        Forms\Components\Select::make('ranking')
+                            ->label('Ranking')
+                            ->options([
+                                'A' => 'A Lieferant',
+                                'B' => 'B Lieferant',
+                                'C' => 'C Lieferant',
+                                'D' => 'D Lieferant',
+                                'E' => 'E Lieferant',
+                            ])
+                            ->placeholder('Ranking auswählen')
+                            ->helperText('Klassifizierung der Lieferantenwichtigkeit'),
                         Forms\Components\TextInput::make('creditor_number')
                             ->label('Eigene Kundennummer bei Lieferant')
                             ->maxLength(255)
@@ -173,6 +184,19 @@ class SupplierResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('ranking')
+                    ->label('Ranking')
+                    ->formatStateUsing(fn (?string $state): string => $state ? $state . ' Lieferant' : '-')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'A' => 'success',
+                        'B' => 'info',
+                        'C' => 'warning',
+                        'D' => 'danger',
+                        'E' => 'gray',
+                        default => 'gray',
+                    })
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('contact_person')
                     ->label('Ansprechpartner')
                     ->searchable()
