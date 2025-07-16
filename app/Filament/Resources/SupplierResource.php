@@ -155,6 +155,82 @@ class SupplierResource extends Resource
             ]);
     }
 
+    public static function infolist(\Filament\Infolists\Infolist $infolist): \Filament\Infolists\Infolist
+    {
+        return $infolist
+            ->schema([
+                \Filament\Infolists\Components\Section::make('Firmendaten')
+                    ->schema([
+                        \Filament\Infolists\Components\TextEntry::make('supplier_number')
+                            ->label('Lieferanten-Nr.'),
+                        \Filament\Infolists\Components\TextEntry::make('company_name')
+                            ->label('Firmenname'),
+                        \Filament\Infolists\Components\TextEntry::make('supplierType.name')
+                            ->label('Lieferantentyp'),
+                        \Filament\Infolists\Components\TextEntry::make('ranking')
+                            ->label('Ranking')
+                            ->formatStateUsing(fn (?string $state): string => $state ? $state . ' Lieferant' : '-')
+                            ->badge()
+                            ->color(fn (?string $state): string => match ($state) {
+                                'A' => 'success',
+                                'B' => 'info',
+                                'C' => 'warning',
+                                'D' => 'danger',
+                                'E' => 'gray',
+                                default => 'gray',
+                            }),
+                        \Filament\Infolists\Components\TextEntry::make('creditor_number')
+                            ->label('Eigene Kundennummer bei Lieferant'),
+                        \Filament\Infolists\Components\TextEntry::make('contract_number')
+                            ->label('Eigene Vertragsnummer bei Lieferant'),
+                        \Filament\Infolists\Components\TextEntry::make('contact_person')
+                            ->label('Ansprechpartner'),
+                        \Filament\Infolists\Components\TextEntry::make('email')
+                            ->label('E-Mail')
+                            ->copyable()
+                            ->url(fn ($record) => $record->email ? 'mailto:' . $record->email : null)
+                            ->openUrlInNewTab(false),
+                        \Filament\Infolists\Components\TextEntry::make('website')
+                            ->label('Website')
+                            ->url(fn ($record) => $record->website)
+                            ->openUrlInNewTab(),
+                    ])->columns(2),
+                \Filament\Infolists\Components\Section::make('Adresse')
+                    ->schema([
+                        \Filament\Infolists\Components\TextEntry::make('address')
+                            ->label('Adresse')
+                            ->prose(),
+                        \Filament\Infolists\Components\TextEntry::make('postal_code')
+                            ->label('PLZ'),
+                        \Filament\Infolists\Components\TextEntry::make('city')
+                            ->label('Stadt'),
+                        \Filament\Infolists\Components\TextEntry::make('country')
+                            ->label('Land'),
+                    ])->columns(2),
+                \Filament\Infolists\Components\Section::make('Steuerliche Daten')
+                    ->schema([
+                        \Filament\Infolists\Components\TextEntry::make('tax_number')
+                            ->label('Steuernummer'),
+                        \Filament\Infolists\Components\TextEntry::make('vat_id')
+                            ->label('Umsatzsteuer-ID'),
+                    ])->columns(2),
+                \Filament\Infolists\Components\Section::make('Status & Sonstiges')
+                    ->schema([
+                        \Filament\Infolists\Components\IconEntry::make('is_active')
+                            ->label('Status')
+                            ->boolean()
+                            ->trueIcon('heroicon-o-check-circle')
+                            ->falseIcon('heroicon-o-x-circle')
+                            ->trueColor('success')
+                            ->falseColor('danger'),
+                        \Filament\Infolists\Components\TextEntry::make('notes')
+                            ->label('Notizen')
+                            ->prose()
+                            ->columnSpanFull(),
+                    ])->columns(2),
+            ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table

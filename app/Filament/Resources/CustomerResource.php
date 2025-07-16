@@ -370,8 +370,19 @@ class CustomerResource extends Resource
                                 'business' => 'Firmenkunde',
                                 'private' => 'Privatkunde',
                                 default => $state,
-                            })
-                            ->columnSpanFull(),
+                            }),
+                        \Filament\Infolists\Components\TextEntry::make('ranking')
+                            ->label('Ranking')
+                            ->formatStateUsing(fn (?string $state): string => $state ? $state . ' Kunde' : '-')
+                            ->badge()
+                            ->color(fn (?string $state): string => match ($state) {
+                                'A' => 'success',
+                                'B' => 'info',
+                                'C' => 'warning',
+                                'D' => 'danger',
+                                'E' => 'gray',
+                                default => 'gray',
+                            }),
                         \Filament\Infolists\Components\TextEntry::make('customer_number')
                             ->label('Kundennummer'),
                         \Filament\Infolists\Components\TextEntry::make('name')
