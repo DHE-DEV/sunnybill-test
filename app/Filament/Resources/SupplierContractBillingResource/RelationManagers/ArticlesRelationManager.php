@@ -110,7 +110,7 @@ class ArticlesRelationManager extends RelationManager
                     ->label('Menge')
                     ->required()
                     ->numeric()
-                    ->step(0.01)
+                    ->step(0.0001)
                     ->default(1)
                     ->minValue(0)
                     ->reactive()
@@ -125,7 +125,7 @@ class ArticlesRelationManager extends RelationManager
                     ->label('Einzelpreis')
                     ->required()
                     ->numeric()
-                    ->step(0.01)
+                    ->step(0.000001)
                     ->prefix('€')
                     ->minValue(0)
                     ->reactive()
@@ -183,13 +183,14 @@ class ArticlesRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('quantity')
                     ->label('Menge')
-                    ->numeric(decimalPlaces: 2)
+                    ->numeric(decimalPlaces: 4)
                     ->sortable()
                     ->alignEnd(),
 
                 Tables\Columns\TextColumn::make('unit_price')
                     ->label('Einzelpreis')
-                    ->money('EUR')
+                    ->numeric(decimalPlaces: 6)
+                    ->suffix(' €')
                     ->sortable()
                     ->alignEnd(),
 
