@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Models\SolarPlant;
 use App\Models\PlantParticipation;
+use App\Filament\Resources\SolarPlantResource;
 
 class SolarPlantsRelationManager extends RelationManager
 {
@@ -128,6 +129,12 @@ class SolarPlantsRelationManager extends RelationManager
                     }),
             ])
             ->actions([
+                Tables\Actions\Action::make('view_solar_plant')
+                    ->label('Solaranlage öffnen')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->url(fn ($record) => SolarPlantResource::getUrl('view', ['record' => $record->solarPlant]))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make()
                     ->label('Bearbeiten'),
                 Tables\Actions\DeleteAction::make()
