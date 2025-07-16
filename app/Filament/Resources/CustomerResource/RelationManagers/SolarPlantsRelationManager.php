@@ -82,6 +82,11 @@ class SolarPlantsRelationManager extends RelationManager
                     ->sortable()
                     ->searchable(),
                 
+                Tables\Columns\TextColumn::make('solarPlant.total_capacity_kw')
+                    ->label('Leistung')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 2, ',', '.') . ' kW' : '-')
+                    ->sortable(),
+                
                 Tables\Columns\TextColumn::make('percentage')
                     ->label('Beteiligung')
                     ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
