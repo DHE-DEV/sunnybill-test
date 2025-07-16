@@ -95,13 +95,15 @@ class SolarPlantsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('start_date')
                     ->label('Startdatum')
                     ->date('d.m.Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                 Tables\Columns\TextColumn::make('end_date')
                     ->label('Enddatum')
                     ->date('d.m.Y')
                     ->sortable()
-                    ->placeholder('Unbegrenzt'),
+                    ->placeholder('Unbegrenzt')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Status')
