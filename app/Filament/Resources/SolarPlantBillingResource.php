@@ -190,6 +190,25 @@ class SolarPlantBillingResource extends Resource
                                     $html .= '<div style="font-size: 0.875rem; color: #6b7280;">';
                                     $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
                                     $html .= '</div>';
+                                    
+                                    // Artikel-Details anzeigen
+                                    if (isset($item['articles']) && !empty($item['articles'])) {
+                                        $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
+                                        $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Artikel:</div>';
+                                        
+                                        foreach ($item['articles'] as $article) {
+                                            $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
+                                            $html .= '<div style="font-weight: 500;">' . htmlspecialchars($article['article_name']) . '</div>';
+                                            $html .= '<div style="display: flex; gap: 1rem;">';
+                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . '</span>';
+                                            $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
+                                            $html .= '<span>Gesamt: ' . number_format($article['total_price'], 2, ',', '.') . ' €</span>';
+                                            $html .= '</div>';
+                                            $html .= '</div>';
+                                        }
+                                        $html .= '</div>';
+                                    }
+                                    
                                     $html .= '</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: center;">';
                                     if ($docs->isNotEmpty()) {
@@ -264,6 +283,25 @@ class SolarPlantBillingResource extends Resource
                                     $html .= '<div style="font-size: 0.875rem; color: #6b7280;">';
                                     $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
                                     $html .= '</div>';
+                                    
+                                    // Artikel-Details anzeigen
+                                    if (isset($item['articles']) && !empty($item['articles'])) {
+                                        $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f0fdf4; border-radius: 0.25rem; border: 1px solid #bbf7d0;">';
+                                        $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #166534; margin-bottom: 0.25rem;">Artikel:</div>';
+                                        
+                                        foreach ($item['articles'] as $article) {
+                                            $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
+                                            $html .= '<div style="font-weight: 500;">' . htmlspecialchars($article['article_name']) . '</div>';
+                                            $html .= '<div style="display: flex; gap: 1rem;">';
+                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . '</span>';
+                                            $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
+                                            $html .= '<span>Gesamt: ' . number_format($article['total_price'], 2, ',', '.') . ' €</span>';
+                                            $html .= '</div>';
+                                            $html .= '</div>';
+                                        }
+                                        $html .= '</div>';
+                                    }
+                                    
                                     $html .= '</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: center;">';
                                     if ($docs->isNotEmpty()) {

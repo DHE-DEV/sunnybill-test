@@ -301,6 +301,20 @@ class SolarPlantBilling extends Model
                 $customerCredit = abs($billing->total_amount) * $finalShare;
                 $totalCredits += $customerCredit;
                 
+                // Hole die Artikel-Details für diese Gutschrift
+                $articles = $billing->articles()->get();
+                $articleDetails = [];
+                
+                foreach ($articles as $article) {
+                    $articleDetails[] = [
+                        'article_name' => $article->article->name ?? $article->description,
+                        'quantity' => $article->quantity,
+                        'unit_price' => $article->unit_price,
+                        'total_price' => $article->total_price,
+                        'description' => $article->description,
+                    ];
+                }
+                
                 $creditBreakdown[] = [
                     'contract_id' => $contract->id,
                     'contract_title' => $contract->title,
@@ -313,6 +327,7 @@ class SolarPlantBilling extends Model
                     'solar_plant_percentage' => $solarPlantPercentage,
                     'customer_percentage' => $percentage,
                     'customer_share' => $customerCredit,
+                    'articles' => $articleDetails,
                 ];
             } else {
                 // Kosten - alle anderen Verträge (nur positive Beträge)
@@ -320,19 +335,34 @@ class SolarPlantBilling extends Model
                     $customerCost = $billing->total_amount * $finalShare;
                     $totalCosts += $customerCost;
                     
-                    $costBreakdown[] = [
-                        'contract_id' => $contract->id,
-                        'contract_title' => $contract->title,
-                        'contract_number' => $contract->contract_number,
-                        'supplier_id' => $contract->supplier->id,
-                        'supplier_name' => $contract->supplier->company_name ?? $contract->supplier->name ?? 'Unbekannt',
-                        'contract_billing_id' => $billing->id,
-                        'billing_number' => $billing->billing_number,
-                        'total_amount' => $billing->total_amount,
-                        'solar_plant_percentage' => $solarPlantPercentage,
-                        'customer_percentage' => $percentage,
-                        'customer_share' => $customerCost,
+                // Hole die Artikel-Details für diese Abrechnung
+                $articles = $billing->articles()->get();
+                $articleDetails = [];
+                
+                foreach ($articles as $article) {
+                    $articleDetails[] = [
+                        'article_name' => $article->article->name ?? $article->description,
+                        'quantity' => $article->quantity,
+                        'unit_price' => $article->unit_price,
+                        'total_price' => $article->total_price,
+                        'description' => $article->description,
                     ];
+                }
+
+                $costBreakdown[] = [
+                    'contract_id' => $contract->id,
+                    'contract_title' => $contract->title,
+                    'contract_number' => $contract->contract_number,
+                    'supplier_id' => $contract->supplier->id,
+                    'supplier_name' => $contract->supplier->company_name ?? $contract->supplier->name ?? 'Unbekannt',
+                    'contract_billing_id' => $billing->id,
+                    'billing_number' => $billing->billing_number,
+                    'total_amount' => $billing->total_amount,
+                    'solar_plant_percentage' => $solarPlantPercentage,
+                    'customer_percentage' => $percentage,
+                    'customer_share' => $customerCost,
+                    'articles' => $articleDetails,
+                ];
                 }
             }
         }
