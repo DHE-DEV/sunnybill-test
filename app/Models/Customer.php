@@ -553,4 +553,46 @@ class Customer extends Model
         $prefix = $companySettings ? ($companySettings->customer_number_prefix ?? 'K') : 'K';
         return $prefix . '-' . $timestamp;
     }
+
+    /**
+     * Berechnet den automatischen Kundenscore basierend auf Anlagen-Beteiligungen
+     * Formel: (Summe der Beteiligung von der Anlagen kWp gerundet auf 0 Nachkommastellen) * 1000
+     */
+    public function getCustomerScoreAttribute(): int
+    {
+        $totalKwp = $this->plantParticipations()->with('solarPlant')->get()->sum(function ($participation) {
+            $plantKwp = $participation->solarPlant->total_capacity_kw ?? 0;
+            $participationKwp = $plantKwp * ($participation->percentage / 100);
+            return $participationKwp;
+        });
+        
+        return (int) round($totalKwp * 1000);
+    }
+
+    /**
+     * Formatierter Kundenscore mit Tausender-Trennzeichen
+     */
+    public function getFormattedCustomerScoreAttribute(): string
+    {
+        return number_format($this->customer_score, 0, ',', '.');
+    }
+
+    /**
+     * Gesamte kWp-Beteiligung des Kunden (ohne Multiplikation)
+     */
+    public function getTotalKwpParticipationAttribute(): float
+    {
+        return $this->plantParticipations()->with('solarPlant')->get()->sum(function ($participation) {
+            $plantKwp = $participation->solarPlant->total_capacity_kw ?? 0;
+            return $plantKwp * ($participation->percentage / 100);
+        });
+    }
+
+    /**
+     * Formatierte Gesamt-kWp-Beteiligung
+     */
+    public function getFormattedTotalKwpParticipationAttribute(): string
+    {
+        return number_format($this->total_kwp_participation, 2, ',', '.') . ' kWp';
+    }
 }

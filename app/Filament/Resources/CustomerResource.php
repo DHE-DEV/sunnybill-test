@@ -364,6 +364,7 @@ class CustomerResource extends Resource
             ->schema([
                 \Filament\Infolists\Components\Section::make('Kundendaten')
                     ->schema([
+                        // Zeile 1: Kundentype, Ranking, Score
                         \Filament\Infolists\Components\TextEntry::make('customer_type')
                             ->label('Kundentyp')
                             ->formatStateUsing(fn (string $state): string => match ($state) {
@@ -383,10 +384,32 @@ class CustomerResource extends Resource
                                 'E' => 'gray',
                                 default => 'gray',
                             }),
-                        \Filament\Infolists\Components\TextEntry::make('customer_number')
-                            ->label('Kundennummer'),
+                        \Filament\Infolists\Components\TextEntry::make('customer_score')
+                            ->label('Score')
+                            ->formatStateUsing(fn ($record) => $record->formatted_customer_score)
+                            ->badge()
+                            ->color('primary')
+                            ->tooltip(fn ($record) => 'Basierend auf ' . $record->formatted_total_kwp_participation . ' kWp-Beteiligung'),
+                        
+                        // Zeile 2: Name (1 Spalte), Kundennummer
                         \Filament\Infolists\Components\TextEntry::make('name')
                             ->label(fn ($record) => $record->customer_type === 'private' ? 'Name' : 'Firmenname'),
+                        \Filament\Infolists\Components\TextEntry::make('customer_number')
+                            ->label('Kundennummer'),
+                        
+                        // Zeile 3: Telefon, E-Mail
+                        \Filament\Infolists\Components\TextEntry::make('phone')
+                            ->label('Telefon')
+                            ->copyable()
+                            ->url(fn ($record) => $record->phone ? 'tel:' . preg_replace('/[\s\-\/]/', '', $record->phone) : null)
+                            ->openUrlInNewTab(false),
+                        \Filament\Infolists\Components\TextEntry::make('email')
+                            ->label('E-Mail')
+                            ->copyable()
+                            ->url(fn ($record) => $record->email ? 'mailto:' . $record->email : null)
+                            ->openUrlInNewTab(false),
+                        
+                        // Zusätzliche Felder für Firmenkunden (falls benötigt)
                         \Filament\Infolists\Components\TextEntry::make('company_name')
                             ->label('Firmenname')
                             ->visible(fn ($record) => $record->customer_type === 'business'),
@@ -396,16 +419,6 @@ class CustomerResource extends Resource
                         \Filament\Infolists\Components\TextEntry::make('department')
                             ->label('Abteilung')
                             ->visible(fn ($record) => $record->customer_type === 'business'),
-                        \Filament\Infolists\Components\TextEntry::make('email')
-                            ->label('E-Mail')
-                            ->copyable()
-                            ->url(fn ($record) => $record->email ? 'mailto:' . $record->email : null)
-                            ->openUrlInNewTab(false),
-                        \Filament\Infolists\Components\TextEntry::make('phone')
-                            ->label('Telefon')
-                            ->copyable()
-                            ->url(fn ($record) => $record->phone ? 'tel:' . preg_replace('/[\s\-\/]/', '', $record->phone) : null)
-                            ->openUrlInNewTab(false),
                         \Filament\Infolists\Components\TextEntry::make('fax')
                             ->label('Fax')
                             ->visible(fn ($record) => $record->customer_type === 'business'),
@@ -414,7 +427,7 @@ class CustomerResource extends Resource
                             ->url(fn ($record) => $record->website)
                             ->openUrlInNewTab()
                             ->visible(fn ($record) => $record->customer_type === 'business'),
-                    ])->columns(2),
+                    ])->columns(3),
 
                 \Filament\Infolists\Components\Section::make('Standard-Adresse')
                     ->description(fn ($record) => $record->hasSeparateBillingAddress()
@@ -1079,6 +1092,13 @@ class CustomerResource extends Resource
                         default => 'gray',
                     })
                     ->sortable(),
+                Tables\Columns\TextColumn::make('customer_score')
+                    ->label('Score')
+                    ->formatStateUsing(fn ($record) => $record->formatted_customer_score)
+                    ->sortable(query: function ($query, $direction) {
+                        return $query->orderBy('id', $direction); // Placeholder für Sortierung
+                    })
+                    ->searchable(false),
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-Mail')
                     ->searchable()
