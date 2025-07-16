@@ -159,9 +159,8 @@ class SolarPlantBillingResource extends Resource
                                 $html .= '<thead>';
                                 $html .= '<tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">';
                                 $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151;">Bezeichnung</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #374151;">Dok.</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151;">Anteil</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151;">Gesamtbetrag</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151; vertical-align: top;">Anteil</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151; vertical-align: top;">Gesamtbetrag</th>';
                                 $html .= '</tr>';
                                 $html .= '</thead>';
                                 $html .= '<tbody>';
@@ -185,7 +184,7 @@ class SolarPlantBillingResource extends Resource
                                     }
 
                                     $html .= '<tr style="border-bottom: 1px solid #e2e8f0;">';
-                                    $html .= '<td style="padding: 0.75rem; color: #374151;">';
+                                    $html .= '<td style="padding: 0.75rem; color: #374151; vertical-align: top;">';
                                     $html .= '<div style="font-weight: 500;">' . htmlspecialchars($item['contract_title']) . '</div>';
                                     $html .= '<div style="font-size: 0.875rem; color: #6b7280;">';
                                     $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
@@ -194,7 +193,7 @@ class SolarPlantBillingResource extends Resource
                                     // Artikel-Details anzeigen
                                     if (isset($item['articles']) && !empty($item['articles'])) {
                                         $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
-                                        $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Artikel:</div>';
+                                        $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Details:</div>';
                                         
                                         foreach ($item['articles'] as $article) {
                                             $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
@@ -212,15 +211,8 @@ class SolarPlantBillingResource extends Resource
                                     }
                                     
                                     $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: center;">';
-                                    if ($docs->isNotEmpty()) {
-                                        $html .= '<a href="#" onclick="window.Livewire.dispatch(\'openModal\', { component: \'filament.modals.document-list-modal\', arguments: { documents: ' . htmlspecialchars(json_encode($docs->toArray())) . ' } })" class="text-primary-600 hover:text-primary-500">';
-                                        $html .= '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
-                                        $html .= '</a>';
-                                    }
-                                    $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
                                     $html .= '</tr>';
                                 }
                                 
@@ -254,9 +246,8 @@ class SolarPlantBillingResource extends Resource
                                 $html .= '<thead>';
                                 $html .= '<tr style="background-color: #f0fdf4; border-bottom: 2px solid #bbf7d0;">';
                                 $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #166534;">Bezeichnung</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #166534;">Dok.</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534;">Anteil</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534;">Gesamtbetrag</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534; vertical-align: top;">Anteil</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534; vertical-align: top;">Gesamtbetrag</th>';
                                 $html .= '</tr>';
                                 $html .= '</thead>';
                                 $html .= '<tbody>';
@@ -288,8 +279,8 @@ class SolarPlantBillingResource extends Resource
                                     
                                     // Artikel-Details anzeigen
                                     if (isset($item['articles']) && !empty($item['articles'])) {
-                                        $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f0fdf4; border-radius: 0.25rem; border: 1px solid #bbf7d0;">';
-                                        $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #166534; margin-bottom: 0.25rem;">Artikel:</div>';
+                                        $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
+                                        $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Details:</div>';
                                         
                                         foreach ($item['articles'] as $article) {
                                             $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
@@ -307,15 +298,8 @@ class SolarPlantBillingResource extends Resource
                                     }
                                     
                                     $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: center;">';
-                                    if ($docs->isNotEmpty()) {
-                                        $html .= '<a href="#" onclick="window.Livewire.dispatch(\'openModal\', { component: \'filament.modals.document-list-modal\', arguments: { documents: ' . htmlspecialchars(json_encode($docs->toArray())) . ' } })" class="text-primary-600 hover:text-primary-500">';
-                                        $html .= '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
-                                        $html .= '</a>';
-                                    }
-                                    $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #166534;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #166534; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
                                     $html .= '</tr>';
                                 }
                                 
