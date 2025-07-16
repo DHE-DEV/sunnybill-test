@@ -43,6 +43,15 @@ class SolarPlantsRelationManager extends RelationManager
                     ->required()
                     ->suffix('%'),
                 
+                Forms\Components\TextInput::make('eeg_compensation_per_kwh')
+                    ->label('Vertraglich zugesicherte EEG-Vergütung')
+                    ->numeric()
+                    ->step(0.000001)
+                    ->minValue(0)
+                    ->suffix('€/kWh')
+                    ->placeholder('0,000000')
+                    ->helperText('Vergütung pro kWh in EUR mit bis zu 6 Nachkommastellen'),
+                
                 Forms\Components\DatePicker::make('start_date')
                     ->label('Startdatum')
                     ->required(),
@@ -90,6 +99,11 @@ class SolarPlantsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('percentage')
                     ->label('Beteiligung')
                     ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
+                    ->sortable(),
+                
+                Tables\Columns\TextColumn::make('eeg_compensation_per_kwh')
+                    ->label('EEG-Vergütung')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') . ' €/kWh' : '-')
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('start_date')

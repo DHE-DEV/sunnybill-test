@@ -14,10 +14,12 @@ class PlantParticipation extends Model
         'customer_id',
         'solar_plant_id',
         'percentage',
+        'eeg_compensation_per_kwh',
     ];
 
     protected $casts = [
         'percentage' => 'decimal:2',
+        'eeg_compensation_per_kwh' => 'decimal:6',
     ];
 
     /**
@@ -42,6 +44,16 @@ class PlantParticipation extends Model
     public function getFormattedPercentageAttribute(): string
     {
         return number_format($this->percentage, 2, ',', '.') . '%';
+    }
+
+    /**
+     * Formatierte EEG-Vergütung
+     */
+    public function getFormattedEegCompensationAttribute(): string
+    {
+        return $this->eeg_compensation_per_kwh 
+            ? number_format($this->eeg_compensation_per_kwh, 6, ',', '.') . ' €/kWh'
+            : '-';
     }
 
     /**
