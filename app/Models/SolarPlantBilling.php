@@ -306,11 +306,21 @@ class SolarPlantBilling extends Model
                 $articleDetails = [];
                 
                 foreach ($articles as $article) {
+                    $articleRecord = $article->article;
+                    $netTotal = $article->total_price;
+                    $taxRate = $articleRecord ? $articleRecord->getCurrentTaxRate() : 0.19;
+                    $taxAmount = $netTotal * $taxRate;
+                    $grossTotal = $netTotal + $taxAmount;
+                    
                     $articleDetails[] = [
-                        'article_name' => $article->article->name ?? $article->description,
+                        'article_name' => $articleRecord->name ?? $article->description,
                         'quantity' => $article->quantity,
+                        'unit' => $articleRecord->unit ?? 'Stk.',
                         'unit_price' => $article->unit_price,
-                        'total_price' => $article->total_price,
+                        'total_price_net' => $netTotal,
+                        'tax_rate' => $taxRate,
+                        'tax_amount' => $taxAmount,
+                        'total_price_gross' => $grossTotal,
                         'description' => $article->description,
                     ];
                 }
@@ -340,11 +350,21 @@ class SolarPlantBilling extends Model
                 $articleDetails = [];
                 
                 foreach ($articles as $article) {
+                    $articleRecord = $article->article;
+                    $netTotal = $article->total_price;
+                    $taxRate = $articleRecord ? $articleRecord->getCurrentTaxRate() : 0.19;
+                    $taxAmount = $netTotal * $taxRate;
+                    $grossTotal = $netTotal + $taxAmount;
+                    
                     $articleDetails[] = [
-                        'article_name' => $article->article->name ?? $article->description,
+                        'article_name' => $articleRecord->name ?? $article->description,
                         'quantity' => $article->quantity,
+                        'unit' => $articleRecord->unit ?? 'Stk.',
                         'unit_price' => $article->unit_price,
-                        'total_price' => $article->total_price,
+                        'total_price_net' => $netTotal,
+                        'tax_rate' => $taxRate,
+                        'tax_amount' => $taxAmount,
+                        'total_price_gross' => $grossTotal,
                         'description' => $article->description,
                     ];
                 }

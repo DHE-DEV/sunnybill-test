@@ -199,10 +199,12 @@ class SolarPlantBillingResource extends Resource
                                         foreach ($item['articles'] as $article) {
                                             $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
                                             $html .= '<div style="font-weight: 500;">' . htmlspecialchars($article['article_name']) . '</div>';
-                                            $html .= '<div style="display: flex; gap: 1rem;">';
-                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . '</span>';
+                                            $html .= '<div style="display: flex; gap: 1rem; flex-wrap: wrap;">';
+                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
                                             $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt: ' . number_format($article['total_price'], 2, ',', '.') . ' €</span>';
+                                            $html .= '<span>Gesamt netto: ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</span>';
+                                            $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
+                                            $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
                                             $html .= '</div>';
                                             $html .= '</div>';
                                         }
@@ -292,10 +294,12 @@ class SolarPlantBillingResource extends Resource
                                         foreach ($item['articles'] as $article) {
                                             $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
                                             $html .= '<div style="font-weight: 500;">' . htmlspecialchars($article['article_name']) . '</div>';
-                                            $html .= '<div style="display: flex; gap: 1rem;">';
-                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . '</span>';
+                                            $html .= '<div style="display: flex; gap: 1rem; flex-wrap: wrap;">';
+                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
                                             $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt: ' . number_format($article['total_price'], 2, ',', '.') . ' €</span>';
+                                            $html .= '<span>Gesamt netto: ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</span>';
+                                            $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
+                                            $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
                                             $html .= '</div>';
                                             $html .= '</div>';
                                         }
