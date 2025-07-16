@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\SupplierContractBillingResource\RelationManagers;
 
-use App\Models\SupplierContractBilling;
 use App\Services\DocumentUploadConfig;
 use App\Traits\DocumentUploadTrait;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -31,39 +30,15 @@ class DocumentsRelationManager extends RelationManager
     {
         $billing = $this->getOwnerRecord();
         
-        // Verwende die spezielle forSupplierContractBillings Konfiguration mit DocumentPathSetting-Integration
-        return DocumentUploadConfig::forSupplierContractBillings($billing)
+        return DocumentUploadConfig::forSupplierContractBillings()
+            ->setModel($billing)
             ->setAdditionalData([
                 'billing_id' => $billing->id,
                 'billing_number' => $billing->billing_number,
-                'contract_number' => $billing->supplierContract?->contract_number,
-                'supplier_name' => $billing->supplierContract?->supplier?->company_name,
-                'supplier_number' => $billing->supplierContract?->supplier?->supplier_number,
             ]);
     }
 
-
     public function canCreate(): bool
-    {
-        return true;
-    }
-
-    public function isReadOnly(): bool
-    {
-        return false; // Erlaubt Aktionen auch im View-Modus
-    }
-
-    public function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
-    {
-        return true;
-    }
-
-    public function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
-    {
-        return true;
-    }
-
-    public function canView(\Illuminate\Database\Eloquent\Model $record): bool
     {
         return true;
     }

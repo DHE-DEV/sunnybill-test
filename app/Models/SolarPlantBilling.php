@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
@@ -66,6 +67,14 @@ class SolarPlantBilling extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Polymorphe Beziehung zu Dokumenten
+     */
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Document::class, 'documentable');
     }
 
     /**
@@ -293,7 +302,11 @@ class SolarPlantBilling extends Model
                 $creditBreakdown[] = [
                     'contract_id' => $contract->id,
                     'contract_title' => $contract->title,
+                    'contract_number' => $contract->contract_number,
+                    'supplier_id' => $contract->supplier->id,
                     'supplier_name' => $contract->supplier->company_name ?? $contract->supplier->name ?? 'Unbekannt',
+                    'contract_billing_id' => $billing->id,
+                    'billing_number' => $billing->billing_number,
                     'total_amount' => $billing->total_amount,
                     'solar_plant_percentage' => $solarPlantPercentage,
                     'customer_percentage' => $percentage,
@@ -308,7 +321,11 @@ class SolarPlantBilling extends Model
                     $costBreakdown[] = [
                         'contract_id' => $contract->id,
                         'contract_title' => $contract->title,
+                        'contract_number' => $contract->contract_number,
+                        'supplier_id' => $contract->supplier->id,
                         'supplier_name' => $contract->supplier->company_name ?? $contract->supplier->name ?? 'Unbekannt',
+                        'contract_billing_id' => $billing->id,
+                        'billing_number' => $billing->billing_number,
                         'total_amount' => $billing->total_amount,
                         'solar_plant_percentage' => $solarPlantPercentage,
                         'customer_percentage' => $percentage,

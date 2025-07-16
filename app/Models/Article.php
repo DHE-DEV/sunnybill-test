@@ -6,6 +6,7 @@ use App\Helpers\PriceFormatter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -103,7 +104,7 @@ class Article extends Model
     public function supplierContracts()
     {
         return $this->belongsToMany(SupplierContract::class, 'supplier_contract_articles')
-            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active'])
+            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement'])
             ->withTimestamps();
     }
 
@@ -114,7 +115,37 @@ class Article extends Model
     {
         return $this->belongsToMany(SupplierContract::class, 'supplier_contract_articles')
             ->wherePivot('is_active', true)
-            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active'])
+            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Beziehung zu Lieferanten über Pivot-Tabelle
+     */
+    public function suppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(Supplier::class, 'supplier_article')
+            ->withPivot('quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement')
+            ->withTimestamps();
+    }
+
+    /**
+     * Beziehung zu Kunden über Pivot-Tabelle
+     */
+    public function customers(): BelongsToMany
+    {
+        return $this->belongsToMany(Customer::class, 'customer_article')
+            ->withPivot('quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement')
+            ->withTimestamps();
+    }
+
+    /**
+     * Beziehung zu Solaranlagen über Pivot-Tabelle
+     */
+    public function solarPlants(): BelongsToMany
+    {
+        return $this->belongsToMany(SolarPlant::class, 'solar_plant_article')
+            ->withPivot('quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement')
             ->withTimestamps();
     }
 

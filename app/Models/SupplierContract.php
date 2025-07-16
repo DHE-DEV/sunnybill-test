@@ -157,7 +157,7 @@ class SupplierContract extends Model
     public function articles(): BelongsToMany
     {
         return $this->belongsToMany(Article::class, 'supplier_contract_articles')
-            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active'])
+            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement'])
             ->withTimestamps();
     }
 
@@ -168,7 +168,7 @@ class SupplierContract extends Model
     {
         return $this->belongsToMany(Article::class, 'supplier_contract_articles')
             ->wherePivot('is_active', true)
-            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active'])
+            ->withPivot(['quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement'])
             ->withTimestamps();
     }
 

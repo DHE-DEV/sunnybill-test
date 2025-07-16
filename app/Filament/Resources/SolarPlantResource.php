@@ -724,6 +724,7 @@ class SolarPlantResource extends Resource
     public static function getRelations(): array
     {
         return [
+            RelationManagers\ArticlesRelationManager::class,
             RelationManagers\ParticipationsRelationManager::class,
             RelationManagers\MonthlyResultsRelationManager::class,
             RelationManagers\DocumentsRelationManager::class,

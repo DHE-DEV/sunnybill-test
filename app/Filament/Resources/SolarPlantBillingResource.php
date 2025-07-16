@@ -7,6 +7,7 @@ use App\Models\SolarPlantBilling;
 use App\Models\SolarPlant;
 use App\Models\Customer;
 use Filament\Forms;
+use App\Models\Document;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -15,6 +16,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Notifications\Notification;
 use Carbon\Carbon;
+use Filament\Infolists\Components\Actions\Action;
+use Filament\Infolists\Components\TextEntry;
+use Illuminate\Support\Facades\Storage;
 
 class SolarPlantBillingResource extends Resource
 {
@@ -139,6 +143,7 @@ class SolarPlantBillingResource extends Resource
                                 $html .= '<thead>';
                                 $html .= '<tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">';
                                 $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151;">Bezeichnung</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #374151;">Dok.</th>';
                                 $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151;">Anteil</th>';
                                 $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151;">Gesamtbetrag</th>';
                                 $html .= '</tr>';
@@ -146,10 +151,36 @@ class SolarPlantBillingResource extends Resource
                                 $html .= '<tbody>';
                                 
                                 foreach ($breakdown as $item) {
+                                    $contractId = $item['contract_id'] ?? null;
+                                    $docs = $contractId ? $record->documents()->where('description', 'like', '%' . $contractId . '%')->get() : collect();
+
+                                    $supplierName = htmlspecialchars($item['supplier_name'] ?? 'Unbekannt');
+                                    if (isset($item['supplier_id'])) {
+                                        $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
+                                        $supplierName = '<a href="' . $supplierUrl . '" target="_blank" class="text-primary-600 hover:underline">' . $supplierName . '</a>';
+                                    }
+
+                                    $billingNumberText = htmlspecialchars($item['billing_number'] ?? 'N/A');
+                                    if (isset($item['contract_billing_id'])) {
+                                        $billingUrl = \App\Filament\Resources\SupplierContractBillingResource::getUrl('view', ['record' => $item['contract_billing_id']]);
+                                        $billingNumber = '<a href="' . $billingUrl . '" target="_blank" class="text-primary-600 hover:underline">' . $billingNumberText . '</a>';
+                                    } else {
+                                        $billingNumber = $billingNumberText;
+                                    }
+
                                     $html .= '<tr style="border-bottom: 1px solid #e2e8f0;">';
                                     $html .= '<td style="padding: 0.75rem; color: #374151;">';
                                     $html .= '<div style="font-weight: 500;">' . htmlspecialchars($item['contract_title']) . '</div>';
-                                    $html .= '<div style="font-size: 0.875rem; color: #6b7280;">(' . htmlspecialchars($item['supplier_name']) . ')</div>';
+                                    $html .= '<div style="font-size: 0.875rem; color: #6b7280;">';
+                                    $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
+                                    $html .= '</div>';
+                                    $html .= '</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: center;">';
+                                    if ($docs->isNotEmpty()) {
+                                        $html .= '<a href="#" onclick="window.Livewire.dispatch(\'openModal\', { component: \'filament.modals.document-list-modal\', arguments: { documents: ' . htmlspecialchars(json_encode($docs->toArray())) . ' } })" class="text-primary-600 hover:text-primary-500">';
+                                        $html .= '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+                                        $html .= '</a>';
+                                    }
                                     $html .= '</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
@@ -186,6 +217,7 @@ class SolarPlantBillingResource extends Resource
                                 $html .= '<thead>';
                                 $html .= '<tr style="background-color: #f0fdf4; border-bottom: 2px solid #bbf7d0;">';
                                 $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #166534;">Bezeichnung</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #166534;">Dok.</th>';
                                 $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534;">Anteil</th>';
                                 $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534;">Gesamtbetrag</th>';
                                 $html .= '</tr>';
@@ -193,10 +225,36 @@ class SolarPlantBillingResource extends Resource
                                 $html .= '<tbody>';
                                 
                                 foreach ($breakdown as $item) {
+                                    $contractId = $item['contract_id'] ?? null;
+                                    $docs = $contractId ? $record->documents()->where('description', 'like', '%' . $contractId . '%')->get() : collect();
+
+                                    $supplierName = htmlspecialchars($item['supplier_name'] ?? 'Unbekannt');
+                                    if (isset($item['supplier_id'])) {
+                                        $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
+                                        $supplierName = '<a href="' . $supplierUrl . '" target="_blank" class="text-primary-600 hover:underline">' . $supplierName . '</a>';
+                                    }
+
+                                    $billingNumberText = htmlspecialchars($item['billing_number'] ?? 'N/A');
+                                    if (isset($item['contract_billing_id'])) {
+                                        $billingUrl = \App\Filament\Resources\SupplierContractBillingResource::getUrl('view', ['record' => $item['contract_billing_id']]);
+                                        $billingNumber = '<a href="' . $billingUrl . '" target="_blank" class="text-primary-600 hover:underline">' . $billingNumberText . '</a>';
+                                    } else {
+                                        $billingNumber = $billingNumberText;
+                                    }
+
                                     $html .= '<tr style="border-bottom: 1px solid #bbf7d0;">';
                                     $html .= '<td style="padding: 0.75rem; color: #166534;">';
                                     $html .= '<div style="font-weight: 500;">' . htmlspecialchars($item['contract_title']) . '</div>';
-                                    $html .= '<div style="font-size: 0.875rem; color: #16a34a;">(' . htmlspecialchars($item['supplier_name']) . ')</div>';
+                                    $html .= '<div style="font-size: 0.875rem; color: #6b7280;">';
+                                    $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
+                                    $html .= '</div>';
+                                    $html .= '</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: center;">';
+                                    if ($docs->isNotEmpty()) {
+                                        $html .= '<a href="#" onclick="window.Livewire.dispatch(\'openModal\', { component: \'filament.modals.document-list-modal\', arguments: { documents: ' . htmlspecialchars(json_encode($docs->toArray())) . ' } })" class="text-primary-600 hover:text-primary-500">';
+                                        $html .= '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+                                        $html .= '</a>';
+                                    }
                                     $html .= '</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #166534;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';

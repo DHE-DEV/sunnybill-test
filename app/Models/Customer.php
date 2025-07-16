@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -203,6 +204,16 @@ class Customer extends Model
     public function solarPlantBillings(): HasMany
     {
         return $this->hasMany(SolarPlantBilling::class);
+    }
+
+    /**
+     * Beziehung zu Artikeln über Pivot-Tabelle
+     */
+    public function articles(): BelongsToMany
+    {
+        return $this->belongsToMany(Article::class, 'customer_article')
+            ->withPivot('quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement')
+            ->withTimestamps();
     }
 
     /**

@@ -268,6 +268,16 @@ class SolarPlant extends Model
     }
 
     /**
+     * Beziehung zu Artikeln über Pivot-Tabelle
+     */
+    public function articles(): BelongsToMany
+    {
+        return $this->belongsToMany(Article::class, 'solar_plant_article')
+            ->withPivot('quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement')
+            ->withTimestamps();
+    }
+
+    /**
      * Gesamtbeteiligung aller Kunden berechnen
      */
     public function getTotalParticipationAttribute(): float

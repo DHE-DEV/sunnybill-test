@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\SupplierContractResource\RelationManagers;
+namespace App\Filament\Resources\SolarPlantResource\RelationManagers;
 
 use App\Models\Article;
 use Filament\Forms;
@@ -34,7 +34,7 @@ class ArticlesRelationManager extends RelationManager
         return $form
             ->schema([
                 Forms\Components\Section::make('Artikel hinzufügen')
-                    ->description('Fügen Sie diesem Vertrag einen Artikel aus der Artikelverwaltung hinzu.')
+                    ->description('Fügen Sie dieser Solaranlage einen Artikel aus der Artikelverwaltung hinzu.')
                     ->schema([
                         Forms\Components\Select::make('id')
                             ->label('Artikel')
@@ -88,7 +88,7 @@ class ArticlesRelationManager extends RelationManager
                             ->required()
                             ->default(1.00)
                             ->suffix('Stk.')
-                            ->helperText('Anzahl der Artikel für diesen Vertrag'),
+                            ->helperText('Anzahl der Artikel für diese Solaranlage'),
 
                         Forms\Components\TextInput::make('unit_price')
                             ->label('Stückpreis')
@@ -216,13 +216,13 @@ class ArticlesRelationManager extends RelationManager
                     ->modalWidth('4xl')
                     ->form([
                         Forms\Components\Section::make('Neuen Artikel erstellen')
-                            ->description('Erstellen Sie einen neuen Artikel und fügen Sie ihn automatisch zu diesem Vertrag hinzu.')
+                            ->description('Erstellen Sie einen neuen Artikel und fügen Sie ihn automatisch zu dieser Solaranlage hinzu.')
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->label('Artikelname')
                                     ->required()
                                     ->maxLength(255)
-                                    ->placeholder('z.B. Wartungsvertrag Solaranlage')
+                                    ->placeholder('z.B. Solarmodul XYZ')
                                     ->columnSpanFull(),
                                 
                                 Forms\Components\Textarea::make('description')
@@ -241,7 +241,7 @@ class ArticlesRelationManager extends RelationManager
                                         'maintenance' => 'Wartung',
                                         'other' => 'Sonstiges',
                                     ])
-                                    ->default('service')
+                                    ->default('product')
                                     ->live()
                                     ->required(),
                                 
@@ -292,8 +292,8 @@ class ArticlesRelationManager extends RelationManager
                                     ->helperText('Anzahl der Nachkommastellen für Gesamtpreise'),
                             ])->columns(2),
                         
-                        Forms\Components\Section::make('Vertragsverknüpfung')
-                            ->description('Konfigurieren Sie, wie dieser Artikel mit dem Vertrag verknüpft wird.')
+                        Forms\Components\Section::make('Anlagenverknüpfung')
+                            ->description('Konfigurieren Sie, wie dieser Artikel mit der Solaranlage verknüpft wird.')
                             ->schema([
                                 Forms\Components\TextInput::make('quantity')
                                     ->label('Menge')
@@ -303,7 +303,7 @@ class ArticlesRelationManager extends RelationManager
                                     ->required()
                                     ->default(1.00)
                                     ->suffix('Stk.')
-                                    ->helperText('Anzahl der Artikel für diesen Vertrag'),
+                                    ->helperText('Anzahl der Artikel für diese Solaranlage'),
                                 
                                 Forms\Components\TextInput::make('unit_price_override')
                                     ->label('Abweichender Stückpreis (optional)')
@@ -313,11 +313,11 @@ class ArticlesRelationManager extends RelationManager
                                     ->prefix('€')
                                     ->helperText('Leer lassen um den Standard-Artikelpreis zu verwenden. Bis zu 6 Nachkommastellen möglich.'),
                                 
-                                Forms\Components\Textarea::make('contract_notes')
-                                    ->label('Vertragsnotizen')
+                                Forms\Components\Textarea::make('plant_notes')
+                                    ->label('Anlagenspezifische Notizen')
                                     ->rows(3)
                                     ->maxLength(1000)
-                                    ->placeholder('Spezielle Notizen für diesen Artikel in diesem Vertrag...')
+                                    ->placeholder('Spezielle Notizen für diesen Artikel bei dieser Anlage...')
                                     ->columnSpanFull(),
                                 
                                 Forms\Components\Toggle::make('is_active')
@@ -332,21 +332,19 @@ class ArticlesRelationManager extends RelationManager
                                     ])
                                     ->default('optional')
                                     ->required()
-                                    ->helperText('Festlegen, ob dieser Artikel bei der Abrechnung für diesen Vertrag obligatorisch ist.'),
+                                    ->helperText('Festlegen, ob dieser Artikel bei der Abrechnung für diese Solaranlage obligatorisch ist.'),
                             ])->columns(2),
                     ])
                     ->action(function (array $data) {
-                        // Hole den Steuersatz für das alte tax_rate Feld
                         $taxRate = \App\Models\TaxRate::find($data['tax_rate_id']);
                         
-                        // Erstelle den neuen Artikel
                         $articleData = [
                             'name' => $data['name'],
                             'description' => $data['description'],
                             'type' => $data['type'],
                             'price' => $data['price'],
                             'tax_rate_id' => $data['tax_rate_id'],
-                            'tax_rate' => $taxRate ? $taxRate->rate : 0.19, // Fallback auf 19%
+                            'tax_rate' => $taxRate ? $taxRate->rate : 0.19,
                             'unit' => $data['unit'],
                             'decimal_places' => $data['decimal_places'],
                             'total_decimal_places' => $data['total_decimal_places'],
@@ -354,11 +352,10 @@ class ArticlesRelationManager extends RelationManager
                         
                         $article = Article::create($articleData);
                         
-                        // Verknüpfe den Artikel mit dem Vertrag
                         $pivotData = [
                             'quantity' => $data['quantity'],
                             'unit_price' => $data['unit_price_override'] ?? $article->price,
-                            'notes' => $data['contract_notes'],
+                            'notes' => $data['plant_notes'],
                             'is_active' => $data['is_active'],
                             'billing_requirement' => $data['billing_requirement'],
                         ];
@@ -367,12 +364,11 @@ class ArticlesRelationManager extends RelationManager
                         
                         Notification::make()
                             ->title('Artikel erstellt und hinzugefügt')
-                            ->body("Der Artikel '{$article->name}' wurde erfolgreich erstellt und zum Vertrag hinzugefügt.")
+                            ->body("Der Artikel '{$article->name}' wurde erfolgreich erstellt und zur Solaranlage hinzugefügt.")
                             ->success()
                             ->send();
                     })
                     ->after(function ($livewire) {
-                        // Aktualisiere die Tabelle
                         $livewire->dispatch('refresh');
                     }),
                 
@@ -381,7 +377,6 @@ class ArticlesRelationManager extends RelationManager
                     ->icon('heroicon-o-plus')
                     ->modalWidth('4xl')
                     ->recordSelectOptionsQuery(function (Builder $query) {
-                        // Schließe bereits verknüpfte Artikel aus
                         $ownerRecord = $this->getOwnerRecord();
                         $attachedArticleIds = $ownerRecord->articles()->pluck('articles.id')->toArray();
                         
@@ -393,7 +388,6 @@ class ArticlesRelationManager extends RelationManager
                         Forms\Components\Select::make('recordId')
                             ->label('Artikel')
                             ->options(function () {
-                                // Schließe bereits verknüpfte Artikel aus
                                 $ownerRecord = $this->getOwnerRecord();
                                 $attachedArticleIds = $ownerRecord->articles()->pluck('articles.id')->toArray();
                                 
@@ -443,7 +437,7 @@ class ArticlesRelationManager extends RelationManager
                             ->required()
                             ->default(1.00)
                             ->suffix('Stk.')
-                            ->helperText('Anzahl der Artikel für diesen Vertrag'),
+                            ->helperText('Anzahl der Artikel für diese Solaranlage'),
 
                         Forms\Components\TextInput::make('unit_price')
                             ->label('Stückpreis')
@@ -474,7 +468,6 @@ class ArticlesRelationManager extends RelationManager
                             ->required(),
                     ])
                     ->mutateFormDataUsing(function (array $data): array {
-                        // Wenn kein unit_price angegeben wurde, verwende den Artikel-Preis
                         if (empty($data['unit_price']) && !empty($data['recordId'])) {
                             $article = Article::find($data['recordId']);
                             if ($article) {
@@ -482,7 +475,6 @@ class ArticlesRelationManager extends RelationManager
                             }
                         }
                         
-                        // Setze Standardwerte
                         $data['quantity'] = $data['quantity'] ?? 1.00;
                         $data['is_active'] = $data['is_active'] ?? true;
                         $data['billing_requirement'] = $data['billing_requirement'] ?? 'optional';
@@ -492,7 +484,7 @@ class ArticlesRelationManager extends RelationManager
                     ->after(function ($record, $livewire) {
                         Notification::make()
                             ->title('Artikel hinzugefügt')
-                            ->body('Der Artikel wurde erfolgreich zum Vertrag hinzugefügt.')
+                            ->body('Der Artikel wurde erfolgreich zur Solaranlage hinzugefügt.')
                             ->success()
                             ->send();
                     }),
@@ -620,7 +612,6 @@ class ArticlesRelationManager extends RelationManager
                                 ])->columns(2),
                         ])
                         ->using(function ($record, array $data): void {
-                            // Aktualisiere die Pivot-Daten
                             $record->pivot->update([
                                 'quantity' => $data['quantity'],
                                 'unit_price' => $data['unit_price'],
@@ -642,12 +633,12 @@ class ArticlesRelationManager extends RelationManager
                         ->color('danger')
                         ->requiresConfirmation()
                         ->modalHeading('Artikel entfernen')
-                        ->modalDescription('Möchten Sie diesen Artikel wirklich vom Vertrag entfernen? Diese Aktion kann nicht rückgängig gemacht werden.')
+                        ->modalDescription('Möchten Sie diesen Artikel wirklich von der Solaranlage entfernen? Diese Aktion kann nicht rückgängig gemacht werden.')
                         ->modalSubmitActionLabel('Ja, entfernen')
                         ->after(function ($livewire) {
                             Notification::make()
                                 ->title('Artikel entfernt')
-                                ->body('Der Artikel wurde erfolgreich vom Vertrag entfernt.')
+                                ->body('Der Artikel wurde erfolgreich von der Solaranlage entfernt.')
                                 ->success()
                                 ->send();
                         }),
@@ -663,14 +654,14 @@ class ArticlesRelationManager extends RelationManager
                         ->label('Ausgewählte entfernen'),
                 ]),
             ])
-            ->defaultSort('supplier_contract_articles.created_at', 'desc')
+            ->defaultSort('solar_plant_article.created_at', 'desc')
             ->emptyStateHeading('Keine Artikel zugeordnet')
-            ->emptyStateDescription('Fügen Sie diesem Vertrag Artikel aus der Artikelverwaltung hinzu.')
+            ->emptyStateDescription('Fügen Sie dieser Solaranlage Artikel aus der Artikelverwaltung hinzu.')
             ->emptyStateIcon('heroicon-o-cube');
     }
     
     public function isReadOnly(): bool
     {
-        return false; // Erlaubt Aktionen auch im View-Modus
+        return false;
     }
 }

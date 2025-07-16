@@ -254,6 +254,7 @@ class SupplierResource extends Resource
             \App\Filament\Resources\CustomerResource\RelationManagers\PhoneNumbersRelationManager::class,
             RelationManagers\EmployeesRelationManager::class,
             RelationManagers\ContractsRelationManager::class,
+            RelationManagers\ArticlesRelationManager::class,
             RelationManagers\DocumentsRelationManager::class,
             RelationManagers\FavoriteNotesRelationManager::class,
             RelationManagers\StandardNotesRelationManager::class,
