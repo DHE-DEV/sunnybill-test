@@ -52,6 +52,11 @@ class SupplierContractBilling extends Model
         return $this->morphMany(Document::class, 'documentable');
     }
 
+    public function articles(): HasMany
+    {
+        return $this->hasMany(SupplierContractBillingArticle::class, 'supplier_contract_billing_id');
+    }
+
     public function getFormattedTotalAmountAttribute(): string
     {
         return number_format($this->total_amount, 2, ',', '.') . ' €';
@@ -131,6 +136,9 @@ class SupplierContractBilling extends Model
         static::created(function ($billing) {
             // Automatisch Allocations basierend auf den Kostenträgern des Vertrags erstellen
             $billing->createAllocationsFromContract();
+            
+            // Automatisch Artikel vom Vertrag zu der Abrechnung hinzufügen
+            $billing->addArticlesFromContract();
         });
     }
 
@@ -156,6 +164,34 @@ class SupplierContractBilling extends Model
                 'percentage' => $solarPlant->pivot->percentage,
                 'amount' => ($this->total_amount * $solarPlant->pivot->percentage) / 100,
                 'notes' => 'Automatisch erstellt basierend auf Vertragszuordnung',
+                'is_active' => true,
+            ]);
+        }
+    }
+
+    /**
+     * Fügt automatisch Artikel vom Vertrag zur Abrechnung hinzu
+     */
+    public function addArticlesFromContract(): void
+    {
+        if (!$this->supplierContract) {
+            return;
+        }
+
+        // Hole alle aktiven Artikel des Vertrags über die Pivot-Tabelle
+        $activeArticles = $this->supplierContract->activeArticles()->get();
+
+        if ($activeArticles->isEmpty()) {
+            return;
+        }
+
+        foreach ($activeArticles as $article) {
+            $this->articles()->create([
+                'article_id' => $article->id,
+                'quantity' => $article->pivot->quantity ?? 1,
+                'unit_price' => $article->pivot->unit_price ?? $article->price,
+                'description' => $article->name,
+                'notes' => 'Automatisch hinzugefügt aus Vertragsartikel',
                 'is_active' => true,
             ]);
         }

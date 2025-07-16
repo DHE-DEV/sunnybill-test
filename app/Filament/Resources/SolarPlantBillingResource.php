@@ -69,7 +69,15 @@ class SolarPlantBillingResource extends Resource
                                 $plant = SolarPlant::find($plantId);
                                 if (!$plant) return 'Anlage nicht gefunden';
                                 
-                                return "Nummer: {$plant->plant_number}\nStandort: {$plant->location}";
+                                $plantUrl = \App\Filament\Resources\SolarPlantResource::getUrl('view', ['record' => $plant->id]);
+                                $plantNumberLink = '<a href="' . $plantUrl . '" target="_blank" class="text-primary-600 hover:text-primary-500 underline font-medium">' . htmlspecialchars($plant->plant_number) . '</a>';
+                                
+                                return new \Illuminate\Support\HtmlString(
+                                    '<div class="space-y-1">' .
+                                    '<div>Nummer: ' . $plantNumberLink . '</div>' .
+                                    '<div>Standort: ' . htmlspecialchars($plant->location ?? 'Nicht angegeben') . '</div>' .
+                                    '</div>'
+                                );
                             })
                             ->visible(fn ($get) => $get('solar_plant_id')),
 
@@ -118,6 +126,14 @@ class SolarPlantBillingResource extends Resource
                             ->minValue(0)
                             ->maxValue(100)
                             ->required(),
+
+                        Forms\Components\TextInput::make('produced_energy_kwh')
+                            ->label('Produzierte Energie (kWh)')
+                            ->suffix('kWh')
+                            ->numeric()
+                            ->step(0.001)
+                            ->minValue(0)
+                            ->placeholder('z.B. 2500.000'),
 
                         Forms\Components\Select::make('status')
                             ->label('Status')
@@ -344,6 +360,13 @@ class SolarPlantBillingResource extends Resource
                 Tables\Columns\TextColumn::make('formatted_month')
                     ->label('Abrechnungsmonat')
                     ->sortable(['billing_year', 'billing_month']),
+
+                Tables\Columns\TextColumn::make('produced_energy_kwh')
+                    ->label('Produzierte Energie')
+                    ->suffix(' kWh')
+                    ->numeric(3)
+                    ->alignRight()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('participation_percentage')
                     ->label('Beteiligung')

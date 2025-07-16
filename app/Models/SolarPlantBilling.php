@@ -20,6 +20,7 @@ class SolarPlantBilling extends Model
         'billing_year',
         'billing_month',
         'participation_percentage',
+        'produced_energy_kwh',
         'total_costs',
         'total_credits',
         'net_amount',
@@ -35,6 +36,7 @@ class SolarPlantBilling extends Model
 
     protected $casts = [
         'participation_percentage' => 'decimal:2',
+        'produced_energy_kwh' => 'decimal:3',
         'total_costs' => 'decimal:2',
         'total_credits' => 'decimal:2',
         'net_amount' => 'decimal:2',

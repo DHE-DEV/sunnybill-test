@@ -726,6 +726,7 @@ class SolarPlantResource extends Resource
         return [
             RelationManagers\ArticlesRelationManager::class,
             RelationManagers\ParticipationsRelationManager::class,
+            RelationManagers\BillingsRelationManager::class,
             RelationManagers\MonthlyResultsRelationManager::class,
             RelationManagers\DocumentsRelationManager::class,
             RelationManagers\ContractsRelationManager::class,
