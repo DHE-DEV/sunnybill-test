@@ -13,12 +13,7 @@ class EditSupplierContract extends EditRecord
     public function getTitle(): string
     {
         $record = $this->getRecord();
-        
-        if ($record) {
-            return "Lieferant Vertrag bearbeiten - {$record->contract_number} - {$record->title}";
-        }
-        
-        return 'Lieferant Vertrag bearbeiten';
+        return "Lieferant Vertrag bearbeiten - {$record->contract_number} - {$record->title}";
     }
 
     protected function getHeaderActions(): array

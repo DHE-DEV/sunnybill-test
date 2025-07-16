@@ -13,7 +13,7 @@ class EditSolarPlant extends EditRecord
     public function getTitle(): string
     {
         $plant = $this->record;
-        return ($plant->plant_number ? $plant->plant_number . ' - ' : '') . $plant->name;
+        return "Solaranlage Bearbeiten - {$plant->plant_number} - {$plant->name}";
     }
 
     protected function getHeaderActions(): array

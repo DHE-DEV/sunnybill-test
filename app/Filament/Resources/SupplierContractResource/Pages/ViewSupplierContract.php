@@ -16,12 +16,7 @@ class ViewSupplierContract extends ViewRecord
     public function getTitle(): string
     {
         $record = $this->getRecord();
-        
-        if ($record) {
-            return "Lieferant Vertrag ansehen - {$record->contract_number} - {$record->title}";
-        }
-        
-        return 'Lieferant Vertrag ansehen';
+        return "Lieferant Vertrag ansehen - {$record->contract_number} - {$record->title}";
     }
 
     public function form(Form $form): Form
