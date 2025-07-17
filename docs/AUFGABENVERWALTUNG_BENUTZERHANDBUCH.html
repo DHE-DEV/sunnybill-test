@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aufgabenverwaltung - Benutzerhandbuch</title>
+    <style>
+        @media print {
+            body {
+                margin: 0;
+                padding: 20mm;
+                font-size: 12pt;
+                line-height: 1.4;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+        
+        h3 {
+            color: #2c3e50;
+            margin-top: 25px;
+        }
+        
+        h4 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+        
+        .header-info {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .header-info p {
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        
+        .toc {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .toc a {
+            text-decoration: none;
+            color: #3498db;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        .feature-list {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .feature-list ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .info-box {
+            background: #e8f4f8;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .status-list {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .status-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #3498db;
+            background: white;
+        }
+        
+        .status-item strong {
+            color: #2c3e50;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .code {
+            background: #f8f9fa;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .step-list {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .step-list li {
+            counter-increment: step-counter;
+            margin: 10px 0;
+            padding-left: 40px;
+            position: relative;
+        }
+        
+        .step-list li:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #3498db;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .faq-item {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .faq-question {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .faq-answer {
+            color: #555;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Aufgabenverwaltung - Benutzerhandbuch</h1>
+    
+    <div class="header-info">
+        <p>Version: 1.0</p>
+        <p>Datum: 17. Juli 2025</p>
+        <p>Bearbeiter: System Administrator</p>
+    </div>
+
+    <div class="toc">
+        <h2>Inhaltsverzeichnis</h2>
+        <ul>
+            <li><a href="#1-einführung">1. Einführung</a></li>
+            <li><a href="#2-zugang-zur-aufgabenverwaltung">2. Zugang zur Aufgabenverwaltung</a></li>
+            <li><a href="#3-aufgaben-übersicht">3. Aufgaben-Übersicht</a></li>
+            <li><a href="#4-neue-aufgabe-erstellen">4. Neue Aufgabe erstellen</a></li>
+            <li><a href="#5-aufgaben-bearbeiten">5. Aufgaben bearbeiten</a></li>
+            <li><a href="#6-aufgaben-status-und-prioritäten">6. Aufgaben-Status und Prioritäten</a></li>
+            <li><a href="#7-zuordnungen-und-verantwortlichkeiten">7. Zuordnungen und Verantwortlichkeiten</a></li>
+            <li><a href="#8-unteraufgaben">8. Unteraufgaben</a></li>
+            <li><a href="#9-termine-und-fälligkeiten">9. Termine und Fälligkeiten</a></li>
+            <li><a href="#10-zeiterfassung">10. Zeiterfassung</a></li>
+            <li><a href="#11-filter-und-suche">11. Filter und Suche</a></li>
+            <li><a href="#12-bulk-aktionen">12. Bulk-Aktionen</a></li>
+            <li><a href="#13-notizen-und-dokumente">13. Notizen und Dokumente</a></li>
+            <li><a href="#14-wiederkehrende-aufgaben">14. Wiederkehrende Aufgaben</a></li>
+            <li><a href="#15-labels-und-kategorisierung">15. Labels und Kategorisierung</a></li>
+            <li><a href="#16-aufgaben-duplizieren">16. Aufgaben duplizieren</a></li>
+            <li><a href="#17-berichtswesen">17. Berichtswesen</a></li>
+            <li><a href="#18-tipps-und-best-practices">18. Tipps und Best Practices</a></li>
+            <li><a href="#19-häufig-gestellte-fragen">19. Häufig gestellte Fragen</a></li>
+        </ul>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2 id="1-einführung">1. Einführung</h2>
+    
+    <p>Die Aufgabenverwaltung ist ein zentrales Modul des SunnyBill-Systems, das eine effiziente Verwaltung, Verfolgung und Koordination von Arbeitsaufgaben ermöglicht. Das System unterstützt Teams bei der Organisation komplexer Projekte und bietet umfassende Funktionen für die Aufgabenplanung und -verfolgung.</p>
+
+    <h3>1.1 Hauptfunktionen</h3>
+    
+    <div class="feature-list">
+        <ul>
+            <li><strong>Aufgabenerstellung und -verwaltung</strong>: Erstellen, bearbeiten und löschen von Aufgaben</li>
+            <li><strong>Hierarchische Strukturierung</strong>: Haupt- und Unteraufgaben für komplexe Projekte</li>
+            <li><strong>Status-Tracking</strong>: Vollständige Verfolgung des Aufgabenfortschritts</li>
+            <li><strong>Zeiterfassung</strong>: Schätzung und Erfassung von Arbeitszeiten</li>
+            <li><strong>Terminplanung</strong>: Fälligkeitsdaten und Terminüberwachung</li>
+            <li><strong>Zuordnungssystem</strong>: Flexible Zuweisung von Verantwortlichkeiten</li>
+            <li><strong>Filterfunktionen</strong>: Erweiterte Such- und Filtermöglichkeiten</li>
+            <li><strong>Berichtswesen</strong>: Umfassende Reporting-Funktionen</li>
+        </ul>
+    </div>
+
+    <h3>1.2 Zielgruppe</h3>
+    
+    <p>Dieses Handbuch richtet sich an:</p>
+    <ul>
+        <li>Projektmanager und Teamleiter</li>
+        <li>Mitarbeiter, die Aufgaben bearbeiten</li>
+        <li>Administratoren des Systems</li>
+        <li>Alle Benutzer, die mit der Aufgabenverwaltung arbeiten</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2 id="2-zugang-zur-aufgabenverwaltung">2. Zugang zur Aufgabenverwaltung</h2>
+
+    <h3>2.1 Navigation</h3>
+    
+    <ol class="step-list">
+        <li>Melden Sie sich im SunnyBill-System an</li>
+        <li>Klicken Sie im Hauptmenü auf "Aufgaben"</li>
+        <li>Die Aufgaben-Übersicht wird angezeigt</li>
+    </ol>
+
+    <h3>2.2 Berechtigungen</h3>
+    
+    <table>
+        <tr>
+            <th>Berechtigung</th>
+            <th>Beschreibung</th>
+        </tr>
+        <tr>
+            <td><strong>Lesen</strong></td>
+            <td>Alle Benutzer können Aufgaben einsehen</td>
+        </tr>
+        <tr>
+            <td><strong>Erstellen</strong></td>
+            <td>Berechtigung zum Erstellen neuer Aufgaben</td>
+        </tr>
+        <tr>
+            <td><strong>Bearbeiten</strong></td>
+            <td>Berechtigung zum Bearbeiten bestehender Aufgaben</td>
+        </tr>
+        <tr>
+            <td><strong>Löschen</strong></td>
+            <td>Berechtigung zum Löschen von Aufgaben</td>
+        </tr>
+        <tr>
+            <td><strong>Admin</strong></td>
+            <td>Vollzugriff auf alle Aufgaben-Funktionen</td>
+        </tr>
+    </table>
+
+    <div class="page-break"></div>
+
+    <h2 id="3-aufgaben-übersicht">3. Aufgaben-Übersicht</h2>
+
+    <h3>3.1 Tabellenansicht</h3>
+    
+    <p>Die Hauptansicht zeigt alle Aufgaben in einer übersichtlichen Tabelle mit folgenden Spalten:</p>
+
+    <div class="info-box">
+        <h4>Standardspalten:</h4>
+        <ul>
+            <li><strong>Titel</strong>: Aufgabentitel mit Kurzbeschreibung</li>
+            <li><strong>Typ</strong>: Aufgabentyp (konfigurierbar)</li>
+            <li><strong>Priorität</strong>: Niedrig, Mittel, Hoch, Dringend</li>
+            <li><strong>Status</strong>: Aktueller Bearbeitungsstatus</li>
+            <li><strong>Fällig am</strong>: Fälligkeitsdatum mit Farbkodierung</li>
+            <li><strong>Zuständig</strong>: Zugewiesene Person</li>
+            <li><strong>Unteraufgaben</strong>: Anzahl der Unteraufgaben</li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <h4>Zusätzliche Spalten (ein-/ausblendbar):</h4>
+        <ul>
+            <li><strong>Nr.</strong>: Automatisch generierte Aufgabennummer</li>
+            <li><strong>Gehört zu</strong>: Übergeordnete Aufgabe</li>
+            <li><strong>Inhaber</strong>: Aufgabeninhaber</li>
+            <li><strong>Kunde</strong>: Zugeordneter Kunde</li>
+            <li><strong>Lieferant</strong>: Zugeordneter Lieferant</li>
+            <li><strong>Solaranlage</strong>: Zugeordnete Solaranlage</li>
+            <li><strong>Geschätzt</strong>: Geschätzte Arbeitszeit</li>
+            <li><strong>Tatsächlich</strong>: Tatsächlich benötigte Zeit</li>
+            <li><strong>Erstellt von</strong>: Ersteller der Aufgabe</li>
+            <li><strong>Erstellt am</strong>: Erstellungsdatum</li>
+            <li><strong>Abgeschlossen am</strong>: Abschlussdatum</li>
+        </ul>
+    </div>
+
+    <h3>3.2 Farbkodierung</h3>
+    
+    <table>
+        <tr>
+            <th>Farbe</th>
+            <th>Bedeutung</th>
+        </tr>
+        <tr>
+            <td><strong>Rot</strong></td>
+            <td>Überfällige Aufgaben</td>
+        </tr>
+        <tr>
+            <td><strong>Orange</strong></td>
+            <td>Heute fällige Aufgaben</td>
+        </tr>
+        <tr>
+            <td><strong>Blau</strong></td>
+            <td>Normale Aufgaben</td>
+        </tr>
+        <tr>
+            <td><strong>Grau</strong></td>
+            <td>Abgeschlossene Aufgaben</td>
+        </tr>
+    </table>
+
+    <h3>3.3 Sortierung</h3>
+    
+    <ul>
+        <li>Klicken Sie auf Spaltenüberschriften zum Sortieren</li>
+        <li>Standardsortierung: Nach Fälligkeitsdatum (aufsteigend)</li>
+        <li>Sortierung wird in der Sitzung gespeichert</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2 id="4-neue-aufgabe-erstellen">4. Neue Aufgabe erstellen</h2>
+
+    <h3>4.1 Grunddaten</h3>
+    
+    <ol class="step-list">
+        <li>Klicken Sie auf "Neue Aufgabe"</li>
+        <li>Füllen Sie die Grunddaten aus</li>
+    </ol>
+
+    <div class="info-box">
+        <h4>Pflichtfelder:</h4>
+        <ul>
+            <li><strong>Titel</strong>: Aussagekräftiger Aufgabentitel</li>
+            <li><strong>Aufgabentyp</strong>: Wählen Sie aus vorkonfigurierten Typen</li>
+            <li><strong>Priorität</strong>: Niedrig, Mittel, Hoch, Dringend</li>
+            <li><strong>Status</strong>: Standardmäßig "Offen"</li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <h4>Optionale Felder:</h4>
+        <ul>
+            <li><strong>Beschreibung</strong>: Detaillierte Aufgabenbeschreibung</li>
+            <li><strong>Aufgabennummer</strong>: Wird automatisch generiert</li>
+        </ul>
+    </div>
+
+    <h3>4.2 Termine und Zeit</h3>
+    
+    <ul>
+        <li><strong>Fälligkeitsdatum</strong>: Wann soll die Aufgabe abgeschlossen sein</li>
+        <li><strong>Fälligkeitszeit</strong>: Spezifische Uhrzeit (optional)</li>
+        <li><strong>Geschätzte Minuten</strong>: Zeitschätzung für die Bearbeitung</li>
+        <li><strong>Tatsächliche Minuten</strong>: Wird während der Bearbeitung erfasst</li>
+    </ul>
+
+    <h3>4.3 Zuordnungen</h3>
+    
+    <ul>
+        <li><strong>Zugewiesen an</strong>: Bearbeiter der Aufgabe</li>
+        <li><strong>Inhaber</strong>: Verantwortlicher für die Aufgabe</li>
+        <li><strong>Kunde</strong>: Zuordnung zu einem Kunden</li>
+        <li><strong>Lieferant</strong>: Zuordnung zu einem Lieferanten</li>
+        <li><strong>Solaranlage</strong>: Zuordnung zu einer Solaranlage</li>
+        <li><strong>Übergeordnete Aufgabe</strong>: Für Unteraufgaben</li>
+    </ul>
+
+    <h3>4.4 Erweiterte Optionen</h3>
+    
+    <ul>
+        <li><strong>Labels</strong>: Frei definierbare Schlagwörter</li>
+        <li><strong>Wiederkehrend</strong>: Checkbox für wiederkehrende Aufgaben</li>
+        <li><strong>Wiederholungsmuster</strong>: Muster für Wiederholungen</li>
+        <li><strong>Sortierreihenfolge</strong>: Numerischer Wert für Sortierung</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2 id="5-aufgaben-bearbeiten">5. Aufgaben bearbeiten</h2>
+
+    <h3>5.1 Aufgabe öffnen</h3>
+    
+    <ol class="step-list">
+        <li>Klicken Sie auf eine Aufgabe in der Übersicht</li>
+        <li>Wählen Sie "Bearbeiten" aus dem Aktionsmenü</li>
+        <li>Oder klicken Sie auf den Aufgabentitel</li>
+    </ol>
+
+    <h3>5.2 Bearbeitungsoptionen</h3>
+    
+    <ul>
+        <li><strong>Alle Felder bearbeitbar</strong>: Änderungen an allen Aufgabenfeldern</li>
+        <li><strong>Statusänderung</strong>: Direktes Ändern des Status</li>
+        <li><strong>Zeitzuweisung</strong>: Aktualisierung der Arbeitszeiten</li>
+        <li><strong>Zuordnungen ändern</strong>: Neuzuweisung von Verantwortlichkeiten</li>
+    </ul>
+
+    <h3>5.3 Speichern und Abbrechen</h3>
+    
+    <ul>
+        <li><strong>Speichern</strong>: Alle Änderungen werden übernommen</li>
+        <li><strong>Abbrechen</strong>: Änderungen werden verworfen</li>
+        <li><strong>Automatisches Speichern</strong>: Bei kritischen Änderungen</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2 id="6-aufgaben-status-und-prioritäten">6. Aufgaben-Status und Prioritäten</h2>
+
+    <h3>6.1 Status-Übersicht</h3>
+    
+    <div class="status-list">
+        <div class="status-item">
+            <strong>Offen</strong>: Aufgabe wurde erstellt, aber noch nicht begonnen
+            <ul>
+                <li>Standardstatus für neue Aufgaben</li>
+                <li>Bereit zur Bearbeitung</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>In Bearbeitung</strong>: Aufgabe wird aktiv bearbeitet
+            <ul>
+                <li>Zeigt laufende Arbeit an</li>
+                <li>Kann Zeiterfassung auslösen</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Warte auf Extern</strong>: Aufgabe wartet auf externe Rückmeldung
+            <ul>
+                <li>Blockiert durch externe Faktoren</li>
+                <li>Verfolgt Abhängigkeiten</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Warte auf Intern</strong>: Aufgabe wartet auf interne Rückmeldung
+            <ul>
+                <li>Blockiert durch interne Faktoren</li>
+                <li>Eskalation möglich</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Abgeschlossen</strong>: Aufgabe wurde erfolgreich beendet
+            <ul>
+                <li>Automatische Zeitstempel</li>
+                <li>Archivierung möglich</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Abgebrochen</strong>: Aufgabe wurde eingestellt
+            <ul>
+                <li>Dokumentation des Abbruchgrunds</li>
+                <li>Nachverfolgung möglich</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>6.2 Prioritäten</h3>
+    
+    <div class="status-list">
+        <div class="status-item">
+            <strong>Niedrig</strong>: Routine-Aufgaben ohne Zeitdruck
+            <ul>
+                <li>Kann später bearbeitet werden</li>
+                <li>Keine besondere Dringlichkeit</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Mittel</strong>: Standard-Priorität für normale Aufgaben
+            <ul>
+                <li>Reguläre Bearbeitungszeit</li>
+                <li>Standardeinstellung</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Hoch</strong>: Wichtige Aufgaben mit erhöhter Priorität
+            <ul>
+                <li>Bevorzugte Bearbeitung</li>
+                <li>Überwachung erforderlich</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Dringend</strong>: Kritische Aufgaben mit höchster Priorität
+            <ul>
+                <li>Sofortige Bearbeitung erforderlich</li>
+                <li>Eskalation und Benachrichtigung</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>6.3 Status-Workflow</h3>
+    
+    <ol class="step-list">
+        <li><strong>Offen</strong> → <strong>In Bearbeitung</strong> (Arbeit beginnen)</li>
+        <li><strong>In Bearbeitung</strong> → <strong>Warte auf Extern/Intern</strong> (Blockierung)</li>
+        <li><strong>Warte auf Extern/Intern</strong> → <strong>In Bearbeitung</strong> (Fortsetzung)</li>
+        <li><strong>In Bearbeitung</strong> → <strong>Abgeschlossen</strong> (Erfolgreiche Beendigung)</li>
+        <li><strong>Jeder Status</strong> → <strong>Abgebrochen</strong> (Einstellung der Arbeit)</li>
+    </ol>
+
+    <div class="page-break"></div>
+
+    <h2 id="7-zuordnungen-und-verantwortlichkeiten">7. Zuordnungen und Verantwortlichkeiten</h2>
+
+    <h3>7.1 Rollen-Konzept</h3>
+    
+    <div class="status-list">
+        <div class="status-item">
+            <strong>Ersteller</strong>: Person, die die Aufgabe erstellt hat
+            <ul>
+                <li>Automatisch bei Erstellung zugewiesen</li>
+                <li>Kann nicht geändert werden</li>
+                <li>Vollzugriff auf die Aufgabe</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Inhaber</strong>: Verantwortlicher für die Aufgabe
+            <ul>
+                <li>Überwacht den Fortschritt</li>
+                <li>Kann Aufgabe zuweisen</li>
+                <li>Berichtspflicht</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Zugewiesen an</strong>: Bearbeiter der Aufgabe
+            <ul>
+                <li>Führt die eigentliche Arbeit aus</li>
+                <li>Kann Status ändern</li>
+                <li>Zeiterfassung</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>7.2 Zuordnungslogik</h3>
+    
+    <ul>
+        <li><strong>Mehrfachzuordnung</strong>: Aufgaben können mehreren Personen zugewiesen werden</li>
+        <li><strong>Benachrichtigungen</strong>: Automatische Mitteilungen bei Zuordnungsänderungen</li>
+        <li><strong>Berechtigung</strong>: Nur Inhaber und Ersteller können Zuordnungen ändern</li>
+    </ul>
+
+    <h3>7.3 Externe Zuordnungen</h3>
+    
+    <div class="status-list">
+        <div class="status-item">
+            <strong>Kunde</strong>: Verknüpfung mit Kundendatensatz
+            <ul>
+                <li>Kundenspezifische Aufgaben</li>
+                <li>Projektbezogene Zuordnung</li>
+                <li>Abrechnungsrelevanz</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Lieferant</strong>: Verknüpfung mit Lieferantendatensatz
+            <ul>
+                <li>Lieferantenbezogene Aufgaben</li>
+                <li>Bestellprozesse</li>
+                <li>Qualitätskontrolle</li>
+            </ul>
+        </div>
+        
+        <div class="status-item">
+            <strong>Solaranlage</strong>: Verknüpfung mit Anlagendatensatz
+            <ul>
+                <li>Anlagenspezifische Wartung</li>
+                <li>Installationsprozesse</li>
+                <li>Betriebsaufgaben</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2 id="8-unteraufgaben">8. Unteraufgaben</h2>
+
+    <h3>8.1 Hierarchische Struktur</h3>
+    
+    <ul>
+        <li><strong>Hauptaufgaben</strong>: Übergeordnete Aufgaben ohne Parent</li>
+        <li><strong
