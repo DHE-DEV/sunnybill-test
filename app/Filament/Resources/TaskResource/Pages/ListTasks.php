@@ -675,7 +675,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     /**
      * Listener für das Livewire-Event, wenn eine Aufgabe verschoben wird.
      */
-    public function onTaskDropped($taskId, $newStatus, $fromStatus, $orderedIds): void
+    public function onTaskDropped($taskId, $newStatus, $fromStatus, $orderedIds = []): void
     {
         // Finde die Aufgabe
         $task = \App\Models\Task::find($taskId);
@@ -698,12 +698,15 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             // Historie für Status-Änderung
             TaskHistory::logFieldChange($task, auth()->id(), 'status', $oldStatus, $newStatus);
 
-            // Optional: Logik zur Neuordnung basierend auf $orderedIds
-            // ...
+            // Status-Änderungs-Benachrichtigung senden
+            $this->sendStatusChangeNotification($task, $oldStatus, $newStatus);
+
+            // Reihenfolge der Aufgaben in der Spalte aktualisieren
+            $this->updateTaskOrderFromDrop($newStatus, $orderedIds);
         }
 
-        // Neu rendern, um die Änderungen zu übernehmen (optional, aber oft nützlich)
-        $this->resetPage();
+        // Neu rendern, um die Änderungen zu übernehmen
+        $this->dispatch('task-updated');
     }
 
     protected function getActions(): array
@@ -1827,142 +1830,168 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             return;
         }
         
-        // Nur an den Inhaber der Aufgabe senden
-        if (!$task->owner_id || $task->owner_id === auth()->id()) {
-            \Log::info('ℹ️ Task: Keine Status-Änderungs-Benachrichtigung - kein Inhaber oder Inhaber ist der Veränderer', [
+        // Sammle alle Benutzer, die benachrichtigt werden sollen
+        $usersToNotify = collect();
+        
+        // Inhaber hinzufügen (falls nicht der Veränderer)
+        if ($task->owner_id && $task->owner_id !== auth()->id()) {
+            $owner = User::find($task->owner_id);
+            if ($owner) {
+                $usersToNotify->push($owner);
+            }
+        }
+        
+        // Zugewiesenen Benutzer hinzufügen (falls nicht der Veränderer und nicht bereits hinzugefügt)
+        if ($task->assigned_to && $task->assigned_to !== auth()->id() && $task->assigned_to !== $task->owner_id) {
+            $assignedUser = User::find($task->assigned_to);
+            if ($assignedUser) {
+                $usersToNotify->push($assignedUser);
+            }
+        }
+        
+        if ($usersToNotify->isEmpty()) {
+            \Log::info('ℹ️ Task: Keine Status-Änderungs-Benachrichtigung - keine relevanten Benutzer', [
                 'task_id' => $task->id,
                 'owner_id' => $task->owner_id,
+                'assigned_to' => $task->assigned_to,
                 'changed_by' => auth()->id()
             ]);
             return;
         }
         
-        $owner = User::find($task->owner_id);
-        if (!$owner) {
-            \Log::warning('⚠️ Task: Inhaber nicht gefunden für Status-Änderungs-Benachrichtigung', [
-                'task_id' => $task->id,
-                'owner_id' => $task->owner_id
-            ]);
-            return;
+        // Status-Labels für die E-Mail
+        $statusLabels = [
+            'open' => 'Offen',
+            'in_progress' => 'In Bearbeitung',
+            'waiting_external' => 'Warte auf Extern',
+            'waiting_internal' => 'Warte auf Intern',
+            'completed' => 'Abgeschlossen',
+            'cancelled' => 'Abgebrochen'
+        ];
+        
+        $gmailService = app(\App\Services\GmailService::class);
+        $successCount = 0;
+        $errorCount = 0;
+        $notifiedUsers = [];
+        
+        foreach ($usersToNotify as $user) {
+            try {
+                \Log::info('📧 Task: Sende Status-Änderungs-Benachrichtigung', [
+                    'task_id' => $task->id,
+                    'task_title' => $task->title,
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'user_name' => $user->name,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'changed_by' => auth()->id()
+                ]);
+
+                // E-Mail-Adresse validieren
+                if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+                    \Log::warning('❌ Task: Ungültige E-Mail-Adresse für Status-Änderungs-Benachrichtigung', [
+                        'task_id' => $task->id,
+                        'user_id' => $user->id,
+                        'email' => $user->email
+                    ]);
+                    $errorCount++;
+                    continue;
+                }
+                
+                // E-Mail-Inhalt rendern
+                $emailContent = view('emails.task-status-change', [
+                    'user' => $user,
+                    'task' => $task,
+                    'author' => auth()->user(),
+                    'oldStatus' => $oldStatus,
+                    'newStatus' => $newStatus,
+                    'oldStatusLabel' => $statusLabels[$oldStatus] ?? $oldStatus,
+                    'newStatusLabel' => $statusLabels[$newStatus] ?? $newStatus,
+                    'changeDate' => now(),
+                    'taskUrl' => route('filament.admin.resources.tasks.index')
+                ])->render();
+
+                $subject = "Aufgaben-Status geändert - {$task->title}";
+
+                // E-Mail über Gmail Service senden
+                $result = $gmailService->sendEmail(
+                    $user->email,
+                    $subject,
+                    $emailContent
+                );
+
+                if ($result['success'] ?? false) {
+                    \Log::info('✅ Task: Status-Änderungs-Benachrichtigung erfolgreich gesendet', [
+                        'task_id' => $task->id,
+                        'user_id' => $user->id,
+                        'user_email' => $user->email,
+                        'user_name' => $user->name,
+                        'old_status' => $oldStatus,
+                        'new_status' => $newStatus,
+                        'subject' => $subject,
+                        'message_id' => $result['message_id'] ?? null
+                    ]);
+                    $successCount++;
+                    $notifiedUsers[] = $user->name;
+                } else {
+                    \Log::error('❌ Task: Status-Änderungs-Benachrichtigung fehlgeschlagen', [
+                        'task_id' => $task->id,
+                        'user_id' => $user->id,
+                        'user_email' => $user->email,
+                        'user_name' => $user->name,
+                        'old_status' => $oldStatus,
+                        'new_status' => $newStatus,
+                        'error' => $result['error'] ?? 'Unbekannter Fehler'
+                    ]);
+                    $errorCount++;
+                }
+
+            } catch (\Exception $e) {
+                \Log::error('❌ Task: Fehler beim Senden der Status-Änderungs-Benachrichtigung', [
+                    'task_id' => $task->id,
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'user_name' => $user->name,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                $errorCount++;
+            }
         }
         
-        try {
-            \Log::info('📧 Task: Sende Status-Änderungs-Benachrichtigung', [
-                'task_id' => $task->id,
-                'task_title' => $task->title,
-                'owner_id' => $owner->id,
-                'owner_email' => $owner->email,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'changed_by' => auth()->id()
-            ]);
-
-            // E-Mail-Adresse validieren
-            if (!filter_var($owner->email, FILTER_VALIDATE_EMAIL)) {
-                \Log::warning('❌ Task: Ungültige E-Mail-Adresse für Status-Änderungs-Benachrichtigung', [
-                    'task_id' => $task->id,
-                    'owner_id' => $owner->id,
-                    'email' => $owner->email
-                ]);
-                return;
-            }
-
-            // Status-Labels für die E-Mail
-            $statusLabels = [
-                'open' => 'Offen',
-                'in_progress' => 'In Bearbeitung',
-                'waiting_external' => 'Warte auf Extern',
-                'waiting_internal' => 'Warte auf Intern',
-                'completed' => 'Abgeschlossen',
-                'cancelled' => 'Abgebrochen'
-            ];
-
-            // Gmail Service verwenden
-            $gmailService = app(\App\Services\GmailService::class);
+        // Benachrichtigungen an den Veränderer senden
+        if ($successCount > 0) {
+            $userList = implode(', ', $notifiedUsers);
+            $message = $successCount === 1 
+                ? "Status-Änderungs-Benachrichtigung an {$userList} versendet"
+                : "Status-Änderungs-Benachrichtigungen an {$successCount} Benutzer versendet ({$userList})";
             
-            // E-Mail-Inhalt rendern
-            $emailContent = view('emails.task-status-change', [
-                'user' => $owner,
-                'task' => $task,
-                'author' => auth()->user(),
-                'oldStatus' => $oldStatus,
-                'newStatus' => $newStatus,
-                'oldStatusLabel' => $statusLabels[$oldStatus] ?? $oldStatus,
-                'newStatusLabel' => $statusLabels[$newStatus] ?? $newStatus,
-                'changeDate' => now(),
-                'taskUrl' => route('filament.admin.resources.tasks.index')
-            ])->render();
-
-            $subject = "Aufgaben-Status geändert - {$task->title}";
-
-            // E-Mail über Gmail Service senden
-            $result = $gmailService->sendEmail(
-                $owner->email,
-                $subject,
-                $emailContent
-            );
-
-            if ($result['success'] ?? false) {
-                \Log::info('✅ Task: Status-Änderungs-Benachrichtigung erfolgreich gesendet', [
-                    'task_id' => $task->id,
-                    'owner_id' => $owner->id,
-                    'owner_email' => $owner->email,
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus,
-                    'subject' => $subject,
-                    'message_id' => $result['message_id'] ?? null
-                ]);
-                
-                // Erfolgs-Benachrichtigung an den Benutzer
-                Notification::make()
-                    ->title('Status-Änderungs-Benachrichtigung versendet')
-                    ->body("E-Mail-Benachrichtigung an {$owner->name} versendet")
-                    ->success()
-                    ->icon('heroicon-o-envelope')
-                    ->send();
-                    
-            } else {
-                \Log::error('❌ Task: Status-Änderungs-Benachrichtigung fehlgeschlagen', [
-                    'task_id' => $task->id,
-                    'owner_id' => $owner->id,
-                    'owner_email' => $owner->email,
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus,
-                    'error' => $result['error'] ?? 'Unbekannter Fehler'
-                ]);
-                
-                // Fehler-Benachrichtigung an den Benutzer
-                Notification::make()
-                    ->title('E-Mail-Versand fehlgeschlagen')
-                    ->body('Status-Änderungs-Benachrichtigung konnte nicht versendet werden')
-                    ->danger()
-                    ->icon('heroicon-o-x-circle')
-                    ->send();
-            }
-
-        } catch (\Exception $e) {
-            \Log::error('❌ Task: Fehler beim Senden der Status-Änderungs-Benachrichtigung', [
-                'task_id' => $task->id,
-                'owner_id' => $owner->id,
-                'owner_email' => $owner->email,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Notification::make()
+                ->title('Status-Änderungs-Benachrichtigungen versendet')
+                ->body($message)
+                ->success()
+                ->icon('heroicon-o-envelope')
+                ->send();
+        }
+        
+        if ($errorCount > 0) {
+            $message = $errorCount === 1 
+                ? 'Status-Änderungs-Benachrichtigung konnte nicht versendet werden'
+                : "{$errorCount} Status-Änderungs-Benachrichtigungen konnten nicht versendet werden";
             
-            // Fehler-Benachrichtigung an den Benutzer
             Notification::make()
                 ->title('E-Mail-Versand fehlgeschlagen')
-                ->body('Fehler beim Senden der Status-Änderungs-Benachrichtigung: ' . $e->getMessage())
+                ->body($message)
                 ->danger()
-                ->icon('heroicon-o-exclamation-triangle')
+                ->icon('heroicon-o-x-circle')
                 ->send();
         }
     }
 
     // Task sorting within columns via drag & drop
-    public function updateTaskOrder($taskId, $newStatus, $fromStatus, $orderedIds)
+    public function updateTaskOrder($taskId, $newStatus, $fromStatus, $orderedIds = [])
     {
         $task = Task::find($taskId);
         if (!$task) return;
@@ -1988,6 +2017,24 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         }
 
         // Update sort order for all tasks in the target column (exclude blockers from manual sorting)
+        $this->updateTaskOrderFromDrop($newStatus, $orderedIds);
+
+        $task->save();
+
+        // Refresh the page to show updated order
+        $this->dispatch('task-updated');
+    }
+
+    /**
+     * Aktualisiert die Reihenfolge der Aufgaben nach einem Drag & Drop
+     */
+    private function updateTaskOrderFromDrop($status, $orderedIds = [])
+    {
+        if (empty($orderedIds)) {
+            return;
+        }
+
+        // Nur nicht-Blocker Tasks können manuell sortiert werden
         $nonBlockerIds = [];
         foreach ($orderedIds as $id) {
             if ($id) {
@@ -1998,23 +2045,11 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             }
         }
 
-        // Nur nicht-Blocker Tasks können manuell sortiert werden
-        if (!$task->isBlocker()) {
-            foreach ($nonBlockerIds as $index => $id) {
-                Task::where('id', $id)
-                    ->where('status', $newStatus)
-                    ->update(['sort_order' => $index + 1]);
-            }
-            
-            // Log position change if within same status
-            if ($newStatus === $oldStatus && count($nonBlockerIds) > 1) {
-                TaskHistory::logFieldChange($task, auth()->id(), 'position', 'Position geändert', 'Neue Reihenfolge in Spalte');
-            }
+        // Reihenfolge aktualisieren
+        foreach ($nonBlockerIds as $index => $id) {
+            Task::where('id', $id)
+                ->where('status', $status)
+                ->update(['sort_order' => $index + 1]);
         }
-
-        $task->save();
-
-        // Refresh the page to show updated order
-        $this->dispatch('task-updated');
     }
 }

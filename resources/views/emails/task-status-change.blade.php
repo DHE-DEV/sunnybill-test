@@ -14,7 +14,6 @@
             padding: 20px;
         }
         .header {
-            background-color: #f8f9fa;
             border-left: 4px solid #3b82f6;
             padding: 20px;
             margin-bottom: 20px;
@@ -26,7 +25,6 @@
             margin: 20px 0;
         }
         .status-change {
-            background-color: #e8f4f8;
             padding: 15px;
             border-radius: 5px;
             margin: 20px 0;
@@ -72,13 +70,13 @@
 </head>
 <body>
     <div class="header">
-        <h1>📋 Aufgaben-Status geändert</h1>
+        <h1>Aufgaben-Status geändert</h1>
         <p>Hallo {{ $user->name }},</p>
         <p>eine Aufgabe, für die Sie als <strong>Inhaber</strong> verantwortlich sind, wurde von <strong>{{ $author->name }}</strong> zwischen den Spalten verschoben.</p>
     </div>
 
     <div class="task-info">
-        <h2>📝 Aufgaben-Details</h2>
+        <h2>Aufgaben-Details</h2>
         <p><strong>Titel:</strong> {{ $task->title }}</p>
         
         @if($task->task_number)
@@ -103,7 +101,7 @@
     </div>
 
     <div class="status-change">
-        <h2>🔄 Status-Änderung</h2>
+        <h2>Status-Änderung</h2>
         <p><strong>{{ $author->name }}</strong> hat die Aufgabe verschoben:</p>
         
         <div style="text-align: center; margin: 20px 0;">
@@ -118,14 +116,13 @@
     </div>
 
     <div style="text-align: center;">
-        <a href="{{ $taskUrl }}" class="button">📋 Aufgabe anzeigen</a>
+        <a href="{{ $taskUrl }}" class="button">Aufgabe anzeigen</a>
     </div>
 
     <div class="footer">
         <p>Diese E-Mail wurde automatisch generiert, da Sie als Inhaber der Aufgabe eingetragen sind.</p>
-        <p>Bei Fragen wenden Sie sich bitte an {{ $author->name }} ({{ $author->email }}).</p>
         <p style="margin-top: 20px;">
-            <small>SunnyBill - Aufgabenverwaltung</small>
+            <small>VoltMaster - Aufgabenverwaltung</small>
         </p>
     </div>
 </body>
