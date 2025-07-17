@@ -7,7 +7,7 @@
             <!-- Filter Bar -->
             <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
                 <div class="space-y-3">
-                    <!-- Erste Zeile: Suchfeld + Zuweisungsfilter + Reset + Active Filter Info -->
+                    <!-- Erste Zeile: Suchfeld + Reset Button + Active Filter Info -->
                     <div class="flex flex-wrap items-center gap-4">
                         <!-- Suchfeld -->
                         <div class="flex items-center gap-2">
@@ -19,32 +19,10 @@
                                    style="min-width: 200px;">
                         </div>
                         
-                        <!-- Trennlinie -->
-                        <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
-                        
-                        <!-- Zuweisungsfilter -->
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Zuweisung:</span>
-                            <div class="flex gap-1">
-                                @foreach($this->assignmentFilters as $value => $label)
-                                    <button wire:click="filterByAssignment('{{ $value }}')"
-                                            class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
-                                                   {{ $filterAssignment === $value 
-                                                      ? 'text-white border-transparent' 
-                                                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
-                                            style="{{ $filterAssignment === $value ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
-                                        {{ $label }}
-                                    </button>
-                                @endforeach
-                            </div>
-                        </div>
-                        
-                        <!-- Trennlinie -->
-                        <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
-                        
-                        <!-- Reset Button -->
+                        <!-- Reset Button (grün) -->
                         <button wire:click="resetFilters"
-                                class="px-3 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                                class="px-3 py-1 text-xs font-medium text-white rounded hover:bg-green-600 transition-colors"
+                                style="background-color: #16a34a !important;">
                             <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
@@ -74,7 +52,24 @@
                         @endif
                     </div>
                     
-                    <!-- Zweite Zeile: Status-Filter -->
+                    <!-- Zweite Zeile: Zuweisungsfilter -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Zuweisung:</span>
+                        <div class="flex gap-1 flex-wrap">
+                            @foreach($this->assignmentFilters as $value => $label)
+                                <button wire:click="filterByAssignment('{{ $value }}')"
+                                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
+                                               {{ $filterAssignment === $value 
+                                                  ? 'text-white border-transparent' 
+                                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
+                                        style="{{ $filterAssignment === $value ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
+                                    {{ $label }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                    
+                    <!-- Dritte Zeile: Status-Filter -->
                     <div class="flex items-center gap-2">
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
                         <div class="flex gap-1 flex-wrap">
