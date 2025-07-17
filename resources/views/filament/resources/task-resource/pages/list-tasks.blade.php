@@ -938,8 +938,25 @@
     
     // Livewire Console-Logging Event Listener
     document.addEventListener('livewire:initialized', () => {
-        Livewire.on('console-log', (event) => {
-            const { type, message, data } = event;
+        Livewire.on('console-log', (eventData) => {
+            console.log('🔧 Raw event data:', eventData);
+            
+            // Prüfe ob eventData ein Array ist (häufig bei Livewire Events)
+            let data;
+            if (Array.isArray(eventData)) {
+                data = eventData[0];
+            } else {
+                data = eventData;
+            }
+            
+            console.log('🔧 Processed data:', data);
+            
+            if (!data || typeof data !== 'object') {
+                console.error('❌ Invalid event data format:', data);
+                return;
+            }
+            
+            const { type, message, data: payload } = data;
             const style = {
                 info: 'color: #3b82f6; font-weight: bold',
                 success: 'color: #10b981; font-weight: bold',
@@ -947,9 +964,13 @@
                 error: 'color: #ef4444; font-weight: bold'
             };
             
-            console.log(`%c${message}`, style[type] || style.info);
-            if (data) {
-                console.log('📊 Daten:', data);
+            if (message) {
+                console.log(`%c${message}`, style[type] || style.info);
+                if (payload) {
+                    console.log('📊 Daten:', payload);
+                }
+            } else {
+                console.error('❌ Message is missing in event data:', data);
             }
         });
     });
