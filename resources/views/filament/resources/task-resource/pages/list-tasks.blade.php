@@ -13,11 +13,11 @@
                         <div class="flex gap-1">
                             @foreach($this->assignmentFilters as $value => $label)
                                 <button wire:click="filterByAssignment('{{ $value }}')"
-                                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors
+                                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
                                                {{ $filterAssignment === $value 
-                                                  ? 'bg-blue-100 text-blue-800 border-blue-200' 
-                                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }} 
-                                               border">
+                                                  ? 'text-white border-transparent' 
+                                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
+                                        style="{{ $filterAssignment === $value ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
                                     {{ $label }}
                                 </button>
                             @endforeach
@@ -33,11 +33,11 @@
                         <div class="flex gap-1 flex-wrap">
                             @foreach($this->availableStatuses as $status => $label)
                                 <button wire:click="toggleStatusFilter('{{ $status }}')"
-                                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors
+                                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
                                                {{ in_array($status, $selectedStatuses) 
-                                                  ? 'bg-green-100 text-green-800 border-green-200' 
-                                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }} 
-                                               border">
+                                                  ? 'text-white border-transparent' 
+                                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
+                                        style="{{ in_array($status, $selectedStatuses) ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
                                     {{ $label }}
                                     @if(in_array($status, $selectedStatuses))
                                         ✓
