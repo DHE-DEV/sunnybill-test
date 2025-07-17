@@ -40,7 +40,7 @@
 
       <f7-block class="text-center mt-8">
         <p class="text-white/60 text-sm">Demo-Zugangsdaten:</p>
-        <p class="text-white/80 text-sm">E-Mail: demo@sunnybill.de</p>
+        <p class="text-white/80 text-sm">E-Mail: demo@voltmaster.cloud</p>
         <p class="text-white/80 text-sm">Passwort: demo123</p>
       </f7-block>
       
@@ -57,7 +57,7 @@ export default {
   data() {
     return {
       loginForm: {
-        email: 'demo@sunnybill.de',
+        email: 'demo@voltmaster.cloud',
         password: 'demo123'
       },
       loading: false
@@ -75,11 +75,11 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Demo login
-        if (this.loginForm.email === 'demo@sunnybill.de' && this.loginForm.password === 'demo123') {
+        if (this.loginForm.email === 'demo@voltmaster.cloud' && this.loginForm.password === 'demo123') {
           const user = {
             id: 1,
             name: 'Demo User',
-            email: 'demo@sunnybill.de',
+            email: 'demo@voltmaster.cloud',
             role: 'admin'
           };
           

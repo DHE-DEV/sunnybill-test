@@ -55,7 +55,7 @@
           <div class="login-screen-content mx-4 mt-4 text-center">
             <p class="text-white/60 text-xs">
               Demo-Zugangsdaten:<br>
-              E-Mail: demo@sunnybill.de<br>
+              E-Mail: demo@voltmaster.cloud<br>
               Passwort: demo123
             </p>
           </div>
@@ -76,7 +76,7 @@ export default {
         id: 'io.sunnybill.mobile',
       },
       loginForm: {
-        email: 'demo@sunnybill.de',
+        email: 'demo@voltmaster.cloud',
         password: 'demo123'
       },
       loading: false
@@ -99,11 +99,11 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Demo login - in real app, this would be an API call
-        if (this.loginForm.email === 'demo@sunnybill.de' && this.loginForm.password === 'demo123') {
+        if (this.loginForm.email === 'demo@voltmaster.cloud' && this.loginForm.password === 'demo123') {
           const user = {
             id: 1,
             name: 'Demo User',
-            email: 'demo@sunnybill.de',
+            email: 'demo@voltmaster.cloud',
             role: 'admin'
           };
           
@@ -177,7 +177,7 @@ export default {
         const user = {
           id: 1,
           name: 'Demo User',
-          email: 'demo@sunnybill.de',
+          email: 'demo@voltmaster.cloud',
           role: 'admin'
         };
         

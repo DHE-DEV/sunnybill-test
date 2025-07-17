@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | API URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used for API documentation and should point to the
+    | production API endpoint. Falls back to APP_URL if not set.
+    |
+    */
+
+    'api_url' => env('API_URL', env('APP_URL', 'http://localhost')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
@@ -141,7 +153,7 @@ return [
     'company_contact_person' => env('COMPANY_CONTACT_PERSON', 'Max Mustermann'),
     'company_department' => env('COMPANY_DEPARTMENT', 'Vertrieb'),
     'company_phone' => env('COMPANY_PHONE', '+49 123 456789'),
-    'company_email' => env('COMPANY_EMAIL', 'info@sunnybill.de'),
+    'company_email' => env('COMPANY_EMAIL', 'info@voltmaster.cloud'),
     'company_fax' => env('COMPANY_FAX', ''),
 
 ];

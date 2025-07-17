@@ -67,7 +67,7 @@
 php artisan tinker
 $user = new App\Models\User();
 $user->name = 'Admin';
-$user->email = 'admin@sunnybill.de';
+$user->email = 'admin@voltmaster.cloud';
 $user->password = bcrypt('SECURE_PASSWORD');
 $user->save();
 ```

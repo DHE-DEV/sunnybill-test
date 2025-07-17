@@ -7,7 +7,7 @@ Diese Dokumentation beschreibt die REST API des SunnyBill-Systems für die Verwa
 ## Zugriff
 
 - **Lokale Entwicklung**: http://localhost:8000/api-docs/
-- **Produktion**: https://sunnybill.de/api-docs/
+- **Produktion**: https://voltmaster.cloud/api-docs/
 
 ## Dateien
 
@@ -27,7 +27,7 @@ Diese Dokumentation beschreibt die REST API des SunnyBill-Systems für die Verwa
 
 2. **Token verwenden**:
    ```bash
-   curl -X GET "https://sunnybill.de/api/app/tasks" \
+   curl -X GET "https://voltmaster.cloud/api/app/tasks" \
      -H "Authorization: Bearer YOUR_APP_TOKEN" \
      -H "Content-Type: application/json"
    ```
@@ -37,7 +37,7 @@ Diese Dokumentation beschreibt die REST API des SunnyBill-Systems für die Verwa
 Für Web-basierte Anwendungen verwenden Sie Sanctum-Token:
 
 ```bash
-curl -X GET "https://sunnybill.de/api/user" \
+curl -X GET "https://voltmaster.cloud/api/user" \
   -H "Authorization: Bearer YOUR_SANCTUM_TOKEN"
 ```
 
@@ -92,7 +92,7 @@ App-Token haben granulare Berechtigungen:
 ### Aufgaben auflisten
 
 ```bash
-curl -X GET "https://sunnybill.de/api/app/tasks?page=1&per_page=10&status=open" \
+curl -X GET "https://voltmaster.cloud/api/app/tasks?page=1&per_page=10&status=open" \
   -H "Authorization: Bearer YOUR_APP_TOKEN" \
   -H "Accept: application/json"
 ```
@@ -100,7 +100,7 @@ curl -X GET "https://sunnybill.de/api/app/tasks?page=1&per_page=10&status=open" 
 ### Neue Aufgabe erstellen
 
 ```bash
-curl -X POST "https://sunnybill.de/api/app/tasks" \
+curl -X POST "https://voltmaster.cloud/api/app/tasks" \
   -H "Authorization: Bearer YOUR_APP_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -115,7 +115,7 @@ curl -X POST "https://sunnybill.de/api/app/tasks" \
 ### Aufgaben-Status ändern
 
 ```bash
-curl -X PATCH "https://sunnybill.de/api/app/tasks/123/status" \
+curl -X PATCH "https://voltmaster.cloud/api/app/tasks/123/status" \
   -H "Authorization: Bearer YOUR_APP_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -167,10 +167,10 @@ Listen-Endpunkte verwenden Laravel-Paginierung:
     "total": 73
   },
   "links": {
-    "first": "https://sunnybill.de/api/app/tasks?page=1",
-    "last": "https://sunnybill.de/api/app/tasks?page=5",
+    "first": "https://voltmaster.cloud/api/app/tasks?page=1",
+    "last": "https://voltmaster.cloud/api/app/tasks?page=5",
     "prev": null,
-    "next": "https://sunnybill.de/api/app/tasks?page=2"
+    "next": "https://voltmaster.cloud/api/app/tasks?page=2"
   }
 }
 ```
@@ -238,7 +238,7 @@ Verwenden Sie die interaktive Swagger UI:
 
 Bei Fragen oder Problemen wenden Sie sich an:
 
-- **E-Mail**: support@sunnybill.de
+- **E-Mail**: support@voltmaster.cloud
 - **GitHub**: https://github.com/DHE-DEV/sunnybill-test
 
 ## Changelog

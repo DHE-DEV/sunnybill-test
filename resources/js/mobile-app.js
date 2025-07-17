@@ -7,7 +7,7 @@ const app = createApp({
       isLoggedIn: false,
       user: null,
       loginForm: {
-        email: 'demo@sunnybill.de',
+        email: 'demo@voltmaster.cloud',
         password: 'demo123'
       },
       loading: false,
@@ -40,11 +40,11 @@ const app = createApp({
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1500));
         
-        if (this.loginForm.email === 'demo@sunnybill.de' && this.loginForm.password === 'demo123') {
+        if (this.loginForm.email === 'demo@voltmaster.cloud' && this.loginForm.password === 'demo123') {
           this.user = {
             id: 1,
             name: 'Demo User',
-            email: 'demo@sunnybill.de',
+            email: 'demo@voltmaster.cloud',
             role: 'admin'
           };
           
@@ -119,7 +119,7 @@ const app = createApp({
       this.user = {
         id: 1,
         name: 'Demo User',
-        email: 'demo@sunnybill.de',
+        email: 'demo@voltmaster.cloud',
         role: 'admin'
       };
       this.isLoggedIn = true;
@@ -174,7 +174,7 @@ const app = createApp({
             <div class="mt-4 text-center">
               <p class="text-white text-opacity-60 text-sm">
                 Demo-Zugangsdaten:<br>
-                E-Mail: demo@sunnybill.de<br>
+                E-Mail: demo@voltmaster.cloud<br>
                 Passwort: demo123
               </p>
             </div>

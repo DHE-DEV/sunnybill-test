@@ -155,7 +155,7 @@ export default {
     user() {
       return this.$store.getters.user || {
         name: 'Demo User',
-        email: 'demo@sunnybill.de',
+        email: 'demo@voltmaster.cloud',
         role: 'admin'
       };
     },
@@ -214,7 +214,7 @@ export default {
     },
     
     showHelp() {
-      this.$f7.dialog.alert('Hilfe & Support\n\nBei Fragen wenden Sie sich an:\nsupport@sunnybill.de\n\nTelefon: +49 123 456 789', 'Hilfe & Support');
+      this.$f7.dialog.alert('Hilfe & Support\n\nBei Fragen wenden Sie sich an:\nsupport@voltmaster.cloud\n\nTelefon: +49 123 456 789', 'Hilfe & Support');
     },
     
     showAbout() {

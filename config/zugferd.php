@@ -28,7 +28,7 @@ return [
             'person' => env('ZUGFERD_COMPANY_CONTACT_PERSON', 'Max Mustermann'),
             'department' => env('ZUGFERD_COMPANY_DEPARTMENT', 'Vertrieb'),
             'phone' => env('ZUGFERD_COMPANY_PHONE', '+49 123 456789'),
-            'email' => env('ZUGFERD_COMPANY_EMAIL', 'info@sunnybill.de'),
+            'email' => env('ZUGFERD_COMPANY_EMAIL', 'info@voltmaster.cloud'),
             'fax' => env('ZUGFERD_COMPANY_FAX', ''),
         ],
     ],

@@ -45,12 +45,12 @@ info:
   version: 1.0.0
   contact:
     name: SunnyBill API Support
-    email: support@sunnybill.de
+    email: support@voltmaster.cloud
   license:
     name: Proprietary
     
 servers:
-  - url: https://sunnybill.de/api
+  - url: https://voltmaster.cloud/api
     description: Production API Server
   - url: http://localhost:8000/api
     description: Development API Server

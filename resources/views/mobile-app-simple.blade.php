@@ -616,7 +616,7 @@
                 
                 <div class="form-group">
                     <label class="form-label">E-Mail-Adresse</label>
-                    <input type="email" class="form-input" id="login-email" placeholder="demo@sunnybill.de" value="demo@sunnybill.de">
+                    <input type="email" class="form-input" id="login-email" placeholder="demo@voltmaster.cloud" value="demo@voltmaster.cloud">
                 </div>
                 
                 <div class="form-group">
@@ -630,7 +630,7 @@
                 
                 <div class="demo-credentials">
                     <h4>Demo-Zugangsdaten:</h4>
-                    <p>demo@sunnybill.de</p>
+                    <p>demo@voltmaster.cloud</p>
                     <p>demo123</p>
                 </div>
             </div>

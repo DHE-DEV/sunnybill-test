@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoltMaster API Dokumentation</title>
+    <title>{{ config('app.name') }} API Dokumentation</title>
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css" />
     <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.10.3/favicon-32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.10.3/favicon-16x16.png" sizes="16x16" />
@@ -128,17 +128,32 @@
             margin: 0;
             color: #666;
         }
+        .api-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px;
+        }
+        .api-info strong {
+            color: #856404;
+        }
     </style>
 </head>
 <body>
     <div class="custom-header">
-        <h1>VoltMaster API</h1>
+        <h1>🌞 {{ config('app.name') }} API</h1>
         <p>Umfassende REST API für Aufgabenverwaltung, Kunden und Solaranlagen</p>
     </div>
 
+    <div class="api-info">
+        <strong>API-Endpunkt:</strong> {{ config('app.api_url') }}/api<br>
+        <strong>Umgebung:</strong> {{ config('app.env') }}
+    </div>
+
     <div class="auth-section">
-        <h2>Authentifizierung</h2>
-        <p>Die VoltMaster API unterstützt zwei Authentifizierungsmethoden:</p>
+        <h2>🔐 Authentifizierung</h2>
+        <p>Die {{ config('app.name') }} API unterstützt zwei Authentifizierungsmethoden:</p>
         
         <div class="auth-example">
             <h3>1. App-Token (Empfohlen für externe Anwendungen)</h3>
@@ -160,7 +175,7 @@
             <code>Authorization: Bearer YOUR_SANCTUM_TOKEN</code>
         </div>
 
-        <h3>Berechtigungen</h3>
+        <h3>📋 Berechtigungen</h3>
         <p>App-Token haben granulare Berechtigungen:</p>
         <div class="permission-grid">
             <div class="permission-item">
@@ -195,7 +210,7 @@
     </div>
 
     <div class="quick-start">
-        <h2>Schnellstart</h2>
+        <h2>🚀 Schnellstart</h2>
         <div class="step">
             <span class="step-number">1</span>
             <strong>Token generieren:</strong> Erstellen Sie ein App-Token mit den erforderlichen Berechtigungen
@@ -211,7 +226,7 @@
         
         <h3>Beispiel-Anfrage:</h3>
         <pre style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;">
-<code>curl -X GET "https://voltmaster.cloud/api/app/tasks" \
+<code>curl -X GET "{{ config('app.api_url') }}/api/app/tasks" \
   -H "Authorization: Bearer YOUR_APP_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json"</code></pre>
@@ -220,7 +235,7 @@
     <div id="swagger-ui"></div>
 
     <div class="footer">
-        <p>&copy; 2025 VoltMaster API - Alle Rechte vorbehalten</p>
+        <p>&copy; {{ date('Y') }} {{ config('app.name') }} API - Alle Rechte vorbehalten</p>
     </div>
 
     <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
@@ -229,7 +244,7 @@
         window.onload = function() {
             // Begin Swagger UI call region
             const ui = SwaggerUIBundle({
-                url: './openapi.yaml',
+                url: '{{ url('/api-docs/openapi.yaml') }}',
                 dom_id: '#swagger-ui',
                 deepLinking: true,
                 presets: [

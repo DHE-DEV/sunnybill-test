@@ -38,8 +38,8 @@ class GmailNotificationMail extends Mailable
         
         return new Envelope(
             subject: $subject,
-            from: config('mail.from.address', 'noreply@sunnybill.de'),
-            replyTo: config('mail.from.address', 'noreply@sunnybill.de'),
+            from: config('mail.from.address', 'noreply@voltmaster.cloud'),
+            replyTo: config('mail.from.address', 'noreply@voltmaster.cloud'),
         );
     }
 

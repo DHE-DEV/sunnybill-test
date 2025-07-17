@@ -141,10 +141,10 @@ class ManageTestDataCommand extends Command
     private function createTestUser()
     {
         $user = User::firstOrCreate(
-            ['email' => 'test@sunnybill.de'],
+            ['email' => 'test@voltmaster.cloud'],
             [
                 'name' => 'Test User',
-                'email' => 'test@sunnybill.de',
+                'email' => 'test@voltmaster.cloud',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]

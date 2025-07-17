@@ -878,7 +878,7 @@ A: Nein, das System erfordert eine Internetverbindung. Alle Änderungen werden i
 Bei Fragen zur Aufgabenverwaltung wenden Sie sich an:
 
 **Technischer Support**:
-- E-Mail: support@sunnybill.de
+- E-Mail: support@voltmaster.cloud
 - Telefon: +49 (0) 123 456 789
 - Servicezeiten: Mo-Fr 8:00-18:00 Uhr
 

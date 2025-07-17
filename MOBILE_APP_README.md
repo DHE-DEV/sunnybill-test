@@ -34,7 +34,7 @@ Eine moderne mobile Anwendung für das SunnyBill Solar Management System, entwic
 ## 📱 Demo-Zugangsdaten
 
 ```
-E-Mail: demo@sunnybill.de
+E-Mail: demo@voltmaster.cloud
 Passwort: demo123
 ```
 
@@ -151,7 +151,7 @@ Die App enthält realistische Demo-Daten für:
 ## 📞 Support
 
 Bei Fragen oder Problemen:
-- E-Mail: support@sunnybill.de
+- E-Mail: support@voltmaster.cloud
 - Telefon: +49 123 456 789
 
 ---

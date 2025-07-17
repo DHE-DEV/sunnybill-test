@@ -183,7 +183,7 @@ In `config/auth.php`:
 ### E-Mail-Absender ändern:
 In `.env`:
 ```env
-MAIL_FROM_ADDRESS=noreply@sunnybill.de
+MAIL_FROM_ADDRESS=noreply@voltmaster.cloud
 MAIL_FROM_NAME="SunnyBill Team"
 ```
 

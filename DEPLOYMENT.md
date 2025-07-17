@@ -27,7 +27,7 @@ DB_PASSWORD=SECURE_PASSWORD_HERE
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.example.com
 MAIL_PORT=587
-MAIL_USERNAME=noreply@sunnybill.de
+MAIL_USERNAME=noreply@voltmaster.cloud
 MAIL_PASSWORD=MAIL_PASSWORD_HERE
 ```
 
@@ -176,7 +176,7 @@ php artisan tinker
 # In Tinker:
 $user = new App\Models\User();
 $user->name = 'Admin';
-$user->email = 'admin@sunnybill.de';
+$user->email = 'admin@voltmaster.cloud';
 $user->password = bcrypt('secure_password_here');
 $user->save();
 ```
