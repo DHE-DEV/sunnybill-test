@@ -1,0 +1,1196 @@
+openapi: 3.0.3
+info:
+  title: SunnyBill API
+  description: |
+    ## SunnyBill API Dokumentation
+    
+    Diese API bietet umfassende Funktionalitäten für das SunnyBill-System zur Verwaltung von Aufgaben, Kunden, Lieferanten und Solaranlagen.
+    
+    ### Authentifizierung
+    
+    Die API unterstützt zwei Authentifizierungsmethoden:
+    
+    1. **Laravel Sanctum** - für Web-Authentifizierung
+    2. **App-Token** - für mobile Apps und externe Integrationen
+    
+    ### App-Token Authentifizierung
+    
+    Für die App-Token-Authentifizierung müssen Sie:
+    
+    1. Ein App-Token über die Admin-Oberfläche generieren
+    2. Das Token im `Authorization` Header mit dem `Bearer` Schema verwenden
+    3. Sicherstellen, dass das Token die erforderlichen Berechtigungen hat
+    
+    ### Berechtigungen
+    
+    App-Token haben granulare Berechtigungen:
+    - `tasks:read` - Aufgaben anzeigen
+    - `tasks:create` - Aufgaben erstellen
+    - `tasks:update` - Aufgaben bearbeiten
+    - `tasks:delete` - Aufgaben löschen
+    - `tasks:status` - Aufgaben-Status ändern
+    - `tasks:assign` - Aufgaben zuweisen
+    - `tasks:time` - Zeiterfassung bearbeiten
+    
+    ### Fehlerbehandlung
+    
+    Die API gibt strukturierte Fehlermeldungen zurück:
+    - `400` - Ungültige Anfrage
+    - `401` - Nicht authentifiziert
+    - `403` - Keine Berechtigung
+    - `404` - Ressource nicht gefunden
+    - `422` - Validierungsfehler
+    - `500` - Serverfehler
+    
+  version: 1.0.0
+  contact:
+    name: SunnyBill API Support
+    email: support@sunnybill.de
+  license:
+    name: Proprietary
+    
+servers:
+  - url: https://sunnybill.de/api
+    description: Production API Server
+  - url: http://localhost:8000/api
+    description: Development API Server
+
+security:
+  - BearerAuth: []
+  - SanctumAuth: []
+
+paths:
+  /user:
+    get:
+      summary: Aktueller Benutzer
+      description: Gibt die Informationen des aktuell authentifizierten Benutzers zurück
+      tags:
+        - Benutzer
+      security:
+        - SanctumAuth: []
+      responses:
+        '200':
+          description: Benutzerinformationen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /users/search:
+    get:
+      summary: Benutzer suchen
+      description: Sucht nach Benutzern basierend auf dem Namen (für @mentions)
+      tags:
+        - Benutzer
+      parameters:
+        - name: q
+          in: query
+          description: Suchbegriff
+          required: true
+          schema:
+            type: string
+            example: "Max"
+      responses:
+        '200':
+          description: Gefundene Benutzer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserBasic'
+
+  /users/all:
+    get:
+      summary: Alle Benutzer
+      description: Gibt alle Benutzer zurück (für @mentions)
+      tags:
+        - Benutzer
+      responses:
+        '200':
+          description: Alle Benutzer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserBasic'
+
+  /app/profile:
+    get:
+      summary: App-Profil
+      description: Gibt Profilinformationen des authentifizierten App-Tokens zurück
+      tags:
+        - App-Token
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profilinformationen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppProfile'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /app/tasks:
+    get:
+      summary: Aufgaben auflisten
+      description: Gibt eine paginierte Liste von Aufgaben zurück
+      tags:
+        - Aufgaben
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Seitennummer
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          description: Anzahl Einträge pro Seite
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 15
+        - name: status
+          in: query
+          description: Filter nach Status
+          schema:
+            type: string
+            enum: [open, in_progress, waiting_external, waiting_internal, completed, cancelled]
+        - name: priority
+          in: query
+          description: Filter nach Priorität
+          schema:
+            type: string
+            enum: [low, medium, high, urgent, blocker]
+        - name: assigned_to
+          in: query
+          description: Filter nach zugewiesenem Benutzer (ID)
+          schema:
+            type: integer
+        - name: due_date
+          in: query
+          description: Filter nach Fälligkeitsdatum
+          schema:
+            type: string
+            format: date
+        - name: overdue
+          in: query
+          description: Nur überfällige Aufgaben
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          description: Suche in Titel und Beschreibung
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: Sortierung
+          schema:
+            type: string
+            enum: [created_at, due_date, priority, status, title]
+            default: created_at
+        - name: order
+          in: query
+          description: Sortierreihenfolge
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Liste der Aufgaben
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskPaginatedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      summary: Neue Aufgabe erstellen
+      description: Erstellt eine neue Aufgabe
+      tags:
+        - Aufgaben
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '201':
+          description: Aufgabe erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /app/tasks/{task}:
+    get:
+      summary: Aufgabe anzeigen
+      description: Gibt eine spezifische Aufgabe zurück
+      tags:
+        - Aufgaben
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task
+          in: path
+          required: true
+          description: Aufgaben-ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Aufgaben-Details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    put:
+      summary: Aufgabe aktualisieren
+      description: Aktualisiert eine existierende Aufgabe
+      tags:
+        - Aufgaben
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task
+          in: path
+          required: true
+          description: Aufgaben-ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateRequest'
+      responses:
+        '200':
+          description: Aufgabe erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      summary: Aufgabe löschen
+      description: Löscht eine Aufgabe
+      tags:
+        - Aufgaben
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task
+          in: path
+          required: true
+          description: Aufgaben-ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Aufgabe erfolgreich gelöscht
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /app/tasks/{task}/status:
+    patch:
+      summary: Aufgaben-Status ändern
+      description: Ändert den Status einer Aufgabe
+      tags:
+        - Aufgaben
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task
+          in: path
+          required: true
+          description: Aufgaben-ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [open, in_progress, waiting_external, waiting_internal, completed, cancelled]
+                  description: Neuer Status der Aufgabe
+      responses:
+        '200':
+          description: Status erfolgreich geändert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /app/tasks/{task}/assign:
+    patch:
+      summary: Aufgabe zuweisen
+      description: Weist eine Aufgabe einem Benutzer zu
+      tags:
+        - Aufgaben
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task
+          in: path
+          required: true
+          description: Aufgaben-ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - assigned_to
+              properties:
+                assigned_to:
+                  type: integer
+                  description: Benutzer-ID (null zum Entfernen der Zuweisung)
+                  nullable: true
+      responses:
+        '200':
+          description: Zuweisung erfolgreich geändert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /app/tasks/{task}/time:
+    patch:
+      summary: Zeiterfassung aktualisieren
+      description: Aktualisiert die Zeiterfassung einer Aufgabe
+      tags:
+        - Aufgaben
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task
+          in: path
+          required: true
+          description: Aufgaben-ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                estimated_minutes:
+                  type: integer
+                  description: Geschätzte Minuten
+                  minimum: 0
+                actual_minutes:
+                  type: integer
+                  description: Tatsächliche Minuten
+                  minimum: 0
+      responses:
+        '200':
+          description: Zeiterfassung erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /app/tasks/{task}/subtasks:
+    get:
+      summary: Unteraufgaben anzeigen
+      description: Gibt alle Unteraufgaben einer Aufgabe zurück
+      tags:
+        - Aufgaben
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task
+          in: path
+          required: true
+          description: Aufgaben-ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste der Unteraufgaben
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /app/users:
+    get:
+      summary: Benutzer-Dropdown
+      description: Gibt alle Benutzer für Dropdown-Menüs zurück
+      tags:
+        - Dropdown-Daten
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Benutzer-Liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserBasic'
+
+  /app/customers:
+    get:
+      summary: Kunden-Dropdown
+      description: Gibt alle Kunden für Dropdown-Menüs zurück
+      tags:
+        - Dropdown-Daten
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Kunden-Liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+
+  /app/suppliers:
+    get:
+      summary: Lieferanten-Dropdown
+      description: Gibt alle Lieferanten für Dropdown-Menüs zurück
+      tags:
+        - Dropdown-Daten
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lieferanten-Liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Supplier'
+
+  /app/solar-plants:
+    get:
+      summary: Solaranlagen-Dropdown
+      description: Gibt alle Solaranlagen für Dropdown-Menüs zurück
+      tags:
+        - Dropdown-Daten
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Solaranlagen-Liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SolarPlant'
+
+  /app/options:
+    get:
+      summary: Optionen-Dropdown
+      description: Gibt alle Dropdown-Optionen zurück (Status, Prioritäten, etc.)
+      tags:
+        - Dropdown-Daten
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Optionen-Liste
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DropdownOptions'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: App-Token für mobile Apps und externe Integrationen
+    SanctumAuth:
+      type: http
+      scheme: bearer
+      description: Laravel Sanctum Token für Web-Authentifizierung
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Benutzer-ID
+        name:
+          type: string
+          description: Vollständiger Name
+        email:
+          type: string
+          format: email
+          description: E-Mail-Adresse
+        salutation:
+          type: string
+          description: Anrede
+          nullable: true
+        name_abbreviation:
+          type: string
+          description: Namenskürzel
+          nullable: true
+        address_form:
+          type: string
+          description: Ansprache (du/Sie)
+          enum: [du, sie]
+        phone:
+          type: string
+          description: Telefonnummer
+          nullable: true
+        department:
+          type: string
+          description: Abteilung
+          nullable: true
+        role:
+          type: string
+          description: Benutzerrolle
+          enum: [admin, manager, user, viewer]
+        is_active:
+          type: boolean
+          description: Aktiv-Status
+        email_verified_at:
+          type: string
+          format: date-time
+          description: E-Mail-Verifizierungsdatum
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserBasic:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+
+    AppProfile:
+      type: object
+      properties:
+        token:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            permissions:
+              type: array
+              items:
+                type: string
+            expires_at:
+              type: string
+              format: date-time
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Aufgaben-ID
+        title:
+          type: string
+          description: Titel der Aufgabe
+        description:
+          type: string
+          description: Beschreibung der Aufgabe
+          nullable: true
+        priority:
+          type: string
+          description: Priorität
+          enum: [low, medium, high, urgent, blocker]
+        status:
+          type: string
+          description: Status
+          enum: [open, in_progress, waiting_external, waiting_internal, completed, cancelled]
+        due_date:
+          type: string
+          format: date
+          description: Fälligkeitsdatum
+          nullable: true
+        due_time:
+          type: string
+          format: time
+          description: Fälligkeitsuhrzeit
+          nullable: true
+        labels:
+          type: array
+          items:
+            type: string
+          description: Labels/Tags
+          nullable: true
+        estimated_minutes:
+          type: integer
+          description: Geschätzte Minuten
+          nullable: true
+        actual_minutes:
+          type: integer
+          description: Tatsächliche Minuten
+          nullable: true
+        task_type_id:
+          type: integer
+          description: Aufgabentyp-ID
+          nullable: true
+        customer_id:
+          type: integer
+          description: Kunden-ID
+          nullable: true
+        supplier_id:
+          type: integer
+          description: Lieferanten-ID
+          nullable: true
+        solar_plant_id:
+          type: string
+          description: Solaranlagen-ID (UUID)
+          nullable: true
+        billing_id:
+          type: integer
+          description: Abrechnung-ID
+          nullable: true
+        milestone_id:
+          type: integer
+          description: Meilenstein-ID
+          nullable: true
+        assigned_to:
+          type: integer
+          description: Zugewiesener Benutzer-ID
+          nullable: true
+        owner_id:
+          type: integer
+          description: Besitzer-ID
+          nullable: true
+        created_by:
+          type: integer
+          description: Ersteller-ID
+          nullable: true
+        parent_task_id:
+          type: integer
+          description: Übergeordnete Aufgabe-ID
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          description: Abschlussdatum
+          nullable: true
+        task_number:
+          type: string
+          description: Aufgabennummer
+        sort_order:
+          type: integer
+          description: Sortierreihenfolge
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        assigned_user:
+          $ref: '#/components/schemas/UserBasic'
+        owner:
+          $ref: '#/components/schemas/UserBasic'
+        creator:
+          $ref: '#/components/schemas/UserBasic'
+        customer:
+          $ref: '#/components/schemas/Customer'
+        supplier:
+          $ref: '#/components/schemas/Supplier'
+        solar_plant:
+          $ref: '#/components/schemas/SolarPlant'
+        is_overdue:
+          type: boolean
+          description: Ist überfällig
+        is_due_today:
+          type: boolean
+          description: Ist heute fällig
+        priority_color:
+          type: string
+          description: Prioritätsfarbe
+        status_color:
+          type: string
+          description: Statusfarbe
+        progress_percentage:
+          type: integer
+          description: Fortschritt in Prozent
+
+    TaskCreateRequest:
+      type: object
+      required:
+        - title
+        - priority
+        - status
+      properties:
+        title:
+          type: string
+          description: Titel der Aufgabe
+          maxLength: 255
+        description:
+          type: string
+          description: Beschreibung der Aufgabe
+          nullable: true
+        priority:
+          type: string
+          description: Priorität
+          enum: [low, medium, high, urgent, blocker]
+          default: medium
+        status:
+          type: string
+          description: Status
+          enum: [open, in_progress, waiting_external, waiting_internal, completed, cancelled]
+          default: open
+        due_date:
+          type: string
+          format: date
+          description: Fälligkeitsdatum
+          nullable: true
+        due_time:
+          type: string
+          format: time
+          description: Fälligkeitsuhrzeit
+          nullable: true
+        labels:
+          type: array
+          items:
+            type: string
+          description: Labels/Tags
+          nullable: true
+        estimated_minutes:
+          type: integer
+          description: Geschätzte Minuten
+          minimum: 0
+          nullable: true
+        task_type_id:
+          type: integer
+          description: Aufgabentyp-ID
+          nullable: true
+        customer_id:
+          type: integer
+          description: Kunden-ID
+          nullable: true
+        supplier_id:
+          type: integer
+          description: Lieferanten-ID
+          nullable: true
+        solar_plant_id:
+          type: string
+          description: Solaranlagen-ID (UUID)
+          nullable: true
+        billing_id:
+          type: integer
+          description: Abrechnung-ID
+          nullable: true
+        milestone_id:
+          type: integer
+          description: Meilenstein-ID
+          nullable: true
+        assigned_to:
+          type: integer
+          description: Zugewiesener Benutzer-ID
+          nullable: true
+        parent_task_id:
+          type: integer
+          description: Übergeordnete Aufgabe-ID
+          nullable: true
+
+    TaskUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Titel der Aufgabe
+          maxLength: 255
+        description:
+          type: string
+          description: Beschreibung der Aufgabe
+          nullable: true
+        priority:
+          type: string
+          description: Priorität
+          enum: [low, medium, high, urgent, blocker]
+        status:
+          type: string
+          description: Status
+          enum: [open, in_progress, waiting_external, waiting_internal, completed, cancelled]
+        due_date:
+          type: string
+          format: date
+          description: Fälligkeitsdatum
+          nullable: true
+        due_time:
+          type: string
+          format: time
+          description: Fälligkeitsuhrzeit
+          nullable: true
+        labels:
+          type: array
+          items:
+            type: string
+          description: Labels/Tags
+          nullable: true
+        estimated_minutes:
+          type: integer
+          description: Geschätzte Minuten
+          minimum: 0
+          nullable: true
+        actual_minutes:
+          type: integer
+          description: Tatsächliche Minuten
+          minimum: 0
+          nullable: true
+        task_type_id:
+          type: integer
+          description: Aufgabentyp-ID
+          nullable: true
+        customer_id:
+          type: integer
+          description: Kunden-ID
+          nullable: true
+        supplier_id:
+          type: integer
+          description: Lieferanten-ID
+          nullable: true
+        solar_plant_id:
+          type: string
+          description: Solaranlagen-ID (UUID)
+          nullable: true
+        billing_id:
+          type: integer
+          description: Abrechnung-ID
+          nullable: true
+        milestone_id:
+          type: integer
+          description: Meilenstein-ID
+          nullable: true
+        assigned_to:
+          type: integer
+          description: Zugewiesener Benutzer-ID
+          nullable: true
+        parent_task_id:
+          type: integer
+          description: Übergeordnete Aufgabe-ID
+          nullable: true
+
+    TaskResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Aufgabe erfolgreich erstellt"
+        data:
+          $ref: '#/components/schemas/Task'
+
+    TaskPaginatedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            from:
+              type: integer
+            last_page:
+              type: integer
+            per_page:
+              type: integer
+            to:
+              type: integer
+            total:
+              type: integer
+        links:
+          type: object
+          properties:
+            first:
+              type: string
+              nullable: true
+            last:
+              type: string
+              nullable: true
+            prev:
+              type: string
+              nullable: true
+            next:
+              type: string
+              nullable: true
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        customer_number:
+          type: string
+          nullable: true
+
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        supplier_number:
+          type: string
+          nullable: true
+
+    SolarPlant:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, planning, maintenance]
+        is_active:
+          type: boolean
+        power_kw:
+          type: number
+          format: float
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        customer_id:
+          type: integer
+          nullable: true
+
+    DropdownOptions:
+      type: object
+      properties:
+        priorities:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              label:
+                type: string
+        statuses:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              label:
+                type: string
+        task_types:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Fehlermeldung
+        errors:
+          type: object
+          description: Detaillierte Validierungsfehler
+          nullable: true
+
+  responses:
+    UnauthorizedError:
+      description: Nicht authentifiziert
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Nicht authentifiziert"
+
+    ForbiddenError:
+      description: Keine Berechtigung
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Keine Berechtigung"
+
+    BadRequestError:
+      description: Ungültige Anfrage
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Ungültige Anfrage"
+
+    NotFoundError:
+      description: Ressource nicht gefunden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Ressource nicht gefunden"
+
+    ValidationError:
+      description: Validierungsfehler
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Validierungsfehler"
+            errors:
+              title: ["Das Titel-Feld ist erforderlich."]
+              priority: ["Die Priorität ist ungültig."]
