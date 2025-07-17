@@ -1148,14 +1148,19 @@
         const mentionLength = cursorPos - mentionStart;
         quill.deleteText(mentionStart, mentionLength);
         
-        // Füge @mention als Link ein
+        // Füge @mention als formatierter Text ein
         quill.insertText(mentionStart, `@${username} `, {
             'color': '#3b82f6',
             'bold': true
         });
         
-        // Cursor nach dem Mention positionieren
-        quill.setSelection(mentionStart + username.length + 2);
+        // Cursor nach dem Mention positionieren und Formatierung zurücksetzen
+        const newCursorPos = mentionStart + username.length + 2;
+        quill.setSelection(newCursorPos);
+        
+        // Formatierung für nachfolgenden Text zurücksetzen
+        quill.format('color', false);
+        quill.format('bold', false);
         
         hideRichTextMentionDropdown();
         
@@ -1177,9 +1182,21 @@
             textarea.dispatchEvent(new Event('input', { bubbles: true }));
         }
         
-        // Livewire addNote aufrufen
-        if (window.Livewire) {
-            window.Livewire.dispatch('addNote');
+        // Livewire addNote direkt aufrufen
+        if (window.Livewire && window.Livewire.find) {
+            // Finde die Livewire-Komponente
+            const component = window.Livewire.find(document.querySelector('[wire\\:id]').getAttribute('wire:id'));
+            if (component) {
+                component.call('addNote');
+            }
+        } else {
+            // Fallback: Button-Klick simulieren
+            const saveButton = document.querySelector('[wire\\:click="addNote"]');
+            if (saveButton) {
+                saveButton.click();
+            } else {
+                console.error('❌ Livewire-Komponente oder Save-Button nicht gefunden');
+            }
         }
         
         console.log('💾 Rich Text: Notiz gespeichert');
@@ -1201,8 +1218,13 @@
             'bold': true
         });
         
-        // Cursor nach dem Mention positionieren
-        quill.setSelection(cursorPos + username.length + 3);
+        // Cursor nach dem Mention positionieren und Formatierung zurücksetzen
+        const newCursorPos = cursorPos + username.length + 3;
+        quill.setSelection(newCursorPos);
+        
+        // Formatierung für nachfolgenden Text zurücksetzen
+        quill.format('color', false);
+        quill.format('bold', false);
         
         console.log('✅ Rich Text: Button-Mention eingefügt:', username);
         
