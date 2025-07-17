@@ -87,6 +87,11 @@ class Task extends Model
         return $this->belongsTo(Milestone::class);
     }
 
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
     public function assignedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
@@ -251,6 +256,25 @@ class Task extends Model
     public function isBlocker(): bool
     {
         return $this->priority === 'blocker';
+    }
+
+    /**
+     * Verfügbare Aufgabentypen
+     */
+    public static function getAvailableTaskTypes(): array
+    {
+        return [
+            'bug' => 'Bug',
+            'feature' => 'Feature',
+            'improvement' => 'Verbesserung',
+            'task' => 'Aufgabe',
+            'support' => 'Support',
+            'documentation' => 'Dokumentation',
+            'maintenance' => 'Wartung',
+            'meeting' => 'Meeting',
+            'research' => 'Recherche',
+            'testing' => 'Testing',
+        ];
     }
 
     /**

@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'require.password.change' => \App\Http\Middleware\RequirePasswordChange::class,
+            'app_token' => \App\Http\Middleware\AppTokenAuth::class,
         ]);
         
         // Apply password change middleware to web routes

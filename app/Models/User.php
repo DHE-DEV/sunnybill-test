@@ -414,6 +414,22 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     }
 
     /**
+     * One-to-Many Beziehung zu App-Tokens
+     */
+    public function appTokens()
+    {
+        return $this->hasMany(AppToken::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Aktive App-Tokens
+     */
+    public function activeAppTokens()
+    {
+        return $this->hasMany(AppToken::class)->valid();
+    }
+
+    /**
      * Prüft ob User Mitglied eines bestimmten Teams ist
      */
     public function isMemberOf(Team $team): bool
