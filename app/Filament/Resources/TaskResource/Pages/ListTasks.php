@@ -485,6 +485,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             
             // Historie für geänderte Felder erstellen
             $this->logTaskChanges($this->editingTask, $oldValues);
+            
+            // E-Mail-Benachrichtigungen für Änderungen senden
+            $this->sendTaskChangeNotifications($this->editingTask, $oldValues);
         } else {
             // Neue Aufgabe erstellen
             $this->createTask();
@@ -546,6 +549,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
 
         // Historie für Task-Erstellung
         TaskHistory::logTaskCreation($task, auth()->id());
+
+        // E-Mail-Benachrichtigung für neue Aufgabe senden
+        $this->sendNewTaskNotifications($task);
 
         $this->closeEditModal();
         
@@ -1230,6 +1236,288 @@ class ListTasks extends ListRecords implements HasForms, HasActions
 
             default:
                 return $value;
+        }
+    }
+
+    /**
+     * Sendet E-Mail-Benachrichtigungen für neue Aufgaben
+     */
+    private function sendNewTaskNotifications(Task $task): void
+    {
+        \Log::info('📧 Task: Sende Benachrichtigungen für neue Aufgabe', [
+            'task_id' => $task->id,
+            'task_title' => $task->title,
+            'assigned_to' => $task->assigned_to,
+            'owner_id' => $task->owner_id,
+            'created_by' => auth()->id()
+        ]);
+
+        $usersToNotify = collect();
+        
+        // Zugewiesenen Benutzer hinzufügen
+        if ($task->assigned_to && $task->assigned_to !== auth()->id()) {
+            $assignedUser = User::find($task->assigned_to);
+            if ($assignedUser) {
+                $usersToNotify->push($assignedUser);
+            }
+        }
+        
+        // Inhaber hinzufügen (falls unterschiedlich vom zugewiesenen Benutzer)
+        if ($task->owner_id && $task->owner_id !== auth()->id() && $task->owner_id !== $task->assigned_to) {
+            $ownerUser = User::find($task->owner_id);
+            if ($ownerUser) {
+                $usersToNotify->push($ownerUser);
+            }
+        }
+        
+        if ($usersToNotify->isEmpty()) {
+            \Log::info('ℹ️ Task: Keine Benutzer für Aufgaben-Benachrichtigung', [
+                'task_id' => $task->id
+            ]);
+            return;
+        }
+        
+        $gmailService = app(\App\Services\GmailService::class);
+        $successCount = 0;
+        $errorCount = 0;
+        
+        foreach ($usersToNotify as $user) {
+            try {
+                \Log::info('📧 Task: Sende Neue-Aufgabe E-Mail', [
+                    'task_id' => $task->id,
+                    'user_id' => $user->id,
+                    'user_email' => $user->email
+                ]);
+
+                // E-Mail-Template rendern
+                $emailContent = view('emails.task-assignment', [
+                    'user' => $user,
+                    'task' => $task,
+                    'author' => auth()->user(),
+                    'isNewTask' => true,
+                    'taskUrl' => route('filament.admin.resources.tasks.index')
+                ])->render();
+
+                $subject = "Neue Aufgabe zugewiesen - {$task->title}";
+
+                $result = $gmailService->sendEmail(
+                    $user->email,
+                    $subject,
+                    $emailContent
+                );
+
+                if ($result['success'] ?? false) {
+                    \Log::info('✅ Task: Neue-Aufgabe E-Mail erfolgreich gesendet', [
+                        'task_id' => $task->id,
+                        'user_id' => $user->id,
+                        'message_id' => $result['message_id'] ?? null
+                    ]);
+                    $successCount++;
+                } else {
+                    \Log::error('❌ Task: Neue-Aufgabe E-Mail fehlgeschlagen', [
+                        'task_id' => $task->id,
+                        'user_id' => $user->id,
+                        'error' => $result['error'] ?? 'Unbekannter Fehler'
+                    ]);
+                    $errorCount++;
+                }
+
+            } catch (\Exception $e) {
+                \Log::error('❌ Task: Fehler beim Senden der Neue-Aufgabe E-Mail', [
+                    'task_id' => $task->id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                $errorCount++;
+            }
+        }
+        
+        // Benachrichtigung an den Ersteller
+        if ($successCount > 0) {
+            Notification::make()
+                ->title('Aufgaben-Benachrichtigungen versendet')
+                ->body("E-Mail-Benachrichtigungen an {$successCount} Benutzer versendet")
+                ->success()
+                ->icon('heroicon-o-envelope')
+                ->send();
+        }
+        
+        if ($errorCount > 0) {
+            Notification::make()
+                ->title('E-Mail-Versand teilweise fehlgeschlagen')
+                ->body("{$errorCount} E-Mails konnten nicht versendet werden")
+                ->warning()
+                ->icon('heroicon-o-exclamation-triangle')
+                ->send();
+        }
+    }
+    
+    /**
+     * Sendet E-Mail-Benachrichtigungen für Aufgaben-Änderungen
+     */
+    private function sendTaskChangeNotifications(Task $task, array $oldValues): void
+    {
+        \Log::info('📧 Task: Prüfe Änderungen für E-Mail-Benachrichtigungen', [
+            'task_id' => $task->id,
+            'task_title' => $task->title,
+            'old_assigned_to' => $oldValues['assigned_to'] ?? null,
+            'new_assigned_to' => $task->assigned_to,
+            'old_owner_id' => $oldValues['owner_id'] ?? null,
+            'new_owner_id' => $task->owner_id,
+            'changed_by' => auth()->id()
+        ]);
+        
+        $usersToNotify = collect();
+        $changes = [];
+        
+        // Prüfe relevante Änderungen
+        $fieldsToCheck = [
+            'title' => 'Titel',
+            'description' => 'Beschreibung',
+            'status' => 'Status',
+            'priority' => 'Priorität',
+            'due_date' => 'Fälligkeitsdatum',
+            'assigned_to' => 'Zugewiesen an',
+            'owner_id' => 'Inhaber'
+        ];
+        
+        foreach ($fieldsToCheck as $field => $label) {
+            $oldValue = $oldValues[$field] ?? null;
+            $newValue = $task->$field;
+            
+            if ($oldValue != $newValue) {
+                $changes[$label] = [
+                    'old_value' => $this->formatHistoryValue($field, $oldValue),
+                    'new_value' => $this->formatHistoryValue($field, $newValue)
+                ];
+            }
+        }
+        
+        // Keine relevanten Änderungen
+        if (empty($changes)) {
+            \Log::info('ℹ️ Task: Keine relevanten Änderungen für E-Mail-Benachrichtigung', [
+                'task_id' => $task->id
+            ]);
+            return;
+        }
+        
+        // Neue Zuweisung - E-Mail an neuen Benutzer
+        if (isset($changes['Zugewiesen an']) && $task->assigned_to && $task->assigned_to !== auth()->id()) {
+            $assignedUser = User::find($task->assigned_to);
+            if ($assignedUser) {
+                $usersToNotify->push($assignedUser);
+            }
+        }
+        
+        // Neuer Inhaber - E-Mail an neuen Inhaber
+        if (isset($changes['Inhaber']) && $task->owner_id && $task->owner_id !== auth()->id() && $task->owner_id !== $task->assigned_to) {
+            $ownerUser = User::find($task->owner_id);
+            if ($ownerUser) {
+                $usersToNotify->push($ownerUser);
+            }
+        }
+        
+        // Bestehende Zuweisungen - E-Mail bei anderen wichtigen Änderungen
+        if (!isset($changes['Zugewiesen an']) && !isset($changes['Inhaber'])) {
+            // E-Mail an aktuell zugewiesenen Benutzer
+            if ($task->assigned_to && $task->assigned_to !== auth()->id()) {
+                $assignedUser = User::find($task->assigned_to);
+                if ($assignedUser) {
+                    $usersToNotify->push($assignedUser);
+                }
+            }
+            
+            // E-Mail an aktuellen Inhaber
+            if ($task->owner_id && $task->owner_id !== auth()->id() && $task->owner_id !== $task->assigned_to) {
+                $ownerUser = User::find($task->owner_id);
+                if ($ownerUser) {
+                    $usersToNotify->push($ownerUser);
+                }
+            }
+        }
+        
+        if ($usersToNotify->isEmpty()) {
+            \Log::info('ℹ️ Task: Keine Benutzer für Änderungs-Benachrichtigung', [
+                'task_id' => $task->id,
+                'changes' => array_keys($changes)
+            ]);
+            return;
+        }
+        
+        $gmailService = app(\App\Services\GmailService::class);
+        $successCount = 0;
+        $errorCount = 0;
+        
+        foreach ($usersToNotify as $user) {
+            try {
+                \Log::info('📧 Task: Sende Änderungs E-Mail', [
+                    'task_id' => $task->id,
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'changes' => array_keys($changes)
+                ]);
+
+                // E-Mail-Template rendern
+                $emailContent = view('emails.task-assignment', [
+                    'user' => $user,
+                    'task' => $task,
+                    'author' => auth()->user(),
+                    'isNewTask' => false,
+                    'changes' => $changes,
+                    'taskUrl' => route('filament.admin.resources.tasks.index')
+                ])->render();
+
+                $subject = "Aufgabe geändert - {$task->title}";
+
+                $result = $gmailService->sendEmail(
+                    $user->email,
+                    $subject,
+                    $emailContent
+                );
+
+                if ($result['success'] ?? false) {
+                    \Log::info('✅ Task: Änderungs E-Mail erfolgreich gesendet', [
+                        'task_id' => $task->id,
+                        'user_id' => $user->id,
+                        'message_id' => $result['message_id'] ?? null
+                    ]);
+                    $successCount++;
+                } else {
+                    \Log::error('❌ Task: Änderungs E-Mail fehlgeschlagen', [
+                        'task_id' => $task->id,
+                        'user_id' => $user->id,
+                        'error' => $result['error'] ?? 'Unbekannter Fehler'
+                    ]);
+                    $errorCount++;
+                }
+
+            } catch (\Exception $e) {
+                \Log::error('❌ Task: Fehler beim Senden der Änderungs E-Mail', [
+                    'task_id' => $task->id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                $errorCount++;
+            }
+        }
+        
+        // Benachrichtigung an den Bearbeiter
+        if ($successCount > 0) {
+            Notification::make()
+                ->title('Änderungs-Benachrichtigungen versendet')
+                ->body("E-Mail-Benachrichtigungen an {$successCount} Benutzer versendet")
+                ->success()
+                ->icon('heroicon-o-envelope')
+                ->send();
+        }
+        
+        if ($errorCount > 0) {
+            Notification::make()
+                ->title('E-Mail-Versand teilweise fehlgeschlagen')
+                ->body("{$errorCount} E-Mails konnten nicht versendet werden")
+                ->warning()
+                ->icon('heroicon-o-exclamation-triangle')
+                ->send();
         }
     }
 
