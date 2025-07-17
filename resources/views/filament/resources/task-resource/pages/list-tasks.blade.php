@@ -64,7 +64,7 @@
                         <div class="text-xs text-gray-500 bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
                             Filter aktiv: 
                             @if($filterAssignment !== 'all')
-                                {{ $assignmentFilters[$filterAssignment] }}
+                                {{ $this->assignmentFilters[$filterAssignment] }}
                             @endif
                             @if($filterAssignment !== 'all' && count($selectedStatuses) !== 6)
                                 • 
