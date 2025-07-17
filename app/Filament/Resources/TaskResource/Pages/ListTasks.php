@@ -144,6 +144,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             
             $query = TaskResource::getEloquentQuery()
                 ->where('status', $status)
+                ->whereNull('deleted_at')
                 ->with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier', 'solarPlant']);
             
             // Zuweisungsfilter anwenden
@@ -432,10 +433,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $userId = auth()->id();
         
         // Basis-Query für alle Aufgaben
-        $allTasksQuery = TaskResource::getEloquentQuery();
+        $allTasksQuery = TaskResource::getEloquentQuery()->whereNull('deleted_at');
         
         // Basis-Query für meine Aufgaben
-        $myTasksQuery = TaskResource::getEloquentQuery()->where(function ($q) use ($userId) {
+        $myTasksQuery = TaskResource::getEloquentQuery()->whereNull('deleted_at')->where(function ($q) use ($userId) {
             $q->where('assigned_to', $userId)
               ->orWhere('owner_id', $userId)
               ->orWhere('created_by', $userId);
@@ -648,6 +649,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     {
         // Top 5 aktivste Benutzer (nach Anzahl zugewiesener Aufgaben)
         $topAssignees = TaskResource::getEloquentQuery()
+            ->whereNull('deleted_at')
             ->join('users', 'tasks.assigned_to', '=', 'users.id')
             ->selectRaw('users.name, COUNT(*) as task_count')
             ->groupBy('users.id', 'users.name')
@@ -658,6 +660,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         
         // Top 5 Aufgaben-Ersteller
         $topCreators = TaskResource::getEloquentQuery()
+            ->whereNull('deleted_at')
             ->join('users', 'tasks.created_by', '=', 'users.id')
             ->selectRaw('users.name, COUNT(*) as task_count')
             ->groupBy('users.id', 'users.name')
