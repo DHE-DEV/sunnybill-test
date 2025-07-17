@@ -795,12 +795,32 @@ class ListTasks extends ListRecords implements HasForms, HasActions
      */
     private function extractMentions(string $content): array
     {
+        \Log::info('🔍 Kanban: Extrahiere @mentions aus Inhalt', [
+            'raw_content' => $content,
+            'content_length' => strlen($content),
+            'is_html' => strpos($content, '<') !== false
+        ]);
+
         // Entferne HTML-Tags für die Mention-Extraktion, behalte aber den Text
         $plainTextContent = strip_tags($content);
         
-        // Einfache Regex: maximal 2 Wörter nach @, dann Stopp bei allem was kein Buchstabe ist
-        preg_match_all('/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)?)\b/u', $plainTextContent, $matches);
-        return array_map('trim', $matches[1]);
+        \Log::info('🔍 Kanban: Nach HTML-Tag-Entfernung', [
+            'plain_content' => $plainTextContent,
+            'plain_length' => strlen($plainTextContent)
+        ]);
+        
+        // Erweiterte Regex: maximal 2 Wörter nach @, stoppt bei Nicht-Buchstaben
+        preg_match_all('/@([a-zA-ZäöüÄÖÜßÀ-ÿ]+(?:\s+[a-zA-ZäöüÄÖÜßÀ-ÿ]+)?)\b/u', $plainTextContent, $matches);
+        
+        $extractedMentions = array_map('trim', $matches[1]);
+        
+        \Log::info('✅ Kanban: @mentions extrahiert', [
+            'extracted_mentions' => $extractedMentions,
+            'count' => count($extractedMentions),
+            'regex_matches' => $matches
+        ]);
+        
+        return $extractedMentions;
     }
     
     /**

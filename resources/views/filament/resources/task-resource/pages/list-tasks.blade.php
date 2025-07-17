@@ -428,7 +428,7 @@
                                                 <span class="text-sm text-gray-500">&nbsp;&nbsp;&nbsp;{{ $note->created_at->format('d.m.Y H:i') }}</span>
                                             </div>
                                         </div>
-                                        <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $note->content }}</div>
+                                        <div class="text-sm text-gray-700 prose prose-sm max-w-none">{!! $note->content !!}</div>
                                     </div>
                                 @empty
                                     <div class="text-center py-8 text-gray-500">

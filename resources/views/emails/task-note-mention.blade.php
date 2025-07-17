@@ -33,12 +33,72 @@
             margin-bottom: 10px;
         }
         .note-content {
-            background-color: #f8f9fa;
+            background-color: transparent;
             padding: 15px;
             border-left: 4px solid #007bff;
             border-radius: 4px;
             margin: 15px 0;
-            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        
+        /* Rich Text Editor Styling für E-Mails */
+        .note-content h1 {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 0.5em 0;
+        }
+        
+        .note-content h2 {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 0.5em 0;
+        }
+        
+        .note-content p {
+            margin: 0.5em 0;
+        }
+        
+        .note-content strong {
+            font-weight: bold;
+        }
+        
+        .note-content em {
+            font-style: italic;
+        }
+        
+        .note-content u {
+            text-decoration: underline;
+        }
+        
+        .note-content ol {
+            margin: 0.5em 0;
+            padding-left: 2em;
+        }
+        
+        .note-content ul {
+            margin: 0.5em 0;
+            padding-left: 2em;
+        }
+        
+        .note-content li {
+            margin: 0.2em 0;
+        }
+        
+        .note-content blockquote {
+            margin: 0.5em 0;
+            padding-left: 1em;
+            border-left: 3px solid #ccc;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* @mention Styling in E-Mails */
+        .note-content [style*="color: #3b82f6"] {
+            color: #007bff !important;
+            font-weight: bold;
+            background-color: #e3f2fd;
+            padding: 2px 4px;
+            border-radius: 3px;
         }
         .meta-info {
             color: #6c757d;
