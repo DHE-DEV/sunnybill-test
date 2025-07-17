@@ -4,6 +4,79 @@
     
     @if($this->showBoard)
         <div class="bg-white dark:bg-gray-900 min-h-screen">
+            <!-- Filter Bar -->
+            <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+                <div class="flex flex-wrap items-center gap-4">
+                    <!-- Zuweisungsfilter -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Zuweisung:</span>
+                        <div class="flex gap-1">
+                            @foreach($this->assignmentFilters as $value => $label)
+                                <button wire:click="filterByAssignment('{{ $value }}')"
+                                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors
+                                               {{ $filterAssignment === $value 
+                                                  ? 'bg-blue-100 text-blue-800 border-blue-200' 
+                                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }} 
+                                               border">
+                                    {{ $label }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                    
+                    <!-- Trennlinie -->
+                    <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
+                    
+                    <!-- Status-Filter -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
+                        <div class="flex gap-1 flex-wrap">
+                            @foreach($this->availableStatuses as $status => $label)
+                                <button wire:click="toggleStatusFilter('{{ $status }}')"
+                                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors
+                                               {{ in_array($status, $selectedStatuses) 
+                                                  ? 'bg-green-100 text-green-800 border-green-200' 
+                                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }} 
+                                               border">
+                                    {{ $label }}
+                                    @if(in_array($status, $selectedStatuses))
+                                        ✓
+                                    @endif
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                    
+                    <!-- Trennlinie -->
+                    <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
+                    
+                    <!-- Reset Button -->
+                    <button wire:click="resetFilters"
+                            class="px-3 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Zurücksetzen
+                    </button>
+                    
+                    <!-- Active Filters Info -->
+                    @if($filterAssignment !== 'all' || count($selectedStatuses) !== 6)
+                        <div class="text-xs text-gray-500 bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
+                            Filter aktiv: 
+                            @if($filterAssignment !== 'all')
+                                {{ $assignmentFilters[$filterAssignment] }}
+                            @endif
+                            @if($filterAssignment !== 'all' && count($selectedStatuses) !== 6)
+                                • 
+                            @endif
+                            @if(count($selectedStatuses) !== 6)
+                                {{ count($selectedStatuses) }}/6 Status
+                            @endif
+                        </div>
+                    @endif
+                </div>
+            </div>
+            
             <!-- Kanban Board -->
             <div class="overflow-x-auto">
                 <div class="flex gap-6 p-6" style="min-width: 1800px;">

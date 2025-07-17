@@ -59,6 +59,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     // History modal properties
     public bool $showHistoryModal = false;
     public ?Task $historyTask = null;
+    
+    // Filter properties
+    public string $filterAssignment = 'all'; // all, assigned_to_me, owned_by_me, my_tasks
+    public array $selectedStatuses = []; // Array für mehrere Status-Filter
 
     public function mount(): void
     {
@@ -66,6 +70,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         // Prüfe URL-Parameter oder Session für den aktuellen Zustand
         $this->showStatistics = request()->get('statistics', false);
         $this->showBoard = request()->get('board', true); // Standardmäßig Board anzeigen
+        
+        // Standardmäßig alle Status anzeigen
+        $this->selectedStatuses = ['open', 'in_progress', 'waiting_external', 'waiting_internal', 'completed', 'cancelled'];
     }
 
     protected function getHeaderActions(): array
@@ -119,9 +126,19 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $columns = [];
         
         foreach ($statusConfig as $status => $config) {
-            $tasks = TaskResource::getEloquentQuery()
+            // Nur Spalten anzeigen, die in den ausgewählten Status enthalten sind
+            if (!in_array($status, $this->selectedStatuses)) {
+                continue;
+            }
+            
+            $query = TaskResource::getEloquentQuery()
                 ->where('status', $status)
-                ->with(['taskType', 'assignedUser', 'customer', 'supplier'])
+                ->with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier']);
+            
+            // Zuweisungsfilter anwenden
+            $this->applyAssignmentFilter($query);
+            
+            $tasks = $query
                 ->orderByRaw('CASE WHEN priority = "blocker" THEN 0 ELSE 1 END')
                 ->orderBy('sort_order', 'asc')
                 ->orderBy('due_date', 'asc')
@@ -137,6 +154,94 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         }
 
         return $columns;
+    }
+    
+    /**
+     * Wendet den Zuweisungsfilter auf die Query an
+     */
+    private function applyAssignmentFilter($query): void
+    {
+        $userId = auth()->id();
+        
+        switch ($this->filterAssignment) {
+            case 'assigned_to_me':
+                $query->where('assigned_to', $userId);
+                break;
+                
+            case 'owned_by_me':
+                $query->where('owner_id', $userId);
+                break;
+                
+            case 'my_tasks':
+                $query->where(function ($q) use ($userId) {
+                    $q->where('assigned_to', $userId)
+                      ->orWhere('owner_id', $userId)
+                      ->orWhere('created_by', $userId);
+                });
+                break;
+                
+            case 'all':
+            default:
+                // Keine Filterung
+                break;
+        }
+    }
+    
+    /**
+     * Filtert nach Zuweisungen
+     */
+    public function filterByAssignment($assignment): void
+    {
+        $this->filterAssignment = $assignment;
+    }
+    
+    /**
+     * Filtert nach Status (Toggle)
+     */
+    public function toggleStatusFilter($status): void
+    {
+        if (in_array($status, $this->selectedStatuses)) {
+            $this->selectedStatuses = array_diff($this->selectedStatuses, [$status]);
+        } else {
+            $this->selectedStatuses = array_merge($this->selectedStatuses, [$status]);
+        }
+    }
+    
+    /**
+     * Setzt alle Filter zurück
+     */
+    public function resetFilters(): void
+    {
+        $this->filterAssignment = 'all';
+        $this->selectedStatuses = ['open', 'in_progress', 'waiting_external', 'waiting_internal', 'completed', 'cancelled'];
+    }
+    
+    /**
+     * Getter für die verfügbaren Zuweisungsfilter
+     */
+    public function getAssignmentFiltersProperty(): array
+    {
+        return [
+            'all' => 'Alle Aufgaben',
+            'assigned_to_me' => 'Mir zugewiesen',
+            'owned_by_me' => 'In meinem Besitz',
+            'my_tasks' => 'Meine Aufgaben (alle)'
+        ];
+    }
+    
+    /**
+     * Getter für die verfügbaren Status-Filter
+     */
+    public function getAvailableStatusesProperty(): array
+    {
+        return [
+            'open' => 'Offen',
+            'in_progress' => 'In Bearbeitung',
+            'waiting_external' => 'Warte auf Extern',
+            'waiting_internal' => 'Warte auf Intern',
+            'completed' => 'Abgeschlossen',
+            'cancelled' => 'Abgebrochen'
+        ];
     }
 
     public function getStatistics(): array
