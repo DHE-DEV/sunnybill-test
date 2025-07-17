@@ -603,7 +603,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         
         // @mentions extrahieren
         $mentionedUsernames = $this->extractMentions($content);
-        $mentionedUsers = [];
+        $mentionedUsers = collect(); // Als Collection initialisieren
         
         \Log::info('🔍 Kanban: @mentions extrahiert', [
             'task_id' => $this->notesTask->id,
