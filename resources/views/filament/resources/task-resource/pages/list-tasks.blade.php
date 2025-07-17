@@ -65,7 +65,7 @@
                     </div>
                     
                     <!-- Zweite Zeile: Zuweisungsfilter + Prioritätsfilter (zweispaltig) -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                         <!-- Linke Spalte: Zuweisungsfilter -->
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Zuweisung:</span>
@@ -102,7 +102,7 @@
                     </div>
                     
                     <!-- Dritte Zeile: Status-Filter + Fälligkeitsfilter (zweispaltig) -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                         <!-- Linke Spalte: Status-Filter -->
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
