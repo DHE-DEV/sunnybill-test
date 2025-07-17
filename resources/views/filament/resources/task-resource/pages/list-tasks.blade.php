@@ -1203,6 +1203,16 @@
                         textarea.dispatchEvent(new Event('input', { bubbles: true }));
                         console.log('🔄 Textarea zurückgesetzt');
                     }
+                    
+                    // Prüfe ob Rich Text Editor noch existiert, wenn nicht - erneut initialisieren
+                    setTimeout(() => {
+                        const editorContainer = document.getElementById('rich-text-editor');
+                        if (editorContainer && (!quill || !quill.root || !document.contains(quill.root))) {
+                            console.log('🔄 Rich Text Editor nicht mehr vorhanden - erneut initialisieren');
+                            quill = null; // Reset
+                            initializeRichTextEditor();
+                        }
+                    }, 300);
                 }, 100);
                 
             } catch (error) {
@@ -1228,6 +1238,16 @@
                             textarea.dispatchEvent(new Event('input', { bubbles: true }));
                             console.log('🔄 Textarea zurückgesetzt (Fallback)');
                         }
+                        
+                        // Prüfe ob Rich Text Editor noch existiert, wenn nicht - erneut initialisieren
+                        setTimeout(() => {
+                            const editorContainer = document.getElementById('rich-text-editor');
+                            if (editorContainer && (!quill || !quill.root || !document.contains(quill.root))) {
+                                console.log('🔄 Rich Text Editor nicht mehr vorhanden - erneut initialisieren (Fallback)');
+                                quill = null; // Reset
+                                initializeRichTextEditor();
+                            }
+                        }, 300);
                     }, 100);
                     
                 } else {
@@ -1260,6 +1280,16 @@
                                             textarea.dispatchEvent(new Event('input', { bubbles: true }));
                                             console.log('🔄 Textarea zurückgesetzt (Direkte Komponente)');
                                         }
+                                        
+                                        // Prüfe ob Rich Text Editor noch existiert, wenn nicht - erneut initialisieren
+                                        setTimeout(() => {
+                                            const editorContainer = document.getElementById('rich-text-editor');
+                                            if (editorContainer && (!quill || !quill.root || !document.contains(quill.root))) {
+                                                console.log('🔄 Rich Text Editor nicht mehr vorhanden - erneut initialisieren (Direkte Komponente)');
+                                                quill = null; // Reset
+                                                initializeRichTextEditor();
+                                            }
+                                        }, 300);
                                     }, 100);
                                     
                                 } else {
