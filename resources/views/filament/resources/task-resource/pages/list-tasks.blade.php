@@ -1219,18 +1219,41 @@
         }
     }
     
-    // Rich Text Editor nach Modal-Öffnung initialisieren
+    // Modal-Initialisierung beim Öffnen
     window.addEventListener('DOMContentLoaded', function() {
-        // Observer für Modal-Öffnung
+        // Sofort beim Laden initialisieren
+        initializeKanbanMentionSystem();
+        
+        // Observer für Modal-Öffnung und dynamische Inhalte
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type === 'childList') {
                     mutation.addedNodes.forEach(function(node) {
                         if (node.nodeType === Node.ELEMENT_NODE) {
+                            // Rich Text Editor initialisieren
                             const editor = node.querySelector('#rich-text-editor');
                             if (editor && !quill) {
                                 setTimeout(() => {
                                     initializeRichTextEditor();
+                                    initializeKanbanMentionSystem(); // Auch Mention-System
+                                }, 100);
+                            }
+                            
+                            // Notes Modal geöffnet
+                            const notesModal = node.querySelector('[aria-labelledby="notes-modal-title"]');
+                            if (notesModal) {
+                                setTimeout(() => {
+                                    console.log('📝 Notes Modal erkannt - initialisiere Mention System');
+                                    initializeKanbanMentionSystem();
+                                }, 200);
+                            }
+                            
+                            // Benutzer-Button Container gefunden
+                            const userButtonContainer = node.querySelector('#kanban-user-buttons');
+                            if (userButtonContainer) {
+                                setTimeout(() => {
+                                    console.log('👥 Benutzer-Button Container erkannt');
+                                    createKanbanUserButtons();
                                 }, 100);
                             }
                         }
@@ -1242,6 +1265,25 @@
         observer.observe(document.body, {
             childList: true,
             subtree: true
+        });
+    });
+    
+    // Livewire Event Listener für Modal-Öffnung
+    document.addEventListener('livewire:initialized', () => {
+        // Initialisierung beim ersten Laden
+        setTimeout(() => {
+            initializeKanbanMentionSystem();
+        }, 500);
+        
+        // Hook in Livewire's event system
+        Livewire.hook('element.updated', (el, component) => {
+            const userButtonContainer = el.querySelector('#kanban-user-buttons');
+            if (userButtonContainer) {
+                setTimeout(() => {
+                    console.log('👥 Livewire Update: Erstelle Benutzer-Buttons');
+                    createKanbanUserButtons();
+                }, 100);
+            }
         });
     });
     

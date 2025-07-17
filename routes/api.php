@@ -20,7 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Benutzer-Suche für @mentions
-Route::middleware('auth:sanctum')->get('/users/search', function (Request $request) {
+Route::get('/users/search', function (Request $request) {
     $query = $request->get('q', '');
     
     if (empty($query)) {
@@ -37,7 +37,7 @@ Route::middleware('auth:sanctum')->get('/users/search', function (Request $reque
 });
 
 // Alle Benutzer für @mentions
-Route::middleware('auth:sanctum')->get('/users/all', function (Request $request) {
+Route::get('/users/all', function (Request $request) {
     $users = User::select('id', 'name', 'email')
         ->orderBy('name')
         ->get();
