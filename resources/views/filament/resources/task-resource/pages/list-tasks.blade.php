@@ -388,12 +388,11 @@
                             <div class="mb-6 pt-4 bg-gray-50 rounded-lg" style="padding: 16px;">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Neue Notiz hinzufügen</label>
                                 
-                                <!-- Rich Text Editor -->
-                                <div class="border rounded-lg overflow-hidden" style="border: 2px solid #3b82f6;">
-                                    <div id="rich-text-editor" 
-                                         style="min-height: 120px; background: white;"
-                                         wire:ignore></div>
-                                </div>
+                <!-- Rich Text Editor -->
+                <div class="border rounded-lg overflow-hidden" style="border: 2px solid #3b82f6;" wire:ignore>
+                    <div id="rich-text-editor" 
+                         style="min-height: 120px; background: white;"></div>
+                </div>
                                 
                                 <!-- Hidden textarea for Livewire -->
                                 <textarea wire:model="newNoteContent"
@@ -938,14 +937,23 @@
 
     // Rich Text Editor Setup
     let quill;
+    let editorInitializing = false;
     
     // Rich Text Editor initialisieren
     function initializeRichTextEditor() {
+        // Verhindere mehrfache gleichzeitige Initialisierung
+        if (editorInitializing) {
+            console.log('⏭️ Rich Text Editor wird bereits initialisiert - überspringe');
+            return;
+        }
+        
         console.log('📝 Initialisiere Rich Text Editor...');
+        editorInitializing = true;
         
         // Prüfe ob Quill bereits geladen ist
         if (typeof Quill === 'undefined') {
             console.log('📦 Lade Quill.js...');
+            editorInitializing = false;
             loadQuillJS();
             return;
         }
@@ -953,29 +961,43 @@
         const container = document.getElementById('rich-text-editor');
         if (!container) {
             console.error('❌ Rich Text Editor Container nicht gefunden');
+            editorInitializing = false;
             return;
         }
         
-        // Quill mit Toolbar konfigurieren
+        // Prüfe ob bereits ein funktionsfähiger Editor existiert
+        if (quill && container.querySelector('.ql-editor')) {
+            console.log('✅ Rich Text Editor bereits vorhanden und funktionsfähig');
+            editorInitializing = false;
+            return;
+        }
+        
+        // Bereinige vorhandenen Quill-Inhalt im Container
+        if (container.querySelector('.ql-toolbar') || container.querySelector('.ql-editor')) {
+            console.log('🧹 Bereinige vorhandenen Quill-Inhalt...');
+            container.innerHTML = '';
+        }
+        
+        // Entferne bestehenden Editor falls vorhanden
+        if (quill) {
+            try {
+                quill = null;
+            } catch (e) {
+                console.log('⚠️ Fehler beim Bereinigen des alten Editors:', e);
+            }
+        }
+        
+        // Quill mit vereinfachter Toolbar konfigurieren
         quill = new Quill(container, {
             theme: 'snow',
             placeholder: 'Notiz eingeben... Verwenden Sie @benutzername um Benutzer zu erwähnen.',
             modules: {
                 toolbar: [
-                    ['bold', 'italic', 'underline', 'strike'],
-                    ['blockquote', 'code-block'],
+                    ['bold', 'italic', 'underline'],
                     [{ 'header': 1 }, { 'header': 2 }],
                     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'script': 'sub'}, { 'script': 'super' }],
-                    [{ 'indent': '-1'}, { 'indent': '+1' }],
-                    [{ 'direction': 'rtl' }],
-                    [{ 'size': ['small', false, 'large', 'huge'] }],
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'font': [] }],
-                    [{ 'align': [] }],
-                    ['clean'],
-                    ['link', 'image', 'video']
+                    ['blockquote'],
+                    ['clean']
                 ]
             }
         });
@@ -995,7 +1017,11 @@
             }
         });
         
-        console.log('✅ Rich Text Editor initialisiert');
+        // Sperre nach erfolgreicher Initialisierung freigeben
+        setTimeout(() => {
+            editorInitializing = false;
+            console.log('✅ Rich Text Editor initialisiert - Sperre freigegeben');
+        }, 100);
     }
     
     // Quill.js dynamisch laden
@@ -1189,31 +1215,13 @@
                 window.Livewire.dispatch('addNote');
                 console.log('✅ Rich Text: Notiz über Livewire.dispatch gespeichert');
                 
-                // Nach erfolgreichem Speichern: Editor zurücksetzen und fokussieren
+                // Editor nach dem Speichern leeren aber nicht zerstören
                 setTimeout(() => {
                     if (quill) {
-                        quill.setContents([]);
-                        quill.focus(); // Editor fokussieren für neue Notiz
-                        console.log('🔄 Rich Text Editor zurückgesetzt und fokussiert');
+                        quill.setText('');
+                        console.log('🧹 Rich Text Editor geleert');
                     }
-                    
-                    // Auch das versteckte Textarea zurücksetzen
-                    if (textarea) {
-                        textarea.value = '';
-                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                        console.log('🔄 Textarea zurückgesetzt');
-                    }
-                    
-                    // Prüfe ob Rich Text Editor noch existiert, wenn nicht - erneut initialisieren
-                    setTimeout(() => {
-                        const editorContainer = document.getElementById('rich-text-editor');
-                        if (editorContainer && (!quill || !quill.root || !document.contains(quill.root))) {
-                            console.log('🔄 Rich Text Editor nicht mehr vorhanden - erneut initialisieren');
-                            quill = null; // Reset
-                            initializeRichTextEditor();
-                        }
-                    }, 300);
-                }, 100);
+                }, 500);
                 
             } catch (error) {
                 console.error('❌ Fehler beim Livewire.dispatch:', error);
@@ -1225,81 +1233,16 @@
                     saveButton.click();
                     console.log('✅ Rich Text: Notiz über Button-Klick gespeichert');
                     
-                    // Nach erfolgreichem Speichern: Editor zurücksetzen und fokussieren
+                    // Editor nach dem Speichern leeren aber nicht zerstören
                     setTimeout(() => {
                         if (quill) {
-                            quill.setContents([]);
-                            quill.focus(); // Editor fokussieren für neue Notiz
-                            console.log('🔄 Rich Text Editor zurückgesetzt und fokussiert (Fallback)');
+                            quill.setText('');
+                            console.log('🧹 Rich Text Editor geleert (Fallback)');
                         }
-                        
-                        if (textarea) {
-                            textarea.value = '';
-                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                            console.log('🔄 Textarea zurückgesetzt (Fallback)');
-                        }
-                        
-                        // Prüfe ob Rich Text Editor noch existiert, wenn nicht - erneut initialisieren
-                        setTimeout(() => {
-                            const editorContainer = document.getElementById('rich-text-editor');
-                            if (editorContainer && (!quill || !quill.root || !document.contains(quill.root))) {
-                                console.log('🔄 Rich Text Editor nicht mehr vorhanden - erneut initialisieren (Fallback)');
-                                quill = null; // Reset
-                                initializeRichTextEditor();
-                            }
-                        }, 300);
-                    }, 100);
+                    }, 500);
                     
                 } else {
                     console.error('❌ Save-Button nicht gefunden');
-                    
-                    // Letzter Fallback: Livewire-Komponente direkt finden
-                    const livewireComponent = document.querySelector('[wire\\:id]');
-                    if (livewireComponent) {
-                        const componentId = livewireComponent.getAttribute('wire:id');
-                        console.log('🔄 Versuche direkte Komponenten-Kommunikation, ID:', componentId);
-                        
-                        // Direkte Livewire-Komponente ansprechen
-                        if (window.Livewire.find && componentId) {
-                            try {
-                                const component = window.Livewire.find(componentId);
-                                if (component) {
-                                    component.call('addNote');
-                                    console.log('✅ Rich Text: Notiz über direkte Komponente gespeichert');
-                                    
-                                    // Nach erfolgreichem Speichern: Editor zurücksetzen und fokussieren
-                                    setTimeout(() => {
-                                        if (quill) {
-                                            quill.setContents([]);
-                                            quill.focus(); // Editor fokussieren für neue Notiz
-                                            console.log('🔄 Rich Text Editor zurückgesetzt und fokussiert (Direkte Komponente)');
-                                        }
-                                        
-                                        if (textarea) {
-                                            textarea.value = '';
-                                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                                            console.log('🔄 Textarea zurückgesetzt (Direkte Komponente)');
-                                        }
-                                        
-                                        // Prüfe ob Rich Text Editor noch existiert, wenn nicht - erneut initialisieren
-                                        setTimeout(() => {
-                                            const editorContainer = document.getElementById('rich-text-editor');
-                                            if (editorContainer && (!quill || !quill.root || !document.contains(quill.root))) {
-                                                console.log('🔄 Rich Text Editor nicht mehr vorhanden - erneut initialisieren (Direkte Komponente)');
-                                                quill = null; // Reset
-                                                initializeRichTextEditor();
-                                            }
-                                        }, 300);
-                                    }, 100);
-                                    
-                                } else {
-                                    console.error('❌ Komponente nicht gefunden');
-                                }
-                            } catch (e) {
-                                console.error('❌ Fehler bei direkter Komponenten-Kommunikation:', e);
-                            }
-                        }
-                    }
                 }
             }
         } else {
@@ -1351,28 +1294,36 @@
         // Sofort beim Laden initialisieren
         initializeKanbanMentionSystem();
         
-        // Observer für Modal-Öffnung und dynamische Inhalte
+        // Observer für Modal-Erkennung und Editor-Initialisierung
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type === 'childList') {
                     mutation.addedNodes.forEach(function(node) {
                         if (node.nodeType === Node.ELEMENT_NODE) {
-                            // Rich Text Editor initialisieren
-                            const editor = node.querySelector('#rich-text-editor');
-                            if (editor && !quill) {
-                                setTimeout(() => {
-                                    initializeRichTextEditor();
-                                    initializeKanbanMentionSystem(); // Auch Mention-System
-                                }, 100);
-                            }
-                            
-                            // Notes Modal geöffnet
+                            // Notes Modal geöffnet - Rich Text Editor initialisieren
                             const notesModal = node.querySelector('[aria-labelledby="notes-modal-title"]');
                             if (notesModal) {
+                                console.log('📝 Notes Modal erkannt - starte vollständige Initialisierung');
+                                
+                                // Warte kurz auf DOM-Aufbau und initialisiere dann alles
                                 setTimeout(() => {
-                                    console.log('📝 Notes Modal erkannt - initialisiere Mention System');
                                     initializeKanbanMentionSystem();
-                                }, 200);
+                                    
+                                    // Rich Text Editor initialisieren
+                                    setTimeout(() => {
+                                        initializeRichTextEditor();
+                                        console.log('✅ Notes Modal: Editor initialisiert');
+                                    }, 100);
+                                }, 300);
+                            }
+                            
+                            // Rich Text Editor Container direkt gefunden
+                            const richTextEditor = node.querySelector('#rich-text-editor');
+                            if (richTextEditor) {
+                                console.log('📝 Rich Text Editor Container direkt erkannt');
+                                setTimeout(() => {
+                                    initializeRichTextEditor();
+                                }, 100);
                             }
                             
                             // Benutzer-Button Container gefunden
@@ -1402,8 +1353,9 @@
             initializeKanbanMentionSystem();
         }, 500);
         
-        // Hook in Livewire's event system
+        // Hook in Livewire's event system für Updates
         Livewire.hook('element.updated', (el, component) => {
+            // Benutzer-Button Container aktualisiert
             const userButtonContainer = el.querySelector('#kanban-user-buttons');
             if (userButtonContainer) {
                 setTimeout(() => {
@@ -1411,6 +1363,51 @@
                     createKanbanUserButtons();
                 }, 100);
             }
+            
+            // Rich Text Editor Container aktualisiert
+            const richTextEditor = el.querySelector('#rich-text-editor');
+            if (richTextEditor) {
+                setTimeout(() => {
+                    console.log('📝 Livewire Update: Rich Text Editor erkannt');
+                    initializeRichTextEditor();
+                }, 200);
+            }
+        });
+        
+        // Event-Listener für Modal-Öffnung
+        Livewire.on('notesModalOpened', () => {
+            console.log('📝 Notes Modal geöffnet - initialisiere Editor');
+            setTimeout(() => {
+                initializeKanbanMentionSystem();
+                setTimeout(() => {
+                    initializeRichTextEditor();
+                }, 200);
+            }, 500);
+        });
+        
+        // Event-Listener für Note Added mit Editor-Reinitialisierung
+        Livewire.on('noteAdded', (eventData) => {
+            console.log('🎯 Note Added Event erkannt - bereite Editor-Reset vor');
+            
+            // Sperre zurücksetzen für Neuinitialisierung nach Livewire-Update
+            editorInitializing = false;
+            
+            // Editor nur leeren, nicht zerstören
+            setTimeout(() => {
+                if (quill) {
+                    quill.setText('');
+                    console.log('🧹 Rich Text Editor nach Note Added geleert');
+                }
+                
+                // Nach Livewire-Update Editor neu initialisieren falls Container nicht mehr funktionsfähig ist
+                setTimeout(() => {
+                    const container = document.getElementById('rich-text-editor');
+                    if (container && (!quill || !container.querySelector('.ql-editor'))) {
+                        console.log('🔄 Rich Text Editor Container nach Livewire-Update neu initialisieren');
+                        initializeRichTextEditor();
+                    }
+                }, 1000);
+            }, 500);
         });
     });
     
@@ -1439,7 +1436,7 @@
     };
     
     console.log('✅ Kanban @mention System geladen');
-    console.log('💡 Verwende window.debugKanbanMentions() für Debug-Infos');
+    console.log('� Verwende window.debugKanbanMentions() für Debug-Infos');
     
     // Livewire Console-Logging Event Listener
     document.addEventListener('livewire:initialized', () => {
@@ -1454,7 +1451,7 @@
                 data = eventData;
             }
             
-            console.log('🔧 Processed data:', data);
+            console.log('� Processed data:', data);
             
             if (!data || typeof data !== 'object') {
                 console.error('❌ Invalid event data format:', data);

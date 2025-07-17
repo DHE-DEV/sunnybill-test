@@ -559,6 +559,12 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $this->notesTask = Task::with(['notes.user'])->find($taskId);
         $this->newNoteContent = '';
         $this->showNotesModal = true;
+        
+        // Event für JavaScript auslösen, damit Rich Text Editor initialisiert wird
+        $this->dispatch('notesModalOpened', [
+            'task_id' => $taskId,
+            'task_title' => $this->notesTask ? $this->notesTask->title : 'Unbekannte Aufgabe'
+        ]);
     }
 
     public function closeNotesModal()
@@ -771,6 +777,16 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                 'task_id' => $this->notesTask->id
             ]
         ]);
+        
+        // Spezielles Event für Rich Text Editor Reinitialisierung
+        $this->dispatch('noteAdded', [
+            'note_id' => $note->id,
+            'task_id' => $this->notesTask->id,
+            'reinitialize_editor' => true
+        ]);
+        
+        // Zusätzliches Event für Livewire-Hooks
+        $this->dispatch('noteSaved');
     }
     
     /**
