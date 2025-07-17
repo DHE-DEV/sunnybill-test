@@ -67,9 +67,6 @@
                                                   : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
                                         style="{{ in_array($status, $selectedStatuses) ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
                                     {{ $label }}
-                                    @if(in_array($status, $selectedStatuses))
-                                        ✓
-                                    @endif
                                 </button>
                             @endforeach
                         </div>
