@@ -582,6 +582,18 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'author_name' => auth()->user()->name
         ]);
         
+        // JavaScript Console Log für bessere Debugging-Erfahrung
+        $this->dispatch('console-log', [
+            'type' => 'info',
+            'message' => '📝 Neue Notiz wird erstellt',
+            'data' => [
+                'task_id' => $this->notesTask->id,
+                'task_title' => $this->notesTask->title,
+                'content' => $content,
+                'author' => auth()->user()->name
+            ]
+        ]);
+        
         // @mentions extrahieren
         $mentionedUsernames = $this->extractMentions($content);
         $mentionedUsers = [];
@@ -589,7 +601,19 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         \Log::info('🔍 Kanban: @mentions extrahiert', [
             'task_id' => $this->notesTask->id,
             'mentioned_usernames' => $mentionedUsernames,
-            'count' => count($mentionedUsernames)
+            'count' => count($mentionedUsernames),
+            'content' => $content,
+            'regex_pattern' => '/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)*)/u'
+        ]);
+        
+        $this->dispatch('console-log', [
+            'type' => 'info',
+            'message' => '🔍 @mentions extrahiert',
+            'data' => [
+                'mentioned_usernames' => $mentionedUsernames,
+                'count' => count($mentionedUsernames),
+                'content' => $content
+            ]
         ]);
         
         if (!empty($mentionedUsernames)) {
@@ -605,7 +629,25 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                         'email' => $user->email
                     ];
                 })->toArray(),
-                'found_count' => $mentionedUsers->count()
+                'found_count' => $mentionedUsers->count(),
+                'all_users_in_db' => User::pluck('name')->toArray()
+            ]);
+            
+            $this->dispatch('console-log', [
+                'type' => 'info',
+                'message' => '👥 Benutzer für @mentions gefunden',
+                'data' => [
+                    'mentioned_usernames' => $mentionedUsernames,
+                    'found_users' => $mentionedUsers->map(function($user) {
+                        return [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email
+                        ];
+                    })->toArray(),
+                    'found_count' => $mentionedUsers->count(),
+                    'all_users_in_db' => User::pluck('name')->toArray()
+                ]
             ]);
         }
 
@@ -623,6 +665,16 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'mentioned_users_count' => $mentionedUsers->count()
         ]);
 
+        $this->dispatch('console-log', [
+            'type' => 'success',
+            'message' => '✅ Notiz erfolgreich erstellt',
+            'data' => [
+                'note_id' => $note->id,
+                'task_id' => $this->notesTask->id,
+                'mentioned_users_count' => $mentionedUsers->count()
+            ]
+        ]);
+
         // E-Mail-Benachrichtigungen an erwähnte Benutzer senden
         if ($mentionedUsers->isNotEmpty()) {
             \Log::info('📧 Kanban: Starte E-Mail-Benachrichtigungen', [
@@ -630,11 +682,31 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                 'task_id' => $this->notesTask->id,
                 'users_to_notify' => $mentionedUsers->count()
             ]);
+
+            $this->dispatch('console-log', [
+                'type' => 'info',
+                'message' => '📧 Starte E-Mail-Benachrichtigungen',
+                'data' => [
+                    'note_id' => $note->id,
+                    'task_id' => $this->notesTask->id,
+                    'users_to_notify' => $mentionedUsers->count()
+                ]
+            ]);
+
             $this->sendMentionNotifications($note, $mentionedUsers);
         } else {
             \Log::info('ℹ️ Kanban: Keine E-Mail-Benachrichtigungen erforderlich', [
                 'note_id' => $note->id,
                 'task_id' => $this->notesTask->id
+            ]);
+
+            $this->dispatch('console-log', [
+                'type' => 'warning',
+                'message' => 'ℹ️ Keine E-Mail-Benachrichtigungen erforderlich',
+                'data' => [
+                    'note_id' => $note->id,
+                    'task_id' => $this->notesTask->id
+                ]
             ]);
         }
 
@@ -648,6 +720,15 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         \Log::info('🔄 Kanban: Notiz-Verarbeitung abgeschlossen', [
             'note_id' => $note->id,
             'task_id' => $this->notesTask->id
+        ]);
+
+        $this->dispatch('console-log', [
+            'type' => 'success',
+            'message' => '🔄 Notiz-Verarbeitung abgeschlossen',
+            'data' => [
+                'note_id' => $note->id,
+                'task_id' => $this->notesTask->id
+            ]
         ]);
     }
     

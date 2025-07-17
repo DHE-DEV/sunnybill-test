@@ -935,5 +935,23 @@
 
     console.log('✅ Kanban @mention System geladen');
     console.log('💡 Verwende window.debugKanbanMentions() für Debug-Infos');
+    
+    // Livewire Console-Logging Event Listener
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('console-log', (event) => {
+            const { type, message, data } = event;
+            const style = {
+                info: 'color: #3b82f6; font-weight: bold',
+                success: 'color: #10b981; font-weight: bold',
+                warning: 'color: #f59e0b; font-weight: bold',
+                error: 'color: #ef4444; font-weight: bold'
+            };
+            
+            console.log(`%c${message}`, style[type] || style.info);
+            if (data) {
+                console.log('📊 Daten:', data);
+            }
+        });
+    });
     </script>
 </x-filament-panels::page>
