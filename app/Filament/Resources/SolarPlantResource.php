@@ -40,20 +40,24 @@ class SolarPlantResource extends Resource
                             ->schema([
                                 Forms\Components\Grid::make(2)
                                     ->schema([
-                                        Forms\Components\TextInput::make('name')
-                                            ->label('Anlagenname')
-                                            ->required()
-                                            ->maxLength(255)
-                                            ->placeholder('z.B. Solaranlage Musterstraße 1'),
-                                        Forms\Components\TextInput::make('location')
-                                            ->label('Standort')
-                                            ->required()
-                                            ->maxLength(255)
-                                            ->placeholder('z.B. Musterstraße 1, 12345 Musterstadt'),
-                                        Forms\Components\TextInput::make('plot_number')
-                                            ->label('Flurstück')
-                                            ->maxLength(255)
-                                            ->placeholder('z.B. Flur 1, Flurstück 123/4'),
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Anlagenname')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('z.B. Solaranlage Musterstraße 1'),
+                                Forms\Components\TextInput::make('app_code')
+                                    ->label('App-Code')
+                                    ->disabled()
+                                    ->helperText('Automatisch generierter eindeutiger Code für die Anlage'),
+                                Forms\Components\TextInput::make('location')
+                                    ->label('Standort')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('z.B. Musterstraße 1, 12345 Musterstadt'),
+                                Forms\Components\TextInput::make('plot_number')
+                                    ->label('Flurstück')
+                                    ->maxLength(255)
+                                    ->placeholder('z.B. Flur 1, Flurstück 123/4'),
                                     ]),
                                 Forms\Components\Grid::make(2)
                                     ->schema([
@@ -408,8 +412,29 @@ class SolarPlantResource extends Resource
                                         default => 'gray',
                                     }),
                                 \Filament\Infolists\Components\IconEntry::make('is_active')
-                                    ->label('Aktiv')
+                                    ->label('Betriebsbereit')
                                     ->boolean(),
+                                \Filament\Infolists\Components\TextEntry::make('app_code')
+                                    ->label('App-Code')
+                                    ->copyable()
+                                    ->copyableState(fn ($state) => $state)
+                                    ->badge()
+                                    ->color('primary')
+                                    ->suffixAction(
+                                        \Filament\Infolists\Components\Actions\Action::make('copy_app_code')
+                                            ->icon('heroicon-m-clipboard-document')
+                                            ->iconButton()
+                                            ->color('gray')
+                                            ->tooltip('App-Code kopieren')
+                                            ->action(function ($record) {
+                                                // Die copyable-Funktion von Filament übernimmt das Kopieren
+                                                \Filament\Notifications\Notification::make()
+                                                    ->title('App-Code kopiert')
+                                                    ->body($record->app_code)
+                                                    ->success()
+                                                    ->send();
+                                            })
+                                    ),
                                 \Filament\Infolists\Components\TextEntry::make('total_capacity_kw')
                                     ->label('Gesamtleistung')
                                     ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') . ' kWp' : '-')
@@ -575,6 +600,14 @@ class SolarPlantResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
+                Tables\Columns\TextColumn::make('app_code')
+                    ->label('App-Code')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->badge()
+                    ->color('primary')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('location')
                     ->label('Standort')
                     ->searchable()

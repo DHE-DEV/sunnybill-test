@@ -17,6 +17,7 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Form;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TaskNoteMention;
+use Filament\Notifications\Notification;
 
 class ListTasks extends ListRecords implements HasForms, HasActions
 {
@@ -673,6 +674,11 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'author_name' => auth()->user()->name
         ]);
 
+        $successCount = 0;
+        $errorCount = 0;
+        $skippedCount = 0;
+        $errorMessages = [];
+
         foreach ($mentionedUsers as $user) {
             // Nicht an sich selbst senden
             if ($user->id === auth()->id()) {
@@ -680,6 +686,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                     'note_id' => $note->id,
                     'author_id' => auth()->id()
                 ]);
+                $skippedCount++;
                 continue;
             }
             
@@ -698,6 +705,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                         'user_id' => $user->id,
                         'email' => $user->email
                     ]);
+                    $errorCount++;
+                    $errorMessages[] = "Ungültige E-Mail-Adresse für {$user->name}";
                     continue;
                 }
 
@@ -725,21 +734,26 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                     $emailContent
                 );
 
-                if ($result) {
+                if ($result['success'] ?? false) {
                     \Log::info('✅ Kanban: Task-Notiz Mention E-Mail erfolgreich gesendet', [
                         'user_id' => $user->id,
                         'user_email' => $user->email,
                         'note_id' => $note->id,
                         'task_id' => $note->task_id,
-                        'subject' => $subject
+                        'subject' => $subject,
+                        'message_id' => $result['message_id'] ?? null
                     ]);
+                    $successCount++;
                 } else {
                     \Log::error('❌ Kanban: Task-Notiz Mention E-Mail konnte nicht gesendet werden', [
                         'user_id' => $user->id,
                         'user_email' => $user->email,
                         'note_id' => $note->id,
-                        'task_id' => $note->task_id
+                        'task_id' => $note->task_id,
+                        'error' => $result['error'] ?? 'Unbekannter Fehler'
                     ]);
+                    $errorCount++;
+                    $errorMessages[] = "Fehler beim Senden an {$user->name}: " . ($result['error'] ?? 'Unbekannter Fehler');
                 }
 
             } catch (\Exception $e) {
@@ -751,14 +765,94 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
                 ]);
+                $errorCount++;
+                $errorMessages[] = "Fehler beim Senden an {$user->name}: " . $e->getMessage();
             }
         }
 
         \Log::info('✅ Kanban: @mentions Verarbeitung abgeschlossen', [
             'note_id' => $note->id,
             'total_users' => $mentionedUsers->count(),
-            'notifications_sent' => $mentionedUsers->where('id', '!=', auth()->id())->count()
+            'success_count' => $successCount,
+            'error_count' => $errorCount,
+            'skipped_count' => $skippedCount
         ]);
+
+        // Filament-Notifications senden
+        $this->sendNotificationFeedback($successCount, $errorCount, $skippedCount, $errorMessages, $mentionedUsers);
+    }
+
+    /**
+     * Sendet Filament-Notifications über den E-Mail-Versand-Status
+     */
+    private function sendNotificationFeedback(int $successCount, int $errorCount, int $skippedCount, array $errorMessages, $mentionedUsers): void
+    {
+        $totalUsers = $mentionedUsers->count();
+        $targetUsers = $totalUsers - $skippedCount; // Benutzer, an die tatsächlich versendet werden sollte
+
+        if ($successCount > 0 && $errorCount === 0) {
+            // Alle E-Mails erfolgreich versendet
+            $message = $successCount === 1 
+                ? 'E-Mail-Benachrichtigung erfolgreich versendet'
+                : "{$successCount} E-Mail-Benachrichtigungen erfolgreich versendet";
+            
+            Notification::make()
+                ->title('E-Mail-Benachrichtigungen versendet')
+                ->body($message)
+                ->success()
+                ->icon('heroicon-o-envelope')
+                ->send();
+                
+        } elseif ($successCount > 0 && $errorCount > 0) {
+            // Teilweise erfolgreich
+            $message = "{$successCount} von {$targetUsers} E-Mail-Benachrichtigungen erfolgreich versendet";
+            
+            Notification::make()
+                ->title('E-Mail-Benachrichtigungen teilweise versendet')
+                ->body($message)
+                ->warning()
+                ->icon('heroicon-o-exclamation-triangle')
+                ->send();
+                
+        } elseif ($successCount === 0 && $errorCount > 0) {
+            // Alle E-Mails fehlgeschlagen
+            $message = $errorCount === 1 
+                ? 'E-Mail-Benachrichtigung konnte nicht versendet werden'
+                : "{$errorCount} E-Mail-Benachrichtigungen konnten nicht versendet werden";
+            
+            Notification::make()
+                ->title('E-Mail-Benachrichtigungen fehlgeschlagen')
+                ->body($message)
+                ->danger()
+                ->icon('heroicon-o-x-circle')
+                ->send();
+                
+        } elseif ($totalUsers > 0 && $targetUsers === 0) {
+            // Nur Selbst-Erwähnungen
+            Notification::make()
+                ->title('Keine E-Mail-Benachrichtigungen')
+                ->body('Sie haben sich selbst erwähnt - keine E-Mail-Benachrichtigung erforderlich')
+                ->info()
+                ->icon('heroicon-o-information-circle')
+                ->send();
+        }
+
+        // Detaillierte Fehlermeldungen bei Problemen
+        if ($errorCount > 0 && !empty($errorMessages)) {
+            $detailedMessage = implode("\n", array_slice($errorMessages, 0, 3)); // Zeige max. 3 Fehler
+            
+            if (count($errorMessages) > 3) {
+                $detailedMessage .= "\n... und " . (count($errorMessages) - 3) . " weitere Fehler";
+            }
+            
+            Notification::make()
+                ->title('Detaillierte Fehlermeldungen')
+                ->body($detailedMessage)
+                ->danger()
+                ->icon('heroicon-o-exclamation-triangle')
+                ->persistent()
+                ->send();
+        }
     }
 
     public function getNotesProperty()

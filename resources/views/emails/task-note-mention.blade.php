@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neue Notiz - Aufgabe - {{ $task->title }}</title>
+    <title>Sie wurden in einer Notiz erwähnt</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,95 +26,81 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        .task-info {
-            background-color: #e3f2fd;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 15px 0;
+        .task-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
         }
         .note-content {
             background-color: #f8f9fa;
             padding: 15px;
             border-left: 4px solid #007bff;
+            border-radius: 4px;
             margin: 15px 0;
-            font-style: italic;
+            white-space: pre-wrap;
+        }
+        .meta-info {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 10px;
         }
         .button {
             display: inline-block;
+            padding: 12px 24px;
             background-color: #007bff;
             color: white;
-            padding: 12px 24px;
             text-decoration: none;
-            border-radius: 6px;
-            margin: 20px 0;
+            border-radius: 4px;
+            margin-top: 15px;
         }
         .button:hover {
             background-color: #0056b3;
         }
         .footer {
-            font-size: 12px;
-            color: #6c757d;
-            text-align: center;
-            margin-top: 30px;
+            margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid #e9ecef;
-        }
-        .mention {
-            background-color: #e3f2fd;
-            color: #1976d2;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
+            color: #6c757d;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
-    <div class="header p-4">
-        <h1>Sie wurden in einer Aufgaben-Notiz erwähnt</h1>
-        <p>Hallo {{ $mentionedUser->name }},</p>
-        <p>{{ $author->name }} hat Sie in einer neuen Notiz zu einer Aufgabe erwähnt.</p>
+    <div class="header">
+        <h2>Sie wurden in einer Aufgaben-Notiz erwähnt</h2>
     </div>
 
     <div class="content">
-        <div class="task-info p-4">
-            <h3>Aufgabe: {{ $task->title }}</h3>
-            <p><strong>Aufgabennummer:</strong> {{ $task->task_number }}</p>
-            @if($task->taskType)
-                <p><strong>Typ:</strong> {{ $task->taskType->name }}</p>
+        <p>Hallo {{ $user->name }},</p>
+        
+        <p>Sie wurden von <strong>{{ $author->name }}</strong> in einer Notiz zur Aufgabe "<strong>{{ $task->title }}</strong>" erwähnt.</p>
+        
+        <div class="task-title">Aufgabe: {{ $task->title }}</div>
+        
+        <div class="note-content">{{ $note->content }}</div>
+        
+        <div class="meta-info">
+            <strong>Autor:</strong> {{ $author->name }}<br>
+            <strong>Zeitpunkt:</strong> {{ $note->created_at->format('d.m.Y H:i') }}<br>
+            @if($task->assignedUser)
+                <strong>Zugewiesen an:</strong> {{ $task->assignedUser->name }}<br>
             @endif
-            @if($task->priority)
-                <p><strong>Priorität:</strong> 
-                    @switch($task->priority)
-                        @case('low') Niedrig @break
-                        @case('medium') Mittel @break
-                        @case('high') Hoch @break
-                        @case('urgent') Dringend @break
-                        @default {{ $task->priority }}
-                    @endswitch
-                </p>
+            @if($task->owner)
+                <strong>Inhaber:</strong> {{ $task->owner->name }}<br>
             @endif
-            @if($task->due_date)
-                <p><strong>Fälligkeitsdatum:</strong> {{ $task->due_date->format('d.m.Y') }}</p>
-            @endif
+            <strong>Status:</strong> {{ $task->status_label ?? ucfirst($task->status) }}<br>
+            <strong>Priorität:</strong> {{ $task->priority_label ?? ucfirst($task->priority) }}
         </div>
-
-        <h3>Notiz von {{ $author->name }}:</h3>
-        <div class="note-content">
-            {!! nl2br(preg_replace('/@(\w+)/', '<span class="mention">@$1</span>', e($note->content))) !!}
-        </div>
-
-        <p><strong>Erstellt am:</strong> {{ $note->created_at->format('d.m.Y H:i') }} Uhr</p>
-
-        <div style="text-align: center;">
-            <a href="{{ $taskUrl }}" class="button">
-                Zur Notiz der Aufgabe
-            </a>
-        </div>
+        
+        @if(isset($taskUrl))
+            <a href="{{ $taskUrl }}" class="button">Aufgabe öffnen</a>
+        @endif
     </div>
 
     <div class="footer">
-        <p>Diese E-Mail wurde automatisch generiert, weil Sie in einer Aufgaben-Notiz erwähnt wurden.</p>
-        <p>Wenn Sie auf "Zur Notiz der Aufgabe" klicken, werden Sie zu admin/tasks weitergeleitet und das Modal zur betreffenden Aufgabe mit den Notizen wird geöffnet.</p>
+        <p>Diese E-Mail wurde automatisch gesendet, weil Sie in einer Aufgaben-Notiz erwähnt wurden.</p>
+        <p>Bitte antworten Sie nicht auf diese E-Mail.</p>
     </div>
 </body>
 </html>

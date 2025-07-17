@@ -22,11 +22,16 @@ class SolarPlant extends Model
             if (empty($solarPlant->plant_number)) {
                 $solarPlant->plant_number = static::generateUniquePlantNumber();
             }
+            
+            if (empty($solarPlant->app_code)) {
+                $solarPlant->app_code = static::generateUniqueAppCode();
+            }
         });
     }
 
     protected $fillable = [
         'plant_number',
+        'app_code',
         'name',
         'location',
         'plot_number',
@@ -536,5 +541,34 @@ class SolarPlant extends Model
         // Fallback: Verwende Timestamp wenn alle Versuche fehlschlagen
         $timestamp = time();
         return $prefix . '-' . $timestamp;
+    }
+
+    /**
+     * Generiert einen eindeutigen zufälligen alphanumerischen AppCode
+     * Verwendet nur Großbuchstaben und Zahlen
+     */
+    public static function generateUniqueAppCode(): string
+    {
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $length = 12;
+        $maxAttempts = 1000;
+        
+        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+            $code = '';
+            for ($i = 0; $i < $length; $i++) {
+                $code .= $characters[random_int(0, strlen($characters) - 1)];
+            }
+            
+            // Prüfe ob dieser Code bereits existiert (aktive + soft-deleted)
+            $exists = static::withTrashed()->where('app_code', $code)->exists();
+            
+            if (!$exists) {
+                return $code;
+            }
+        }
+        
+        // Fallback: Verwende Timestamp wenn alle Versuche fehlschlagen
+        $timestamp = time();
+        return 'APP' . substr($timestamp, -9);
     }
 }
