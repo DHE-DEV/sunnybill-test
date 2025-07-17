@@ -64,6 +64,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public string $filterAssignment = 'all'; // all, assigned_to_me, owned_by_me, my_tasks
     public array $selectedStatuses = []; // Array für mehrere Status-Filter
     public string $searchQuery = ''; // Suchfeld für Titel und Aufgabennummer
+    public array $selectedPriorities = []; // Array für Prioritäts-Filter
+    public array $selectedDueDates = []; // Array für Fälligkeits-Filter
 
     public function mount(): void
     {
@@ -74,6 +76,12 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         
         // Standardmäßig alle Status anzeigen
         $this->selectedStatuses = ['open', 'in_progress', 'waiting_external', 'waiting_internal', 'completed', 'cancelled'];
+        
+        // Standardmäßig alle Prioritäten anzeigen
+        $this->selectedPriorities = ['low', 'medium', 'high', 'urgent', 'blocker'];
+        
+        // Standardmäßig alle Fälligkeiten anzeigen
+        $this->selectedDueDates = ['overdue', 'today', 'next_7_days', 'next_30_days', 'no_due_date'];
     }
 
     protected function getHeaderActions(): array
@@ -141,6 +149,12 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             
             // Suchfilter anwenden
             $this->applySearchFilter($query);
+            
+            // Prioritätsfilter anwenden
+            $this->applyPriorityFilter($query);
+            
+            // Fälligkeitsfilter anwenden
+            $this->applyDueDateFilter($query);
             
             $tasks = $query
                 ->orderByRaw('CASE WHEN priority = "blocker" THEN 0 ELSE 1 END')
@@ -212,6 +226,30 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     }
     
     /**
+     * Filtert nach Priorität (Toggle)
+     */
+    public function togglePriorityFilter($priority): void
+    {
+        if (in_array($priority, $this->selectedPriorities)) {
+            $this->selectedPriorities = array_diff($this->selectedPriorities, [$priority]);
+        } else {
+            $this->selectedPriorities = array_merge($this->selectedPriorities, [$priority]);
+        }
+    }
+    
+    /**
+     * Filtert nach Fälligkeit (Toggle)
+     */
+    public function toggleDueDateFilter($dueDate): void
+    {
+        if (in_array($dueDate, $this->selectedDueDates)) {
+            $this->selectedDueDates = array_diff($this->selectedDueDates, [$dueDate]);
+        } else {
+            $this->selectedDueDates = array_merge($this->selectedDueDates, [$dueDate]);
+        }
+    }
+    
+    /**
      * Wendet den Suchfilter auf die Query an
      */
     private function applySearchFilter($query): void
@@ -227,12 +265,88 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     }
     
     /**
+     * Wendet den Prioritätsfilter auf die Query an
+     */
+    private function applyPriorityFilter($query): void
+    {
+        if (!empty($this->selectedPriorities) && count($this->selectedPriorities) < 5) {
+            $query->whereIn('priority', $this->selectedPriorities);
+        }
+    }
+    
+    /**
+     * Wendet den Fälligkeitsfilter auf die Query an
+     */
+    private function applyDueDateFilter($query): void
+    {
+        if (!empty($this->selectedDueDates) && count($this->selectedDueDates) < 5) {
+            $query->where(function ($q) {
+                $now = now()->startOfDay();
+                $conditions = [];
+                
+                foreach ($this->selectedDueDates as $dueDateFilter) {
+                    switch ($dueDateFilter) {
+                        case 'overdue':
+                            $conditions[] = function ($subQuery) use ($now) {
+                                $subQuery->where('due_date', '<', $now)
+                                        ->whereNotNull('due_date');
+                            };
+                            break;
+                            
+                        case 'today':
+                            $conditions[] = function ($subQuery) use ($now) {
+                                $subQuery->whereDate('due_date', $now->toDateString());
+                            };
+                            break;
+                            
+                        case 'next_7_days':
+                            $conditions[] = function ($subQuery) use ($now) {
+                                $subQuery->whereBetween('due_date', [
+                                    $now->copy()->addDay()->startOfDay(),
+                                    $now->copy()->addDays(7)->endOfDay()
+                                ]);
+                            };
+                            break;
+                            
+                        case 'next_30_days':
+                            $conditions[] = function ($subQuery) use ($now) {
+                                $subQuery->whereBetween('due_date', [
+                                    $now->copy()->addDays(8)->startOfDay(),
+                                    $now->copy()->addDays(30)->endOfDay()
+                                ]);
+                            };
+                            break;
+                            
+                        case 'no_due_date':
+                            $conditions[] = function ($subQuery) {
+                                $subQuery->whereNull('due_date');
+                            };
+                            break;
+                    }
+                }
+                
+                // Füge die erste Bedingung hinzu
+                if (!empty($conditions)) {
+                    $q->where($conditions[0]);
+                    
+                    // Füge weitere Bedingungen mit OR hinzu
+                    for ($i = 1; $i < count($conditions); $i++) {
+                        $q->orWhere($conditions[$i]);
+                    }
+                }
+            });
+        }
+    }
+    
+    /**
      * Setzt alle Filter zurück
      */
     public function resetFilters(): void
     {
         $this->filterAssignment = 'all';
         $this->selectedStatuses = ['open', 'in_progress', 'waiting_external', 'waiting_internal', 'completed', 'cancelled'];
+        $this->selectedPriorities = ['low', 'medium', 'high', 'urgent', 'blocker'];
+        $this->selectedDueDates = ['overdue', 'today', 'next_7_days', 'next_30_days', 'no_due_date'];
         $this->searchQuery = '';
     }
     
@@ -261,6 +375,34 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'waiting_internal' => 'Warte auf Intern',
             'completed' => 'Abgeschlossen',
             'cancelled' => 'Abgebrochen'
+        ];
+    }
+    
+    /**
+     * Getter für die verfügbaren Prioritäts-Filter
+     */
+    public function getAvailablePrioritiesProperty(): array
+    {
+        return [
+            'low' => 'Niedrig',
+            'medium' => 'Mittel',
+            'high' => 'Hoch',
+            'urgent' => 'Dringend',
+            'blocker' => 'Blocker'
+        ];
+    }
+    
+    /**
+     * Getter für die verfügbaren Fälligkeits-Filter
+     */
+    public function getAvailableDueDatesProperty(): array
+    {
+        return [
+            'overdue' => 'Überfällig',
+            'today' => 'Heute',
+            'next_7_days' => 'Nächste 7 Tage',
+            'next_30_days' => 'Nächste 30 Tage',
+            'no_due_date' => 'Ohne Fälligkeitsdatum'
         ];
     }
 

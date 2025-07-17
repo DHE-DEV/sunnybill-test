@@ -30,59 +30,111 @@
                         </button>
                         
                         <!-- Active Filters Info -->
-                        @if($filterAssignment !== 'all' || count($selectedStatuses) !== 6 || !empty(trim($searchQuery)))
+                        @if($filterAssignment !== 'all' || count($selectedStatuses) !== 6 || count($selectedPriorities) !== 5 || count($selectedDueDates) !== 5 || !empty(trim($searchQuery)))
                             <div class="text-xs text-gray-500 bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
                                 Filter aktiv: 
                                 @if(!empty(trim($searchQuery)))
                                     Suche: "{{ $searchQuery }}"
                                 @endif
-                                @if(!empty(trim($searchQuery)) && ($filterAssignment !== 'all' || count($selectedStatuses) !== 6))
+                                @if(!empty(trim($searchQuery)) && ($filterAssignment !== 'all' || count($selectedStatuses) !== 6 || count($selectedPriorities) !== 5 || count($selectedDueDates) !== 5))
                                     • 
                                 @endif
                                 @if($filterAssignment !== 'all')
                                     {{ $this->assignmentFilters[$filterAssignment] }}
                                 @endif
-                                @if($filterAssignment !== 'all' && count($selectedStatuses) !== 6)
+                                @if($filterAssignment !== 'all' && (count($selectedStatuses) !== 6 || count($selectedPriorities) !== 5 || count($selectedDueDates) !== 5))
                                     • 
                                 @endif
                                 @if(count($selectedStatuses) !== 6)
                                     {{ count($selectedStatuses) }}/6 Status
                                 @endif
+                                @if(count($selectedStatuses) !== 6 && (count($selectedPriorities) !== 5 || count($selectedDueDates) !== 5))
+                                    • 
+                                @endif
+                                @if(count($selectedPriorities) !== 5)
+                                    {{ count($selectedPriorities) }}/5 Prioritäten
+                                @endif
+                                @if(count($selectedPriorities) !== 5 && count($selectedDueDates) !== 5)
+                                    • 
+                                @endif
+                                @if(count($selectedDueDates) !== 5)
+                                    {{ count($selectedDueDates) }}/5 Fälligkeiten
+                                @endif
                             </div>
                         @endif
                     </div>
                     
-                    <!-- Zweite Zeile: Zuweisungsfilter -->
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Zuweisung:</span>
-                        <div class="flex gap-1 flex-wrap">
-                            @foreach($this->assignmentFilters as $value => $label)
-                                <button wire:click="filterByAssignment('{{ $value }}')"
-                                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
-                                               {{ $filterAssignment === $value 
-                                                  ? 'text-white border-transparent' 
-                                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
-                                        style="{{ $filterAssignment === $value ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
-                                    {{ $label }}
-                                </button>
-                            @endforeach
+                    <!-- Zweite Zeile: Zuweisungsfilter + Prioritätsfilter (zweispaltig) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Linke Spalte: Zuweisungsfilter -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Zuweisung:</span>
+                            <div class="flex gap-1 flex-wrap">
+                                @foreach($this->assignmentFilters as $value => $label)
+                                    <button wire:click="filterByAssignment('{{ $value }}')"
+                                            class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
+                                                   {{ $filterAssignment === $value 
+                                                      ? 'text-white border-transparent' 
+                                                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
+                                            style="{{ $filterAssignment === $value ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
+                                        {{ $label }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        
+                        <!-- Rechte Spalte: Prioritätsfilter -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Priorität:</span>
+                            <div class="flex gap-1 flex-wrap">
+                                @foreach($this->availablePriorities as $priority => $label)
+                                    <button wire:click="togglePriorityFilter('{{ $priority }}')"
+                                            class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
+                                                   {{ in_array($priority, $selectedPriorities) 
+                                                      ? 'text-white border-transparent' 
+                                                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
+                                            style="{{ in_array($priority, $selectedPriorities) ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
+                                        {{ $label }}
+                                    </button>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Dritte Zeile: Status-Filter -->
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
-                        <div class="flex gap-1 flex-wrap">
-                            @foreach($this->availableStatuses as $status => $label)
-                                <button wire:click="toggleStatusFilter('{{ $status }}')"
-                                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
-                                               {{ in_array($status, $selectedStatuses) 
-                                                  ? 'text-white border-transparent' 
-                                                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
-                                        style="{{ in_array($status, $selectedStatuses) ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
-                                    {{ $label }}
-                                </button>
-                            @endforeach
+                    <!-- Dritte Zeile: Status-Filter + Fälligkeitsfilter (zweispaltig) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Linke Spalte: Status-Filter -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
+                            <div class="flex gap-1 flex-wrap">
+                                @foreach($this->availableStatuses as $status => $label)
+                                    <button wire:click="toggleStatusFilter('{{ $status }}')"
+                                            class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
+                                                   {{ in_array($status, $selectedStatuses) 
+                                                      ? 'text-white border-transparent' 
+                                                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
+                                            style="{{ in_array($status, $selectedStatuses) ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
+                                        {{ $label }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        
+                        <!-- Rechte Spalte: Fälligkeitsfilter -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Fälligkeit:</span>
+                            <div class="flex gap-1 flex-wrap">
+                                @foreach($this->availableDueDates as $dueDate => $label)
+                                    <button wire:click="toggleDueDateFilter('{{ $dueDate }}')"
+                                            class="px-3 py-1 text-xs font-medium rounded-full transition-colors border
+                                                   {{ in_array($dueDate, $selectedDueDates) 
+                                                      ? 'text-white border-transparent' 
+                                                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}"
+                                            style="{{ in_array($dueDate, $selectedDueDates) ? 'background-color: rgb(217, 119, 6) !important;' : '' }}">
+                                        {{ $label }}
+                                    </button>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
                 </div>
