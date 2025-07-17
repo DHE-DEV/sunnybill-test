@@ -47,10 +47,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public string $editStatus = '';
     public string $editPriority = '';
     public ?string $editDueDate = null;
-    public ?int $editTaskTypeId = null;
-    public ?int $editAssignedTo = null;
-    public ?int $editOwnerId = null;
-    public ?int $editSolarPlantId = null;
+    public $editTaskTypeId = null;
+    public $editAssignedTo = null;
+    public $editOwnerId = null;
+    public $editSolarPlantId = null;
     
     // Notes modal properties
     public bool $showNotesModal = false;
@@ -746,10 +746,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             $this->editingTask->status = $this->editStatus;
             $this->editingTask->priority = $this->editPriority;
             $this->editingTask->due_date = $this->editDueDate ? \Carbon\Carbon::parse($this->editDueDate) : null;
-            $this->editingTask->task_type_id = $this->editTaskTypeId;
-            $this->editingTask->assigned_to = $this->editAssignedTo;
-            $this->editingTask->owner_id = $this->editOwnerId;
-            $this->editingTask->solar_plant_id = $this->editSolarPlantId;
+            $this->editingTask->task_type_id = $this->editTaskTypeId ?: null;
+            $this->editingTask->assigned_to = $this->editAssignedTo ?: null;
+            $this->editingTask->owner_id = $this->editOwnerId ?: null;
+            $this->editingTask->solar_plant_id = $this->editSolarPlantId ?: null;
             
             $this->editingTask->save();
             
@@ -818,6 +818,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'task_type_id' => $this->editTaskTypeId ?: null,
             'assigned_to' => $this->editAssignedTo ?: null,
             'owner_id' => $this->editOwnerId ?: null,
+            'solar_plant_id' => $this->editSolarPlantId ?: null,
             'created_by' => auth()->id(),
             'sort_order' => 1, // Neue Aufgaben immer ganz oben
         ]);

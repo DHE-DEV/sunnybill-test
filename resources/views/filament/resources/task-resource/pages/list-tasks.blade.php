@@ -212,10 +212,12 @@
                                      ">
                                      
                                      @if($task->priority === 'blocker')
-                                         <div class="blocker-banner text-white text-xs font-bold px-2 py-1 rounded-t-lg -mx-3 -mt-3 mb-3 text-center"
+                                        <div class="pt-2"></div>
+                                         <div class="blocker-banner text-white text-xs font-bold px-0 py-1 rounded-t-lg -mx-3 -mt-3 mb-3 text-center"
                                               style="background-color: #dc2626 !important; color: white !important;">
                                              BLOCKER
                                          </div>
+                                         <div class="pt-2"></div>
                                      @endif
                                      
                                      <!-- Task Content with Edit Button -->
