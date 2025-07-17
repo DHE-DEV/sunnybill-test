@@ -1182,24 +1182,50 @@
             textarea.dispatchEvent(new Event('input', { bubbles: true }));
         }
         
-        // Livewire addNote direkt aufrufen
-        if (window.Livewire && window.Livewire.find) {
-            // Finde die Livewire-Komponente
-            const component = window.Livewire.find(document.querySelector('[wire\\:id]').getAttribute('wire:id'));
-            if (component) {
-                component.call('addNote');
+        // Livewire-Event über Event-Dispatch
+        if (window.Livewire) {
+            try {
+                // Versuche über Livewire.dispatch
+                window.Livewire.dispatch('addNote');
+                console.log('✅ Rich Text: Notiz über Livewire.dispatch gespeichert');
+            } catch (error) {
+                console.error('❌ Fehler beim Livewire.dispatch:', error);
+                
+                // Fallback: Button-Klick simulieren
+                const saveButton = document.querySelector('[wire\\:click="addNote"]');
+                if (saveButton) {
+                    console.log('🔄 Fallback: Simuliere Button-Klick');
+                    saveButton.click();
+                    console.log('✅ Rich Text: Notiz über Button-Klick gespeichert');
+                } else {
+                    console.error('❌ Save-Button nicht gefunden');
+                    
+                    // Letzter Fallback: Livewire-Komponente direkt finden
+                    const livewireComponent = document.querySelector('[wire\\:id]');
+                    if (livewireComponent) {
+                        const componentId = livewireComponent.getAttribute('wire:id');
+                        console.log('🔄 Versuche direkte Komponenten-Kommunikation, ID:', componentId);
+                        
+                        // Direkte Livewire-Komponente ansprechen
+                        if (window.Livewire.find && componentId) {
+                            try {
+                                const component = window.Livewire.find(componentId);
+                                if (component) {
+                                    component.call('addNote');
+                                    console.log('✅ Rich Text: Notiz über direkte Komponente gespeichert');
+                                } else {
+                                    console.error('❌ Komponente nicht gefunden');
+                                }
+                            } catch (e) {
+                                console.error('❌ Fehler bei direkter Komponenten-Kommunikation:', e);
+                            }
+                        }
+                    }
+                }
             }
         } else {
-            // Fallback: Button-Klick simulieren
-            const saveButton = document.querySelector('[wire\\:click="addNote"]');
-            if (saveButton) {
-                saveButton.click();
-            } else {
-                console.error('❌ Livewire-Komponente oder Save-Button nicht gefunden');
-            }
+            console.error('❌ Livewire nicht verfügbar');
         }
-        
-        console.log('💾 Rich Text: Notiz gespeichert');
     }
     
     // Benutzer-Mention über Button in Rich Text Editor einfügen
