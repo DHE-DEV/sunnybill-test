@@ -550,7 +550,9 @@ class UserResource extends Resource
                 ->icon('heroicon-m-ellipsis-vertical')
                 ->size('sm')
                 ->color('gray')
-                ->button(),
+                ->button()
+                ->dropdownWidth('lg')
+                ->dropdownMaxHeight('96'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
