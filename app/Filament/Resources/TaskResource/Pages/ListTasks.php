@@ -28,6 +28,13 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     
     protected static string $view = 'filament.resources.task-resource.pages.list-tasks';
 
+    // Event-Listener für JavaScript-Events
+    protected $listeners = [
+        'addNote' => 'addNote',
+        'task-updated' => '$refresh',
+        'console-log' => 'handleConsoleLog'
+    ];
+
     public bool $showStatistics = false;
     public bool $showBoard = false;
     public ?int $selectedTaskId = null;
