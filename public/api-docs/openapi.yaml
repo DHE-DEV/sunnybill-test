@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: SunnyBill API
+  title: VoltMaster API
   description: |
-    ## SunnyBill API Dokumentation
+    ## VoltMaster API Dokumentation
     
-    Diese API bietet umfassende Funktionalitäten für das SunnyBill-System zur Verwaltung von Aufgaben, Kunden, Lieferanten und Solaranlagen.
+    Diese API bietet umfassende Funktionalitäten für das VoltMaster-System zur Verwaltung von Aufgaben, Kunden, Lieferanten und Solaranlagen.
     
     ### Authentifizierung
     
@@ -44,7 +44,7 @@ info:
     
   version: 1.0.0
   contact:
-    name: SunnyBill API Support
+    name: VoltMaster API Support
     email: support@voltmaster.cloud
   license:
     name: Proprietary

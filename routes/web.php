@@ -39,10 +39,14 @@ Route::get('/api-docs/openapi.yaml', function () {
     // Ersetze auch die URLs in den Beispielen
     $yaml = str_replace([
         'https://sunnybill.de/api',
-        'support@sunnybill.de'
+        'support@sunnybill.de',
+        'SunnyBill',
+        'sunnybill.de'
     ], [
         $apiUrl . '/api',
-        config('mail.from.address', 'support@voltmaster.cloud')
+        config('mail.from.address', 'support@voltmaster.cloud'),
+        'VoltMaster',
+        'voltmaster.cloud'
     ], $yaml);
     
     return response($yaml, 200, [
