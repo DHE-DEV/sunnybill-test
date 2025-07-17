@@ -106,9 +106,6 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                     $this->showStatistics = !$this->showStatistics;
                     $this->showBoard = false;
                 }),
-            
-            Actions\CreateAction::make()
-                ->icon('heroicon-o-plus'),
         ];
     }
 
