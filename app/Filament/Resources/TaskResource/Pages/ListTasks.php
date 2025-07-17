@@ -622,6 +622,26 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         if (!empty($mentionedUsernames)) {
             $mentionedUsers = User::whereIn('name', $mentionedUsernames)->get();
             
+            // Zusätzliche Debug-Informationen für Case-Sensitivity und Exact-Matching
+            $allUsersInDb = User::pluck('name')->toArray();
+            $debugMatches = [];
+            
+            foreach ($mentionedUsernames as $mentionedName) {
+                $exactMatch = User::where('name', $mentionedName)->first();
+                $caseInsensitiveMatch = User::whereRaw('LOWER(name) = ?', [strtolower($mentionedName)])->first();
+                
+                $debugMatches[] = [
+                    'searched_name' => $mentionedName,
+                    'searched_name_length' => strlen($mentionedName),
+                    'searched_name_bytes' => bin2hex($mentionedName),
+                    'exact_match' => $exactMatch ? $exactMatch->name : null,
+                    'case_insensitive_match' => $caseInsensitiveMatch ? $caseInsensitiveMatch->name : null,
+                    'potential_matches' => array_filter($allUsersInDb, function($dbName) use ($mentionedName) {
+                        return stripos($dbName, $mentionedName) !== false || stripos($mentionedName, $dbName) !== false;
+                    })
+                ];
+            }
+            
             \Log::info('👥 Kanban: Gefundene Benutzer für @mentions', [
                 'task_id' => $this->notesTask->id,
                 'mentioned_usernames' => $mentionedUsernames,
@@ -633,7 +653,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                     ];
                 })->toArray(),
                 'found_count' => $mentionedUsers->count(),
-                'all_users_in_db' => User::pluck('name')->toArray()
+                'all_users_in_db' => $allUsersInDb,
+                'debug_matches' => $debugMatches
             ]);
             
             $this->dispatch('console-log', [
@@ -649,7 +670,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                         ];
                     })->toArray(),
                     'found_count' => $mentionedUsers->count(),
-                    'all_users_in_db' => User::pluck('name')->toArray()
+                    'all_users_in_db' => $allUsersInDb,
+                    'debug_matches' => $debugMatches
                 ]
             ]);
         }
