@@ -612,7 +612,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'data' => [
                 'mentioned_usernames' => $mentionedUsernames,
                 'count' => count($mentionedUsernames),
-                'content' => $content
+                'content' => $content,
+                'content_length' => strlen($content),
+                'regex_pattern' => '/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)*)/u',
+                'raw_matches' => $this->debugExtractMentions($content)
             ]
         ]);
         
@@ -740,6 +743,25 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         // Verbesserte Regex für vollständige Namen mit Leerzeichen
         preg_match_all('/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)*)/u', $content, $matches);
         return array_map('trim', $matches[1]);
+    }
+    
+    /**
+     * Debug-Funktion für @mentions-Extraktion
+     */
+    private function debugExtractMentions(string $content): array
+    {
+        $pattern = '/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)*)/u';
+        preg_match_all($pattern, $content, $matches, PREG_SET_ORDER);
+        
+        return [
+            'full_matches' => $matches,
+            'content_analysis' => [
+                'has_at_symbol' => strpos($content, '@') !== false,
+                'at_positions' => array_keys(array_filter(str_split($content), fn($char) => $char === '@')),
+                'content_bytes' => bin2hex($content),
+                'content_chars' => str_split($content)
+            ]
+        ];
     }
     
     /**
