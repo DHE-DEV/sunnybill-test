@@ -1189,11 +1189,12 @@
                 window.Livewire.dispatch('addNote');
                 console.log('✅ Rich Text: Notiz über Livewire.dispatch gespeichert');
                 
-                // Nach erfolgreichem Speichern: Editor zurücksetzen
+                // Nach erfolgreichem Speichern: Editor zurücksetzen und fokussieren
                 setTimeout(() => {
                     if (quill) {
                         quill.setContents([]);
-                        console.log('🔄 Rich Text Editor zurückgesetzt');
+                        quill.focus(); // Editor fokussieren für neue Notiz
+                        console.log('🔄 Rich Text Editor zurückgesetzt und fokussiert');
                     }
                     
                     // Auch das versteckte Textarea zurücksetzen
@@ -1214,11 +1215,12 @@
                     saveButton.click();
                     console.log('✅ Rich Text: Notiz über Button-Klick gespeichert');
                     
-                    // Nach erfolgreichem Speichern: Editor zurücksetzen
+                    // Nach erfolgreichem Speichern: Editor zurücksetzen und fokussieren
                     setTimeout(() => {
                         if (quill) {
                             quill.setContents([]);
-                            console.log('🔄 Rich Text Editor zurückgesetzt (Fallback)');
+                            quill.focus(); // Editor fokussieren für neue Notiz
+                            console.log('🔄 Rich Text Editor zurückgesetzt und fokussiert (Fallback)');
                         }
                         
                         if (textarea) {
@@ -1245,11 +1247,12 @@
                                     component.call('addNote');
                                     console.log('✅ Rich Text: Notiz über direkte Komponente gespeichert');
                                     
-                                    // Nach erfolgreichem Speichern: Editor zurücksetzen
+                                    // Nach erfolgreichem Speichern: Editor zurücksetzen und fokussieren
                                     setTimeout(() => {
                                         if (quill) {
                                             quill.setContents([]);
-                                            console.log('🔄 Rich Text Editor zurückgesetzt (Direkte Komponente)');
+                                            quill.focus(); // Editor fokussieren für neue Notiz
+                                            console.log('🔄 Rich Text Editor zurückgesetzt und fokussiert (Direkte Komponente)');
                                         }
                                         
                                         if (textarea) {
