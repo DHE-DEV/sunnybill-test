@@ -354,8 +354,9 @@ class Task extends Model
         $year = date('Y');
         $prefix = "TASK-{$year}-";
         
-        // Finde die höchste Nummer für das aktuelle Jahr
-        $lastTask = self::where('task_number', 'like', $prefix . '%')
+        // Finde die höchste Nummer für das aktuelle Jahr (inklusive gelöschter Aufgaben)
+        $lastTask = self::withTrashed()
+            ->where('task_number', 'like', $prefix . '%')
             ->orderBy('task_number', 'desc')
             ->first();
         
