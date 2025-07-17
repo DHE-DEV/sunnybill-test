@@ -674,6 +674,15 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                     'debug_matches' => $debugMatches
                 ]
             ]);
+
+            // Zusätzliche detaillierte Debug-Ausgabe für jede Suche
+            foreach ($debugMatches as $index => $match) {
+                $this->dispatch('console-log', [
+                    'type' => 'warning',
+                    'message' => "🔍 Debug-Match #{$index}: {$match['searched_name']}",
+                    'data' => $match
+                ]);
+            }
         }
 
         // Notiz erstellen
