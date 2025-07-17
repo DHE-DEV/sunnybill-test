@@ -50,7 +50,7 @@ info:
     name: Proprietary
     
 servers:
-  - url: https://voltmaster.cloud/api
+  - url: https://prosoltec.voltmaster.cloud/api
     description: Production API Server
   - url: http://localhost:8000/api
     description: Development API Server

@@ -30,8 +30,12 @@ Route::get('/api-docs/openapi.yaml', function () {
     // Ersetze die Server-URLs mit der dynamischen API_URL
     $yaml = str_replace([
         'https://sunnybill.de/api',
+        'https://voltmaster.cloud/api',
+        'https://prosoltec.voltmaster.cloud/api',
         'http://localhost:8000/api'
     ], [
+        $apiUrl . '/api',
+        $apiUrl . '/api',
         $apiUrl . '/api',
         config('app.url') . '/api'
     ], $yaml);
