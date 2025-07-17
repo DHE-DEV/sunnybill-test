@@ -633,7 +633,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                 $debugMatches[] = [
                     'searched_name' => $mentionedName,
                     'searched_name_length' => strlen($mentionedName),
-                    'searched_name_bytes' => bin2hex($mentionedName),
+                    'encoding' => mb_detect_encoding($mentionedName, 'UTF-8, ISO-8859-1', true),
                     'exact_match' => $exactMatch ? $exactMatch->name : null,
                     'case_insensitive_match' => $caseInsensitiveMatch ? $caseInsensitiveMatch->name : null,
                     'potential_matches' => array_filter($allUsersInDb, function($dbName) use ($mentionedName) {
@@ -790,8 +790,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'content_analysis' => [
                 'has_at_symbol' => strpos($content, '@') !== false,
                 'at_positions' => array_keys(array_filter(str_split($content), fn($char) => $char === '@')),
-                'content_bytes' => bin2hex($content),
-                'content_chars' => str_split($content)
+                'content_length' => strlen($content),
+                'content_preview' => mb_substr($content, 0, 100) . (strlen($content) > 100 ? '...' : ''),
+                'encoding' => mb_detect_encoding($content, 'UTF-8, ISO-8859-1', true)
             ]
         ];
     }
