@@ -50,6 +50,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public ?int $editTaskTypeId = null;
     public ?int $editAssignedTo = null;
     public ?int $editOwnerId = null;
+    public ?int $editSolarPlantId = null;
     
     // Notes modal properties
     public bool $showNotesModal = false;
@@ -142,7 +143,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             
             $query = TaskResource::getEloquentQuery()
                 ->where('status', $status)
-                ->with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier']);
+                ->with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier', 'solarPlant']);
             
             // Zuweisungsfilter anwenden
             $this->applyAssignmentFilter($query);
@@ -711,6 +712,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             $this->editTaskTypeId = $this->editingTask->task_type_id;
             $this->editAssignedTo = $this->editingTask->assigned_to;
             $this->editOwnerId = $this->editingTask->owner_id;
+            $this->editSolarPlantId = $this->editingTask->solar_plant_id;
             
             $this->showEditModal = true;
         }
@@ -747,6 +749,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             $this->editingTask->task_type_id = $this->editTaskTypeId;
             $this->editingTask->assigned_to = $this->editAssignedTo;
             $this->editingTask->owner_id = $this->editOwnerId;
+            $this->editingTask->solar_plant_id = $this->editSolarPlantId;
             
             $this->editingTask->save();
             
@@ -775,6 +778,11 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public function getUsersProperty()
     {
         return \App\Models\User::orderBy('name')->get();
+    }
+
+    public function getSolarPlantsProperty()
+    {
+        return \App\Models\SolarPlant::orderBy('name')->get();
     }
 
     public function addTaskToColumn($status)

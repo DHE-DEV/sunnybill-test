@@ -241,6 +241,12 @@
                                                      </span>
                                                  @endif
                                                  
+                                                 @if($task->solarPlant)
+                                                     <span class="text-blue-600 dark:text-blue-400 font-medium">
+                                                         🌞 {{ $task->solarPlant->name }}
+                                                     </span>
+                                                 @endif
+                                                 
                                                  @if($task->due_date)
                                                      @php
                                                          $now = now()->startOfDay();
@@ -472,6 +478,16 @@
                                             <option value="">-- Kein Inhaber --</option>
                                             @foreach($this->users as $user)
                                                 <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Solaranlage</label>
+                                        <select wire:model="editSolarPlantId" class="block w-full border-gray-300 rounded-md shadow-sm">
+                                            <option value="">-- Keine Solaranlage --</option>
+                                            @foreach($this->solarPlants as $solarPlant)
+                                                <option value="{{ $solarPlant->id }}">{{ $solarPlant->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
