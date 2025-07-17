@@ -767,12 +767,12 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     }
     
     /**
-     * Extrahiert @mentions aus dem Text
+     * Extrahiert @mentions aus dem Text (maximal 3 Wörter pro Mention)
      */
     private function extractMentions(string $content): array
     {
-        // Verbesserte Regex für vollständige Namen mit Leerzeichen
-        preg_match_all('/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)*)/u', $content, $matches);
+        // Verbesserte Regex: maximal 3 Wörter nach @, dann Stopp bei Nicht-Buchstaben oder Wortende
+        preg_match_all('/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+){0,2})(?=\s|$|[^a-zA-ZäöüÄÖÜß])/u', $content, $matches);
         return array_map('trim', $matches[1]);
     }
     
@@ -781,11 +781,12 @@ class ListTasks extends ListRecords implements HasForms, HasActions
      */
     private function debugExtractMentions(string $content): array
     {
-        $pattern = '/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)*)/u';
+        $pattern = '/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+){0,2})(?=\s|$|[^a-zA-ZäöüÄÖÜß])/u';
         preg_match_all($pattern, $content, $matches, PREG_SET_ORDER);
         
         return [
             'full_matches' => $matches,
+            'pattern_explanation' => 'Regex erfasst maximal 3 Wörter nach @, dann Stopp bei Nicht-Buchstaben',
             'content_analysis' => [
                 'has_at_symbol' => strpos($content, '@') !== false,
                 'at_positions' => array_keys(array_filter(str_split($content), fn($char) => $char === '@')),
