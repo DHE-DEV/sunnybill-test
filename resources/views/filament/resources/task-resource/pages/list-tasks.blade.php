@@ -422,6 +422,17 @@
                                     <textarea wire:model="editDescription" rows="3" class="block w-full border-gray-300 rounded-md shadow-sm"></textarea>
                                 </div>
                                 
+                                <!-- Solaranlage (volle Breite) -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Solaranlage</label>
+                                    <select wire:model="editSolarPlantId" class="block w-full border-gray-300 rounded-md shadow-sm">
+                                        <option value="">-- Keine Solaranlage --</option>
+                                        @foreach($this->solarPlants as $solarPlant)
+                                            <option value="{{ $solarPlant->id }}">{{ $solarPlant->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                
                                 <!-- 2-Spalten Grid für alle restlichen Felder -->
                                 <div style="display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 1rem !important;">
                                     <div>
@@ -478,16 +489,6 @@
                                             <option value="">-- Kein Inhaber --</option>
                                             @foreach($this->users as $user)
                                                 <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Solaranlage</label>
-                                        <select wire:model="editSolarPlantId" class="block w-full border-gray-300 rounded-md shadow-sm">
-                                            <option value="">-- Keine Solaranlage --</option>
-                                            @foreach($this->solarPlants as $solarPlant)
-                                                <option value="{{ $solarPlant->id }}">{{ $solarPlant->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
