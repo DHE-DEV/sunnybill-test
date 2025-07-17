@@ -11,12 +11,15 @@ class SolarPlantStatsWidget extends BaseWidget
 {
     protected function getStats(): array
     {
+        // Nur nicht-gelöschte Anlagen berücksichtigen
         $totalPlants = SolarPlant::count();
-        $activePlants = SolarPlant::where('is_active', true)->count();
-        $inactivePlants = SolarPlant::where('is_active', false)->count();
+        $activePlants = SolarPlant::where('status', 'active')->count();
+        $inactivePlants = SolarPlant::where('status', 'inactive')->count();
+        $planningPlants = SolarPlant::where('status', 'in_planning')->count();
+        $maintenancePlants = SolarPlant::where('status', 'maintenance')->count();
         $plantsWithParticipations = SolarPlant::whereHas('participations')->count();
-        $totalCapacity = SolarPlant::sum('total_capacity_kw');
-        $totalInvestment = SolarPlant::sum('total_investment');
+        $totalCapacity = SolarPlant::sum('total_capacity_kw') ?? 0;
+        $totalInvestment = SolarPlant::sum('total_investment') ?? 0;
         
         return [
             Stat::make('Gesamt Solaranlagen', $totalPlants)
@@ -29,10 +32,20 @@ class SolarPlantStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
                 
+            Stat::make('In Planung', $planningPlants)
+                ->description(($totalPlants > 0 ? round(($planningPlants / $totalPlants) * 100, 1) : 0) . '% sind in Planung')
+                ->descriptionIcon('heroicon-m-document-text')
+                ->color('warning'),
+                
             Stat::make('Inaktive Anlagen', $inactivePlants)
                 ->description(($totalPlants > 0 ? round(($inactivePlants / $totalPlants) * 100, 1) : 0) . '% sind inaktiv')
                 ->descriptionIcon('heroicon-m-x-circle')
                 ->color('danger'),
+                
+            Stat::make('Wartung', $maintenancePlants)
+                ->description(($totalPlants > 0 ? round(($maintenancePlants / $totalPlants) * 100, 1) : 0) . '% in Wartung')
+                ->descriptionIcon('heroicon-m-wrench-screwdriver')
+                ->color('info'),
                 
             Stat::make('Anlagen mit Beteiligungen', $plantsWithParticipations)
                 ->description(($totalPlants > 0 ? round(($plantsWithParticipations / $totalPlants) * 100, 1) : 0) . '% haben Kunden-Beteiligungen')
