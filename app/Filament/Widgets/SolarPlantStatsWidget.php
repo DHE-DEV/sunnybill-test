@@ -11,15 +11,51 @@ class SolarPlantStatsWidget extends BaseWidget
 {
     protected function getStats(): array
     {
-        // Nur nicht-gelöschte Anlagen berücksichtigen
+        // Nur nicht-gelöschte Anlagen berücksichtigen (SoftDeletes automatisch berücksichtigt)
         $totalPlants = SolarPlant::count();
+        
+        // Hauptlogik: Verwende primär das 'status' Feld
         $activePlants = SolarPlant::where('status', 'active')->count();
         $inactivePlants = SolarPlant::where('status', 'inactive')->count();
         $planningPlants = SolarPlant::where('status', 'in_planning')->count();
         $maintenancePlants = SolarPlant::where('status', 'maintenance')->count();
+        
+        // Prüfe auch auf alternative deutsche Status-Werte
+        $activeAlternatives = SolarPlant::where('status', 'aktiv')->count();
+        $inactiveAlternatives = SolarPlant::where('status', 'inaktiv')->count();
+        
+        // Kombiniere mögliche Status-Werte
+        $activePlants += $activeAlternatives;
+        $inactivePlants += $inactiveAlternatives;
+        
+        // Für bessere Konsistenz: Anlagen mit 'inactive' Status sollten auch als inaktiv gelten,
+        // unabhängig vom is_active Boolean-Feld
+        $actuallyInactive = SolarPlant::where(function($query) {
+            $query->where('status', 'inactive')
+                  ->orWhere('status', 'inaktiv')
+                  ->orWhere('is_active', false);
+        })->count();
+        
+        // Korrekte Berechnung: Inaktive = alle als inaktiv markierten
+        $inactivePlants = $actuallyInactive;
+        
+        // Aktive = alle mit status 'active' UND is_active = true (für Konsistenz)
+        $reallyActive = SolarPlant::where(function($query) {
+            $query->where('status', 'active')
+                  ->orWhere('status', 'aktiv');
+        })->where('is_active', true)->count();
+        
+        $activePlants = $reallyActive;
+        
         $plantsWithParticipations = SolarPlant::whereHas('participations')->count();
         $totalCapacity = SolarPlant::sum('total_capacity_kw') ?? 0;
         $totalInvestment = SolarPlant::sum('total_investment') ?? 0;
+        
+        // Debug-Informationen für Entwicklung
+        $statusDistribution = SolarPlant::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
         
         return [
             Stat::make('Gesamt Solaranlagen', $totalPlants)
