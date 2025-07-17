@@ -78,7 +78,7 @@
         
         <div class="task-title">Aufgabe: {{ $task->title }}</div>
         
-        <div class="note-content">{{ $note->content }}</div>
+        <div class="note-content">{!! $note->content !!}</div>
         
         <div class="meta-info">
             <strong>Autor:</strong> {{ $author->name }}<br>

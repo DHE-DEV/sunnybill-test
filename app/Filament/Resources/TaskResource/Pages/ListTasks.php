@@ -768,11 +768,15 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     
     /**
      * Extrahiert @mentions aus dem Text (maximal 2 Wörter pro Mention)
+     * Unterstützt sowohl Plain Text als auch HTML-Inhalt
      */
     private function extractMentions(string $content): array
     {
+        // Entferne HTML-Tags für die Mention-Extraktion, behalte aber den Text
+        $plainTextContent = strip_tags($content);
+        
         // Einfache Regex: maximal 2 Wörter nach @, dann Stopp bei allem was kein Buchstabe ist
-        preg_match_all('/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)?)\b/u', $content, $matches);
+        preg_match_all('/@([a-zA-ZäöüÄÖÜß]+(?:\s+[a-zA-ZäöüÄÖÜß]+)?)\b/u', $plainTextContent, $matches);
         return array_map('trim', $matches[1]);
     }
     

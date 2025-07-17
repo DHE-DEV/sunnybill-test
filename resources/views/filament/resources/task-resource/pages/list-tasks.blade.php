@@ -387,15 +387,18 @@
                             <!-- New Note Input -->
                             <div class="mb-6 pt-4 bg-gray-50 rounded-lg" style="padding: 16px;">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Neue Notiz hinzufügen</label>
+                                
+                                <!-- Rich Text Editor -->
+                                <div class="border rounded-lg overflow-hidden" style="border: 2px solid #3b82f6;">
+                                    <div id="rich-text-editor" 
+                                         style="min-height: 120px; background: white;"
+                                         wire:ignore></div>
+                                </div>
+                                
+                                <!-- Hidden textarea for Livewire -->
                                 <textarea wire:model="newNoteContent"
                                           id="kanban-note-content"
-                                          rows="4"
-                                          class="block w-full border-gray-300 rounded-md shadow-sm resize-none"
-                                          placeholder="Notiz eingeben... Verwenden Sie @benutzername um Benutzer zu erwähnen."
-                                          style="border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.5;"
-                                          oninput="handleKanbanMentionInput(this, event);"
-                                          onkeydown="handleKanbanMentionKeydown(this, event);"
-                                          onfocus="console.log('🎯 Kanban Textarea focused:', this.id); initializeKanbanMentionSystem();"></textarea>
+                                          style="display: none;"></textarea>
                                 
                                 <!-- Benutzer-Auswahl-Komponente -->
                                 <div class="user-mention-selector mt-3" style="padding: 12px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;">
@@ -408,7 +411,7 @@
                                 </div>
                                 
                                 <div class="flex justify-end mt-3">
-                                    <button wire:click="addNote"
+                                    <button onclick="saveRichTextNote()"
                                             class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none"
                                             style="background-color: rgb(217, 119, 6) !important; color: white !important; border: none !important;">
                                         Speichern
@@ -933,6 +936,339 @@
             });
     };
 
+    // Rich Text Editor Setup
+    let quill;
+    
+    // Rich Text Editor initialisieren
+    function initializeRichTextEditor() {
+        console.log('📝 Initialisiere Rich Text Editor...');
+        
+        // Prüfe ob Quill bereits geladen ist
+        if (typeof Quill === 'undefined') {
+            console.log('📦 Lade Quill.js...');
+            loadQuillJS();
+            return;
+        }
+        
+        const container = document.getElementById('rich-text-editor');
+        if (!container) {
+            console.error('❌ Rich Text Editor Container nicht gefunden');
+            return;
+        }
+        
+        // Quill mit Toolbar konfigurieren
+        quill = new Quill(container, {
+            theme: 'snow',
+            placeholder: 'Notiz eingeben... Verwenden Sie @benutzername um Benutzer zu erwähnen.',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'header': 1 }, { 'header': 2 }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'direction': 'rtl' }],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'font': [] }],
+                    [{ 'align': [] }],
+                    ['clean'],
+                    ['link', 'image', 'video']
+                ]
+            }
+        });
+        
+        // Event-Handler für Textänderungen
+        quill.on('text-change', function(delta, oldDelta, source) {
+            if (source === 'user') {
+                const html = quill.root.innerHTML;
+                const textarea = document.getElementById('kanban-note-content');
+                if (textarea) {
+                    textarea.value = html;
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                
+                // @mention Handling im Rich Text Editor
+                handleRichTextMentions();
+            }
+        });
+        
+        console.log('✅ Rich Text Editor initialisiert');
+    }
+    
+    // Quill.js dynamisch laden
+    function loadQuillJS() {
+        // CSS laden
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
+        document.head.appendChild(link);
+        
+        // JavaScript laden
+        const script = document.createElement('script');
+        script.src = 'https://cdn.quilljs.com/1.3.6/quill.min.js';
+        script.onload = function() {
+            console.log('✅ Quill.js geladen');
+            initializeRichTextEditor();
+        };
+        document.head.appendChild(script);
+    }
+    
+    // @mentions im Rich Text Editor verarbeiten
+    function handleRichTextMentions() {
+        if (!quill) return;
+        
+        const text = quill.getText();
+        const cursorPos = quill.getSelection()?.index || 0;
+        
+        // Suche nach @mentions
+        let mentionStart = -1;
+        for (let i = cursorPos - 1; i >= 0; i--) {
+            if (text[i] === '@') {
+                if (i === 0 || /\s/.test(text[i - 1])) {
+                    mentionStart = i;
+                    break;
+                }
+            } else if (/\s/.test(text[i])) {
+                break;
+            }
+        }
+        
+        if (mentionStart !== -1) {
+            const query = text.substring(mentionStart + 1, cursorPos);
+            if (!/\s/.test(query) && query.length > 0) {
+                console.log('🔍 Rich Text: Zeige Dropdown für:', query);
+                showRichTextMentionDropdown(query, mentionStart);
+                return;
+            }
+        }
+        hideRichTextMentionDropdown();
+    }
+    
+    // Dropdown für Rich Text Editor anzeigen
+    function showRichTextMentionDropdown(query, mentionStart) {
+        fetch(`/api/users/search?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(users => {
+                if (users.length === 0) {
+                    hideRichTextMentionDropdown();
+                    return;
+                }
+                
+                hideRichTextMentionDropdown();
+                
+                const dropdown = document.createElement('div');
+                dropdown.id = 'rich-text-mention-dropdown';
+                dropdown.style.cssText = `
+                    position: absolute;
+                    background: white;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                    max-height: 200px;
+                    overflow-y: auto;
+                    z-index: 99999;
+                    min-width: 250px;
+                    font-family: system-ui, -apple-system, sans-serif;
+                `;
+                
+                users.slice(0, 5).forEach((user, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'rich-text-mention-item';
+                    item.style.cssText = `
+                        padding: 12px 16px;
+                        cursor: pointer;
+                        border-bottom: 1px solid #f3f4f6;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        transition: background-color 0.15s ease;
+                    `;
+                    
+                    if (index === 0) {
+                        item.style.backgroundColor = '#eff6ff';
+                        item.classList.add('selected');
+                    }
+                    
+                    item.addEventListener('mouseenter', () => {
+                        document.querySelectorAll('.rich-text-mention-item').forEach(i => {
+                            i.style.backgroundColor = '';
+                            i.classList.remove('selected');
+                        });
+                        item.style.backgroundColor = '#eff6ff';
+                        item.classList.add('selected');
+                    });
+                    
+                    const initial = user.name.charAt(0).toUpperCase();
+                    item.innerHTML = `
+                        <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">${initial}</div>
+                        <div style="font-weight: 600; font-size: 14px; color: #111827;">${user.name}</div>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        selectRichTextMention(user.name, mentionStart);
+                    });
+                    
+                    dropdown.appendChild(item);
+                });
+                
+                const editorRect = document.getElementById('rich-text-editor').getBoundingClientRect();
+                dropdown.style.left = editorRect.left + 'px';
+                dropdown.style.top = (editorRect.bottom + 5) + 'px';
+                
+                document.body.appendChild(dropdown);
+                
+                console.log('✅ Rich Text: Dropdown angezeigt');
+            })
+            .catch(error => {
+                console.error('❌ Rich Text: Fehler bei API-Suche:', error);
+            });
+    }
+    
+    // Dropdown für Rich Text Editor verstecken
+    function hideRichTextMentionDropdown() {
+        const dropdown = document.getElementById('rich-text-mention-dropdown');
+        if (dropdown) {
+            dropdown.remove();
+        }
+    }
+    
+    // @mention im Rich Text Editor auswählen
+    function selectRichTextMention(username, mentionStart) {
+        if (!quill) return;
+        
+        const text = quill.getText();
+        const cursorPos = quill.getSelection()?.index || 0;
+        const beforeMention = text.substring(0, mentionStart);
+        const afterCursor = text.substring(cursorPos);
+        
+        // Entferne den aktuellen @mention Text
+        const mentionLength = cursorPos - mentionStart;
+        quill.deleteText(mentionStart, mentionLength);
+        
+        // Füge @mention als Link ein
+        quill.insertText(mentionStart, `@${username} `, {
+            'color': '#3b82f6',
+            'bold': true
+        });
+        
+        // Cursor nach dem Mention positionieren
+        quill.setSelection(mentionStart + username.length + 2);
+        
+        hideRichTextMentionDropdown();
+        
+        console.log('✅ Rich Text: Mention eingefügt:', username);
+    }
+    
+    // Rich Text Editor Inhalt speichern
+    function saveRichTextNote() {
+        if (!quill) {
+            console.error('❌ Rich Text Editor nicht initialisiert');
+            return;
+        }
+        
+        const html = quill.root.innerHTML;
+        const textarea = document.getElementById('kanban-note-content');
+        
+        if (textarea) {
+            textarea.value = html;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        
+        // Livewire addNote aufrufen
+        if (window.Livewire) {
+            window.Livewire.dispatch('addNote');
+        }
+        
+        console.log('💾 Rich Text: Notiz gespeichert');
+    }
+    
+    // Benutzer-Mention über Button in Rich Text Editor einfügen
+    function insertRichTextUserMention(username) {
+        if (!quill) {
+            console.error('❌ Rich Text Editor nicht initialisiert');
+            return;
+        }
+        
+        const selection = quill.getSelection();
+        const cursorPos = selection ? selection.index : quill.getLength();
+        
+        // Füge @mention als formatierten Text ein
+        quill.insertText(cursorPos, ` @${username} `, {
+            'color': '#3b82f6',
+            'bold': true
+        });
+        
+        // Cursor nach dem Mention positionieren
+        quill.setSelection(cursorPos + username.length + 3);
+        
+        console.log('✅ Rich Text: Button-Mention eingefügt:', username);
+        
+        // Visuelles Feedback
+        const button = event.target.closest('.kanban-user-btn');
+        if (button) {
+            const originalBg = button.style.backgroundColor;
+            button.style.backgroundColor = '#10b981';
+            button.style.color = 'white';
+            setTimeout(() => {
+                button.style.backgroundColor = originalBg;
+                button.style.color = '';
+            }, 300);
+        }
+    }
+    
+    // Rich Text Editor nach Modal-Öffnung initialisieren
+    window.addEventListener('DOMContentLoaded', function() {
+        // Observer für Modal-Öffnung
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            const editor = node.querySelector('#rich-text-editor');
+                            if (editor && !quill) {
+                                setTimeout(() => {
+                                    initializeRichTextEditor();
+                                }, 100);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+    
+    // Benutzer-Buttons für Rich Text Editor überschreiben
+    window.insertKanbanUserMention = function(username) {
+        if (quill) {
+            insertRichTextUserMention(username);
+        } else {
+            // Fallback für normales Textarea
+            const textarea = document.getElementById('kanban-note-content');
+            if (!textarea) return;
+            
+            const cursorPos = textarea.selectionStart;
+            const currentText = textarea.value;
+            const textBefore = currentText.substring(0, cursorPos);
+            const textAfter = currentText.substring(cursorPos);
+            const mentionText = ' @' + username + ' ';
+            const newText = textBefore + mentionText + textAfter;
+            
+            textarea.value = newText;
+            const newCursorPos = cursorPos + mentionText.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            textarea.focus();
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    };
+    
     console.log('✅ Kanban @mention System geladen');
     console.log('💡 Verwende window.debugKanbanMentions() für Debug-Infos');
     
