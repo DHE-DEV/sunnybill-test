@@ -1399,12 +1399,25 @@
                     console.log('🧹 Rich Text Editor nach Note Added geleert');
                 }
                 
+                // Benutzer-Buttons wiederherstellen
+                setTimeout(() => {
+                    console.log('👥 Stelle Benutzer-Buttons nach Note Added wieder her');
+                    createKanbanUserButtons();
+                }, 200);
+                
                 // Nach Livewire-Update Editor neu initialisieren falls Container nicht mehr funktionsfähig ist
                 setTimeout(() => {
                     const container = document.getElementById('rich-text-editor');
                     if (container && (!quill || !container.querySelector('.ql-editor'))) {
                         console.log('🔄 Rich Text Editor Container nach Livewire-Update neu initialisieren');
                         initializeRichTextEditor();
+                    }
+                    
+                    // Sicherstellung dass Benutzer-Buttons vorhanden sind
+                    const userButtonContainer = document.getElementById('kanban-user-buttons');
+                    if (userButtonContainer && userButtonContainer.children.length === 0) {
+                        console.log('🔄 Benutzer-Buttons Container leer - erstelle erneut');
+                        createKanbanUserButtons();
                     }
                 }, 1000);
             }, 500);
