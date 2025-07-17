@@ -65,6 +65,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public string $filterAssignment = 'all'; // all, assigned_to_me, owned_by_me, my_tasks
     public array $selectedStatuses = []; // Array für mehrere Status-Filter
     public string $searchQuery = ''; // Suchfeld für Titel und Aufgabennummer
+    public string $solarPlantSearch = ''; // Suchfeld für Solaranlagen
     public array $selectedPriorities = []; // Array für Prioritäts-Filter
     public array $selectedDueDates = []; // Array für Fälligkeits-Filter
 
@@ -150,6 +151,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             
             // Suchfilter anwenden
             $this->applySearchFilter($query);
+            
+            // Solaranlagen-Filter anwenden
+            $this->applySolarPlantFilter($query);
             
             // Prioritätsfilter anwenden
             $this->applyPriorityFilter($query);
@@ -266,6 +270,21 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     }
     
     /**
+     * Wendet den Solaranlagen-Filter auf die Query an
+     */
+    private function applySolarPlantFilter($query): void
+    {
+        if (!empty(trim($this->solarPlantSearch))) {
+            $searchTerm = trim($this->solarPlantSearch);
+            
+            $query->whereHas('solarPlant', function ($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('plant_number', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+    }
+    
+    /**
      * Wendet den Prioritätsfilter auf die Query an
      */
     private function applyPriorityFilter($query): void
@@ -349,6 +368,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $this->selectedPriorities = ['low', 'medium', 'high', 'urgent', 'blocker'];
         $this->selectedDueDates = ['overdue', 'today', 'next_7_days', 'next_30_days', 'no_due_date'];
         $this->searchQuery = '';
+        $this->solarPlantSearch = '';
     }
     
     /**

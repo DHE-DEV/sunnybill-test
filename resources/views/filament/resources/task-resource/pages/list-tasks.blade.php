@@ -19,6 +19,16 @@
                                    style="min-width: 200px;">
                         </div>
                         
+                        <!-- Solaranlagen-Suchfeld -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Solaranlage:</span>
+                            <input type="text" 
+                                   wire:model.live="solarPlantSearch"
+                                   placeholder="Solaranlage suchen..."
+                                   class="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                   style="min-width: 200px;">
+                        </div>
+                        
                         <!-- Reset Button (grün) -->
                         <button wire:click="resetFilters"
                                 class="px-3 py-1 text-xs font-medium text-white rounded hover:bg-green-600 transition-colors"
@@ -30,13 +40,19 @@
                         </button>
                         
                         <!-- Active Filters Info -->
-                        @if($filterAssignment !== 'all' || count($selectedStatuses) !== 6 || count($selectedPriorities) !== 5 || count($selectedDueDates) !== 5 || !empty(trim($searchQuery)))
+                        @if($filterAssignment !== 'all' || count($selectedStatuses) !== 6 || count($selectedPriorities) !== 5 || count($selectedDueDates) !== 5 || !empty(trim($searchQuery)) || !empty(trim($solarPlantSearch)))
                             <div class="text-xs text-gray-500 bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
                                 Filter aktiv: 
                                 @if(!empty(trim($searchQuery)))
                                     Suche: "{{ $searchQuery }}"
                                 @endif
-                                @if(!empty(trim($searchQuery)) && ($filterAssignment !== 'all' || count($selectedStatuses) !== 6 || count($selectedPriorities) !== 5 || count($selectedDueDates) !== 5))
+                                @if(!empty(trim($searchQuery)) && (!empty(trim($solarPlantSearch)) || $filterAssignment !== 'all' || count($selectedStatuses) !== 6 || count($selectedPriorities) !== 5 || count($selectedDueDates) !== 5))
+                                    • 
+                                @endif
+                                @if(!empty(trim($solarPlantSearch)))
+                                    Solaranlage: "{{ $solarPlantSearch }}"
+                                @endif
+                                @if(!empty(trim($solarPlantSearch)) && ($filterAssignment !== 'all' || count($selectedStatuses) !== 6 || count($selectedPriorities) !== 5 || count($selectedDueDates) !== 5))
                                     • 
                                 @endif
                                 @if($filterAssignment !== 'all')
