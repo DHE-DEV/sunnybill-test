@@ -1188,6 +1188,22 @@
                 // Versuche über Livewire.dispatch
                 window.Livewire.dispatch('addNote');
                 console.log('✅ Rich Text: Notiz über Livewire.dispatch gespeichert');
+                
+                // Nach erfolgreichem Speichern: Editor zurücksetzen
+                setTimeout(() => {
+                    if (quill) {
+                        quill.setContents([]);
+                        console.log('🔄 Rich Text Editor zurückgesetzt');
+                    }
+                    
+                    // Auch das versteckte Textarea zurücksetzen
+                    if (textarea) {
+                        textarea.value = '';
+                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        console.log('🔄 Textarea zurückgesetzt');
+                    }
+                }, 100);
+                
             } catch (error) {
                 console.error('❌ Fehler beim Livewire.dispatch:', error);
                 
@@ -1197,6 +1213,21 @@
                     console.log('🔄 Fallback: Simuliere Button-Klick');
                     saveButton.click();
                     console.log('✅ Rich Text: Notiz über Button-Klick gespeichert');
+                    
+                    // Nach erfolgreichem Speichern: Editor zurücksetzen
+                    setTimeout(() => {
+                        if (quill) {
+                            quill.setContents([]);
+                            console.log('🔄 Rich Text Editor zurückgesetzt (Fallback)');
+                        }
+                        
+                        if (textarea) {
+                            textarea.value = '';
+                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                            console.log('🔄 Textarea zurückgesetzt (Fallback)');
+                        }
+                    }, 100);
+                    
                 } else {
                     console.error('❌ Save-Button nicht gefunden');
                     
@@ -1213,6 +1244,21 @@
                                 if (component) {
                                     component.call('addNote');
                                     console.log('✅ Rich Text: Notiz über direkte Komponente gespeichert');
+                                    
+                                    // Nach erfolgreichem Speichern: Editor zurücksetzen
+                                    setTimeout(() => {
+                                        if (quill) {
+                                            quill.setContents([]);
+                                            console.log('🔄 Rich Text Editor zurückgesetzt (Direkte Komponente)');
+                                        }
+                                        
+                                        if (textarea) {
+                                            textarea.value = '';
+                                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                                            console.log('🔄 Textarea zurückgesetzt (Direkte Komponente)');
+                                        }
+                                    }, 100);
+                                    
                                 } else {
                                     console.error('❌ Komponente nicht gefunden');
                                 }
