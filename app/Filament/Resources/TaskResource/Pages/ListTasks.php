@@ -63,6 +63,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     // Filter properties
     public string $filterAssignment = 'all'; // all, assigned_to_me, owned_by_me, my_tasks
     public array $selectedStatuses = []; // Array für mehrere Status-Filter
+    public string $searchQuery = ''; // Suchfeld für Titel und Aufgabennummer
 
     public function mount(): void
     {
@@ -138,6 +139,9 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             // Zuweisungsfilter anwenden
             $this->applyAssignmentFilter($query);
             
+            // Suchfilter anwenden
+            $this->applySearchFilter($query);
+            
             $tasks = $query
                 ->orderByRaw('CASE WHEN priority = "blocker" THEN 0 ELSE 1 END')
                 ->orderBy('sort_order', 'asc')
@@ -208,12 +212,28 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     }
     
     /**
+     * Wendet den Suchfilter auf die Query an
+     */
+    private function applySearchFilter($query): void
+    {
+        if (!empty(trim($this->searchQuery))) {
+            $searchTerm = trim($this->searchQuery);
+            
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('task_number', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+    }
+    
+    /**
      * Setzt alle Filter zurück
      */
     public function resetFilters(): void
     {
         $this->filterAssignment = 'all';
         $this->selectedStatuses = ['open', 'in_progress', 'waiting_external', 'waiting_internal', 'completed', 'cancelled'];
+        $this->searchQuery = '';
     }
     
     /**

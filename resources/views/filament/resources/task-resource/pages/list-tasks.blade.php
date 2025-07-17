@@ -7,8 +7,21 @@
             <!-- Filter Bar -->
             <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
                 <div class="space-y-3">
-                    <!-- Erste Zeile: Zuweisungsfilter + Reset + Active Filter Info -->
+                    <!-- Erste Zeile: Suchfeld + Zuweisungsfilter + Reset + Active Filter Info -->
                     <div class="flex flex-wrap items-center gap-4">
+                        <!-- Suchfeld -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Suche:</span>
+                            <input type="text" 
+                                   wire:model.live="searchQuery"
+                                   placeholder="Aufgabennummer oder Titel..."
+                                   class="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                   style="min-width: 200px;">
+                        </div>
+                        
+                        <!-- Trennlinie -->
+                        <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
+                        
                         <!-- Zuweisungsfilter -->
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Zuweisung:</span>
@@ -39,9 +52,15 @@
                         </button>
                         
                         <!-- Active Filters Info -->
-                        @if($filterAssignment !== 'all' || count($selectedStatuses) !== 6)
+                        @if($filterAssignment !== 'all' || count($selectedStatuses) !== 6 || !empty(trim($searchQuery)))
                             <div class="text-xs text-gray-500 bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
                                 Filter aktiv: 
+                                @if(!empty(trim($searchQuery)))
+                                    Suche: "{{ $searchQuery }}"
+                                @endif
+                                @if(!empty(trim($searchQuery)) && ($filterAssignment !== 'all' || count($selectedStatuses) !== 6))
+                                    • 
+                                @endif
                                 @if($filterAssignment !== 'all')
                                     {{ $this->assignmentFilters[$filterAssignment] }}
                                 @endif
