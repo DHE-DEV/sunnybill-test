@@ -14,6 +14,11 @@ class Task extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * Temporärer Speicher für ursprüngliche Attribute zur History-Protokollierung
+     */
+    private static array $originalAttributes = [];
+
     protected $fillable = [
         'title',
         'description',
@@ -41,6 +46,10 @@ class Task extends Model
         'completed_at',
         'task_number',
         'sort_order',
+    ];
+
+    protected $guarded = [
+        '_original_attributes',
     ];
 
     protected $casts = [
@@ -419,19 +428,21 @@ class Task extends Model
 
         static::updating(function ($task) {
             // Speichere die ursprünglichen Werte für History-Protokollierung
-            $task->_original_attributes = $task->getOriginal();
+            // Verwende eine statische Variable statt eines Model-Attributes
+            self::$originalAttributes[$task->id] = $task->getOriginal();
         });
 
         static::updated(function ($task) {
             // Protokolliere alle geänderten Felder
-            if (isset($task->_original_attributes)) {
+            if (isset(self::$originalAttributes[$task->id])) {
                 $userId = auth()->id() ?? $task->created_by;
                 $changes = $task->getChanges();
+                $originalAttributes = self::$originalAttributes[$task->id];
                 
                 foreach ($changes as $field => $newValue) {
                     if ($field === 'updated_at') continue; // Überspringe updated_at
                     
-                    $oldValue = $task->_original_attributes[$field] ?? null;
+                    $oldValue = $originalAttributes[$field] ?? null;
                     
                     // Konvertiere spezielle Felder für bessere Lesbarkeit
                     $fieldName = self::getFieldDisplayName($field);
@@ -440,6 +451,9 @@ class Task extends Model
                     
                     TaskHistory::logFieldChange($task, $userId, $fieldName, $oldDisplayValue, $newDisplayValue);
                 }
+                
+                // Cleanup: Entferne die gespeicherten Originaldaten
+                unset(self::$originalAttributes[$task->id]);
             }
         });
 
