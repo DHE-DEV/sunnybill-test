@@ -50,6 +50,9 @@ Route::prefix('app')->middleware('app_token')->group(function () {
     // Profil-Informationen
     Route::get('/profile', [App\Http\Controllers\Api\TaskApiController::class, 'profile']);
     
+    // Logout
+    Route::post('/logout', [App\Http\Controllers\Api\TaskApiController::class, 'logout']);
+    
     // Aufgaben-Management
     Route::prefix('tasks')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\TaskApiController::class, 'index'])->middleware('app_token:tasks:read');

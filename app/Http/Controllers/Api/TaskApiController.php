@@ -382,7 +382,7 @@ class TaskApiController extends Controller
     /**
      * Hole Profil-Informationen
      */
-    public function profile(): JsonResponse
+    public function profile(Request $request): JsonResponse
     {
         $user = Auth::user();
         
@@ -399,5 +399,28 @@ class TaskApiController extends Controller
                 'app_token' => $request->app_token->only(['name', 'app_type', 'expires_at', 'abilities']),
             ]
         ]);
+    }
+    
+    /**
+     * Benutzer abmelden (Token invalidieren)
+     */
+    public function logout(Request $request): JsonResponse
+    {
+        try {
+            // App-Token löschen/invalidieren
+            if ($request->app_token) {
+                $request->app_token->delete();
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Erfolgreich abgemeldet'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fehler beim Abmelden: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
