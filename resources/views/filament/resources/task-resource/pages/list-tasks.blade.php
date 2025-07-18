@@ -259,7 +259,11 @@
                                                      </span>
                                                  @endif
                                                  
-                                                 @if($task->solarPlant)
+                                                 @if($task->applies_to_all_solar_plants)
+                                                     <span class="text-purple-600 dark:text-purple-400 font-medium">
+                                                         🌞 Alle Solaranlagen
+                                                     </span>
+                                                 @elseif($task->solarPlant)
                                                      <span class="text-blue-600 dark:text-blue-400 font-medium">
                                                          🌞 {{ $task->solarPlant->name }}
                                                      </span>
