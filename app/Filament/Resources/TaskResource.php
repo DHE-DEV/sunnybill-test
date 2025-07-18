@@ -522,6 +522,14 @@ class TaskResource extends Resource
                     ->modalWidth('4xl')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Schließen')
+                    ->extraModalFooterActions([
+                        Action::make('edit')
+                            ->label('Bearbeiten')
+                            ->icon('heroicon-o-pencil')
+                            ->color('primary')
+                            ->url(fn (Task $record): string => route('filament.admin.resources.tasks.edit', $record))
+                            ->openUrlInNewTab(false)
+                    ])
                     ->size('sm'),
                     
                 Tables\Actions\ActionGroup::make([
