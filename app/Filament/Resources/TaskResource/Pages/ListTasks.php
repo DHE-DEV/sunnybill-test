@@ -275,9 +275,14 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         if (!empty(trim($this->solarPlantSearch))) {
             $searchTerm = trim($this->solarPlantSearch);
             
-            $query->whereHas('solarPlant', function ($q) use ($searchTerm) {
-                $q->where('name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('plant_number', 'LIKE', "%{$searchTerm}%");
+            $query->where(function ($q) use ($searchTerm) {
+                // Zeige Tasks für spezifische Solaranlagen
+                $q->whereHas('solarPlant', function ($subQuery) use ($searchTerm) {
+                    $subQuery->where('name', 'LIKE', "%{$searchTerm}%")
+                            ->orWhere('plant_number', 'LIKE', "%{$searchTerm}%");
+                })
+                // UND auch Tasks die für "alle Solaranlagen" gelten
+                ->orWhere('applies_to_all_solar_plants', true);
             });
         }
     }
@@ -735,7 +740,13 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             $this->editTaskTypeId = $this->editingTask->task_type_id;
             $this->editAssignedTo = $this->editingTask->assigned_to;
             $this->editOwnerId = $this->editingTask->owner_id;
-            $this->editSolarPlantId = $this->editingTask->solar_plant_id;
+            
+            // Korrekte Behandlung der Solaranlagen-Auswahl
+            if ($this->editingTask->applies_to_all_solar_plants) {
+                $this->editSolarPlantId = 'all';
+            } else {
+                $this->editSolarPlantId = $this->editingTask->solar_plant_id;
+            }
             
             $this->showEditModal = true;
         }
@@ -772,7 +783,15 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             $this->editingTask->task_type_id = $this->editTaskTypeId ?: null;
             $this->editingTask->assigned_to = $this->editAssignedTo ?: null;
             $this->editingTask->owner_id = $this->editOwnerId ?: null;
-            $this->editingTask->solar_plant_id = $this->editSolarPlantId ?: null;
+            
+            // Behandle "Alle Solaranlagen" Auswahl
+            if ($this->editSolarPlantId === 'all') {
+                $this->editingTask->solar_plant_id = null;
+                $this->editingTask->applies_to_all_solar_plants = true;
+            } else {
+                $this->editingTask->solar_plant_id = $this->editSolarPlantId ?: null;
+                $this->editingTask->applies_to_all_solar_plants = false;
+            }
             
             $this->editingTask->save();
             
@@ -823,6 +842,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $this->editTaskTypeId = null;
         $this->editAssignedTo = null;
         $this->editOwnerId = null;
+        $this->editSolarPlantId = null; // Solaranlagen-Feld zurücksetzen
     }
 
     public function createTask()
@@ -830,6 +850,18 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         // Alle anderen Aufgaben im gleichen Status um 1 nach unten verschieben
         \App\Models\Task::where('status', $this->editStatus)
             ->increment('sort_order');
+
+        // Behandle "Alle Solaranlagen" Auswahl
+        $solarPlantId = null;
+        $appliesToAllSolarPlants = false;
+        
+        if ($this->editSolarPlantId === 'all') {
+            $solarPlantId = null;
+            $appliesToAllSolarPlants = true;
+        } else {
+            $solarPlantId = $this->editSolarPlantId ?: null;
+            $appliesToAllSolarPlants = false;
+        }
 
         // Neue Aufgabe erstellen
         $task = \App\Models\Task::create([
@@ -841,7 +873,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'task_type_id' => $this->editTaskTypeId ?: null,
             'assigned_to' => $this->editAssignedTo ?: null,
             'owner_id' => $this->editOwnerId ?: null,
-            'solar_plant_id' => $this->editSolarPlantId ?: null,
+            'solar_plant_id' => $solarPlantId,
+            'applies_to_all_solar_plants' => $appliesToAllSolarPlants,
             'created_by' => auth()->id(),
             'sort_order' => 1, // Neue Aufgaben immer ganz oben
         ]);

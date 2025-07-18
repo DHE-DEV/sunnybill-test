@@ -14,6 +14,7 @@ use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\SolarPlant;
 use App\Models\User;
+use Filament\Forms\Get;
 
 class TasksRelationManager extends RelationManager
 {
@@ -110,9 +111,36 @@ class TasksRelationManager extends RelationManager
 
                         Forms\Components\Select::make('solar_plant_id')
                             ->label('Solaranlage')
-                            ->relationship('solarPlant', 'name')
+                            ->options(function () {
+                                $options = ['all' => 'Alle Solaranlagen'];
+                                $solarPlants = SolarPlant::whereNotNull('name')
+                                    ->where('name', '!=', '')
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->pluck('name', 'id')
+                                    ->toArray();
+                                return $options + $solarPlants;
+                            })
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->nullable()
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state === 'all') {
+                                    $set('applies_to_all_solar_plants', true);
+                                    $set('solar_plant_id', null);
+                                } else {
+                                    $set('applies_to_all_solar_plants', false);
+                                }
+                            })
+                            ->helperText(fn (Forms\Get $get): string => 
+                                $get('applies_to_all_solar_plants') 
+                                    ? '🌟 Diese Aufgabe gilt für alle Solaranlagen. Beim Abschließen wird für jede Solaranlage eine abgeschlossene Aufgabe erstellt.'
+                                    : 'Wählen Sie eine spezifische Solaranlage oder "Alle Solaranlagen" aus.'
+                            ),
+
+                        Forms\Components\Hidden::make('applies_to_all_solar_plants')
+                            ->default(false),
 
                         Forms\Components\Select::make('parent_task_id')
                             ->label('Übergeordnete Aufgabe')
