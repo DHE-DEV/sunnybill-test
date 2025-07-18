@@ -31,6 +31,7 @@ class Task extends Model
         'customer_id',
         'supplier_id',
         'solar_plant_id',
+        'applies_to_all_solar_plants',
         'billing_id',
         'milestone_id',
         'assigned_to',
@@ -47,6 +48,7 @@ class Task extends Model
         'due_time' => 'datetime:H:i',
         'labels' => 'array',
         'is_recurring' => 'boolean',
+        'applies_to_all_solar_plants' => 'boolean',
         'estimated_minutes' => 'integer',
         'actual_minutes' => 'integer',
         'order_index' => 'integer',
@@ -301,6 +303,47 @@ class Task extends Model
             'status' => 'completed',
             'completed_at' => now(),
         ]);
+        
+        // Wenn die Aufgabe für alle Solaranlagen gilt, erstelle für jede Solaranlage eine abgeschlossene Kopie
+        if ($this->applies_to_all_solar_plants) {
+            $this->createCompletedTasksForAllSolarPlants();
+        }
+    }
+    
+    /**
+     * Erstellt abgeschlossene Aufgabenkopien für alle Solaranlagen
+     */
+    private function createCompletedTasksForAllSolarPlants(): void
+    {
+        $solarPlants = SolarPlant::whereNotNull('name')
+            ->where('name', '!=', '')
+            ->get();
+            
+        foreach ($solarPlants as $solarPlant) {
+            // Prüfe, ob bereits eine abgeschlossene Aufgabe für diese Solaranlage existiert
+            $existingTask = Task::where('solar_plant_id', $solarPlant->id)
+                ->where('title', $this->title)
+                ->where('task_type_id', $this->task_type_id)
+                ->where('status', 'completed')
+                ->where('applies_to_all_solar_plants', false)
+                ->first();
+                
+            if (!$existingTask) {
+                // Erstelle eine neue abgeschlossene Aufgabe für diese Solaranlage
+                $taskCopy = $this->replicate([
+                    'task_number',
+                    'created_at',
+                    'updated_at'
+                ]);
+                
+                $taskCopy->solar_plant_id = $solarPlant->id;
+                $taskCopy->applies_to_all_solar_plants = false;
+                $taskCopy->status = 'completed';
+                $taskCopy->completed_at = now();
+                $taskCopy->created_by = auth()->id();
+                $taskCopy->save();
+            }
+        }
     }
 
     public function markAsInProgress(): void

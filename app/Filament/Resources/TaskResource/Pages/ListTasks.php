@@ -772,7 +772,15 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             $this->editingTask->task_type_id = $this->editTaskTypeId ?: null;
             $this->editingTask->assigned_to = $this->editAssignedTo ?: null;
             $this->editingTask->owner_id = $this->editOwnerId ?: null;
-            $this->editingTask->solar_plant_id = $this->editSolarPlantId ?: null;
+            
+            // Behandle "Alle Solaranlagen" Auswahl
+            if ($this->editSolarPlantId === 'all') {
+                $this->editingTask->solar_plant_id = null;
+                $this->editingTask->applies_to_all_solar_plants = true;
+            } else {
+                $this->editingTask->solar_plant_id = $this->editSolarPlantId ?: null;
+                $this->editingTask->applies_to_all_solar_plants = false;
+            }
             
             $this->editingTask->save();
             

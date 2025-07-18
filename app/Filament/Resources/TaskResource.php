@@ -184,15 +184,37 @@ class TaskResource extends Resource
 
                         Select::make('solar_plant_id')
                             ->label('Solaranlage')
-                            ->relationship('solarPlant', 'name', function ($query) {
-                                return $query->whereNotNull('name')
+                            ->options(function () {
+                                $options = ['all' => '🌟 Alle Solaranlagen'];
+                                $solarPlants = SolarPlant::whereNotNull('name')
                                     ->where('name', '!=', '')
-                                    ->orderBy('name');
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->pluck('name', 'id')
+                                    ->toArray();
+                                return $options + $solarPlants;
                             })
                             ->searchable()
                             ->preload()
                             ->placeholder('Solaranlage auswählen...')
-                            ->nullable(),
+                            ->nullable()
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state === 'all') {
+                                    $set('applies_to_all_solar_plants', true);
+                                    $set('solar_plant_id', null);
+                                } else {
+                                    $set('applies_to_all_solar_plants', false);
+                                }
+                            })
+                            ->helperText(fn (Forms\Get $get): string => 
+                                $get('applies_to_all_solar_plants') 
+                                    ? '🌟 Diese Aufgabe gilt für alle Solaranlagen. Beim Abschließen wird für jede Solaranlage eine abgeschlossene Aufgabe erstellt.'
+                                    : 'Wählen Sie eine spezifische Solaranlage oder "Alle Solaranlagen" aus.'
+                            ),
+
+                        Forms\Components\Hidden::make('applies_to_all_solar_plants')
+                            ->default(false),
 
                         Select::make('parent_task_id')
                             ->label('Übergeordnete Aufgabe')
@@ -362,7 +384,13 @@ class TaskResource extends Resource
                     ->label('Solaranlage')
                     ->searchable()
                     ->limit(30)
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->formatStateUsing(function (Task $record): string {
+                        if ($record->applies_to_all_solar_plants) {
+                            return 'Alle Solaranlagen';
+                        }
+                        return $record->solarPlant?->name ?? '-';
+                    }),
 
                 TextColumn::make('estimated_minutes')
                     ->label('Geschätzt')
