@@ -514,8 +514,8 @@ class TaskResource extends Resource
             ])
             ->actions([
                 Action::make('view_details')
-                    ->label('Details anzeigen')
-                    ->icon('heroicon-o-eye')
+                    ->label('Details')
+                    ->icon('heroicon-o-information-circle')
                     ->color('info')
                     ->modalHeading(fn (Task $record): string => 'Aufgabe: ' . $record->title)
                     ->modalContent(fn (Task $record): string => view('filament.task-details-modal', compact('record'))->render())
@@ -530,11 +530,15 @@ class TaskResource extends Resource
                             ->url(fn (Task $record): string => route('filament.admin.resources.tasks.edit', $record))
                             ->openUrlInNewTab(false)
                     ])
-                    ->size('sm'),
+                    ->size('sm')
+                    ->tooltip('Vollständige Details anzeigen'),
+
+                Tables\Actions\EditAction::make()
+                    ->size('sm')
+                    ->tooltip('Aufgabe bearbeiten'),
                     
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
                     Action::make('duplicate')
                         ->label('Duplizieren')
                         ->icon('heroicon-o-document-duplicate')
