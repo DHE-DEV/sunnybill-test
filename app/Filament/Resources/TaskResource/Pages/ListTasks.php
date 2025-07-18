@@ -735,7 +735,13 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             $this->editTaskTypeId = $this->editingTask->task_type_id;
             $this->editAssignedTo = $this->editingTask->assigned_to;
             $this->editOwnerId = $this->editingTask->owner_id;
-            $this->editSolarPlantId = $this->editingTask->solar_plant_id;
+            
+            // Korrekte Behandlung der Solaranlagen-Auswahl
+            if ($this->editingTask->applies_to_all_solar_plants) {
+                $this->editSolarPlantId = 'all';
+            } else {
+                $this->editSolarPlantId = $this->editingTask->solar_plant_id;
+            }
             
             $this->showEditModal = true;
         }
@@ -831,6 +837,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $this->editTaskTypeId = null;
         $this->editAssignedTo = null;
         $this->editOwnerId = null;
+        $this->editSolarPlantId = null; // Solaranlagen-Feld zurücksetzen
     }
 
     public function createTask()
