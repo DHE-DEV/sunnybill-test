@@ -839,6 +839,18 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         \App\Models\Task::where('status', $this->editStatus)
             ->increment('sort_order');
 
+        // Behandle "Alle Solaranlagen" Auswahl
+        $solarPlantId = null;
+        $appliesToAllSolarPlants = false;
+        
+        if ($this->editSolarPlantId === 'all') {
+            $solarPlantId = null;
+            $appliesToAllSolarPlants = true;
+        } else {
+            $solarPlantId = $this->editSolarPlantId ?: null;
+            $appliesToAllSolarPlants = false;
+        }
+
         // Neue Aufgabe erstellen
         $task = \App\Models\Task::create([
             'title' => $this->editTitle,
@@ -849,7 +861,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             'task_type_id' => $this->editTaskTypeId ?: null,
             'assigned_to' => $this->editAssignedTo ?: null,
             'owner_id' => $this->editOwnerId ?: null,
-            'solar_plant_id' => $this->editSolarPlantId ?: null,
+            'solar_plant_id' => $solarPlantId,
+            'applies_to_all_solar_plants' => $appliesToAllSolarPlants,
             'created_by' => auth()->id(),
             'sort_order' => 1, // Neue Aufgaben immer ganz oben
         ]);

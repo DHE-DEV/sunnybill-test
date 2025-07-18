@@ -185,7 +185,7 @@ class TaskResource extends Resource
                         Select::make('solar_plant_id')
                             ->label('Solaranlage')
                             ->options(function () {
-                                $options = ['all' => '🌟 Alle Solaranlagen'];
+                                $options = ['all' => 'Alle Solaranlagen'];
                                 $solarPlants = SolarPlant::whereNotNull('name')
                                     ->where('name', '!=', '')
                                     ->orderBy('name')

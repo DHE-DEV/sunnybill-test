@@ -445,7 +445,7 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Solaranlage</label>
                                     <select wire:model="editSolarPlantId" class="block w-full border-gray-300 rounded-md shadow-sm">
                                         <option value="">-- Keine Solaranlage --</option>
-                                        <option value="all">🌟 Alle Solaranlagen</option>
+                                        <option value="all">Alle Solaranlagen</option>
                                         @foreach($this->solarPlants as $solarPlant)
                                             <option value="{{ $solarPlant->id }}">{{ $solarPlant->name }}</option>
                                         @endforeach
