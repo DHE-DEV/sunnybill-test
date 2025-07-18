@@ -275,9 +275,14 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         if (!empty(trim($this->solarPlantSearch))) {
             $searchTerm = trim($this->solarPlantSearch);
             
-            $query->whereHas('solarPlant', function ($q) use ($searchTerm) {
-                $q->where('name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('plant_number', 'LIKE', "%{$searchTerm}%");
+            $query->where(function ($q) use ($searchTerm) {
+                // Zeige Tasks für spezifische Solaranlagen
+                $q->whereHas('solarPlant', function ($subQuery) use ($searchTerm) {
+                    $subQuery->where('name', 'LIKE', "%{$searchTerm}%")
+                            ->orWhere('plant_number', 'LIKE', "%{$searchTerm}%");
+                })
+                // UND auch Tasks die für "alle Solaranlagen" gelten
+                ->orWhere('applies_to_all_solar_plants', true);
             });
         }
     }
