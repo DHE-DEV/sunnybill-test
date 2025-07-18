@@ -513,6 +513,17 @@ class TaskResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Action::make('view_details')
+                    ->label('Details anzeigen')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->modalHeading(fn (Task $record): string => 'Aufgabe: ' . $record->title)
+                    ->modalContent(fn (Task $record): string => view('filament.task-details-modal', compact('record'))->render())
+                    ->modalWidth('4xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Schließen')
+                    ->size('sm'),
+                    
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
@@ -543,7 +554,7 @@ class TaskResource extends Resource
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
                 ])
-                    ->label('Aktionen')
+                    ->label('Weitere Aktionen')
                     ->icon('heroicon-m-ellipsis-vertical')
                     ->size('sm')
                     ->color('gray')
