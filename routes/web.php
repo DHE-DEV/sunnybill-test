@@ -282,3 +282,18 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/tasks/{task}/update-status', [App\Http\Controllers\TaskStatusController::class, 'updateStatus'])
         ->name('tasks.update-status');
 });
+
+// Dokumentations-Routen
+Route::prefix('docs')->group(function () {
+    Route::get('/benutzerhandbuch', function () {
+        return response()->file(public_path('docs/AUFGABENVERWALTUNG_BENUTZERHANDBUCH.html'));
+    })->name('docs.benutzerhandbuch');
+    
+    Route::get('/benutzerhandbuch-kompakt', function () {
+        return response()->file(public_path('docs/AUFGABENVERWALTUNG_BENUTZERHANDBUCH_KOMPAKT.html'));
+    })->name('docs.benutzerhandbuch.kompakt');
+    
+    Route::get('/', function () {
+        return response()->file(public_path('docs/AUFGABENVERWALTUNG_BENUTZERHANDBUCH.html'));
+    })->name('docs.index');
+});
