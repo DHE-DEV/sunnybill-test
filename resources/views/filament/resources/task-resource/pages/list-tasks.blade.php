@@ -345,6 +345,15 @@
                                          
                                          <!-- Action Buttons -->
                                          <div class="flex-shrink-0 flex flex-col items-center gap-1">
+                                             <!-- Details Button -->
+                                             <button wire:click="openDetailsModal({{ $task->id }})"
+                                                     class="text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1"
+                                                     title="Details anzeigen">
+                                                 <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                                 </svg>
+                                             </button>
+                                             
                                              <!-- Edit Button -->
                                              <button wire:click="editTaskById({{ $task->id }})"
                                                      class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
@@ -677,6 +686,184 @@
                                         <p>Noch keine Historie vorhanden</p>
                                     </div>
                                 @endforelse
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Details Modal -->
+            @if($showDetailsModal && $detailsTask)
+                <div class="fixed inset-0 z-[9999] overflow-y-auto"
+                     aria-labelledby="details-modal-title"
+                     role="dialog"
+                     aria-modal="true"
+                     style="z-index: 9999 !important;"
+                     x-data="{}"
+                     x-on:keydown.escape.window="$wire.closeDetailsModal()">
+                    <!-- Background overlay -->
+                    <div class="fixed inset-0 transition-opacity" style="background-color: rgba(0, 0, 0, 0.75) !important; z-index: 9998 !important;" wire:click="closeDetailsModal"></div>
+                    
+                    <!-- Modal container -->
+                    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center" style="z-index: 9999 !important;">
+                        <!-- Modal panel -->
+                        <div class="relative inline-block bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all" style="width: 90vw !important; max-width: 1000px !important; z-index: 9999 !important; padding: 20px !important; max-height: 85vh !important;">
+                            <!-- Header -->
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                    {{ $detailsTask->title }}
+                                </h3>
+                                <button wire:click="closeDetailsModal" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Content -->
+                            <div class="pt-4 space-y-6" style="max-height: 70vh !important; overflow-y: auto !important;">
+                                <!-- Task Information Grid -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Left Column -->
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Aufgabennummer</label>
+                                            <p class="text-sm text-gray-900 font-mono">{{ $detailsTask->task_number ?? 'Nicht vergeben' }}</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                {{ $detailsTask->status === 'open' ? 'bg-gray-100 text-gray-800' : '' }}
+                                                {{ $detailsTask->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : '' }}
+                                                {{ $detailsTask->status === 'waiting_external' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                                                {{ $detailsTask->status === 'waiting_internal' ? 'bg-purple-100 text-purple-800' : '' }}
+                                                {{ $detailsTask->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
+                                                {{ $detailsTask->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
+                                                {{ $this->availableStatuses[$detailsTask->status] ?? ucfirst($detailsTask->status) }}
+                                            </span>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Priorität</label>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                {{ $detailsTask->priority === 'low' ? 'bg-gray-100 text-gray-800' : '' }}
+                                                {{ $detailsTask->priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                                                {{ $detailsTask->priority === 'high' ? 'bg-orange-100 text-orange-800' : '' }}
+                                                {{ $detailsTask->priority === 'urgent' ? 'bg-red-100 text-red-800' : '' }}
+                                                {{ $detailsTask->priority === 'blocker' ? 'bg-red-200 text-red-900' : '' }}">
+                                                {{ $this->availablePriorities[$detailsTask->priority] ?? ucfirst($detailsTask->priority) }}
+                                            </span>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Aufgabentyp</label>
+                                            <p class="text-sm text-gray-900">{{ $detailsTask->taskType->name ?? 'Nicht festgelegt' }}</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Fälligkeitsdatum</label>
+                                            <p class="text-sm text-gray-900">
+                                                @if($detailsTask->due_date)
+                                                    {{ $detailsTask->due_date->format('d.m.Y') }}
+                                                    <span class="text-xs {{ $this->getDueDateColor($detailsTask->due_date) }}">
+                                                        ({{ $this->getDueDateText($detailsTask->due_date) }})
+                                                    </span>
+                                                @else
+                                                    Nicht festgelegt
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Right Column -->
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Zugewiesen an</label>
+                                            <p class="text-sm text-gray-900">{{ $detailsTask->assignedUser->name ?? 'Nicht zugewiesen' }}</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Inhaber</label>
+                                            <p class="text-sm text-gray-900">{{ $detailsTask->owner->name ?? 'Nicht festgelegt' }}</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Erstellt von</label>
+                                            <p class="text-sm text-gray-900">{{ $detailsTask->creator->name ?? 'Unbekannt' }}</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Erstellt am</label>
+                                            <p class="text-sm text-gray-900">{{ $detailsTask->created_at->format('d.m.Y H:i') }}</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Solaranlage</label>
+                                            <p class="text-sm text-gray-900">
+                                                @if($detailsTask->applies_to_all_solar_plants)
+                                                    🌞 Alle Solaranlagen
+                                                @elseif($detailsTask->solarPlant)
+                                                    🌞 {{ $detailsTask->solarPlant->name }}
+                                                @else
+                                                    Nicht festgelegt
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Description -->
+                                @if($detailsTask->description)
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Beschreibung</label>
+                                        <div class="bg-gray-50 rounded-lg p-3">
+                                            <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ $detailsTask->description }}</p>
+                                        </div>
+                                    </div>
+                                @endif
+                                
+                                <!-- Additional Information -->
+                                <div class="border-t pt-4">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-3">Zusätzliche Informationen</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        @if($detailsTask->completed_at)
+                                            <div>
+                                                <span class="font-medium">Abgeschlossen am:</span>
+                                                <span class="text-gray-900">{{ $detailsTask->completed_at->format('d.m.Y H:i') }}</span>
+                                            </div>
+                                        @endif
+                                        
+                                        <div>
+                                            <span class="font-medium">Letzte Änderung:</span>
+                                            <span class="text-gray-900">{{ $detailsTask->updated_at->format('d.m.Y H:i') }}</span>
+                                        </div>
+                                        
+                                        @if($detailsTask->parentTask)
+                                            <div>
+                                                <span class="font-medium">Übergeordnete Aufgabe:</span>
+                                                <span class="text-gray-900">{{ $detailsTask->parentTask->title }}</span>
+                                            </div>
+                                        @endif
+                                        
+                                        @if($detailsTask->subtasks->count() > 0)
+                                            <div>
+                                                <span class="font-medium">Unteraufgaben:</span>
+                                                <span class="text-gray-900">{{ $detailsTask->subtasks->count() }} Stück</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Footer -->
+                            <div class="flex justify-end mt-6 pt-4 border-t border-gray-200" style="gap: 1rem !important;">
+                                <button wire:click="closeDetailsModal" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                    Schließen
+                                </button>
+                                <button wire:click="editTaskById({{ $detailsTask->id }})" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none" style="background-color: rgb(217, 119, 6) !important; color: white !important; border: none !important;">
+                                    Bearbeiten
+                                </button>
                             </div>
                         </div>
                     </div>

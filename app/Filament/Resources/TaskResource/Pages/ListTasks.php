@@ -61,6 +61,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public bool $showHistoryModal = false;
     public ?Task $historyTask = null;
     
+    // Details modal properties
+    public bool $showDetailsModal = false;
+    public ?Task $detailsTask = null;
+    
     // Filter properties
     public string $filterAssignment = 'all'; // all, assigned_to_me, owned_by_me, my_tasks
     public array $selectedStatuses = []; // Array für mehrere Status-Filter
@@ -1411,6 +1415,19 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             ->with('user')
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    // Details Modal Methods
+    public function openDetailsModal($taskId)
+    {
+        $this->detailsTask = Task::with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier', 'solarPlant', 'parentTask', 'subtasks', 'creator'])->find($taskId);
+        $this->showDetailsModal = true;
+    }
+
+    public function closeDetailsModal()
+    {
+        $this->showDetailsModal = false;
+        $this->detailsTask = null;
     }
 
     // Mark as read methods
