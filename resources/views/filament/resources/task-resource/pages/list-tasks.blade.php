@@ -733,32 +733,45 @@
                                         
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                {{ $detailsTask->status === 'open' ? 'bg-gray-100 text-gray-800' : '' }}
-                                                {{ $detailsTask->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : '' }}
-                                                {{ $detailsTask->status === 'waiting_external' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                                {{ $detailsTask->status === 'waiting_internal' ? 'bg-purple-100 text-purple-800' : '' }}
-                                                {{ $detailsTask->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
-                                                {{ $detailsTask->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">
                                                 {{ $this->availableStatuses[$detailsTask->status] ?? ucfirst($detailsTask->status) }}
                                             </span>
                                         </div>
                                         
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Priorität</label>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                {{ $detailsTask->priority === 'low' ? 'bg-gray-100 text-gray-800' : '' }}
-                                                {{ $detailsTask->priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                                {{ $detailsTask->priority === 'high' ? 'bg-orange-100 text-orange-800' : '' }}
-                                                {{ $detailsTask->priority === 'urgent' ? 'bg-red-100 text-red-800' : '' }}
-                                                {{ $detailsTask->priority === 'blocker' ? 'bg-red-200 text-red-900' : '' }}">
-                                                {{ $this->availablePriorities[$detailsTask->priority] ?? ucfirst($detailsTask->priority) }}
-                                            </span>
+                                            @if($detailsTask->priority === 'blocker')
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #dc2626 !important; color: white !important;">
+                                                    Blocker
+                                                </span>
+                                            @elseif($detailsTask->priority === 'urgent')
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #fecaca !important; color: #991b1b !important;">
+                                                    Dringend
+                                                </span>
+                                            @elseif($detailsTask->priority === 'high')
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #fed7aa !important; color: #c2410c !important;">
+                                                    Hoch
+                                                </span>
+                                            @elseif($detailsTask->priority === 'medium')
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #fef3c7 !important; color: #a16207 !important;">
+                                                    Mittel
+                                                </span>
+                                            @elseif($detailsTask->priority === 'low')
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #dcfce7 !important; color: #166534 !important;">
+                                                    Niedrig
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">
+                                                    Keine Priorität
+                                                </span>
+                                            @endif
                                         </div>
                                         
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Aufgabentyp</label>
-                                            <p class="text-sm text-gray-900">{{ $detailsTask->taskType->name ?? 'Nicht festgelegt' }}</p>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">
+                                                {{ $detailsTask->taskType->name ?? 'Nicht festgelegt' }}
+                                            </span>
                                         </div>
                                         
                                         <div>

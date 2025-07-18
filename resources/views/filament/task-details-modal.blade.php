@@ -14,36 +14,13 @@
                 </div>
                 <div>
                     <span class="text-sm font-medium text-gray-600">Typ:</span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">
                         {{ $record->taskType?->name ?? 'Nicht zugewiesen' }}
                     </span>
                 </div>
                 <div>
                     <span class="text-sm font-medium text-gray-600">Status:</span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        @switch($record->status)
-                            @case('open')
-                                bg-gray-100 text-gray-800
-                                @break
-                            @case('in_progress')
-                                bg-blue-100 text-blue-800
-                                @break
-                            @case('waiting_external')
-                                bg-yellow-100 text-yellow-800
-                                @break
-                            @case('waiting_internal')
-                                bg-purple-100 text-purple-800
-                                @break
-                            @case('completed')
-                                bg-green-100 text-green-800
-                                @break
-                            @case('cancelled')
-                                bg-red-100 text-red-800
-                                @break
-                            @default
-                                bg-gray-100 text-gray-800
-                        @endswitch
-                    ">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">
                         @switch($record->status)
                             @case('open')
                                 Offen
@@ -70,41 +47,31 @@
                 </div>
                 <div>
                     <span class="text-sm font-medium text-gray-600">Priorität:</span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        @switch($record->priority)
-                            @case('low')
-                                bg-gray-100 text-gray-800
-                                @break
-                            @case('medium')
-                                bg-blue-100 text-blue-800
-                                @break
-                            @case('high')
-                                bg-orange-100 text-orange-800
-                                @break
-                            @case('urgent')
-                                bg-red-100 text-red-800
-                                @break
-                            @default
-                                bg-gray-100 text-gray-800
-                        @endswitch
-                    ">
-                        @switch($record->priority)
-                            @case('low')
-                                Niedrig
-                                @break
-                            @case('medium')
-                                Mittel
-                                @break
-                            @case('high')
-                                Hoch
-                                @break
-                            @case('urgent')
-                                Dringend
-                                @break
-                            @default
-                                {{ $record->priority }}
-                        @endswitch
-                    </span>
+                    @if($record->priority === 'blocker')
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #dc2626 !important; color: white !important;">
+                            Blocker
+                        </span>
+                    @elseif($record->priority === 'urgent')
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #fecaca !important; color: #991b1b !important;">
+                            Dringend
+                        </span>
+                    @elseif($record->priority === 'high')
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #fed7aa !important; color: #c2410c !important;">
+                            Hoch
+                        </span>
+                    @elseif($record->priority === 'medium')
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #fef3c7 !important; color: #a16207 !important;">
+                            Mittel
+                        </span>
+                    @elseif($record->priority === 'low')
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #dcfce7 !important; color: #166534 !important;">
+                            Niedrig
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">
+                            Keine Priorität
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>
