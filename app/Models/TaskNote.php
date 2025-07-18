@@ -72,4 +72,42 @@ class TaskNote extends Model
             })
             ->get();
     }
+
+    /**
+     * Boot-Methode für automatische History-Protokollierung
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($taskNote) {
+            // Protokolliere das Hinzufügen einer Notiz
+            TaskHistory::create([
+                'task_id' => $taskNote->task_id,
+                'user_id' => $taskNote->user_id,
+                'action' => 'note_added',
+                'description' => 'Notiz hinzugefügt: ' . \Str::limit($taskNote->content, 100),
+            ]);
+        });
+
+        static::updated(function ($taskNote) {
+            // Protokolliere das Bearbeiten einer Notiz
+            TaskHistory::create([
+                'task_id' => $taskNote->task_id,
+                'user_id' => auth()->id() ?? $taskNote->user_id,
+                'action' => 'note_updated',
+                'description' => 'Notiz bearbeitet: ' . \Str::limit($taskNote->content, 100),
+            ]);
+        });
+
+        static::deleted(function ($taskNote) {
+            // Protokolliere das Löschen einer Notiz
+            TaskHistory::create([
+                'task_id' => $taskNote->task_id,
+                'user_id' => auth()->id() ?? $taskNote->user_id,
+                'action' => 'note_deleted',
+                'description' => 'Notiz gelöscht: ' . \Str::limit($taskNote->content, 100),
+            ]);
+        });
+    }
 }

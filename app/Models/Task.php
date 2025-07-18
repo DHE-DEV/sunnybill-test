@@ -411,6 +411,47 @@ class Task extends Model
                 $task->task_number = self::generateTaskNumber();
             }
         });
+
+        static::created(function ($task) {
+            // Protokolliere die Erstellung der Aufgabe
+            TaskHistory::logTaskCreation($task, auth()->id() ?? $task->created_by);
+        });
+
+        static::updating(function ($task) {
+            // Speichere die ursprünglichen Werte für History-Protokollierung
+            $task->_original_attributes = $task->getOriginal();
+        });
+
+        static::updated(function ($task) {
+            // Protokolliere alle geänderten Felder
+            if (isset($task->_original_attributes)) {
+                $userId = auth()->id() ?? $task->created_by;
+                $changes = $task->getChanges();
+                
+                foreach ($changes as $field => $newValue) {
+                    if ($field === 'updated_at') continue; // Überspringe updated_at
+                    
+                    $oldValue = $task->_original_attributes[$field] ?? null;
+                    
+                    // Konvertiere spezielle Felder für bessere Lesbarkeit
+                    $fieldName = self::getFieldDisplayName($field);
+                    $oldDisplayValue = self::getFieldDisplayValue($field, $oldValue);
+                    $newDisplayValue = self::getFieldDisplayValue($field, $newValue);
+                    
+                    TaskHistory::logFieldChange($task, $userId, $fieldName, $oldDisplayValue, $newDisplayValue);
+                }
+            }
+        });
+
+        static::deleted(function ($task) {
+            // Protokolliere die Löschung der Aufgabe
+            TaskHistory::create([
+                'task_id' => $task->id,
+                'user_id' => auth()->id() ?? $task->created_by,
+                'action' => 'deleted',
+                'description' => 'Aufgabe wurde gelöscht',
+            ]);
+        });
     }
 
     /**
@@ -437,5 +478,87 @@ class Task extends Model
         
         // Formatiere mit führenden Nullen (4 Stellen)
         return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Gibt benutzerfreundliche Feldnamen für die History zurück
+     */
+    private static function getFieldDisplayName(string $field): string
+    {
+        return match($field) {
+            'title' => 'Titel',
+            'description' => 'Beschreibung',
+            'priority' => 'Priorität',
+            'status' => 'Status',
+            'due_date' => 'Fälligkeitsdatum',
+            'due_time' => 'Fälligkeitszeit',
+            'labels' => 'Labels',
+            'estimated_minutes' => 'Geschätzte Minuten',
+            'actual_minutes' => 'Tatsächliche Minuten',
+            'task_type_id' => 'Aufgabentyp',
+            'customer_id' => 'Kunde',
+            'supplier_id' => 'Lieferant',
+            'solar_plant_id' => 'Solaranlage',
+            'applies_to_all_solar_plants' => 'Gilt für alle Solaranlagen',
+            'billing_id' => 'Abrechnung',
+            'milestone_id' => 'Meilenstein',
+            'assigned_to' => 'Zugewiesen an',
+            'owner_id' => 'Besitzer',
+            'parent_task_id' => 'Übergeordnete Aufgabe',
+            'completed_at' => 'Abgeschlossen am',
+            'sort_order' => 'Sortierreihenfolge',
+            'is_recurring' => 'Wiederkehrend',
+            'recurring_pattern' => 'Wiederholungsmuster',
+            'order_index' => 'Reihenfolge',
+            default => ucfirst(str_replace('_', ' ', $field)),
+        };
+    }
+
+    /**
+     * Gibt benutzerfreundliche Feldwerte für die History zurück
+     */
+    private static function getFieldDisplayValue(string $field, $value): string
+    {
+        if ($value === null) {
+            return 'Leer';
+        }
+
+        return match($field) {
+            'priority' => match($value) {
+                'low' => 'Niedrig',
+                'medium' => 'Mittel',
+                'high' => 'Hoch',
+                'urgent' => 'Dringend',
+                'blocker' => 'Blockierend',
+                default => $value,
+            },
+            'status' => match($value) {
+                'open' => 'Offen',
+                'in_progress' => 'In Bearbeitung',
+                'waiting_external' => 'Warten auf extern',
+                'waiting_internal' => 'Warten auf intern',
+                'completed' => 'Abgeschlossen',
+                'cancelled' => 'Abgebrochen',
+                default => $value,
+            },
+            'task_type_id' => $value ? (TaskType::find($value)?->name ?? "ID: $value") : 'Leer',
+            'customer_id' => $value ? (Customer::find($value)?->name ?? "ID: $value") : 'Leer',
+            'supplier_id' => $value ? (Supplier::find($value)?->name ?? "ID: $value") : 'Leer',
+            'solar_plant_id' => $value ? (SolarPlant::find($value)?->name ?? "ID: $value") : 'Leer',
+            'assigned_to' => $value ? (User::find($value)?->name ?? "ID: $value") : 'Leer',
+            'owner_id' => $value ? (User::find($value)?->name ?? "ID: $value") : 'Leer',
+            'parent_task_id' => $value ? (Task::find($value)?->title ?? "ID: $value") : 'Leer',
+            'billing_id' => $value ? "Abrechnung ID: $value" : 'Leer',
+            'milestone_id' => $value ? (Milestone::find($value)?->title ?? "ID: $value") : 'Leer',
+            'applies_to_all_solar_plants' => $value ? 'Ja' : 'Nein',
+            'is_recurring' => $value ? 'Ja' : 'Nein',
+            'labels' => is_array($value) ? implode(', ', $value) : (string) $value,
+            'due_date' => $value ? Carbon::parse($value)->format('d.m.Y') : 'Leer',
+            'due_time' => $value ? Carbon::parse($value)->format('H:i') : 'Leer',
+            'completed_at' => $value ? Carbon::parse($value)->format('d.m.Y H:i') : 'Leer',
+            'estimated_minutes' => $value ? "$value Minuten" : 'Leer',
+            'actual_minutes' => $value ? "$value Minuten" : 'Leer',
+            default => (string) $value,
+        };
     }
 }

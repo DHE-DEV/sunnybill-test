@@ -582,6 +582,7 @@ class TaskResource extends Resource
             RelationManagers\SubtasksRelationManager::class,
             RelationManagers\NotesRelationManager::class,
             RelationManagers\DocumentsRelationManager::class,
+            RelationManagers\HistoryRelationManager::class,
         ];
     }
 
