@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DocumentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +17,15 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Über uns Seite
+Route::get('/ueber-uns', function () {
+    return view('ueber-uns');
+})->name('ueber-uns');
+
+// Document Download Route
+Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
 
 // OpenAPI Dokumentation
 Route::get('/api-docs', function () {
