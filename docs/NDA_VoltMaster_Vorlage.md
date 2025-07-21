@@ -88,7 +88,7 @@ Bei schuldhafter Verletzung der Geheimhaltungspflicht ist eine Vertragsstrafe in
 
 3. Es gilt das Recht der Bundesrepublik Deutschland.
 
-4. Gerichtsstand ist Hennef.
+4. Gerichtsstand ist Köln.
 
 ---
 
