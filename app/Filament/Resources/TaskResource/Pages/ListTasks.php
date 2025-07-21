@@ -139,6 +139,11 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $columns = [];
         
         foreach ($statusConfig as $status => $config) {
+            // Prüfe ob dieser Status im Filter ausgewählt ist
+            if (!in_array($status, $this->selectedStatuses)) {
+                continue;
+            }
+            
             // Spezialbehandlung für Wiederkehrend-Spalte
             if ($status === 'recurring') {
                 $query = TaskResource::getEloquentQuery()
@@ -146,11 +151,6 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                     ->whereNull('deleted_at')
                     ->with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier', 'solarPlant']);
             } else {
-                // Nur Spalten anzeigen, die in den ausgewählten Status enthalten sind
-                if (!in_array($status, $this->selectedStatuses)) {
-                    continue;
-                }
-                
                 // WICHTIG: Ausschluss von wiederkehrenden Tasks aus normalen Spalten
                 $query = TaskResource::getEloquentQuery()
                     ->where('status', $status)
