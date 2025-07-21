@@ -80,8 +80,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $this->showStatistics = request()->get('statistics', false);
         $this->showBoard = request()->get('board', true); // Standardmäßig Board anzeigen
         
-        // Standardmäßig alle Status anzeigen
-        $this->selectedStatuses = ['open', 'in_progress', 'waiting_external', 'waiting_internal', 'completed', 'cancelled'];
+        // Standardmäßig alle Status anzeigen (inklusive Wiederkehrend)
+        $this->selectedStatuses = ['recurring', 'open', 'in_progress', 'waiting_external', 'waiting_internal', 'completed', 'cancelled'];
         
         // Standardmäßig alle Prioritäten anzeigen
         $this->selectedPriorities = ['low', 'medium', 'high', 'urgent', 'blocker'];
@@ -383,7 +383,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public function resetFilters(): void
     {
         $this->filterAssignment = 'all';
-        $this->selectedStatuses = ['open', 'in_progress', 'waiting_external', 'waiting_internal', 'completed', 'cancelled'];
+        $this->selectedStatuses = ['recurring', 'open', 'in_progress', 'waiting_external', 'waiting_internal', 'completed', 'cancelled'];
         $this->selectedPriorities = ['low', 'medium', 'high', 'urgent', 'blocker'];
         $this->selectedDueDates = ['overdue', 'today', 'next_7_days', 'next_30_days', 'no_due_date'];
         $this->searchQuery = '';
@@ -409,6 +409,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     public function getAvailableStatusesProperty(): array
     {
         return [
+            'recurring' => 'Wiederkehrend',
             'open' => 'Offen',
             'in_progress' => 'In Bearbeitung',
             'waiting_external' => 'Warte auf Extern',
