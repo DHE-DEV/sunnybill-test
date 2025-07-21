@@ -286,7 +286,7 @@
                                                          }
                                                      @endphp
                                                      <span class="text-xs font-medium" style="color: {{ $color }} !important;">
-                                                         {{ $this->getDueDateText($task->due_date) }}
+                                                         {{ $this->getDueDateText($task) }}
                                                      </span>
                                                  @endif
                                              </div>
