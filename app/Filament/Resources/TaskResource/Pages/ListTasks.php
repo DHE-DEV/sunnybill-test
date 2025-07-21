@@ -2080,22 +2080,47 @@ class ListTasks extends ListRecords implements HasForms, HasActions
 
         $oldStatus = $task->status;
         
-        // Update task status if changed (Blocker-Tasks können zwischen Spalten verschoben werden)
-        if ($newStatus !== $oldStatus) {
-            $task->status = $newStatus;
-            
-            // Set completed_at if status changed to completed
-            if ($newStatus === 'completed' && $task->completed_at === null) {
-                $task->completed_at = now();
-            } elseif ($newStatus !== 'completed') {
-                $task->completed_at = null;
+        // Spezielle Behandlung für "recurring" Spalte
+        if ($newStatus === 'recurring') {
+            // Setze is_recurring auf true, behalte aber den eigentlichen Status
+            $task->is_recurring = true;
+            // Wenn die Task noch keinen Status hat oder von recurring kommt, setze auf 'open'
+            if (!$task->status || $task->status === 'recurring') {
+                $task->status = 'open';
             }
             
-            // Log status change
-            TaskHistory::logFieldChange($task, auth()->id(), 'status', $oldStatus, $newStatus);
+            // Log recurring change
+            TaskHistory::logFieldChange($task, auth()->id(), 'is_recurring', $task->getOriginal('is_recurring') ? 'Ja' : 'Nein', 'Ja');
+            
+        } else {
+            // Normale Spalten - setze is_recurring auf false und aktualisiere Status
+            $wasRecurring = $task->is_recurring;
+            $task->is_recurring = false;
+            
+            // Update task status if changed
+            if ($newStatus !== $oldStatus) {
+                $task->status = $newStatus;
+                
+                // Set completed_at if status changed to completed
+                if ($newStatus === 'completed' && $task->completed_at === null) {
+                    $task->completed_at = now();
+                } elseif ($newStatus !== 'completed') {
+                    $task->completed_at = null;
+                }
+                
+                // Log status change
+                TaskHistory::logFieldChange($task, auth()->id(), 'status', $oldStatus, $newStatus);
+            }
+            
+            // Log recurring change wenn von recurring weg verschoben
+            if ($wasRecurring) {
+                TaskHistory::logFieldChange($task, auth()->id(), 'is_recurring', 'Ja', 'Nein');
+            }
             
             // Send status change notification to task owner
-            $this->sendStatusChangeNotification($task, $oldStatus, $newStatus);
+            if ($newStatus !== $oldStatus || $wasRecurring) {
+                $this->sendStatusChangeNotification($task, $oldStatus, $newStatus);
+            }
         }
 
         // Update sort order for all tasks in the target column (exclude blockers from manual sorting)
