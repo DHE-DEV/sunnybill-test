@@ -160,16 +160,16 @@
             <div class="overflow-x-auto">
                 <div class="flex gap-6 p-6" style="min-width: 1800px;">
                     @foreach($this->getStatusColumns() as $status => $column)
-                        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg flex-shrink-0" 
+                        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg flex-shrink-0 {{ $status === 'recurring' ? 'bg-emerald-50 dark:bg-emerald-900' : '' }}" 
                              style="width: 280px;">
                         
                         <!-- Column Header -->
-                        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="p-4 border-b border-gray-200 dark:border-gray-700 {{ $status === 'recurring' ? 'border-emerald-200 dark:border-emerald-700' : '' }}">
                             <div class="flex items-center justify-between">
-                                <h3 class="font-semibold text-gray-900 dark:text-white text-sm">
+                                <h3 class="font-semibold {{ $status === 'recurring' ? 'text-emerald-800 dark:text-emerald-200' : 'text-gray-900 dark:text-white' }} text-sm">
                                     {{ $column['label'] }}
                                 </h3>
-                                <span class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium px-2 py-1 rounded">
+                                <span class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium px-2 py-1 rounded {{ $status === 'recurring' ? 'bg-emerald-200 dark:bg-emerald-700 text-emerald-800 dark:text-emerald-200' : '' }}">
                                     {{ $column['count'] }}
                                 </span>
                             </div>
@@ -291,7 +291,7 @@
                                                  @endif
                                              </div>
 
-                                             <!-- Priority, Task Type, Owner and Assigned User Badges -->
+                                             <!-- Priority, Task Type, Recurring and User Badges -->
                                              <div class="flex items-center gap-2 flex-wrap">
                                                  <!-- Priority Badge -->
                                                  @if($task->priority === 'blocker')
@@ -317,6 +317,13 @@
                                                  @else
                                                      <span class="text-xs px-2 py-1 rounded font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">
                                                          Keine Priorität
+                                                     </span>
+                                                 @endif
+                                                 
+                                                 <!-- Recurring Badge -->
+                                                 @if($task->is_recurring)
+                                                     <span class="text-xs px-2 py-1 rounded font-medium" style="background-color: #10b981 !important; color: white !important;" title="Wiederkehrende Aufgabe">
+                                                         Wiederkehrend
                                                      </span>
                                                  @endif
                                                  
@@ -470,6 +477,7 @@
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                                         <select wire:model="editStatus" class="block w-full border-gray-300 rounded-md shadow-sm">
+                                            <option value="recurring">Wiederkehrend</option>
                                             <option value="open">Offen</option>
                                             <option value="in_progress">In Bearbeitung</option>
                                             <option value="waiting_external">Warte auf Extern</option>

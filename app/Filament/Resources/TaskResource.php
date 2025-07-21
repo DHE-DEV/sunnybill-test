@@ -325,6 +325,17 @@ class TaskResource extends Resource
                     ->sortable()
                     ->toggleable(),
 
+                IconColumn::make('is_recurring')
+                    ->label('Wiederkehrend')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-arrow-path')
+                    ->falseIcon('heroicon-o-minus')
+                    ->trueColor('success')
+                    ->falseColor('gray')
+                    ->sortable()
+                    ->toggleable()
+                    ->tooltip(fn (Task $record): string => $record->is_recurring ? 'Wiederkehrende Aufgabe' : 'Einmalige Aufgabe'),
+
                 BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([

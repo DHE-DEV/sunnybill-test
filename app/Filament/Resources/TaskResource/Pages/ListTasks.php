@@ -127,6 +127,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     {
         // Spalten in logischer Workflow-Reihenfolge von links nach rechts
         $statusConfig = [
+            'recurring' => ['label' => 'Wiederkehrend', 'color' => 'emerald', 'special' => true],
             'open' => ['label' => 'Offen', 'color' => 'gray'],
             'in_progress' => ['label' => 'In Bearbeitung', 'color' => 'blue'],
             'waiting_external' => ['label' => 'Warte auf Extern', 'color' => 'yellow'],
@@ -138,15 +139,23 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $columns = [];
         
         foreach ($statusConfig as $status => $config) {
-            // Nur Spalten anzeigen, die in den ausgewählten Status enthalten sind
-            if (!in_array($status, $this->selectedStatuses)) {
-                continue;
+            // Spezialbehandlung für Wiederkehrend-Spalte
+            if ($status === 'recurring') {
+                $query = TaskResource::getEloquentQuery()
+                    ->where('is_recurring', true)
+                    ->whereNull('deleted_at')
+                    ->with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier', 'solarPlant']);
+            } else {
+                // Nur Spalten anzeigen, die in den ausgewählten Status enthalten sind
+                if (!in_array($status, $this->selectedStatuses)) {
+                    continue;
+                }
+                
+                $query = TaskResource::getEloquentQuery()
+                    ->where('status', $status)
+                    ->whereNull('deleted_at')
+                    ->with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier', 'solarPlant']);
             }
-            
-            $query = TaskResource::getEloquentQuery()
-                ->where('status', $status)
-                ->whereNull('deleted_at')
-                ->with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier', 'solarPlant']);
             
             // Zuweisungsfilter anwenden
             $this->applyAssignmentFilter($query);
@@ -175,6 +184,7 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                 'color' => $config['color'],
                 'count' => $tasks->count(),
                 'tasks' => $tasks,
+                'special' => $config['special'] ?? false,
             ];
         }
 
@@ -781,7 +791,19 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             // Bestehende Task mit Formulardaten aktualisieren
             $this->editingTask->title = $this->editTitle;
             $this->editingTask->description = $this->editDescription;
-            $this->editingTask->status = $this->editStatus;
+            
+            // Behandle "Wiederkehrend" Status
+            if ($this->editStatus === 'recurring') {
+                $this->editingTask->is_recurring = true;
+                // Behalte den ursprünglichen Status bei oder setze auf 'open' falls noch keiner vorhanden
+                if (!$this->editingTask->status || $this->editingTask->status === 'recurring') {
+                    $this->editingTask->status = 'open';
+                }
+            } else {
+                $this->editingTask->status = $this->editStatus;
+                $this->editingTask->is_recurring = false;
+            }
+            
             $this->editingTask->priority = $this->editPriority;
             $this->editingTask->due_date = $this->editDueDate ? \Carbon\Carbon::parse($this->editDueDate) : null;
             $this->editingTask->task_type_id = $this->editTaskTypeId ?: null;
@@ -851,8 +873,17 @@ class ListTasks extends ListRecords implements HasForms, HasActions
 
     public function createTask()
     {
+        // Behandle "Wiederkehrend" Status
+        $actualStatus = $this->editStatus;
+        $isRecurring = false;
+        
+        if ($this->editStatus === 'recurring') {
+            $isRecurring = true;
+            $actualStatus = 'open'; // Wiederkehrende Aufgaben starten als "Offen"
+        }
+
         // Alle anderen Aufgaben im gleichen Status um 1 nach unten verschieben
-        \App\Models\Task::where('status', $this->editStatus)
+        \App\Models\Task::where('status', $actualStatus)
             ->increment('sort_order');
 
         // Behandle "Alle Solaranlagen" Auswahl
@@ -871,7 +902,8 @@ class ListTasks extends ListRecords implements HasForms, HasActions
         $task = \App\Models\Task::create([
             'title' => $this->editTitle,
             'description' => $this->editDescription,
-            'status' => $this->editStatus,
+            'status' => $actualStatus,
+            'is_recurring' => $isRecurring,
             'priority' => $this->editPriority,
             'due_date' => $this->editDueDate ? \Carbon\Carbon::parse($this->editDueDate) : null,
             'task_type_id' => $this->editTaskTypeId ?: null,
