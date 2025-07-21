@@ -151,8 +151,10 @@ class ListTasks extends ListRecords implements HasForms, HasActions
                     continue;
                 }
                 
+                // WICHTIG: Ausschluss von wiederkehrenden Tasks aus normalen Spalten
                 $query = TaskResource::getEloquentQuery()
                     ->where('status', $status)
+                    ->where('is_recurring', false) // Nur nicht-wiederkehrende Tasks
                     ->whereNull('deleted_at')
                     ->with(['taskType', 'assignedUser', 'owner', 'customer', 'supplier', 'solarPlant']);
             }
