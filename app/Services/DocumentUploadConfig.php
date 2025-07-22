@@ -28,7 +28,7 @@ class DocumentUploadConfig
             'pathType' => null, // Für dynamische Pfad-Generierung
             'model' => null, // Model-Instanz für Platzhalter
             'additionalData' => [], // Zusätzliche Daten für Platzhalter
-            'maxSize' => 10240, // 10MB in KB
+            'maxSize' => 51200, // 50MB in KB
             'preserveFilenames' => true,
             'timestampFilenames' => false,
             'multiple' => false,
@@ -653,6 +653,28 @@ class DocumentUploadConfig
             'preserveFilenames' => false,
             'timestampFilenames' => true,
             // Entferne hardcodierte Kategorien - verwende DocumentTypes stattdessen
+            'categories' => [],
+            'categoryColors' => [],
+            'showCategory' => true, // Aktiviere DocumentType-Anzeige
+            'defaultSort' => ['name', 'desc'], // Sortierung nach Name absteigend
+        ]);
+    }
+
+    /**
+     * Erstellt eine Konfiguration für Projekt-Dokumente
+     * Verwendet DocumentTypes statt hardcodierte Kategorien
+     */
+    public static function forProjects($project = null): self
+    {
+        return new self([
+            'pathType' => 'projects',
+            'model' => $project,
+            'title' => 'Projekt-Dokumente',
+            'sectionTitle' => 'Projekt-Dokumente',
+            'preserveFilenames' => false,
+            'timestampFilenames' => true,
+            // Aktiviere DocumentTypes statt hardcodierte Kategorien
+            'useDocumentTypes' => true, // WICHTIG: Aktiviert DocumentType-Dropdown
             'categories' => [],
             'categoryColors' => [],
             'showCategory' => true, // Aktiviere DocumentType-Anzeige
