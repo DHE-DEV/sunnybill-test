@@ -11,23 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('project_task', function (Blueprint $table) {
-            $table->uuid('project_id');
-            $table->uuid('task_id');
-            $table->primary(['project_id', 'task_id']);
-            
-            $table->foreign('project_id')
-                ->references('id')
-                ->on('projects')
-                ->onDelete('cascade');
+        if (!Schema::hasTable('project_task')) {
+            Schema::create('project_task', function (Blueprint $table) {
+                $table->uuid('project_id');
+                $table->uuid('task_id');
+                $table->primary(['project_id', 'task_id']);
                 
-            $table->foreign('task_id')
-                ->references('id')
-                ->on('tasks')
-                ->onDelete('cascade');
-                
-            $table->index(['project_id', 'task_id']);
-        });
+                $table->foreign('project_id')
+                    ->references('id')
+                    ->on('projects')
+                    ->onDelete('cascade');
+                    
+                $table->foreign('task_id')
+                    ->references('id')
+                    ->on('tasks')
+                    ->onDelete('cascade');
+                    
+                $table->index(['project_id', 'task_id']);
+            });
+        }
     }
 
     /**

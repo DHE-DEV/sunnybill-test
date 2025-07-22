@@ -269,6 +269,12 @@
                                                      </span>
                                                  @endif
                                                  
+                                                 @if($task->projects && $task->projects->count() > 0)
+                                                     <span class="text-indigo-600 dark:text-indigo-400 font-medium">
+                                                         📁 {{ $task->projects->take(2)->pluck('name')->join(', ') }}@if($task->projects->count() > 2)...@endif
+                                                     </span>
+                                                 @endif
+                                                 
                                                  @if($task->due_date)
                                                      @php
                                                          $now = now()->startOfDay();

@@ -116,10 +116,20 @@ class DocumentFormBuilder
                 $category = $get('category');
                 $documentTypeId = $get('document_type_id');
                 
+                \Log::debug('DocumentFormBuilder: FileUpload directory wird bestimmt', [
+                    'category' => $category,
+                    'document_type_id' => $documentTypeId
+                ]);
+                
                 // Wenn DocumentType verwendet wird, hole die Kategorie vom DocumentType
                 if ($documentTypeId && !$category) {
                     $documentType = \App\Models\DocumentType::find($documentTypeId);
                     $category = $documentType?->key;
+                    
+                    \Log::debug('DocumentFormBuilder: FileUpload Kategorie von DocumentType geholt', [
+                        'document_type_id' => $documentTypeId,
+                        'category_from_type' => $category
+                    ]);
                 }
                 
                 $pathType = $this->config('pathType');
@@ -129,12 +139,22 @@ class DocumentFormBuilder
                     $category ? ['category' => $category] : []
                 );
                 
-                return DocumentStorageService::getUploadDirectoryForModel(
+                $directory = DocumentStorageService::getUploadDirectoryForModel(
                     $pathType,
                     $model,
                     $additionalData
                 );
-            });
+                
+                \Log::debug('DocumentFormBuilder: FileUpload directory bestimmt', [
+                    'final_directory' => $directory,
+                    'path_type' => $pathType,
+                    'final_category' => $category
+                ]);
+                
+                return $directory;
+            })
+            ->live() // Mache das FileUpload-Feld reaktiv
+            ->reactive(); // Zusätzlich reactive für bessere Kompatibilität
         } else {
             // Statisches Directory für Rückwärtskompatibilität
             $directory = $this->getUploadDirectory();
@@ -198,7 +218,18 @@ class DocumentFormBuilder
             ->searchable($this->config('documentTypeSearchable', true))
             ->required($this->config('documentTypeRequired', true))
             ->placeholder($this->config('documentTypePlaceholder', 'Dokumententyp auswählen...'))
-            ->live(); // Aktiviert Live-Updates für die Pfad-Vorschau
+            ->live() // Aktiviert Live-Updates für die Pfad-Vorschau
+            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                // Zusätzliche Logging für Debug-Zwecke
+                if ($state) {
+                    $documentType = \App\Models\DocumentType::find($state);
+                    \Log::info('DocumentFormBuilder: DocumentType ausgewählt', [
+                        'document_type_id' => $state,
+                        'document_type_name' => $documentType?->name,
+                        'document_type_key' => $documentType?->key,
+                    ]);
+                }
+            });
     }
 
     /**
@@ -239,13 +270,31 @@ class DocumentFormBuilder
                 $category = $get('category');
                 $documentTypeId = $get('document_type_id');
                 
+                \Log::debug('DocumentFormBuilder: Pfad-Vorschau wird generiert', [
+                    'category' => $category,
+                    'document_type_id' => $documentTypeId,
+                    'has_path_type' => !empty($this->config('pathType')),
+                    'has_model' => !empty($this->config('model')),
+                    'path_type' => $this->config('pathType'),
+                    'model_class' => $this->config('model') ? get_class($this->config('model')) : 'null'
+                ]);
+                
                 // Wenn DocumentType verwendet wird, hole die Kategorie vom DocumentType
                 if ($documentTypeId && !$category) {
                     try {
                         $documentType = \App\Models\DocumentType::find($documentTypeId);
                         $category = $documentType?->key;
+                        
+                        \Log::debug('DocumentFormBuilder: Kategorie von DocumentType geholt', [
+                            'document_type_id' => $documentTypeId,
+                            'document_type_found' => $documentType ? 'yes' : 'no',
+                            'category_from_type' => $category
+                        ]);
                     } catch (\Exception $e) {
-                        // Fallback wenn DocumentType nicht gefunden wird
+                        \Log::error('DocumentFormBuilder: Fehler beim Laden des DocumentType', [
+                            'document_type_id' => $documentTypeId,
+                            'error' => $e->getMessage()
+                        ]);
                         $category = null;
                     }
                 }
@@ -259,6 +308,13 @@ class DocumentFormBuilder
                         $category ? ['category' => $category] : []
                     );
                     
+                    \Log::debug('DocumentFormBuilder: Generiere dynamischen Pfad', [
+                        'path_type' => $pathType,
+                        'model_class' => get_class($model),
+                        'additional_data' => $additionalData,
+                        'final_category' => $category
+                    ]);
+                    
                     try {
                         $previewPath = DocumentStorageService::getUploadDirectoryForModel(
                             $pathType,
@@ -266,15 +322,55 @@ class DocumentFormBuilder
                             $additionalData
                         );
                         
-                        return "📁 {$previewPath}/";
+                        \Log::debug('DocumentFormBuilder: Pfad erfolgreich generiert', [
+                            'preview_path' => $previewPath
+                        ]);
+                        
+                        if (empty($previewPath)) {
+                            return "📁 " . $this->getUploadDirectory() . "/ (Fallback: Leerer Pfad)";
+                        }
+                        
+                        // Vollständigen Pfad mit Storage-Basis anzeigen
+                        $diskName = $this->config('diskName') ?? DocumentStorageService::getDiskName();
+                        $fullPath = $this->getFullStoragePath($previewPath, $diskName);
+                        
+                        return "📁 {$fullPath}";
                     } catch (\Exception $e) {
-                        return "📁 " . $this->getUploadDirectory() . "/";
+                        \Log::error('DocumentFormBuilder: Fehler bei Pfad-Generierung', [
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        return "📁 " . $this->getUploadDirectory() . "/ (Fallback: Fehler)";
                     }
                 } else {
-                    return "📁 " . $this->getUploadDirectory() . "/";
+                    $fallbackPath = $this->getUploadDirectory();
+                    \Log::debug('DocumentFormBuilder: Verwende Fallback-Pfad', [
+                        'fallback_path' => $fallbackPath
+                    ]);
+                    return "📁 {$fallbackPath}/ (Standard)";
                 }
             })
-            ->helperText($this->config('pathPreviewHelperText', 'Hier wird das Dokument gespeichert. Der Pfad ändert sich automatisch basierend auf dem ausgewählten Dokumenttyp.'))
+            ->helperText(function (Forms\Get $get): string {
+                $documentTypeId = $get('document_type_id');
+                $category = $get('category');
+                
+                if ($documentTypeId && !$category) {
+                    try {
+                        $documentType = \App\Models\DocumentType::find($documentTypeId);
+                        $category = $documentType?->key;
+                    } catch (\Exception $e) {
+                        // Ignore error in helper text
+                    }
+                }
+                
+                $baseHelperText = $this->config('pathPreviewHelperText', 'Hier wird das Dokument gespeichert. Der Pfad ändert sich automatisch basierend auf dem ausgewählten Dokumenttyp.');
+                
+                if ($category) {
+                    return $baseHelperText . " | Aktuelle Kategorie: " . $category;
+                }
+                
+                return $baseHelperText;
+            })
             ->live() // Aktiviert Live-Updates
             ->columnSpanFull();
     }
@@ -483,5 +579,33 @@ class DocumentFormBuilder
         $timestamp = now()->format('Y-m-d_H-i-s');
         
         return $cleanName . '_' . $timestamp . $extension;
+    }
+
+    /**
+     * Erstellt den vollständigen Storage-Pfad für die Anzeige
+     */
+    protected function getFullStoragePath(string $relativePath, string $diskName): string
+    {
+        try {
+            // Konvertiere Forward-Slashes zu Backslashes für Windows-Darstellung
+            $windowsPath = str_replace('/', '\\', $relativePath);
+            
+            if ($diskName === 'local') {
+                // Für lokale Disk: zeige nur den relativen Pfad mit Backslashes
+                return $windowsPath . '\\';
+            } else {
+                // Für Cloud-Disks: zeige Disk-Namen mit Windows-Pfad
+                return "({$diskName}) {$windowsPath}\\";
+            }
+        } catch (\Exception $e) {
+            \Log::warning('DocumentFormBuilder: Fehler beim Erstellen des vollständigen Pfads', [
+                'relative_path' => $relativePath,
+                'disk_name' => $diskName,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Fallback: zeige nur den relativen Pfad mit Backslashes
+            return str_replace('/', '\\', $relativePath) . '\\';
+        }
     }
 }

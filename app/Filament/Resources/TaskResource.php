@@ -230,6 +230,23 @@ class TaskResource extends Resource
                             ->preload()
                             ->placeholder('Übergeordnete Aufgabe auswählen...')
                             ->nullable(),
+
+                        Select::make('projects')
+                            ->label('Projekte')
+                            ->relationship('projects', 'name', function ($query) {
+                                return $query->whereNotNull('name')
+                                    ->where('name', '!=', '')
+                                    ->orderBy('name');
+                            })
+                            ->getOptionLabelFromRecordUsing(fn ($record): string =>
+                                "[{$record->project_number}] {$record->name}"
+                            )
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Projekte auswählen...')
+                            ->helperText('Wählen Sie ein oder mehrere Projekte aus, denen diese Aufgabe zugeordnet werden soll.')
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
 
@@ -401,6 +418,19 @@ class TaskResource extends Resource
                             return 'Alle Solaranlagen';
                         }
                         return $record->solarPlant?->name ?? '-';
+                    }),
+
+                TextColumn::make('projects.name')
+                    ->label('Projekte')
+                    ->badge()
+                    ->separator(', ')
+                    ->limit(2)
+                    ->toggleable()
+                    ->tooltip(function (Task $record): string {
+                        $projectNames = $record->projects->pluck('name')->toArray();
+                        return count($projectNames) > 0 
+                            ? 'Projekte: ' . implode(', ', $projectNames)
+                            : 'Keine Projekte zugeordnet';
                     }),
 
                 TextColumn::make('estimated_minutes')

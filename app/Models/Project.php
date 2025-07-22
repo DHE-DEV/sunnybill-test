@@ -86,6 +86,11 @@ class Project extends Model
         return $this->belongsToMany(Task::class, 'project_task');
     }
 
+    public function documents()
+    {
+        return $this->morphMany(Document::class, 'documentable');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

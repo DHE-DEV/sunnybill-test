@@ -189,6 +189,7 @@ class DocumentStorageService
             'supplier_contract_billings' => 'supplier-contract-billing-documents',
             'solar_plants' => 'solar-plant-documents',
             'tasks' => 'task-documents',
+            'projects' => 'projekte',
             'general' => 'documents',
             default => $type . '-documents'
         };
@@ -205,6 +206,7 @@ class DocumentStorageService
             'supplier_contracts' => 'Lieferantenvertrags-Dokumente',
             'solar_plants' => 'Solaranlagen-Dokumente',
             'tasks' => 'Aufgaben-Dokumente',
+            'projects' => 'Projekt-Dokumente',
             'general' => 'Allgemeine Dokumente',
         ];
     }

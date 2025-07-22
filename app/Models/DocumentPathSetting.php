@@ -42,6 +42,7 @@ class DocumentPathSetting extends Model
             'App\Models\Supplier' => 'Lieferant',
             'App\Models\SupplierContract' => 'Lieferantenvertrag',
             'App\Models\SupplierContractBilling' => 'Lieferanten-Abrechnung',
+            'App\Models\Project' => 'Projekt',
             'App\Models\UploadedPdf' => 'PDF-Upload',
         ];
     }
@@ -157,6 +158,33 @@ class DocumentPathSetting extends Model
             $replacements['{task_number}'] = $this->sanitizeValue($model->task_number ?? 'unknown');
             $replacements['{task_title}'] = $this->sanitizeValue($model->title ?? 'unknown');
             $replacements['{task_id}'] = $model->id ?? 'unknown';
+        }
+
+        // Project-spezifische Platzhalter
+        if ($model instanceof \App\Models\Project) {
+            $replacements['{project_number}'] = $this->sanitizeValue($model->project_number ?? 'unknown');
+            $replacements['{project_name}'] = $this->sanitizeValue($model->name ?? 'unknown');
+            $replacements['{project_id}'] = $model->id ?? 'unknown';
+            $replacements['{project_type}'] = $this->sanitizeValue($model->type ?? 'unknown');
+            $replacements['{project_status}'] = $this->sanitizeValue($model->status ?? 'unknown');
+            $replacements['{project_priority}'] = $this->sanitizeValue($model->priority ?? 'unknown');
+            
+            // Datum-basierte Platzhalter
+            if ($model->start_date) {
+                $replacements['{project_start_year}'] = $model->start_date->format('Y');
+                $replacements['{project_start_month}'] = $model->start_date->format('m');
+            }
+            if ($model->planned_end_date) {
+                $replacements['{project_end_year}'] = $model->planned_end_date->format('Y');
+                $replacements['{project_end_month}'] = $model->planned_end_date->format('m');
+            }
+            
+            // Kunde vom Projekt
+            if ($model->customer) {
+                $replacements['{customer_number}'] = $this->sanitizeValue($model->customer->customer_number ?? 'unknown');
+                $replacements['{customer_name}'] = $this->sanitizeValue($model->customer->company_name ?? 'unknown');
+                $replacements['{customer_id}'] = $model->customer->id ?? 'unknown';
+            }
         }
 
         // Invoice-spezifische Platzhalter
@@ -352,6 +380,24 @@ class DocumentPathSetting extends Model
                 ]);
                 break;
 
+            case 'App\Models\Project':
+                $placeholders = array_merge($placeholders, [
+                    'project_number' => 'Projektnummer',
+                    'project_name' => 'Projektname',
+                    'project_id' => 'Projekt-ID',
+                    'project_type' => 'Projekttyp',
+                    'project_status' => 'Projektstatus',
+                    'project_priority' => 'Projektpriorität',
+                    'project_start_year' => 'Projektstart Jahr',
+                    'project_start_month' => 'Projektstart Monat',
+                    'project_end_year' => 'Projektende Jahr',
+                    'project_end_month' => 'Projektende Monat',
+                    'customer_number' => 'Kundennummer (vom zugehörigen Kunden)',
+                    'customer_name' => 'Kundenname (vom zugehörigen Kunden)',
+                    'customer_id' => 'Kunden-ID (vom zugehörigen Kunden)',
+                ]);
+                break;
+
             case 'App\Models\Invoice':
                 $placeholders = array_merge($placeholders, [
                     'invoice_number' => 'Rechnungsnummer',
@@ -440,6 +486,146 @@ class DocumentPathSetting extends Model
                 'path_template' => 'aufgaben/{task_number}',
                 'description' => 'Standard-Pfad für Aufgaben-Dokumente',
                 'placeholders' => ['task_number', 'task_title', 'task_id'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => null,
+                'path_template' => 'projekte/{project_number}',
+                'description' => 'Standard-Pfad für Projekt-Dokumente',
+                'placeholders' => ['project_number', 'project_name', 'project_id', 'project_type', 'project_status'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'proposal',
+                'path_template' => 'projekte/{project_number}/angebote',
+                'description' => 'Pfad für Projekt-Angebote',
+                'placeholders' => ['project_number', 'project_name', 'customer_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'contract',
+                'path_template' => 'projekte/{project_number}/vertraege',
+                'description' => 'Pfad für Projekt-Verträge',
+                'placeholders' => ['project_number', 'project_name', 'customer_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'planning',
+                'path_template' => 'projekte/{project_number}/planung',
+                'description' => 'Pfad für Projekt-Planungsdokumente',
+                'placeholders' => ['project_number', 'project_name', 'project_type'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'technical',
+                'path_template' => 'projekte/{project_number}/technische-unterlagen',
+                'description' => 'Pfad für technische Unterlagen',
+                'placeholders' => ['project_number', 'project_name', 'project_type'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'progress',
+                'path_template' => 'projekte/{project_number}/fortschrittsberichte',
+                'description' => 'Pfad für Fortschrittsberichte',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'documentation',
+                'path_template' => 'projekte/{project_number}/dokumentation',
+                'description' => 'Pfad für Projekt-Dokumentation',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'correspondence',
+                'path_template' => 'projekte/{project_number}/korrespondenz',
+                'description' => 'Pfad für Projekt-Korrespondenz',
+                'placeholders' => ['project_number', 'project_name', 'customer_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'invoice',
+                'path_template' => 'projekte/{project_number}/rechnungen',
+                'description' => 'Pfad für Projekt-Rechnungen',
+                'placeholders' => ['project_number', 'project_name', 'customer_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'photo',
+                'path_template' => 'projekte/{project_number}/fotos',
+                'description' => 'Pfad für Projekt-Fotos',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'certificate',
+                'path_template' => 'projekte/{project_number}/zertifikate',
+                'description' => 'Pfad für Projekt-Zertifikate',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'handover',
+                'path_template' => 'projekte/{project_number}/uebergabe',
+                'description' => 'Pfad für Übergabe-Dokumente',
+                'placeholders' => ['project_number', 'project_name', 'customer_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'permits',
+                'path_template' => 'projekte/{project_number}/genehmigungen',
+                'description' => 'Pfad für Genehmigungen',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'installation',
+                'path_template' => 'projekte/{project_number}/installation',
+                'description' => 'Pfad für Installations-Dokumente',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'maintenance',
+                'path_template' => 'projekte/{project_number}/wartung',
+                'description' => 'Pfad für Wartungs-Dokumente',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'invoices',
+                'path_template' => 'projekte/{project_number}/rechnungen',
+                'description' => 'Pfad für Rechnungen (Alternative zu invoice)',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'certificates',
+                'path_template' => 'projekte/{project_number}/zertifikate',
+                'description' => 'Pfad für Zertifikate (Alternative zu certificate)',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'contracts',
+                'path_template' => 'projekte/{project_number}/vertraege',
+                'description' => 'Pfad für Verträge (Alternative zu contract)',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'photos',
+                'path_template' => 'projekte/{project_number}/fotos',
+                'description' => 'Pfad für Fotos (Alternative zu photo)',
+                'placeholders' => ['project_number', 'project_name'],
+            ],
+            [
+                'documentable_type' => 'App\Models\Project',
+                'category' => 'other',
+                'path_template' => 'projekte/{project_number}/sonstiges',
+                'description' => 'Pfad für sonstige Projekt-Dokumente',
+                'placeholders' => ['project_number', 'project_name'],
             ],
             [
                 'documentable_type' => 'App\Models\Invoice',
