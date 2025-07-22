@@ -131,7 +131,7 @@ class DocumentResource extends Resource
                                 'application/zip',
                                 'application/x-rar-compressed',
                             ])
-                            ->maxSize(10240) // 10MB
+                            ->maxSize(51200) // 50MB
                             ->required()
                             ->columnSpanFull(),
                     ])

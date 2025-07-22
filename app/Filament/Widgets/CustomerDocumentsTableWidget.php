@@ -213,7 +213,7 @@ class CustomerDocumentsTableWidget extends BaseWidget
                             ->disk('documents')
                             ->directory('temp')
                             ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/plain'])
-                            ->maxSize(10240), // 10MB
+                            ->maxSize(51200), // 50MB
                         TextInput::make('name')
                             ->label('Dateiname (optional)')
                             ->maxLength(255)

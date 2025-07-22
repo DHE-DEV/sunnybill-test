@@ -103,7 +103,7 @@ class DocumentFormBuilder
             ->label($this->config('fileLabel', 'Datei'))
             ->required($this->config('required', true))
             ->disk($diskName)
-            ->maxSize($this->config('maxSize', 10240))
+            ->maxSize($this->config('maxSize', 51200))
             ->acceptedFileTypes($this->config('acceptedFileTypes', ['application/pdf']))
             ->afterStateUpdated(function (Forms\Set $set, $state) {
                 $this->handleFileUpload($set, $state);

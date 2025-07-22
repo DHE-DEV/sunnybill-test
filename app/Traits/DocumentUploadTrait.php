@@ -53,7 +53,7 @@ trait DocumentUploadTrait
                 'correspondence' => 'Korrespondenz',
                 'other' => 'Sonstiges',
             ],
-            'maxSize' => 10240, // 10MB
+            'maxSize' => 51200, // 50MB
             'acceptedFileTypes' => [
                 'application/pdf',
                 'application/msword',

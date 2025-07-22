@@ -70,7 +70,7 @@ class DocumentUploadComponent extends Component implements HasForms, HasTable
                 'correspondence' => 'Korrespondenz',
                 'other' => 'Sonstiges',
             ],
-            'maxSize' => 10240,
+            'maxSize' => 51200,
             'acceptedFileTypes' => [
                 'application/pdf',
                 'application/msword',

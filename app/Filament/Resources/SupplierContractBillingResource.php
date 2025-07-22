@@ -344,7 +344,7 @@ class SupplierContractBillingResource extends Resource
                                 }
                                 return 'suppliers/invoices';
                             })
-                            ->maxSize(10240) // 10MB
+                            ->maxSize(51200) // 50MB
                             ->downloadable()
                             ->openable()
                             ->previewable()
