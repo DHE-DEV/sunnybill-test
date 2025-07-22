@@ -12,7 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Erweitere die Status-Enum um 'waiting' und 'recurring'
+        // Schritt 1: Bereinige ungültige Status-Werte vor der ENUM-Erweiterung
+        DB::statement("UPDATE tasks SET status = 'open' WHERE status NOT IN ('open', 'in_progress', 'completed', 'cancelled')");
+        
+        // Schritt 2: Erweitere die Status-Enum um 'waiting' und 'recurring'
         DB::statement("ALTER TABLE tasks MODIFY COLUMN status ENUM('open', 'in_progress', 'completed', 'cancelled', 'waiting', 'recurring') NOT NULL DEFAULT 'open'");
     }
 
