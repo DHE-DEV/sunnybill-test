@@ -52,7 +52,7 @@ class DocumentsRelationManager extends RelationManager
             ->setModel($customer)
             ->merge([
                 // Upload-Einstellungen
-                'maxSize' => 10240, // 10MB in KB
+                'maxSize' => 51200, // 50MB in KB
                 'multiple' => true,
                 'acceptedFileTypes' => [
                     'application/pdf',

@@ -158,7 +158,7 @@ class CompanySettingResource extends Resource
                                                 '1:1',
                                             ])
                                             ->acceptedFileTypes(['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'])
-                                            ->maxSize(5120) // 5MB
+                                            ->maxSize(51200) // 50MB
                                             ->disk('s3') // Direkt DigitalOcean Spaces verwenden
                                             ->directory('') // Root-Verzeichnis
                                             ->preserveFilenames(false)

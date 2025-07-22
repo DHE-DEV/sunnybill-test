@@ -38,7 +38,7 @@ class ModernDocumentsRelationManager extends RelationManager
                 'photo' => 'Foto',
                 'other' => 'Sonstiges',
             ],
-            'maxSize' => 20480, // 20MB
+            'maxSize' => 51200, // 50MB
             'acceptedFileTypes' => [
                 'application/pdf',
                 'image/jpeg',
