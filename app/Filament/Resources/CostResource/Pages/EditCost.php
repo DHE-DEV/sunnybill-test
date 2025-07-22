@@ -21,4 +21,9 @@ class EditCost extends EditRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    protected function getSavedNotificationTitle(): ?string
+    {
+        return 'Kosten erfolgreich aktualisiert';
+    }
 }

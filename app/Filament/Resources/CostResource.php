@@ -5,6 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CostResource\Pages;
 use App\Models\Cost;
 use App\Models\CostCategory;
+use App\Models\Customer;
+use App\Models\Supplier;
+use App\Models\SolarPlant;
+use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -63,9 +67,65 @@ class CostResource extends Resource
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
+                                Forms\Components\Select::make('costable_type')
+                                    ->label('Zuordnung zu')
+                                    ->options([
+                                        Customer::class => 'Kunde',
+                                        Supplier::class => 'Lieferant',
+                                    ])
+                                    ->reactive()
+                                    ->afterStateUpdated(fn (callable $set) => $set('costable_id', null)),
+                                Forms\Components\Select::make('costable_id')
+                                    ->label('Kunde/Lieferant')
+                                    ->options(function (callable $get) {
+                                        $type = $get('costable_type');
+                                        if ($type === Customer::class) {
+                                            return Customer::query()
+                                                ->where('is_active', true)
+                                                ->orderBy('customer_number')
+                                                ->get()
+                                                ->pluck('name', 'id');
+                                        } elseif ($type === Supplier::class) {
+                                            return Supplier::query()
+                                                ->where('is_active', true)
+                                                ->orderBy('supplier_number')
+                                                ->get()
+                                                ->pluck('name', 'id');
+                                        }
+                                        return [];
+                                    })
+                                    ->searchable()
+                                    ->visible(fn (callable $get) => filled($get('costable_type'))),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('solar_plant_id')
+                                    ->label('Solaranlage')
+                                    ->options(
+                                        SolarPlant::query()
+                                            ->where('is_active', true)
+                                            ->orderBy('name')
+                                            ->get()
+                                            ->mapWithKeys(fn ($plant) => [$plant->id => $plant->name . ' (' . $plant->plant_number . ')'])
+                                    )
+                                    ->searchable(),
+                                Forms\Components\Select::make('project_id')
+                                    ->label('Projekt')
+                                    ->options(
+                                        Project::query()
+                                            ->whereIn('status', ['planning', 'active'])
+                                            ->orderBy('created_at', 'desc')
+                                            ->get()
+                                            ->mapWithKeys(fn ($project) => [$project->id => $project->name . ' (' . $project->project_number . ')'])
+                                    )
+                                    ->searchable(),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
                                 Forms\Components\TextInput::make('supplier')
-                                    ->label('Lieferant')
-                                    ->maxLength(255),
+                                    ->label('Lieferant (Freitext)')
+                                    ->maxLength(255)
+                                    ->helperText('Falls kein Lieferant im System vorhanden ist'),
                                 Forms\Components\TextInput::make('reference_number')
                                     ->label('Referenznummer')
                                     ->maxLength(255),
@@ -113,8 +173,23 @@ class CostResource extends Resource
                     ->label('Kategorie')
                     ->badge()
                     ->color(fn ($record) => $record->category->color ?? 'gray'),
-                Tables\Columns\TextColumn::make('supplier')
-                    ->label('Lieferant')
+                Tables\Columns\TextColumn::make('costable.name')
+                    ->label('Kunde/Lieferant')
+                    ->searchable()
+                    ->formatStateUsing(function ($record) {
+                        if ($record->costable_type === Customer::class) {
+                            return '👤 ' . $record->costable?->name;
+                        } elseif ($record->costable_type === Supplier::class) {
+                            return '🏢 ' . $record->costable?->name;
+                        }
+                        return $record->supplier ?: '-';
+                    }),
+                Tables\Columns\TextColumn::make('solarPlant.name')
+                    ->label('Solaranlage')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('project.name')
+                    ->label('Projekt')
                     ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('amount')
@@ -157,6 +232,25 @@ class CostResource extends Resource
                         'paid' => 'Bezahlt',
                         'cancelled' => 'Storniert',
                     ]),
+                SelectFilter::make('solar_plant_id')
+                    ->label('Solaranlage')
+                    ->options(
+                        SolarPlant::query()
+                            ->where('is_active', true)
+                            ->orderBy('name')
+                            ->get()
+                            ->mapWithKeys(fn ($plant) => [$plant->id => $plant->name . ' (' . $plant->plant_number . ')'])
+                    )
+                    ->searchable(),
+                SelectFilter::make('project_id')
+                    ->label('Projekt')
+                    ->options(
+                        Project::query()
+                            ->orderBy('created_at', 'desc')
+                            ->get()
+                            ->mapWithKeys(fn ($project) => [$project->id => $project->name . ' (' . $project->project_number . ')'])
+                    )
+                    ->searchable(),
                 Filter::make('date_range')
                     ->form([
                         Forms\Components\DatePicker::make('date_from')

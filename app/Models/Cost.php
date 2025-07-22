@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Cost extends Model
 {
@@ -21,6 +22,10 @@ class Cost extends Model
         'status',
         'paid_at',
         'notes',
+        'costable_type',
+        'costable_id',
+        'solar_plant_id',
+        'project_id',
     ];
 
     protected $casts = [
@@ -32,6 +37,21 @@ class Cost extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(CostCategory::class, 'cost_category_id');
+    }
+
+    public function costable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    public function solarPlant(): BelongsTo
+    {
+        return $this->belongsTo(SolarPlant::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     public function scopePending($query)
