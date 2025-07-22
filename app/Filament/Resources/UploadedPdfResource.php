@@ -115,7 +115,7 @@ class UploadedPdfResource extends Resource
                             })
                             ->storeFileNamesIn('original_filename')
                             ->acceptedFileTypes(['application/pdf'])
-                            ->maxSize(50240) // 50MB
+                            ->maxSize(51200) // 50MB
                             ->required()
                             ->columnSpanFull()
                             ->helperText('Nur PDF-Dateien sind erlaubt. Maximale Größe: 50MB'),
