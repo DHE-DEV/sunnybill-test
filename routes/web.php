@@ -319,9 +319,8 @@ Route::prefix('api')->group(function () {
             ->header('Content-Type', 'text/markdown');
     })->name('api.docs.markdown');
     
-    // L5-Swagger stellt automatisch /api/documentation bereit
-    // Fallback falls L5-Swagger nicht funktioniert
-    Route::get('/documentation-fallback', function () {
+    // Hauptdokumentation (eigenständige Lösung, da L5-Swagger Probleme auf Produktion hat)
+    Route::get('/documentation', function () {
         $apiDocsPath = storage_path('api-docs/api-docs.yaml');
         
         // Falls die generierte Datei nicht existiert, verwende die Original-Datei
@@ -338,20 +337,20 @@ Route::prefix('api')->group(function () {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoltMaster API Dokumentation (Fallback)</title>
+    <title>VoltMaster API Dokumentation</title>
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
     <style>
         body { margin: 0; }
         .swagger-ui .topbar { display: none; }
         .swagger-ui .info { margin: 20px 0; }
         .swagger-ui .scheme-container { background: #fafafa; border: 1px solid #e3e3e3; border-radius: 4px; margin: 20px 0; padding: 10px; }
-        .fallback-notice { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; margin: 20px; border-radius: 5px; text-align: center; }
+        .info-notice { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; margin: 20px; border-radius: 5px; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="fallback-notice">
-        ⚠️ <strong>Fallback-Modus:</strong> Dies ist eine alternative Dokumentationsansicht. 
-        Die Haupt-Dokumentation ist verfügbar unter <a href="/api/documentation">/api/documentation</a>
+    <div class="info-notice">
+        🚀 <strong>VoltMaster API Dokumentation</strong> - Vollständig interaktive Swagger UI mit 85+ Endpoints. 
+        Verfügbar auch als <a href="/api/openapi.yaml">YAML</a>, <a href="/api/openapi.json">JSON</a> oder <a href="/api/docs">Markdown</a>.
     </div>
     <div id="swagger-ui"></div>
     <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js"></script>
