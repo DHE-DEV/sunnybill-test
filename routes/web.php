@@ -302,15 +302,37 @@ Route::prefix('docs')->group(function () {
 Route::prefix('api')->group(function () {
     // OpenAPI YAML-Spezifikation
     Route::get('/openapi.yaml', function () {
-        return response()->file(base_path('docs/openapi.yaml'))
-            ->header('Content-Type', 'application/x-yaml');
+        $yamlPath = base_path('docs/openapi.yaml');
+        
+        if (!file_exists($yamlPath)) {
+            return response('OpenAPI YAML-Datei nicht gefunden', 404);
+        }
+        
+        try {
+            $yamlContent = file_get_contents($yamlPath);
+            return response($yamlContent)
+                ->header('Content-Type', 'application/x-yaml')
+                ->header('Content-Disposition', 'inline; filename="openapi.yaml"');
+        } catch (\Exception $e) {
+            return response('Fehler beim Laden der YAML-Datei: ' . $e->getMessage(), 500);
+        }
     })->name('api.openapi.yaml');
     
     // OpenAPI JSON-Format (konvertiert von YAML)
     Route::get('/openapi.json', function () {
-        $yamlContent = file_get_contents(base_path('docs/openapi.yaml'));
-        $phpArray = \Symfony\Component\Yaml\Yaml::parse($yamlContent);
-        return response()->json($phpArray);
+        $yamlPath = base_path('docs/openapi.yaml');
+        
+        if (!file_exists($yamlPath)) {
+            return response()->json(['error' => 'OpenAPI YAML-Datei nicht gefunden'], 404);
+        }
+        
+        try {
+            $yamlContent = file_get_contents($yamlPath);
+            $phpArray = \Symfony\Component\Yaml\Yaml::parse($yamlContent);
+            return response()->json($phpArray);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Fehler beim Parsen der YAML-Datei: ' . $e->getMessage()], 500);
+        }
     })->name('api.openapi.json');
     
     // Markdown-Dokumentation
