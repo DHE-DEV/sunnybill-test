@@ -313,56 +313,11 @@ Route::prefix('api')->group(function () {
         return response()->json($phpArray);
     })->name('api.openapi.json');
     
-    // Swagger UI HTML-Dokumentation
-    Route::get('/documentation', function () {
-        $html = '<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoltMaster API Dokumentation</title>
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
-    <style>
-        body { margin: 0; }
-        .swagger-ui .topbar { display: none; }
-        .swagger-ui .info { margin: 20px 0; }
-        .swagger-ui .scheme-container { background: #fafafa; border: 1px solid #e3e3e3; border-radius: 4px; margin: 20px 0; padding: 10px; }
-    </style>
-</head>
-<body>
-    <div id="swagger-ui"></div>
-    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js"></script>
-    <script>
-        SwaggerUIBundle({
-            url: "' . url('/api/openapi.yaml') . '",
-            dom_id: "#swagger-ui",
-            deepLinking: true,
-            presets: [
-                SwaggerUIBundle.presets.apis,
-                SwaggerUIBundle.presets.standalone
-            ],
-            plugins: [
-                SwaggerUIBundle.plugins.DownloadUrl
-            ],
-            layout: "StandaloneLayout",
-            defaultModelsExpandDepth: 1,
-            defaultModelExpandDepth: 1,
-            docExpansion: "list",
-            filter: true,
-            showExtensions: true,
-            showCommonExtensions: true,
-            tryItOutEnabled: true
-        });
-    </script>
-</body>
-</html>';
-        
-        return response($html)->header('Content-Type', 'text/html');
-    })->name('api.documentation');
-    
     // Markdown-Dokumentation
     Route::get('/docs', function () {
         return response()->file(base_path('docs/API_ENDPOINTS_DOKUMENTATION.md'))
             ->header('Content-Type', 'text/markdown');
     })->name('api.docs.markdown');
+    
+    // L5-Swagger stellt automatisch /api/documentation bereit
 });

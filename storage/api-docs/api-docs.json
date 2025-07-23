@@ -1,0 +1,1851 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "VoltMaster API",
+        "description": "Vollst\u00e4ndige REST API f\u00fcr die VoltMaster Solar-Management Anwendung.\n\n## Authentifizierung\nAlle API-Endpoints verwenden App-Token-Authentifizierung \u00fcber den `Authorization` Header.\n\n## Berechtigungen\nDas API-System verwendet granulare Berechtigungen f\u00fcr verschiedene Aktionen.\nJeder Endpoint erfordert spezifische Berechtigungen, die in der Beschreibung aufgef\u00fchrt sind.\n\n## Paginierung\nListen-Endpoints unterst\u00fctzen Paginierung mit den Parametern `page` und `per_page`.\n",
+        "version": "1.0.0",
+        "contact": {
+            "name": "VoltMaster API Support",
+            "email": "support@voltmaster.de"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "servers": [
+        {
+            "url": "https://{domain}/api/app",
+            "description": "VoltMaster API Server (HTTPS)",
+            "variables": {
+                "domain": {
+                    "default": "voltmaster.de",
+                    "description": "Your VoltMaster domain"
+                }
+            }
+        },
+        {
+            "url": "http://{domain}/api/app",
+            "description": "VoltMaster API Server (HTTP - Development)",
+            "variables": {
+                "domain": {
+                    "default": "localhost:8000",
+                    "description": "Your local VoltMaster domain"
+                }
+            }
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "App-Token Authentifizierung"
+            }
+        },
+        "schemas": {
+            "PaginationMeta": {
+                "type": "object",
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "ApiResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "oneOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "array"
+                            }
+                        ]
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationMeta"
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object"
+                    }
+                }
+            },
+            "SolarPlant": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Solarpark Musterstadt"
+                    },
+                    "location": {
+                        "type": "string",
+                        "example": "Musterstadt, Deutschland"
+                    },
+                    "total_capacity_kw": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100.5
+                    },
+                    "commissioning_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-06-15"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "planning",
+                            "construction",
+                            "operational",
+                            "maintenance",
+                            "decommissioned"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "SolarPlantCreate": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "location",
+                    "total_capacity_kw",
+                    "commissioning_date"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "location": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "total_capacity_kw": {
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0
+                    },
+                    "commissioning_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "planning",
+                            "construction",
+                            "operational",
+                            "maintenance",
+                            "decommissioned"
+                        ],
+                        "default": "planning"
+                    }
+                }
+            },
+            "Project": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "planning",
+                            "active",
+                            "on_hold",
+                            "completed",
+                            "cancelled"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "installation",
+                            "maintenance",
+                            "expansion",
+                            "consulting",
+                            "other"
+                        ]
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high",
+                            "urgent"
+                        ]
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "planned_end_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "actual_end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "budget": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "actual_costs": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "progress_percentage": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "project_manager_id": {
+                        "type": "integer"
+                    },
+                    "customer_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "supplier_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "solar_plant_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "ProjectCreate": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "start_date",
+                    "planned_end_date",
+                    "project_manager_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "planning",
+                            "active",
+                            "on_hold",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "default": "planning"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "installation",
+                            "maintenance",
+                            "expansion",
+                            "consulting",
+                            "other"
+                        ],
+                        "default": "other"
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high",
+                            "urgent"
+                        ],
+                        "default": "medium"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "planned_end_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "budget": {
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0
+                    },
+                    "project_manager_id": {
+                        "type": "integer"
+                    },
+                    "customer_id": {
+                        "type": "integer"
+                    },
+                    "supplier_id": {
+                        "type": "integer"
+                    },
+                    "solar_plant_id": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Customer": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "customer_type": {
+                        "type": "string",
+                        "enum": [
+                            "private",
+                            "business"
+                        ]
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "street": {
+                        "type": "string"
+                    },
+                    "house_number": {
+                        "type": "string"
+                    },
+                    "postal_code": {
+                        "type": "string"
+                    },
+                    "city": {
+                        "type": "string"
+                    },
+                    "country": {
+                        "type": "string"
+                    },
+                    "customer_number": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "prospect",
+                            "blocked"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "CustomerCreate": {
+                "type": "object",
+                "required": [
+                    "customer_type",
+                    "email",
+                    "status"
+                ],
+                "properties": {
+                    "customer_type": {
+                        "type": "string",
+                        "enum": [
+                            "private",
+                            "business"
+                        ]
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "street": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "house_number": {
+                        "type": "string",
+                        "maxLength": 20
+                    },
+                    "postal_code": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "city": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "country": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "customer_number": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "prospect",
+                            "blocked"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "default": true
+                    }
+                }
+            },
+            "Supplier": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "company_name": {
+                        "type": "string"
+                    },
+                    "supplier_type": {
+                        "type": "string",
+                        "enum": [
+                            "energy_provider",
+                            "maintenance",
+                            "installation",
+                            "consulting",
+                            "insurance",
+                            "other"
+                        ]
+                    },
+                    "contact_person": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "street": {
+                        "type": "string"
+                    },
+                    "house_number": {
+                        "type": "string"
+                    },
+                    "postal_code": {
+                        "type": "string"
+                    },
+                    "city": {
+                        "type": "string"
+                    },
+                    "country": {
+                        "type": "string"
+                    },
+                    "supplier_number": {
+                        "type": "string"
+                    },
+                    "website": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "blocked"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "payment_terms": {
+                        "type": "integer"
+                    },
+                    "discount_percentage": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "SupplierCreate": {
+                "type": "object",
+                "required": [
+                    "company_name",
+                    "supplier_type",
+                    "email",
+                    "status"
+                ],
+                "properties": {
+                    "company_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "supplier_type": {
+                        "type": "string",
+                        "enum": [
+                            "energy_provider",
+                            "maintenance",
+                            "installation",
+                            "consulting",
+                            "insurance",
+                            "other"
+                        ]
+                    },
+                    "contact_person": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "street": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "house_number": {
+                        "type": "string",
+                        "maxLength": 20
+                    },
+                    "postal_code": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "city": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "country": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "supplier_number": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "website": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 255
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "blocked"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "payment_terms": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 365
+                    },
+                    "discount_percentage": {
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "maximum": 100
+                    }
+                }
+            },
+            "Task": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "in_progress",
+                            "completed",
+                            "cancelled",
+                            "on_hold"
+                        ]
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high",
+                            "urgent"
+                        ]
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "assigned_user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "customer_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "supplier_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "estimated_hours": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "actual_hours": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "TaskOptions": {
+                "type": "object",
+                "properties": {
+                    "statuses": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "priorities": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "parameters": {
+            "PageParam": {
+                "name": "page",
+                "in": "query",
+                "description": "Seitennummer f\u00fcr Paginierung",
+                "schema": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1
+                }
+            },
+            "PerPageParam": {
+                "name": "per_page",
+                "in": "query",
+                "description": "Anzahl Elemente pro Seite (max 100)",
+                "schema": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 15
+                }
+            },
+            "SortByParam": {
+                "name": "sort_by",
+                "in": "query",
+                "description": "Feld zum Sortieren",
+                "schema": {
+                    "type": "string",
+                    "default": "created_at"
+                }
+            },
+            "SortDirectionParam": {
+                "name": "sort_direction",
+                "in": "query",
+                "description": "Sortierrichtung",
+                "schema": {
+                    "type": "string",
+                    "enum": [
+                        "asc",
+                        "desc"
+                    ],
+                    "default": "desc"
+                }
+            },
+            "SearchParam": {
+                "name": "search",
+                "in": "query",
+                "description": "Suchbegriff",
+                "schema": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "paths": {
+        "/solar-plants": {
+            "get": {
+                "tags": [
+                    "Solaranlagen"
+                ],
+                "summary": "Liste aller Solaranlagen",
+                "description": "Erhalte eine paginierte Liste aller Solaranlagen mit Filterm\u00f6glichkeiten.\n**Berechtigung:** `solar-plants:read`\n",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/PerPageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/SortByParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/SortDirectionParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/SearchParam"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter nach Status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "planning",
+                                "construction",
+                                "operational",
+                                "maintenance",
+                                "decommissioned"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter nach Aktiv-Status",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "location",
+                        "in": "query",
+                        "description": "Filter nach Standort",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "min_capacity",
+                        "in": "query",
+                        "description": "Minimale Kapazit\u00e4t in kW",
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "max_capacity",
+                        "in": "query",
+                        "description": "Maximale Kapazit\u00e4t in kW",
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponse"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/SolarPlant"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Nicht authentifiziert",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Keine Berechtigung",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Solaranlagen"
+                ],
+                "summary": "Neue Solaranlage erstellen",
+                "description": "Erstelle eine neue Solaranlage.\n**Berechtigung:** `solar-plants:create`\n",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SolarPlantCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Solaranlage erfolgreich erstellt",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponse"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/SolarPlant"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/solar-plants/{id}": {
+            "get": {
+                "tags": [
+                    "Solaranlagen"
+                ],
+                "summary": "Details einer Solaranlage",
+                "description": "Erhalte detaillierte Informationen zu einer Solaranlage.\n**Berechtigung:** `solar-plants:read`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponse"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/SolarPlant"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Solaranlagen"
+                ],
+                "summary": "Solaranlage aktualisieren",
+                "description": "Aktualisiere eine bestehende Solaranlage.\n**Berechtigung:** `solar-plants:update`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SolarPlantCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Solaranlage erfolgreich aktualisiert"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Solaranlagen"
+                ],
+                "summary": "Solaranlage l\u00f6schen",
+                "description": "L\u00f6sche eine Solaranlage.\n**Berechtigung:** `solar-plants:delete`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Solaranlage erfolgreich gel\u00f6scht"
+                    }
+                }
+            }
+        },
+        "/projects": {
+            "get": {
+                "tags": [
+                    "Projekte"
+                ],
+                "summary": "Liste aller Projekte",
+                "description": "Erhalte eine paginierte Liste aller Projekte mit Filterm\u00f6glichkeiten.\n**Berechtigung:** `projects:read`\n",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/PerPageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/SearchParam"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter nach Status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "planning",
+                                "active",
+                                "on_hold",
+                                "completed",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filter nach Projekttyp",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "installation",
+                                "maintenance",
+                                "expansion",
+                                "consulting",
+                                "other"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "priority",
+                        "in": "query",
+                        "description": "Filter nach Priorit\u00e4t",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high",
+                                "urgent"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponse"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Project"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Projekte"
+                ],
+                "summary": "Neues Projekt erstellen",
+                "description": "Erstelle ein neues Projekt.\n**Berechtigung:** `projects:create`\n",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProjectCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Projekt erfolgreich erstellt"
+                    }
+                }
+            }
+        },
+        "/projects/{id}": {
+            "get": {
+                "tags": [
+                    "Projekte"
+                ],
+                "summary": "Projektdetails",
+                "description": "Erhalte detaillierte Informationen zu einem Projekt.\n**Berechtigung:** `projects:read`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Projekte"
+                ],
+                "summary": "Projekt aktualisieren",
+                "description": "Aktualisiere ein bestehendes Projekt.\n**Berechtigung:** `projects:update`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProjectCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Projekt erfolgreich aktualisiert"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Projekte"
+                ],
+                "summary": "Projekt l\u00f6schen",
+                "description": "L\u00f6sche ein Projekt.\n**Berechtigung:** `projects:delete`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Projekt erfolgreich gel\u00f6scht"
+                    }
+                }
+            }
+        },
+        "/customers": {
+            "get": {
+                "tags": [
+                    "Kunden"
+                ],
+                "summary": "Liste aller Kunden",
+                "description": "Erhalte eine paginierte Liste aller Kunden mit Filterm\u00f6glichkeiten.\n**Berechtigung:** `customers:read`\n",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/PerPageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/SearchParam"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter nach Status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive",
+                                "prospect",
+                                "blocked"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "customer_type",
+                        "in": "query",
+                        "description": "Filter nach Kundentyp",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "private",
+                                "business"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponse"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Customer"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Kunden"
+                ],
+                "summary": "Neuen Kunden erstellen",
+                "description": "Erstelle einen neuen Kunden.\n**Berechtigung:** `customers:create`\n",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CustomerCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Kunde erfolgreich erstellt"
+                    }
+                }
+            }
+        },
+        "/customers/{id}": {
+            "get": {
+                "tags": [
+                    "Kunden"
+                ],
+                "summary": "Details eines Kunden",
+                "description": "Erhalte detaillierte Informationen zu einem Kunden.\n**Berechtigung:** `customers:read`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Kunden"
+                ],
+                "summary": "Kunden aktualisieren",
+                "description": "Aktualisiere einen bestehenden Kunden.\n**Berechtigung:** `customers:update`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CustomerCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Kunde erfolgreich aktualisiert"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Kunden"
+                ],
+                "summary": "Kunden l\u00f6schen",
+                "description": "L\u00f6sche einen Kunden.\n**Berechtigung:** `customers:delete`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Kunde erfolgreich gel\u00f6scht"
+                    }
+                }
+            }
+        },
+        "/suppliers": {
+            "get": {
+                "tags": [
+                    "Lieferanten"
+                ],
+                "summary": "Liste aller Lieferanten",
+                "description": "Erhalte eine paginierte Liste aller Lieferanten mit Filterm\u00f6glichkeiten.\n**Berechtigung:** `suppliers:read`\n",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/PerPageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/SearchParam"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter nach Status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive",
+                                "blocked"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "supplier_type",
+                        "in": "query",
+                        "description": "Filter nach Lieferantentyp",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "energy_provider",
+                                "maintenance",
+                                "installation",
+                                "consulting",
+                                "insurance",
+                                "other"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponse"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Supplier"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Lieferanten"
+                ],
+                "summary": "Neuen Lieferanten erstellen",
+                "description": "Erstelle einen neuen Lieferanten.\n**Berechtigung:** `suppliers:create`\n",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SupplierCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Lieferant erfolgreich erstellt"
+                    }
+                }
+            }
+        },
+        "/suppliers/{id}": {
+            "get": {
+                "tags": [
+                    "Lieferanten"
+                ],
+                "summary": "Details eines Lieferanten",
+                "description": "Erhalte detaillierte Informationen zu einem Lieferanten.\n**Berechtigung:** `suppliers:read`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Lieferanten"
+                ],
+                "summary": "Lieferanten aktualisieren",
+                "description": "Aktualisiere einen bestehenden Lieferanten.\n**Berechtigung:** `suppliers:update`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SupplierCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lieferant erfolgreich aktualisiert"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Lieferanten"
+                ],
+                "summary": "Lieferanten l\u00f6schen",
+                "description": "L\u00f6sche einen Lieferanten.\n**Berechtigung:** `suppliers:delete`\n",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lieferant erfolgreich gel\u00f6scht"
+                    }
+                }
+            }
+        },
+        "/tasks": {
+            "get": {
+                "tags": [
+                    "Aufgaben"
+                ],
+                "summary": "Liste aller Aufgaben",
+                "description": "Erhalte eine paginierte Liste aller Aufgaben mit Filterm\u00f6glichkeiten.\n**Berechtigung:** `tasks:read`\n",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/PerPageParam"
+                    },
+                    {
+                        "$ref": "#/components/parameters/SearchParam"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter nach Status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "in_progress",
+                                "completed",
+                                "cancelled",
+                                "on_hold"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "priority",
+                        "in": "query",
+                        "description": "Filter nach Priorit\u00e4t",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high",
+                                "urgent"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponse"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Task"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/options/tasks": {
+            "get": {
+                "tags": [
+                    "Optionen"
+                ],
+                "summary": "Aufgaben-Optionen",
+                "description": "Erhalte verf\u00fcgbare Optionen f\u00fcr Aufgaben (Status, Priorit\u00e4ten, etc.).\n**Berechtigung:** `tasks:read`\n",
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponse"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/TaskOptions"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/options/projects": {
+            "get": {
+                "tags": [
+                    "Optionen"
+                ],
+                "summary": "Projekt-Optionen",
+                "description": "Erhalte verf\u00fcgbare Optionen f\u00fcr Projekte (Status, Typen, Priorit\u00e4ten).\n**Berechtigung:** `projects:read`\n",
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort"
+                    }
+                }
+            }
+        },
+        "/options/customers": {
+            "get": {
+                "tags": [
+                    "Optionen"
+                ],
+                "summary": "Kunden-Optionen",
+                "description": "Erhalte verf\u00fcgbare Optionen f\u00fcr Kunden (Status, Typen).\n**Berechtigung:** `customers:read`\n",
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort"
+                    }
+                }
+            }
+        },
+        "/options/suppliers": {
+            "get": {
+                "tags": [
+                    "Optionen"
+                ],
+                "summary": "Lieferanten-Optionen",
+                "description": "Erhalte verf\u00fcgbare Optionen f\u00fcr Lieferanten (Status, Typen).\n**Berechtigung:** `suppliers:read`\n",
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort"
+                    }
+                }
+            }
+        },
+        "/profile": {
+            "get": {
+                "tags": [
+                    "Authentifizierung"
+                ],
+                "summary": "Benutzer-Profil",
+                "description": "Erhalte Profil-Informationen des aktuellen Benutzers",
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreiche Antwort"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Authentifizierung"
+                ],
+                "summary": "Benutzer abmelden",
+                "description": "Melde den aktuellen Benutzer ab",
+                "responses": {
+                    "200": {
+                        "description": "Erfolgreich abgemeldet"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Solaranlagen",
+            "description": "Verwaltung von Solaranlagen"
+        },
+        {
+            "name": "Projekte",
+            "description": "Projektverwaltung und -verfolgung"
+        },
+        {
+            "name": "Kunden",
+            "description": "Kundenverwaltung und -beziehungen"
+        },
+        {
+            "name": "Lieferanten",
+            "description": "Lieferantenverwaltung und -vertr\u00e4ge"
+        },
+        {
+            "name": "Aufgaben",
+            "description": "Aufgaben- und Task-Management"
+        },
+        {
+            "name": "Optionen",
+            "description": "Dropdown-Optionen und Konfigurationsdaten"
+        },
+        {
+            "name": "Authentifizierung",
+            "description": "Benutzer-Authentifizierung und Profilverwaltung"
+        }
+    ]
+}
