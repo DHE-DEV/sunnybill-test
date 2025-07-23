@@ -49,6 +49,16 @@ class GenerateSwaggerDocs extends Command
             return 1;
         }
 
+        // Leere Laravel Cache für bessere Performance
+        try {
+            \Artisan::call('config:clear');
+            \Artisan::call('route:clear');
+            \Artisan::call('view:clear');
+            $this->info('Cleared Laravel caches');
+        } catch (\Exception $e) {
+            $this->warn('Could not clear caches: ' . $e->getMessage());
+        }
+
         $this->info('✅ Swagger documentation generated successfully!');
         $this->info('📖 Access documentation at: /api/documentation');
         

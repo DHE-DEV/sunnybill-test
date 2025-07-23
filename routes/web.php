@@ -320,4 +320,66 @@ Route::prefix('api')->group(function () {
     })->name('api.docs.markdown');
     
     // L5-Swagger stellt automatisch /api/documentation bereit
+    // Fallback falls L5-Swagger nicht funktioniert
+    Route::get('/documentation-fallback', function () {
+        $apiDocsPath = storage_path('api-docs/api-docs.yaml');
+        
+        // Falls die generierte Datei nicht existiert, verwende die Original-Datei
+        if (!file_exists($apiDocsPath)) {
+            $apiDocsPath = base_path('docs/openapi.yaml');
+        }
+        
+        if (!file_exists($apiDocsPath)) {
+            return response('API-Dokumentation nicht verfügbar', 404);
+        }
+        
+        $html = '<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoltMaster API Dokumentation (Fallback)</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
+    <style>
+        body { margin: 0; }
+        .swagger-ui .topbar { display: none; }
+        .swagger-ui .info { margin: 20px 0; }
+        .swagger-ui .scheme-container { background: #fafafa; border: 1px solid #e3e3e3; border-radius: 4px; margin: 20px 0; padding: 10px; }
+        .fallback-notice { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; margin: 20px; border-radius: 5px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="fallback-notice">
+        ⚠️ <strong>Fallback-Modus:</strong> Dies ist eine alternative Dokumentationsansicht. 
+        Die Haupt-Dokumentation ist verfügbar unter <a href="/api/documentation">/api/documentation</a>
+    </div>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js"></script>
+    <script>
+        SwaggerUIBundle({
+            url: "' . url('/api/openapi.yaml') . '",
+            dom_id: "#swagger-ui",
+            deepLinking: true,
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIBundle.presets.standalone
+            ],
+            plugins: [
+                SwaggerUIBundle.plugins.DownloadUrl
+            ],
+            layout: "StandaloneLayout",
+            defaultModelsExpandDepth: 1,
+            defaultModelExpandDepth: 1,
+            docExpansion: "list",
+            filter: true,
+            showExtensions: true,
+            showCommonExtensions: true,
+            tryItOutEnabled: true
+        });
+    </script>
+</body>
+</html>';
+        
+        return response($html)->header('Content-Type', 'text/html');
+    })->name('api.documentation.fallback');
 });

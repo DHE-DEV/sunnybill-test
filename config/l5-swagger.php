@@ -40,10 +40,6 @@ return [
                  */
                 'format_to_use_for_docs' => env('L5_FORMAT_TO_USE_FOR_DOCS', 'yaml'),
 
-                /*
-                 * Use existing OpenAPI file instead of scanning annotations
-                 */
-                'source_yaml' => base_path('docs/openapi.yaml'),
 
                 /*
                  * Absolute paths to directory containing the swagger annotations are stored.
