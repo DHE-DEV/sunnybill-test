@@ -174,12 +174,23 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             // Fälligkeitsfilter anwenden
             $this->applyDueDateFilter($query);
             
-            $tasks = $query
-                ->orderByRaw('CASE WHEN priority = "blocker" THEN 0 ELSE 1 END')
-                ->orderBy('sort_order', 'asc')
-                ->orderBy('due_date', 'asc')
-                ->orderBy('priority', 'desc')
-                ->get();
+            // Spezielle Sortierung für abgeschlossene Aufgaben
+            if ($status === 'completed') {
+                $tasks = $query
+                    ->orderByRaw('CASE WHEN priority = "blocker" THEN 0 ELSE 1 END')
+                    ->orderBy('completed_at', 'desc') // Neueste abgeschlossene Aufgaben zuerst
+                    ->orderBy('updated_at', 'desc') // Falls completed_at nicht gesetzt ist
+                    ->orderBy('sort_order', 'asc')
+                    ->get();
+            } else {
+                // Standard-Sortierung für alle anderen Spalten
+                $tasks = $query
+                    ->orderByRaw('CASE WHEN priority = "blocker" THEN 0 ELSE 1 END')
+                    ->orderBy('sort_order', 'asc')
+                    ->orderBy('due_date', 'asc')
+                    ->orderBy('priority', 'desc')
+                    ->get();
+            }
 
             $columns[$status] = [
                 'label' => $config['label'],

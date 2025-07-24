@@ -76,7 +76,7 @@ class CustomerResource extends Resource
                         Forms\Components\TextInput::make('company_name')
                             ->label('Firmenname')
                             ->maxLength(255)
-                            ->visible(fn (Forms\Get $get) => $get('customer_type') === 'business'),
+                            ->hidden(), // Komplett ausblenden da redundant - das erste "name" Feld wird bei Firmenkunden bereits als "Firmenname" beschriftet
                         Forms\Components\TextInput::make('contact_person')
                             ->label('Ansprechpartner')
                             ->maxLength(255)
