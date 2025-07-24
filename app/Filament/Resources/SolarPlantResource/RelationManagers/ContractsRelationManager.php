@@ -272,7 +272,33 @@ class ContractsRelationManager extends RelationManager
                                         ->numeric()
                                         ->step(0.01)
                                         ->prefix('€')
-                                        ->minValue(0),
+                                        ->minValue(0)
+                                        ->reactive()
+                                        ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                            // Berechne automatisch den Gesamtbetrag basierend auf den Artikeln
+                                            $articles = $get('articles') ?? [];
+                                            $calculatedTotal = 0;
+                                            
+                                            foreach ($articles as $article) {
+                                                if (isset($article['quantity']) && isset($article['unit_price'])) {
+                                                    $calculatedTotal += $article['quantity'] * $article['unit_price'];
+                                                }
+                                            }
+                                            
+                                            // Wenn der berechnete Betrag vom eingegebenen abweicht, warnen
+                                            if ($calculatedTotal > 0 && abs($calculatedTotal - ($state ?? 0)) > 0.01) {
+                                                $set('_calculated_total_warning', 
+                                                    'Hinweis: Berechneter Artikelgesamtbetrag: €' . number_format($calculatedTotal, 2, ',', '.')
+                                                );
+                                            } else {
+                                                $set('_calculated_total_warning', null);
+                                            }
+                                        }),
+
+                                    Forms\Components\Placeholder::make('_calculated_total_warning')
+                                        ->label('')
+                                        ->content(fn ($state) => new \Illuminate\Support\HtmlString('<div class="text-orange-600 font-medium">' . e($state) . '</div>'))
+                                        ->visible(fn ($state) => !empty($state)),
 
                                     Forms\Components\Select::make('currency')
                                         ->label('Währung')
@@ -302,15 +328,268 @@ class ContractsRelationManager extends RelationManager
                                         ->columnSpanFull(),
                                 ])
                                 ->columns(2),
+
+                            Forms\Components\Section::make('Artikel')
+                                ->description('Diese Artikel werden automatisch basierend auf dem Vertrag und Lieferanten vorgeladen. Pflichtartikel sind standardmäßig aktiviert.')
+                                ->schema([
+                                    Forms\Components\Repeater::make('articles')
+                                        ->label('')
+                                        ->schema([
+                                            Forms\Components\Hidden::make('is_required_article'),
+                                            
+                                            Forms\Components\Select::make('article_id')
+                                                ->label('Artikel')
+                                                ->options(function (callable $get) {
+                                                    $contractId = $get('../../supplier_contract_id');
+                                                    if (!$contractId) {
+                                                        return [];
+                                                    }
+                                                    
+                                                    $contract = \App\Models\SupplierContract::find($contractId);
+                                                    if (!$contract) {
+                                                        return [];
+                                                    }
+                                                    
+                                                    // Sammle Artikel vom Vertrag
+                                                    $contractArticles = $contract->activeArticles()->get();
+                                                    
+                                                    // Sammle Artikel vom Lieferanten (falls nicht schon über Vertrag abgedeckt)
+                                                    $supplierArticles = collect();
+                                                    if ($contract->supplier) {
+                                                        $supplierArticles = $contract->supplier->articles()
+                                                            ->wherePivot('is_active', true)
+                                                            ->get();
+                                                    }
+                                                    
+                                                    // Kombiniere beide Listen ohne Duplikate
+                                                    $allArticles = $contractArticles->concat($supplierArticles)->unique('id');
+                                                    
+                                                    return $allArticles->mapWithKeys(function ($article) {
+                                                        return [$article->id => "{$article->name} - {$article->formatted_price}"];
+                                                    })->toArray();
+                                                })
+                                                ->required()
+                                                ->searchable()
+                                                ->reactive()
+                                                ->columnSpanFull()
+                                                ->hidden(fn (callable $get) => $get('is_required_article'))
+                                                ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                                    if (!$state) return;
+                                                    
+                                                    $article = \App\Models\Article::find($state);
+                                                    if (!$article) return;
+                                                    
+                                                    $contractId = $get('../../supplier_contract_id');
+                                                    $contract = \App\Models\SupplierContract::find($contractId);
+                                                    
+                                                    if ($contract) {
+                                                        // Prüfe zuerst Vertragsartikel
+                                                        $contractArticle = $contract->activeArticles()
+                                                            ->where('articles.id', $state)
+                                                            ->first();
+                                                        
+                                                        if ($contractArticle) {
+                                                            $set('quantity', $contractArticle->pivot->quantity ?? 1);
+                                                            $set('unit_price', $contractArticle->pivot->unit_price ?? $article->price);
+                                                            $set('description', $article->name);
+                                                            return;
+                                                        }
+                                                        
+                                                        // Fallback zu Lieferantenartikel
+                                                        if ($contract->supplier) {
+                                                            $supplierArticle = $contract->supplier->articles()
+                                                                ->where('articles.id', $state)
+                                                                ->first();
+                                                            
+                                                            if ($supplierArticle) {
+                                                                $set('quantity', $supplierArticle->pivot->quantity ?? 1);
+                                                                $set('unit_price', $supplierArticle->pivot->unit_price ?? $article->price);
+                                                                $set('description', $article->name);
+                                                                return;
+                                                            }
+                                                        }
+                                                    }
+                                                    
+                                                    // Standard-Fallback
+                                                    $set('quantity', 1);
+                                                    $set('unit_price', $article->price);
+                                                    $set('description', $article->name);
+                                                }),
+                                            
+                                            Forms\Components\TextInput::make('article_display')
+                                                ->label('Artikel (Pflichtartikel)')
+                                                ->disabled()
+                                                ->columnSpanFull()
+                                                ->visible(fn (callable $get) => $get('is_required_article'))
+                                                ->formatStateUsing(function (callable $get) {
+                                                    $articleId = $get('article_id');
+                                                    if (!$articleId) return 'Unbekannter Artikel';
+                                                    
+                                                    $article = \App\Models\Article::find($articleId);
+                                                    return $article ? $article->name . ' - ' . $article->formatted_price : 'Unbekannter Artikel';
+                                                })
+                                                ->dehydrated(false),
+
+                                            Forms\Components\TextInput::make('quantity')
+                                                ->label('Menge')
+                                                ->required()
+                                                ->numeric()
+                                                ->step(0.01)
+                                                ->minValue(0.01)
+                                                ->reactive()
+                                                ->afterStateUpdated(function (callable $get, callable $set) {
+                                                    $quantity = $get('quantity');
+                                                    $unitPrice = $get('unit_price');
+                                                    if ($quantity && $unitPrice) {
+                                                        $set('total_price', $quantity * $unitPrice);
+                                                    }
+                                                }),
+
+                                            Forms\Components\TextInput::make('unit_price')
+                                                ->label('Einzelpreis')
+                                                ->required()
+                                                ->numeric()
+                                                ->step(0.01)
+                                                ->prefix('€')
+                                                ->minValue(0)
+                                                ->reactive()
+                                                ->afterStateUpdated(function (callable $get, callable $set) {
+                                                    $quantity = $get('quantity');
+                                                    $unitPrice = $get('unit_price');
+                                                    if ($quantity && $unitPrice) {
+                                                        $set('total_price', $quantity * $unitPrice);
+                                                    }
+                                                }),
+
+                                            Forms\Components\TextInput::make('total_price')
+                                                ->label('Gesamtpreis')
+                                                ->numeric()
+                                                ->step(0.01)
+                                                ->prefix('€')
+                                                ->disabled()
+                                                ->dehydrated(false),
+
+                                            Forms\Components\TextInput::make('description')
+                                                ->label('Beschreibung')
+                                                ->maxLength(255)
+                                                ->columnSpanFull(),
+
+                                            Forms\Components\Textarea::make('notes')
+                                                ->label('Notizen')
+                                                ->rows(2)
+                                                ->columnSpanFull(),
+
+                                        ])
+                                        ->columns(3)
+                                        ->default(function ($record) {
+                                            if (!$record) return [];
+                                            
+                                            // Sammle automatisch alle Artikel vom Vertrag und Lieferanten
+                                            $items = [];
+                                            
+                                            // Artikel vom Vertrag
+                                            $contractArticles = $record->activeArticles()->get();
+                                            foreach ($contractArticles as $article) {
+                                                $billingRequirement = $article->pivot->billing_requirement ?? 'optional';
+                                                $isRequired = $billingRequirement === 'required';
+                                                
+                                                $items[] = [
+                                                    'article_id' => $article->id,
+                                                    'quantity' => $article->pivot->quantity ?? 1,
+                                                    'unit_price' => $article->pivot->unit_price ?? $article->price,
+                                                    'total_price' => ($article->pivot->quantity ?? 1) * ($article->pivot->unit_price ?? $article->price),
+                                                    'description' => $article->name,
+                                                    'notes' => $isRequired ? 'Pflichtartikel - automatisch hinzugefügt' : 'Optionaler Artikel - kann entfernt werden',
+                                                    'is_required_article' => $isRequired,
+                                                ];
+                                            }
+                                            
+                                            // Artikel vom Lieferanten (falls nicht schon über Vertrag erfasst)
+                                            if ($record->supplier) {
+                                                $supplierArticles = $record->supplier->articles()
+                                                    ->wherePivot('is_active', true)
+                                                    ->get();
+                                                
+                                                $contractArticleIds = $contractArticles->pluck('id')->toArray();
+                                                
+                                                foreach ($supplierArticles as $article) {
+                                                    // Überspringe bereits über Vertrag erfasste Artikel
+                                                    if (in_array($article->id, $contractArticleIds)) {
+                                                        continue;
+                                                    }
+                                                    
+                                                    $billingRequirement = $article->pivot->billing_requirement ?? 'optional';
+                                                    $isRequired = $billingRequirement === 'required';
+                                                    
+                                                    $items[] = [
+                                                        'article_id' => $article->id,
+                                                        'quantity' => $article->pivot->quantity ?? 1,
+                                                        'unit_price' => $article->pivot->unit_price ?? $article->price,
+                                                        'total_price' => ($article->pivot->quantity ?? 1) * ($article->pivot->unit_price ?? $article->price),
+                                                        'description' => $article->name,
+                                                        'notes' => $isRequired ? 'Pflichtartikel (Lieferant) - automatisch hinzugefügt' : 'Optionaler Artikel (Lieferant) - kann entfernt werden',
+                                                        'is_required_article' => $isRequired,
+                                                    ];
+                                                }
+                                            }
+                                            
+                                            return $items;
+                                        })
+                                        ->addActionLabel('Weiteren Artikel hinzufügen')
+                                        ->reorderableWithButtons()
+                                        ->collapsible()
+                                        ->itemLabel(function (array $state): ?string {
+                                            if (!isset($state['article_id'])) {
+                                                return 'Neuer Artikel';
+                                            }
+                                            
+                                            $article = \App\Models\Article::find($state['article_id']);
+                                            $quantity = $state['quantity'] ?? 1;
+                                            $unitPrice = $state['unit_price'] ?? 0;
+                                            $totalPrice = $quantity * $unitPrice;
+                                            
+                                            $articleName = $article ? $article->name : 'Unbekannter Artikel';
+                                            
+                                            // Formatiere Preise mit ihren tatsächlichen Nachkommastellen
+                                            $formattedUnitPrice = rtrim(rtrim(number_format($unitPrice, 10, ',', '.'), '0'), ',');
+                                            $formattedTotalPrice = rtrim(rtrim(number_format($totalPrice, 10, ',', '.'), '0'), ',');
+                                            
+                                            return "{$articleName} - {$quantity}x à €{$formattedUnitPrice} = €{$formattedTotalPrice}";
+                                        })
+                                        ->live(),
+                                ])
+                                ->collapsible()
+                                ->collapsed(fn ($record) => $record === null),
                         ])
                         ->action(function (array $data, $record) {
+                            // Extrahiere Artikel-Daten vor dem Erstellen der Abrechnung
+                            $articles = $data['articles'] ?? [];
+                            unset($data['articles']); // Entferne Artikel aus den Hauptdaten
+                            
                             // Erstelle die Abrechnung
                             $billing = \App\Models\SupplierContractBilling::create($data);
+                            
+                            // Erstelle die Artikel für die Abrechnung
+                            foreach ($articles as $articleData) {
+                                if (isset($articleData['article_id'])) {
+                                    $billing->articles()->create([
+                                        'article_id' => $articleData['article_id'],
+                                        'quantity' => $articleData['quantity'] ?? 1,
+                                        'unit_price' => $articleData['unit_price'] ?? 0,
+                                        'description' => $articleData['description'] ?? '',
+                                        'notes' => $articleData['notes'] ?? '',
+                                        'is_active' => true,
+                                    ]);
+                                }
+                            }
+                            
+                            // Zähle hinzugefügte Artikel
+                            $activeArticlesCount = count($articles);
                             
                             // Benachrichtigung
                             \Filament\Notifications\Notification::make()
                                 ->title('Abrechnung erfolgreich erstellt')
-                                ->body("Die Abrechnung wurde erstellt und kann unter Lieferanten → Abrechnungen bearbeitet werden.")
+                                ->body("Die Abrechnung wurde mit {$activeArticlesCount} Artikeln erstellt und kann unter Lieferanten → Abrechnungen bearbeitet werden.")
                                 ->success()
                                 ->actions([
                                     \Filament\Notifications\Actions\Action::make('view')
