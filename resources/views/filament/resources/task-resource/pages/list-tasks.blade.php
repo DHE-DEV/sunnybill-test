@@ -158,10 +158,10 @@
             
             <!-- Kanban Board -->
             <div class="overflow-x-auto">
-                <div class="flex gap-6 p-6" style="min-width: 1800px;">
+                <div class="flex gap-6 p-6" style="min-width: 2700px;">
                     @foreach($this->getStatusColumns() as $status => $column)
                         <div class="bg-gray-50 dark:bg-gray-800 rounded-lg flex-shrink-0 {{ $status === 'recurring' ? 'bg-emerald-50 dark:bg-emerald-900' : '' }}" 
-                             style="width: 280px;">
+                             style="width: 420px;">
                         
                         <!-- Column Header -->
                         <div class="p-4 border-b border-gray-200 dark:border-gray-700 {{ $status === 'recurring' ? 'border-emerald-200 dark:border-emerald-700' : '' }}">
