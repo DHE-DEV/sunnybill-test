@@ -37,18 +37,29 @@ class SupplierContractBillingResource extends Resource
                 Forms\Components\Section::make('Abrechnungsdetails')
                     ->schema([
                         // Zeile 1
-                        Forms\Components\Select::make('supplier_contract_id')
-                            ->label('Lieferantenvertrag')
-                            ->relationship('supplierContract', 'title')
-                            ->getOptionLabelFromRecordUsing(function (SupplierContract $record): string {
-                                $supplierNumber = $record->supplier && !empty($record->supplier->supplier_number)
-                                    ? (string) $record->supplier->supplier_number
-                                    : 'Unbekannt';
-                                return "{$record->contract_number} - {$record->title} ({$supplierNumber})";
+                        Forms\Components\Select::make('temp_solar_plant_id')
+                            ->label('Solaranlage (zur Filterung)')
+                            ->options(function () {
+                                return \App\Models\SolarPlant::where('is_active', true)
+                                    ->whereNotNull('name')
+                                    ->where('name', '!=', '')
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->mapWithKeys(function ($plant) {
+                                        $plantNumber = $plant->plant_number ?? 'Keine Nr.';
+                                        $plantName = $plant->name ?? 'Unbenannt';
+                                        return [$plant->id => "{$plantNumber} - {$plantName}"];
+                                    });
                             })
-                            ->searchable(['contract_number', 'title'])
+                            ->searchable()
                             ->preload()
-                            ->required(),
+                            ->reactive()
+                            ->dehydrated(false)
+                            ->helperText('Wählen Sie eine Solaranlage, um die verfügbaren Verträge zu filtern')
+                            ->afterStateUpdated(function (callable $set) {
+                                // Reset contract selection when solar plant changes
+                                $set('supplier_contract_id', null);
+                            }),
 
                         Forms\Components\TextInput::make('billing_number')
                             ->label('Abrechnungsnummer')
@@ -57,19 +68,50 @@ class SupplierContractBillingResource extends Resource
                             ->placeholder('Wird automatisch generiert'),
 
                         // Zeile 2
+                        Forms\Components\Select::make('supplier_contract_id')
+                            ->label('Lieferantenvertrag')
+                            ->options(function (callable $get) {
+                                $solarPlantId = $get('temp_solar_plant_id');
+                                if (!$solarPlantId) {
+                                    return \App\Models\SupplierContract::with('supplier')->get()->mapWithKeys(function ($contract) {
+                                        $supplierNumber = $contract->supplier && !empty($contract->supplier->supplier_number)
+                                            ? (string) $contract->supplier->supplier_number
+                                            : 'Unbekannt';
+                                        return [$contract->id => "{$contract->contract_number} - {$contract->title} ({$supplierNumber})"];
+                                    });
+                                }
+                                
+                                // Find contracts that are associated with the selected solar plant
+                                return \App\Models\SupplierContract::whereHas('solarPlants', function ($query) use ($solarPlantId) {
+                                    $query->where('solar_plants.id', $solarPlantId);
+                                })->with('supplier')->get()->mapWithKeys(function ($contract) {
+                                    $supplierNumber = $contract->supplier && !empty($contract->supplier->supplier_number)
+                                        ? (string) $contract->supplier->supplier_number
+                                        : 'Unbekannt';
+                                    return [$contract->id => "{$contract->contract_number} - {$contract->title} ({$supplierNumber})"];
+                                });
+                            })
+                            ->searchable()
+                            ->required()
+                            ->reactive()
+                            ->placeholder('Wählen Sie eine Solaranlage für gefilterte Verträge')
+                            ->helperText('Verfügbare Verträge (gefiltert nach ausgewählter Solaranlage)')
+                            ->columnSpanFull(),
+
+                        // Zeile 3
                         Forms\Components\TextInput::make('title')
                             ->label('Titel')
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
 
-                        // Zeile 3
+                        // Zeile 4
                         Forms\Components\Textarea::make('description')
                             ->label('Beschreibung')
                             ->rows(3)
                             ->columnSpanFull(),
 
-                        // Zeile 4
+                        // Zeile 5
                         Forms\Components\Select::make('billing_type')
                             ->label('Abrechnungstyp')
                             ->options(SupplierContractBilling::getBillingTypeOptions())
@@ -81,7 +123,7 @@ class SupplierContractBillingResource extends Resource
                             ->maxLength(255)
                             ->placeholder('Rechnungsnummer des Anbieters'),
 
-                        // Zeile 5
+                        // Zeile 6
                         Forms\Components\Select::make('billing_year')
                             ->label('Abrechnungsjahr')
                             ->options(function () {
@@ -107,7 +149,7 @@ class SupplierContractBillingResource extends Resource
                             })
                             ->searchable(),
 
-                        // Zeile 6
+                        // Zeile 7
                         Forms\Components\DatePicker::make('billing_date')
                             ->label('Abrechnungsdatum')
                             ->required()
