@@ -369,6 +369,23 @@ class SupplierContractBillingResource extends Resource
                     ->weight('medium')
                     ->toggleable(),
 
+                Tables\Columns\TextColumn::make('solar_plant_name')
+                    ->label('Solaranlage')
+                    ->getStateUsing(function (SupplierContractBilling $record): ?string {
+                        $contract = $record->supplierContract;
+                        if ($contract) {
+                            $solarPlant = $contract->solarPlants()->first();
+                            return $solarPlant?->name ?? 'Keine Zuordnung';
+                        }
+                        return 'Keine Zuordnung';
+                    })
+                    ->color('primary')
+                    ->weight('medium')
+                    ->searchable(false)
+                    ->sortable(false)
+                    ->placeholder('—')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('supplier_invoice_number')
                     ->label('Anbieter-Rechnung')
                     ->searchable()
