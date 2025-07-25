@@ -431,7 +431,6 @@
                     <th>Lieferant</th>
                     <th>Vertrag</th>
                     <th>Rechnungsnummer</th>
-                    <th>Anlagenanteil</th>
                     <th>Kundenanteil</th>
                     <th class="number">Betrag (€)</th>
                 </tr>
@@ -442,7 +441,6 @@
                     <td>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</td>
                     <td>{{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}</td>
                     <td>{{ $credit['billing_number'] ?? 'N/A' }}</td>
-                    <td class="number">{{ number_format($credit['solar_plant_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
@@ -462,7 +460,6 @@
                     <th>Lieferant</th>
                     <th>Vertrag</th>
                     <th>Rechnungsnummer</th>
-                    <th>Anlagenanteil</th>
                     <th>Kundenanteil</th>
                     <th class="number">Betrag (€)</th>
                 </tr>
@@ -473,7 +470,6 @@
                     <td>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</td>
                     <td>{{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}</td>
                     <td>{{ $cost['billing_number'] ?? 'N/A' }}</td>
-                    <td class="number">{{ number_format($cost['solar_plant_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
