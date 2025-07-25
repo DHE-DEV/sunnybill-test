@@ -109,7 +109,46 @@ class SupplierContractBillingResource extends Resource
 
                         Forms\Components\DatePicker::make('due_date')
                             ->label('Fälligkeitsdatum')
-                            ->after('billing_date'),
+                            ->after('billing_date')
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Betragsangaben')
+                    ->schema([
+                        Forms\Components\TextInput::make('net_amount')
+                            ->label('Betrag Netto')
+                            ->numeric()
+                            ->step(0.01)
+                            ->prefix('€')
+                            ->minValue(0)
+                            ->reactive()
+                            ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                // Berechne Gesamtbetrag wenn Nettobetrag und MwSt. vorhanden sind
+                                $vatRate = floatval($get('vat_rate') ?? 0);
+                                if ($state && $vatRate >= 0) {
+                                    $totalAmount = $state * (1 + ($vatRate / 100));
+                                    $set('total_amount', round($totalAmount, 2));
+                                }
+                            }),
+
+                        Forms\Components\TextInput::make('vat_rate')
+                            ->label('MwSt. (%)')
+                            ->numeric()
+                            ->step(0.01)
+                            ->suffix('%')
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->default(19.00)
+                            ->reactive()
+                            ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                // Berechne Gesamtbetrag wenn Nettobetrag und MwSt. vorhanden sind
+                                $netAmount = floatval($get('net_amount') ?? 0);
+                                if ($netAmount && $state >= 0) {
+                                    $totalAmount = $netAmount * (1 + ($state / 100));
+                                    $set('total_amount', round($totalAmount, 2));
+                                }
+                            }),
 
                         Forms\Components\TextInput::make('total_amount')
                             ->label('Gesamtbetrag')
@@ -133,7 +172,19 @@ class SupplierContractBillingResource extends Resource
                                 }
                                 
                                 $set('allocations', $updatedAllocations);
+                                
+                                // Berechne Nettobetrag wenn Gesamtbetrag und MwSt. vorhanden sind
+                                $vatRate = floatval($get('vat_rate') ?? 0);
+                                if ($state && $vatRate >= 0) {
+                                    $netAmount = $state / (1 + ($vatRate / 100));
+                                    $set('net_amount', round($netAmount, 2));
+                                }
                             }),
+                    ])
+                    ->columns(3),
+
+                Forms\Components\Section::make('Sonstige Angaben')
+                    ->schema([
 
                         Forms\Components\Select::make('currency')
                             ->label('Währung')

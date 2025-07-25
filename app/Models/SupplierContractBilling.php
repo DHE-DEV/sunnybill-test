@@ -26,6 +26,8 @@ class SupplierContractBilling extends Model
         'billing_date',
         'due_date',
         'total_amount',
+        'net_amount',
+        'vat_rate',
         'currency',
         'status',
         'notes',
@@ -35,6 +37,8 @@ class SupplierContractBilling extends Model
         'billing_date' => 'date',
         'due_date' => 'date',
         'total_amount' => 'decimal:2',
+        'net_amount' => 'decimal:2',
+        'vat_rate' => 'decimal:2',
     ];
 
     public function supplierContract(): BelongsTo
