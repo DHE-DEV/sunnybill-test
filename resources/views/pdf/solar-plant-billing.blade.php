@@ -350,7 +350,7 @@
 
     <!-- Anlageninfo -->
     <div class="plant-info">
-        <h3>Solaranlage: {{ $solarPlant->plant_number }}</h3>
+        <h3>Solaranlage: {{ $solarPlant->name }}</h3>
         <div class="plant-details">
             <div>
                 <strong>Standort:</strong><br>
@@ -483,7 +483,7 @@
     <div style="margin-top: 30px; font-size: 9pt; color: #666;">
         <p><strong>Hinweise:</strong></p>
         <ul>
-            <li>Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {{ $solarPlant->plant_number }}.</li>
+            <li>Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {{ $solarPlant->name }}.</li>
             <li>Ihr aktueller Beteiligungsanteil beträgt {{ number_format($currentPercentage, 2, ',', '.') }}%.</li>
             @if($billing->total_credits > 0)
             <li>Die Einnahmen/Gutschriften stammen aus Vertragsabrechnungen für diese Solaranlage.</li>
