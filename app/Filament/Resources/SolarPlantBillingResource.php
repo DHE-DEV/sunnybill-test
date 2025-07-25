@@ -325,29 +325,63 @@ class SolarPlantBillingResource extends Resource
 
                 Forms\Components\Section::make('Beträge')
                     ->schema([
-                        Forms\Components\TextInput::make('total_costs')
-                            ->label('Gesamtkosten')
-                            ->prefix('€')
-                            ->numeric()
-                            ->step(0.01)
-                            ->default(0),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('total_costs')
+                                    ->label('Gesamtkosten (Brutto)')
+                                    ->prefix('€')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false),
 
-                        Forms\Components\TextInput::make('total_credits')
-                            ->label('Gesamtgutschriften')
-                            ->prefix('€')
-                            ->numeric()
-                            ->step(0.01)
-                            ->default(0),
+                                Forms\Components\TextInput::make('total_costs_net')
+                                    ->label('Gesamtkosten (Netto)')
+                                    ->prefix('€')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false),
 
-                        Forms\Components\TextInput::make('net_amount')
-                            ->label('Gesamtbetrag')
-                            ->prefix('€')
-                            ->numeric()
-                            ->step(0.01)
-                            ->default(0)
-                            ->disabled()
-                            ->dehydrated(false),
-                    ])->columns(2),
+                                Forms\Components\TextInput::make('total_credits')
+                                    ->label('Gesamtgutschriften (Brutto)')
+                                    ->prefix('€')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false),
+
+                                Forms\Components\TextInput::make('total_credits_net')
+                                    ->label('Gesamtgutschriften (Netto)')
+                                    ->prefix('€')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false),
+
+                                Forms\Components\TextInput::make('total_vat_amount')
+                                    ->label('MwSt.-Betrag')
+                                    ->prefix('€')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false),
+
+                                Forms\Components\TextInput::make('net_amount')
+                                    ->label('Gesamtbetrag (Brutto)')
+                                    ->prefix('€')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false),
+                            ]),
+                    ]),
 
                 Forms\Components\Section::make('Zusätzliche Informationen')
                     ->schema([

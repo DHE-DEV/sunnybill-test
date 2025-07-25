@@ -24,6 +24,9 @@ class SolarPlantBilling extends Model
         'total_costs',
         'total_credits',
         'net_amount',
+        'total_costs_net',
+        'total_credits_net',
+        'total_vat_amount',
         'status',
         'notes',
         'cost_breakdown',
@@ -40,6 +43,9 @@ class SolarPlantBilling extends Model
         'total_costs' => 'decimal:2',
         'total_credits' => 'decimal:2',
         'net_amount' => 'decimal:2',
+        'total_costs_net' => 'decimal:2',
+        'total_credits_net' => 'decimal:2',
+        'total_vat_amount' => 'decimal:2',
         'cost_breakdown' => 'array',
         'credit_breakdown' => 'array',
         'finalized_at' => 'datetime',
@@ -214,6 +220,9 @@ class SolarPlantBilling extends Model
                 'produced_energy_kwh' => $producedEnergyKwh,
                 'total_costs' => $costData['total_costs'],
                 'total_credits' => $costData['total_credits'],
+                'total_costs_net' => $costData['total_costs_net'],
+                'total_credits_net' => $costData['total_credits_net'],
+                'total_vat_amount' => $costData['total_vat_amount'],
                 'net_amount' => $costData['total_costs'] - $costData['total_credits'],
                 'cost_breakdown' => $costData['cost_breakdown'],
                 'credit_breakdown' => $costData['credit_breakdown'],
@@ -261,6 +270,9 @@ class SolarPlantBilling extends Model
 
         $totalCosts = 0;
         $totalCredits = 0;
+        $totalCostsNet = 0;
+        $totalCreditsNet = 0;
+        $totalVatAmount = 0;
         $costBreakdown = [];
         $creditBreakdown = [];
 
@@ -301,6 +313,21 @@ class SolarPlantBilling extends Model
                 // Gutschriften - verwende den absoluten Betrag für die Berechnung
                 $customerCredit = abs($billing->total_amount) * $finalShare;
                 $totalCredits += $customerCredit;
+                
+                // Berechne Netto-Gutschriften und MwSt.
+                if ($billing->net_amount) {
+                    $customerCreditNet = abs($billing->net_amount) * $finalShare;
+                    $totalCreditsNet += $customerCreditNet;
+                    
+                    // MwSt.-Betrag = Brutto - Netto
+                    $vatAmount = $customerCredit - $customerCreditNet;
+                    $totalVatAmount -= $vatAmount; // Subtrahiere MwSt. bei Gutschriften
+                } else {
+                    // Fallback: Verwende 19% MwSt. wenn net_amount nicht verfügbar
+                    $customerCreditNet = $customerCredit / 1.19;
+                    $totalCreditsNet += $customerCreditNet;
+                    $totalVatAmount -= ($customerCredit - $customerCreditNet);
+                }
                 
                 // Hole die Artikel-Details für diese Gutschrift
                 $articles = $billing->articles()->get();
@@ -345,6 +372,21 @@ class SolarPlantBilling extends Model
                 if ($billing->total_amount > 0) {
                     $customerCost = $billing->total_amount * $finalShare;
                     $totalCosts += $customerCost;
+                    
+                    // Berechne Netto-Kosten und MwSt.
+                    if ($billing->net_amount) {
+                        $customerCostNet = $billing->net_amount * $finalShare;
+                        $totalCostsNet += $customerCostNet;
+                        
+                        // MwSt.-Betrag = Brutto - Netto
+                        $vatAmount = $customerCost - $customerCostNet;
+                        $totalVatAmount += $vatAmount; // Addiere MwSt. bei Kosten
+                    } else {
+                        // Fallback: Verwende 19% MwSt. wenn net_amount nicht verfügbar
+                        $customerCostNet = $customerCost / 1.19;
+                        $totalCostsNet += $customerCostNet;
+                        $totalVatAmount += ($customerCost - $customerCostNet);
+                    }
                     
                 // Hole die Artikel-Details für diese Abrechnung
                 $articles = $billing->articles()->get();
@@ -391,6 +433,9 @@ class SolarPlantBilling extends Model
         return [
             'total_costs' => $totalCosts,
             'total_credits' => $totalCredits,
+            'total_costs_net' => $totalCostsNet,
+            'total_credits_net' => $totalCreditsNet,
+            'total_vat_amount' => $totalVatAmount,
             'net_amount' => $totalCosts - $totalCredits,
             'cost_breakdown' => $costBreakdown,
             'credit_breakdown' => $creditBreakdown,
