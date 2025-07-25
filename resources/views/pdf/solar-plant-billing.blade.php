@@ -417,7 +417,11 @@
     <!-- Gesamtergebnis prominent -->
     <div style="clear: both; margin: 44px 0; text-align: center;">
         <div style="display: inline-block; background: #2563eb; color: white; padding: 15px 30px; border-radius: 5px; font-size: 14pt; font-weight: bold;">
-            Gesamtergebnis: {{ number_format($billing->net_amount, 2, ',', '.') }} €
+            @if($billing->net_amount < 0)
+                Gutschrift: {{ number_format(abs($billing->net_amount), 2, ',', '.') }} €
+            @else
+                Rechnung: {{ number_format($billing->net_amount, 2, ',', '.') }} €
+            @endif
         </div>
     </div>
 
