@@ -210,6 +210,7 @@ class ArticlesRelationManager extends RelationManager
                     ->native(false),
             ])
             ->headerActions([
+                // AttachAction entfernt - nur CreateAction verfügbar
                 Tables\Actions\CreateAction::make()
                     ->label('Artikel neu anlegen')
                     ->icon('heroicon-o-plus-circle')
@@ -650,6 +651,11 @@ class ArticlesRelationManager extends RelationManager
     }
     
     public function isReadOnly(): bool
+    {
+        return false;
+    }
+    
+    protected function canAttach(): bool
     {
         return false;
     }
