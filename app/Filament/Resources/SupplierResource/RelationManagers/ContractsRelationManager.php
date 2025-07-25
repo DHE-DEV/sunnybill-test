@@ -15,11 +15,17 @@ class ContractsRelationManager extends RelationManager
 {
     protected static string $relationship = 'contracts';
 
-    protected static ?string $title = 'Verträge';
-
     protected static ?string $modelLabel = 'Vertrag';
 
     protected static ?string $pluralModelLabel = 'Verträge';
+
+    public function mount(): void
+    {
+        parent::mount();
+        
+        $supplierName = $this->ownerRecord->company_name ?? $this->ownerRecord->name ?? 'Unbekannt';
+        static::$title = "Verträge - {$supplierName}";
+    }
 
     public function form(Form $form): Form
     {
@@ -92,6 +98,22 @@ class ContractsRelationManager extends RelationManager
                     ->label('Vertragsnummer')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('solarPlants')
+                    ->label('Zugeordnete Solaranlagen')
+                    ->getStateUsing(function ($record) {
+                        $solarPlants = $record->activeSolarPlants;
+                        if ($solarPlants->isEmpty()) {
+                            return '-';
+                        }
+                        return $solarPlants->pluck('name')->implode(', ');
+                    })
+                    ->wrap()
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('solarPlants', function (Builder $subQuery) use ($search) {
+                            $subQuery->where('name', 'like', "%{$search}%")
+                                     ->orWhere('location', 'like', "%{$search}%");
+                        });
+                    }),
                 Tables\Columns\TextColumn::make('title')
                     ->label('Titel')
                     ->searchable()
@@ -134,7 +156,8 @@ class ContractsRelationManager extends RelationManager
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('contractNotes_count')
                     ->label('Notizen')
                     ->counts('contractNotes')
@@ -155,6 +178,29 @@ class ContractsRelationManager extends RelationManager
                     ->options(SupplierContract::getStatusOptions()),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Aktiv'),
+                Tables\Filters\Filter::make('solar_plant_search')
+                    ->form([
+                        Forms\Components\TextInput::make('solar_plant_name')
+                            ->label('Solaranlage suchen')
+                            ->placeholder('Name oder Standort der Solaranlage'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['solar_plant_name'],
+                            fn (Builder $query, $search): Builder => $query->whereHas('solarPlants', function (Builder $subQuery) use ($search) {
+                                $subQuery->where('name', 'like', "%{$search}%")
+                                         ->orWhere('location', 'like', "%{$search}%");
+                            })
+                        );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['solar_plant_name'] ?? null) {
+                            $indicators[] = Tables\Filters\Indicator::make('Solaranlage: ' . $data['solar_plant_name'])
+                                ->removeField('solar_plant_name');
+                        }
+                        return $indicators;
+                    }),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->headerActions([
@@ -197,9 +243,12 @@ class ContractsRelationManager extends RelationManager
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ])
-            ->modifyQueryUsing(fn (Builder $query) => $query->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]))
+            ->modifyQueryUsing(function (Builder $query) {
+                return $query->withoutGlobalScopes([
+                    SoftDeletingScope::class,
+                ])->with(['solarPlants']);
+            })
+            ->persistSearchInSession()
             ->defaultSort('created_at', 'desc');
     }
 }

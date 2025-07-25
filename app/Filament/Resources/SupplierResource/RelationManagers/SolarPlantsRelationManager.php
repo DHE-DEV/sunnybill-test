@@ -88,7 +88,7 @@ class SolarPlantsRelationManager extends RelationManager
                     ->label('Ansprechpartner')
                     ->getStateUsing(function ($record) {
                         $pivotData = $record->pivot;
-                        if ($pivotData->supplier_employee_id) {
+                        if ($pivotData && $pivotData->supplier_employee_id) {
                             $employee = SupplierEmployee::find($pivotData->supplier_employee_id);
                             return $employee?->full_name;
                         }
@@ -193,6 +193,6 @@ class SolarPlantsRelationManager extends RelationManager
                     Tables\Actions\DetachBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('name');
+            ;
     }
 }

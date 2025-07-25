@@ -9,6 +9,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ArticlesRelationManager extends RelationManager
@@ -20,6 +21,12 @@ class ArticlesRelationManager extends RelationManager
     protected static ?string $modelLabel = 'Artikel';
 
     protected static ?string $pluralModelLabel = 'Artikel';
+
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        $count = $ownerRecord->articles()->count();
+        return $count > 0 ? (string) $count : null;
+    }
 
     public function form(Form $form): Form
     {

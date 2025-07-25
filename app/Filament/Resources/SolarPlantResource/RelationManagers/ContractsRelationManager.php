@@ -372,7 +372,8 @@ class ContractsRelationManager extends RelationManager
                                                 ->searchable()
                                                 ->reactive()
                                                 ->columnSpanFull()
-                                                ->hidden(fn (callable $get) => $get('is_required_article'))
+                                                ->disabled(fn (callable $get) => $get('is_required_article'))
+                                                ->helperText(fn (callable $get) => $get('is_required_article') ? 'Dieser Artikel ist ein Pflichtartikel und kann nicht geändert werden.' : null)
                                                 ->afterStateUpdated(function (callable $get, callable $set, $state) {
                                                     if (!$state) return;
                                                     
@@ -395,7 +396,7 @@ class ContractsRelationManager extends RelationManager
                                                             return;
                                                         }
                                                         
-                                                        // Fallback zu Lieferantenartikel
+                                                        // Fallback zu Lieferanterartikel
                                                         if ($contract->supplier) {
                                                             $supplierArticle = $contract->supplier->articles()
                                                                 ->where('articles.id', $state)
@@ -415,20 +416,6 @@ class ContractsRelationManager extends RelationManager
                                                     $set('unit_price', $article->price);
                                                     $set('description', $article->name);
                                                 }),
-                                            
-                                            Forms\Components\TextInput::make('article_display')
-                                                ->label('Artikel (Pflichtartikel)')
-                                                ->disabled()
-                                                ->columnSpanFull()
-                                                ->visible(fn (callable $get) => $get('is_required_article'))
-                                                ->formatStateUsing(function (callable $get) {
-                                                    $articleId = $get('article_id');
-                                                    if (!$articleId) return 'Unbekannter Artikel';
-                                                    
-                                                    $article = \App\Models\Article::find($articleId);
-                                                    return $article ? $article->name . ' - ' . $article->formatted_price : 'Unbekannter Artikel';
-                                                })
-                                                ->dehydrated(false),
 
                                             Forms\Components\TextInput::make('quantity')
                                                 ->label('Menge')
@@ -437,6 +424,8 @@ class ContractsRelationManager extends RelationManager
                                                 ->step(0.01)
                                                 ->minValue(0.01)
                                                 ->reactive()
+                                                ->disabled(fn (callable $get) => $get('is_required_article'))
+                                                ->helperText(fn (callable $get) => $get('is_required_article') ? 'Menge für Pflichtartikel ist festgelegt und kann nicht geändert werden.' : null)
                                                 ->afterStateUpdated(function (callable $get, callable $set) {
                                                     $quantity = $get('quantity');
                                                     $unitPrice = $get('unit_price');
@@ -453,6 +442,8 @@ class ContractsRelationManager extends RelationManager
                                                 ->prefix('€')
                                                 ->minValue(0)
                                                 ->reactive()
+                                                ->disabled(fn (callable $get) => $get('is_required_article'))
+                                                ->helperText(fn (callable $get) => $get('is_required_article') ? 'Preis für Pflichtartikel ist festgelegt und kann nicht geändert werden.' : null)
                                                 ->afterStateUpdated(function (callable $get, callable $set) {
                                                     $quantity = $get('quantity');
                                                     $unitPrice = $get('unit_price');

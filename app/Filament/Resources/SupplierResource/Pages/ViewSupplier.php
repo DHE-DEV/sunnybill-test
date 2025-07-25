@@ -15,6 +15,12 @@ class ViewSupplier extends ViewRecord
 {
     protected static string $resource = SupplierResource::class;
 
+    public function getTitle(): string
+    {
+        $supplierName = $this->record->company_name ?? $this->record->name ?? 'Unbekannt';
+        return "Lieferant ansehen - {$supplierName}";
+    }
+
     public function infolist(Infolist $infolist): Infolist
     {
         return $infolist
