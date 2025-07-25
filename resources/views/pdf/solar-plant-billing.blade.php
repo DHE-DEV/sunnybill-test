@@ -516,7 +516,7 @@
                     <th>Lieferant</th>
                     <th>Anteil</th>
                     <th>Netto (€)</th>
-                    <th>MwSt. %<th>
+                    <th>MwSt. %</th>
                     <th class="number">Betrag (€)</th>
                 </tr>
             </thead>
@@ -579,7 +579,7 @@
                     <th>Lieferant</th>
                     <th>Anteil</th>
                     <th>Netto (€)</th>
-                    <th>MwSt. %<th>
+                    <th>MwSt. %</th>
                     <th class="number">Betrag (€)</th>
                 </tr>
             </thead>
