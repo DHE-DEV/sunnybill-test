@@ -420,7 +420,7 @@ class SupplierContractBillingResource extends Resource
                     )
                     ->color('primary'),
 
-                Tables\Columns\TextColumn::make('supplierContract.supplier.display_name')
+                Tables\Columns\TextColumn::make('supplierContract.supplier.name')
                     ->label('Lieferant')
                     ->searchable()
                     ->sortable()
@@ -433,8 +433,8 @@ class SupplierContractBillingResource extends Resource
                             return 'Kein Lieferant';
                         }
                         
-                        // Verwende display_name Attribut oder fallback zu company_name/name
-                        return $supplier->display_name ?? $supplier->company_name ?? $supplier->name ?? 'Unbekannt';
+                        // Verwende company_name oder fallback zu name
+                        return $supplier->company_name ?? $supplier->name ?? 'Unbekannt';
                     }),
 
                 Tables\Columns\TextColumn::make('title')
