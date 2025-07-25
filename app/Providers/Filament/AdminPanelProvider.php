@@ -106,7 +106,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 'panels::head.end',
-                fn (): string => '<link rel="stylesheet" href="' . \Illuminate\Support\Facades\Vite::asset('resources/css/admin-custom.css') . '">'
+                fn (): string => $this->getCustomCssLink()
             )
             ->renderHook(
                 'panels::body.end',
@@ -118,5 +118,35 @@ class AdminPanelProvider extends PanelProvider
                 'panels::sidebar.footer',
                 fn (): string => view('vendor.filament.components.version')->render()
             );
+    }
+
+    private function getCustomCssLink(): string
+    {
+        try {
+            // Versuche zuerst Vite zu verwenden
+            $viteManifestPath = public_path('build/manifest.json');
+            if (file_exists($viteManifestPath)) {
+                return '<link rel="stylesheet" href="' . \Illuminate\Support\Facades\Vite::asset('resources/css/admin-custom.css') . '">';
+            }
+        } catch (\Exception $e) {
+            // Fallback wenn Vite nicht verfügbar ist
+        }
+        
+        // Fallback: CSS direkt laden falls verfügbar
+        $cssPath = public_path('css/admin-custom.css');
+        if (file_exists($cssPath)) {
+            return '<link rel="stylesheet" href="' . asset('css/admin-custom.css') . '">';
+        }
+        
+        // Als letztes Fallback: Inline CSS
+        return '<style>
+            [data-filament-table-bulk-actions-container] .fi-ta-bulk-actions {
+                min-width: 280px !important;
+            }
+            [data-filament-table-bulk-actions-container] .fi-ta-bulk-actions .fi-dropdown-list-item {
+                min-width: 260px !important;
+                white-space: nowrap !important;
+            }
+        </style>';
     }
 }
