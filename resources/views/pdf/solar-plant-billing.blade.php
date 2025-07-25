@@ -633,7 +633,7 @@
     @endif
 
     <!-- MwSt.-Aufschlüsselung -->
-    <div style="margin-top: 30px; background: #2563eb; color: white; padding: 15px; border-radius: 5px;">
+    <div style="margin-top: 30px; background: #e6f3ff; color: white; padding: 15px; border-radius: 5px;">
         <div style="display: table; width: 100%; font-size: 11pt;">
             <div style="display: table-row;">
                 <div style="display: table-cell; padding: 3px 0;">Gesamtsumme netto:</div>
