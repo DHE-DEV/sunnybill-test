@@ -632,8 +632,32 @@
     </div>
     @endif
 
+    <!-- MwSt.-Aufschlüsselung -->
+    <div style="margin-top: 30px; background: #2563eb; color: white; padding: 15px; border-radius: 5px;">
+        <div style="display: table; width: 100%; font-size: 11pt;">
+            <div style="display: table-row;">
+                <div style="display: table-cell; padding: 3px 0;">Gesamtsumme netto:</div>
+                <div style="display: table-cell; text-align: right; padding: 3px 0; font-weight: bold;">
+                    {{ number_format(($billing->total_costs_net ?? 0) - ($billing->total_credits_net ?? 0), 2, ',', '.') }} €
+                </div>
+            </div>
+            <div style="display: table-row;">
+                <div style="display: table-cell; padding: 3px 0;">Zzgl. MwSt. von 19%:</div>
+                <div style="display: table-cell; text-align: right; padding: 3px 0; font-weight: bold;">
+                    {{ number_format($billing->total_vat_amount ?? 0, 2, ',', '.') }} €
+                </div>
+            </div>
+            <div style="display: table-row; border-top: 1px solid rgba(255,255,255,0.3);">
+                <div style="display: table-cell; padding: 8px 0 3px 0; font-weight: bold; font-size: 12pt;">Gesamtsumme brutto:</div>
+                <div style="display: table-cell; text-align: right; padding: 8px 0 3px 0; font-weight: bold; font-size: 12pt;">
+                    {{ number_format($billing->net_amount ?? 0, 2, ',', '.') }} €
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Hinweise -->
-    <div style="margin-top: 30px; font-size: 9pt; color: #666;">
+    <div style="margin-top: 20px; font-size: 9pt; color: #666;">
         <p><strong>Hinweise:</strong></p>
         <ul>
             <li>Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {{ $solarPlant->name }}.</li>
