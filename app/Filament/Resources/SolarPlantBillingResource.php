@@ -211,7 +211,7 @@ class SolarPlantBillingResource extends Resource
                                     }
                                     
                                     $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
                                     $html .= '</tr>';
                                 }
@@ -298,7 +298,7 @@ class SolarPlantBillingResource extends Resource
                                     }
                                     
                                     $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format($item['solar_plant_percentage'], 2, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #166534; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
                                     $html .= '</tr>';
                                 }
@@ -398,7 +398,15 @@ class SolarPlantBillingResource extends Resource
                     ->label('Beteiligung')
                     ->suffix('%')
                     ->numeric(2)
-                    ->alignRight(),
+                    ->alignRight()
+                    ->getStateUsing(function (SolarPlantBilling $record): ?float {
+                        // Hole die aktuelle Beteiligung aus der participations Tabelle
+                        $participation = $record->solarPlant->participations()
+                            ->where('customer_id', $record->customer_id)
+                            ->first();
+                        
+                        return $participation ? $participation->percentage : $record->participation_percentage;
+                    }),
 
                 Tables\Columns\TextColumn::make('formatted_total_costs')
                     ->label('Kosten')
