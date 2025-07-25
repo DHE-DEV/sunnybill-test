@@ -385,7 +385,7 @@
             <tr>
                 <th>Pos.</th>
                 <th>Beschreibung</th>
-                <th>Menge</th>
+                <th class="number">Menge</th>
                 <th>Einheit</th>
                 <th class="number">Einzelpreis</th>
                 <th class="number">Gesamtpreis</th>
