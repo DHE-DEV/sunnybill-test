@@ -308,22 +308,15 @@
     <!-- Header -->
     <div class="header">
         <div class="logo">
-            @if($companySetting->hasLogo())
-                <img src="{{ public_path('storage/' . $companySetting->logo_path) }}" alt="Logo">
-            @endif
+            <!-- Leer für Platz -->
         </div>
         <div class="company-info">
+            @if($companySetting->hasLogo())
+                <div style="text-align: right; margin-bottom: 15px;">
+                    <img src="{{ public_path('storage/' . $companySetting->logo_path) }}" alt="Logo" style="max-width: 150px; max-height: 60px;">
+                </div>
+            @endif
             <h3>{{ $companySetting->company_name }}</h3>
-            <div>{{ $companySetting->full_address }}</div>
-            @if($companySetting->phone)
-                <div>Tel: {{ $companySetting->phone }}</div>
-            @endif
-            @if($companySetting->email)
-                <div>E-Mail: {{ $companySetting->email }}</div>
-            @endif
-            @if($companySetting->website)
-                <div>Web: {{ $companySetting->website }}</div>
-            @endif
         </div>
     </div>
 
@@ -678,21 +671,21 @@
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
-        <div style="text-align: center; margin-bottom: 8px; font-size: 8pt;">
+        <div style="text-align: center; margin-bottom: 4px; font-size: 8pt;">
             {{ $companySetting->company_name }}
             @if($companySetting->full_address) | {{ $companySetting->full_address }}@endif
             @if($companySetting->phone) | {{ $companySetting->phone }}@endif
         </div>
         
         <!-- Zeile 3: E-Mail und Website -->
-        <div style="text-align: center; margin-bottom: 8px; font-size: 8pt;">
+        <div style="text-align: center; margin-bottom: 4px; font-size: 8pt;">
             @if($companySetting->email){{ $companySetting->email }}@endif
             @if($companySetting->email && $companySetting->website) | @endif
             @if($companySetting->website){{ $companySetting->website }}@endif
         </div>
         
         <!-- Zeile 4: Amtsgericht und Geschäftsführer -->
-        <div style="text-align: center; margin-bottom: 8px; font-size: 8pt;">
+        <div style="text-align: center; margin-bottom: 4px; font-size: 8pt;">
             @if($companySetting->formatted_commercial_register){{ $companySetting->formatted_commercial_register }}@endif
             @if($companySetting->formatted_commercial_register && $companySetting->management) | @endif
             @if($companySetting->management)Geschäftsführung: {{ $companySetting->management }}@endif
