@@ -83,6 +83,10 @@
             width: 40%;
         }
         
+        .billing-info td:last-child {
+            text-align: right;
+        }
+        
         .document-title {
             clear: both;
             margin: 40px 0 30px 0;
@@ -522,8 +526,7 @@
                 @endif
             </div>
             <div class="footer-section text-right">
-                Seite <span class="page-number"></span> von <span class="total-pages"></span><br>
-                Erstellt am {{ $generatedAt->format('d.m.Y H:i') }}
+                &nbsp;
             </div>
         </div>
     </div>
