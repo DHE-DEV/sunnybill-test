@@ -550,7 +550,7 @@
                                     <td style="text-align: center; padding: 2px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }}</td>
                                     <td style="text-align: center; padding: 2px;">{{ $article['unit'] ?? 'Stk.' }}</td>
                                     <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, 6, ',', '.') }} €</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, 2, ',', '.') }} €</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, 6, ',', '.') }} €</td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -611,7 +611,7 @@
                                     <td style="text-align: center; padding: 2px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }}</td>
                                     <td style="text-align: center; padding: 2px;">{{ $article['unit'] ?? 'Stk.' }}</td>
                                     <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, 6, ',', '.') }} €</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, 2, ',', '.') }} €</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, 6, ',', '.') }} €</td>
                                 </tr>
                                 @endforeach
                             </tbody>
