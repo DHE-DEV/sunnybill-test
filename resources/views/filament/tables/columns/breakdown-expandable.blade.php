@@ -68,7 +68,36 @@
                                         <div class="text-xs text-gray-500">({{ $item['supplier_name'] }})</div>
                                     </td>
                                     <td class="px-3 py-2 text-right text-sm text-gray-900">
-                                        {{ number_format($item['solar_plant_percentage'], 2, ',', '.') }}%
+                                        @php
+                                            // Hole den korrekten Beteiligungsprozentsatz aus dem Vertrag
+                                            $contract = \App\Models\SupplierContract::find($item['supplier_contract_id'] ?? null);
+                                            $participationPercentage = 100.0; // Fallback
+                                            
+                                            if ($contract) {
+                                                $solarPlantId = $getRecord()->solar_plant_id;
+                                                $pivotData = $contract->solarPlants()
+                                                    ->wherePivot('solar_plant_id', $solarPlantId)
+                                                    ->first();
+                                                
+                                                if ($pivotData && $pivotData->pivot->participation_percentage) {
+                                                    $participationPercentage = $pivotData->pivot->participation_percentage;
+                                                }
+                                            }
+                                        @endphp
+                                        <div class="flex flex-col items-end">
+                                            <span class="text-green-700 font-medium flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                </svg>
+                                                {{ number_format($participationPercentage, 2, ',', '.') }}%
+                                            </span>
+                                            <span class="text-xs text-gray-500 flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                </svg>
+                                                Beteiligung (Vertrag)
+                                            </span>
+                                        </div>
                                     </td>
                                     <td class="px-3 py-2 text-right text-sm text-gray-900">
                                         {{ number_format($getRecord()->participation_percentage, 2, ',', '.') }}%
@@ -121,7 +150,36 @@
                                         <div class="text-xs text-gray-500">({{ $item['supplier_name'] }})</div>
                                     </td>
                                     <td class="px-3 py-2 text-right text-sm text-gray-900">
-                                        {{ number_format($item['solar_plant_percentage'], 2, ',', '.') }}%
+                                        @php
+                                            // Hole den korrekten Beteiligungsprozentsatz aus dem Vertrag
+                                            $contract = \App\Models\SupplierContract::find($item['supplier_contract_id'] ?? null);
+                                            $participationPercentage = 100.0; // Fallback
+                                            
+                                            if ($contract) {
+                                                $solarPlantId = $getRecord()->solar_plant_id;
+                                                $pivotData = $contract->solarPlants()
+                                                    ->wherePivot('solar_plant_id', $solarPlantId)
+                                                    ->first();
+                                                
+                                                if ($pivotData && $pivotData->pivot->participation_percentage) {
+                                                    $participationPercentage = $pivotData->pivot->participation_percentage;
+                                                }
+                                            }
+                                        @endphp
+                                        <div class="flex flex-col items-end">
+                                            <span class="text-green-700 font-medium flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                </svg>
+                                                {{ number_format($participationPercentage, 2, ',', '.') }}%
+                                            </span>
+                                            <span class="text-xs text-gray-500 flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                </svg>
+                                                Beteiligung (Vertrag)
+                                            </span>
+                                        </div>
                                     </td>
                                     <td class="px-3 py-2 text-right text-sm text-gray-900">
                                         {{ number_format($getRecord()->participation_percentage, 2, ',', '.') }}%
