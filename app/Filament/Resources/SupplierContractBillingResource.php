@@ -420,14 +420,24 @@ class SupplierContractBillingResource extends Resource
                     )
                     ->color('primary'),
 
-                Tables\Columns\TextColumn::make('supplierContract.supplier.name')
+                Tables\Columns\TextColumn::make('supplier_display_name')
                     ->label('Lieferant')
-                    ->searchable(['name', 'company_name'])
-                    ->sortable()
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('supplierContract.supplier', function (Builder $query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                  ->orWhere('company_name', 'like', "%{$search}%");
+                        });
+                    })
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->join('supplier_contracts', 'supplier_contract_billings.supplier_contract_id', '=', 'supplier_contracts.id')
+                                    ->join('suppliers', 'supplier_contracts.supplier_id', '=', 'suppliers.id')
+                                    ->orderBy('suppliers.name', $direction)
+                                    ->select('supplier_contract_billings.*');
+                    })
                     ->limit(30)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->placeholder('Kein Lieferant')
-                    ->formatStateUsing(function (?string $state, SupplierContractBilling $record): ?string {
+                    ->getStateUsing(function (SupplierContractBilling $record): ?string {
                         $supplier = $record->supplierContract?->supplier;
                         if (!$supplier) {
                             return 'Kein Lieferant';
