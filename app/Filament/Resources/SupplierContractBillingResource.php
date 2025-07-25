@@ -116,6 +116,16 @@ class SupplierContractBillingResource extends Resource
 
                 Forms\Components\Section::make('Betragsangaben')
                     ->schema([
+                        Forms\Components\Select::make('currency')
+                            ->label('Währung')
+                            ->options([
+                                'EUR' => 'Euro (€)',
+                                'USD' => 'US-Dollar ($)',
+                                'CHF' => 'Schweizer Franken (CHF)',
+                            ])
+                            ->default('EUR')
+                            ->required(),
+
                         Forms\Components\TextInput::make('net_amount')
                             ->label('Betrag Netto')
                             ->numeric()
@@ -181,20 +191,10 @@ class SupplierContractBillingResource extends Resource
                                 }
                             }),
                     ])
-                    ->columns(3),
+                    ->columns(4),
 
                 Forms\Components\Section::make('Sonstige Angaben')
                     ->schema([
-
-                        Forms\Components\Select::make('currency')
-                            ->label('Währung')
-                            ->options([
-                                'EUR' => 'Euro (€)',
-                                'USD' => 'US-Dollar ($)',
-                                'CHF' => 'Schweizer Franken (CHF)',
-                            ])
-                            ->default('EUR')
-                            ->required(),
 
                         Forms\Components\Select::make('status')
                             ->label('Status')
