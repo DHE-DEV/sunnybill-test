@@ -48,8 +48,7 @@ class SupplierContractBillingResource extends Resource
                             })
                             ->searchable(['contract_number', 'title'])
                             ->preload()
-                            ->required()
-                            ->columnSpanFull(),
+                            ->required(),
 
                         Forms\Components\TextInput::make('billing_number')
                             ->label('Abrechnungsnummer')
