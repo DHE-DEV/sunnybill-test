@@ -677,8 +677,14 @@
             Abrechnung-Nr.: {{ $billing->id }}
         </div>
         
-        <!-- Leerzeile -->
-        <div style="height: 8px;"></div>
+        <!-- Zeile 2: Firmeninfo -->
+        <div style="text-align: center; margin-bottom: 8px; font-size: 8pt;">
+            {{ $companySetting->company_name }}
+            @if($companySetting->full_address) | {{ $companySetting->full_address }}@endif
+            @if($companySetting->phone) | {{ $companySetting->phone }}@endif
+            @if($companySetting->email) | {{ $companySetting->email }}@endif
+            @if($companySetting->website) | {{ $companySetting->website }}@endif
+        </div>
         
         <!-- Bisherige Footer-Inhalte -->
         <div class="footer-content">
