@@ -77,7 +77,8 @@ class SupplierContractBillingResource extends Resource
                                         $supplierNumber = $contract->supplier && !empty($contract->supplier->supplier_number)
                                             ? (string) $contract->supplier->supplier_number
                                             : 'Unbekannt';
-                                        return [$contract->id => "{$contract->contract_number} - {$contract->title} ({$supplierNumber})"];
+                                        $supplierName = $contract->supplier?->name ?? $contract->supplier?->company_name ?? 'Unbekannt';
+                                        return [$contract->id => "{$contract->contract_number} - {$contract->title} ({$supplierNumber} - {$supplierName})"];
                                     });
                                 }
                                 
@@ -88,7 +89,8 @@ class SupplierContractBillingResource extends Resource
                                     $supplierNumber = $contract->supplier && !empty($contract->supplier->supplier_number)
                                         ? (string) $contract->supplier->supplier_number
                                         : 'Unbekannt';
-                                    return [$contract->id => "{$contract->contract_number} - {$contract->title} ({$supplierNumber})"];
+                                    $supplierName = $contract->supplier?->name ?? $contract->supplier?->company_name ?? 'Unbekannt';
+                                    return [$contract->id => "{$contract->contract_number} - {$contract->title} ({$supplierNumber} - {$supplierName})"];
                                 });
                             })
                             ->searchable()
