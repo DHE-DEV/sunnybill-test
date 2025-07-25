@@ -134,58 +134,11 @@ class SolarPlantBillingPdfService
      */
     public function downloadBillingPdf(SolarPlantBilling $billing)
     {
-        // Lade alle notwendigen Beziehungen
-        $billing->load(['solarPlant', 'customer']);
-
-        $companySetting = CompanySetting::first();
-        if (!$companySetting) {
-            throw new \Exception('Firmeneinstellungen nicht gefunden');
-        }
-
-        // Aktueller Beteiligungsanteil aus der participation Tabelle
-        $currentParticipation = $billing->solarPlant->participations()
-            ->where('customer_id', $billing->customer_id)
-            ->first();
-        
-        $currentPercentage = $currentParticipation 
-            ? $currentParticipation->percentage 
-            : $billing->participation_percentage;
-
-        // Generiere aktuelles Datum
-        $generatedAt = now();
-        
-        // Monatsnamen
-        $monthNames = [
-            1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
-            5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
-        ];
-        
-        $monthName = $monthNames[$billing->billing_month];
-
-        // PDF generieren
-        $pdf = Pdf::loadView('pdf.solar-plant-billing', [
-            'billing' => $billing,
-            'solarPlant' => $billing->solarPlant,
-            'customer' => $billing->customer,
-            'companySetting' => $companySetting,
-            'currentPercentage' => $currentPercentage,
-            'generatedAt' => $generatedAt,
-            'monthName' => $monthName,
-        ])
-        ->setPaper('a4', 'portrait')
-        ->setOptions([
-            'dpi' => 150,
-            'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => true,
-            'isHtml5ParserEnabled' => true,
-        ]);
-
-        // Dateiname generieren (neues Format: Solaranlagen-Name_Kunden-Name_YYYY-MM.pdf)
+        $pdfContent = $this->generateBillingPdf($billing);
         $filename = $this->generatePdfFilename($billing);
 
         return response()->streamDownload(
-            fn () => print($pdf->output()),
+            fn () => print($pdfContent),
             $filename
         );
     }
