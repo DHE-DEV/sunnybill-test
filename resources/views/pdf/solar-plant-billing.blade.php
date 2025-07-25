@@ -424,11 +424,14 @@
                 <td class="number">-{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
             </tr>
             @endif
-            <tr class="total-row">
-                <td>Gesamtergebnis:</td>
-                <td class="number">{{ number_format($billing->net_amount, 2, ',', '.') }} €</td>
-            </tr>
         </table>
+    </div>
+
+    <!-- Gesamtergebnis prominent -->
+    <div style="clear: both; margin: 30px 0; text-align: center;">
+        <div style="display: inline-block; background: #2563eb; color: white; padding: 15px 30px; border-radius: 5px; font-size: 14pt; font-weight: bold;">
+            Gesamtergebnis: {{ number_format($billing->net_amount, 2, ',', '.') }} €
+        </div>
     </div>
 
     <!-- Aufschlüsselung der Gutschriften/Einnahmen -->
