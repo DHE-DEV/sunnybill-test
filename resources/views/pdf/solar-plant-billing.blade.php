@@ -311,8 +311,8 @@
             <!-- Leer für Platz -->
         </div>
         <div class="company-info">
-                    @if($companySetting->hasLogo())
-                        <img src="{{ public_path('storage/' . $companySetting->logo_path) }}" 
+                    @if($logoBase64)
+                        <img src="{{ $logoBase64 }}" 
                              alt="Firmenlogo" 
                              style="max-width: 150px; max-height: 60px; object-fit: contain;">
                     @endif

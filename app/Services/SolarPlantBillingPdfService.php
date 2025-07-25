@@ -75,6 +75,21 @@ class SolarPlantBillingPdfService
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
         ];
         
+        // Logo als base64 für PDF konvertieren
+        $logoBase64 = null;
+        if ($companySetting->hasLogo()) {
+            try {
+                $logoPath = storage_path('app/public/' . $companySetting->logo_path);
+                if (file_exists($logoPath)) {
+                    $logoContent = file_get_contents($logoPath);
+                    $mimeType = mime_content_type($logoPath);
+                    $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoContent);
+                }
+            } catch (\Exception $e) {
+                // Logo konnte nicht geladen werden - wird ignoriert
+            }
+        }
+        
         return [
             'billing' => $billing,
             'customer' => $customer,
@@ -84,6 +99,7 @@ class SolarPlantBillingPdfService
             'monthName' => $monthNames[$billing->billing_month],
             'billingDate' => Carbon::createFromDate($billing->billing_year, $billing->billing_month, 1),
             'generatedAt' => now(),
+            'logoBase64' => $logoBase64,
         ];
     }
 
