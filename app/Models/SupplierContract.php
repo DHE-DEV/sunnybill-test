@@ -28,6 +28,7 @@ class SupplierContract extends Model
         'end_date',
         'contract_value',
         'currency',
+        'default_vat_rate',
         'status',
         'payment_terms',
         'notes',
@@ -47,6 +48,7 @@ class SupplierContract extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'contract_value' => 'decimal:2',
+        'default_vat_rate' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

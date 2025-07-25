@@ -111,6 +111,15 @@ class SupplierContractResource extends Resource
                                 'CHF' => 'Schweizer Franken (CHF)',
                             ])
                             ->default('EUR'),
+                        Forms\Components\TextInput::make('default_vat_rate')
+                            ->label('Standard MwSt.')
+                            ->numeric()
+                            ->step(0.01)
+                            ->suffix('%')
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->default(19.00)
+                            ->helperText('Standard-Mehrwertsteuersatz für Abrechnungen dieses Vertrags'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Vertragserkennung')
