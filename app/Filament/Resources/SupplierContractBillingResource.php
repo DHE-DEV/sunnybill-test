@@ -310,7 +310,7 @@ class SupplierContractBillingResource extends Resource
                                 }),
                         ])
                         ->columnSpanFull()
-                        ->alignCenter(),
+                        ->alignStart(),
 
                         Forms\Components\Placeholder::make('calculate_help')
                             ->label('')
