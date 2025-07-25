@@ -650,6 +650,20 @@ class SupplierContractBillingResource extends Resource
                     ->color(fn ($state) => $state && $state->isPast() ? 'danger' : 'gray')
                     ->toggleable(),
 
+                Tables\Columns\TextColumn::make('net_amount')
+                    ->label('Netto')
+                    ->money('EUR')
+                    ->sortable()
+                    ->alignEnd()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('vat_rate')
+                    ->label('MwSt.')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 2, ',', '.') . ' %' : '—')
+                    ->sortable()
+                    ->alignEnd()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Gesamtbetrag')
                     ->money('EUR')
