@@ -25,7 +25,7 @@ class SupplierContractBillingArticle extends Model
     protected $casts = [
         'quantity' => 'decimal:4',
         'unit_price' => 'decimal:6',
-        'total_price' => 'decimal:2',
+        'total_price' => 'decimal:6',
         'is_active' => 'boolean',
     ];
 
