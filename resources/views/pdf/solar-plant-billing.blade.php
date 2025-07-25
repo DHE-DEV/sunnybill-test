@@ -64,7 +64,7 @@
         .billing-info {
             float: right;
             width: 45%;
-            margin-top: -80px;
+            margin-top: -108px;
             font-size: 9pt;
         }
         
