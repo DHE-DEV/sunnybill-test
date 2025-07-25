@@ -354,12 +354,11 @@
         <div class="plant-details">
             <div>
                 <strong>Standort:</strong><br>
-                {{ $solarPlant->address }}<br>
-                {{ $solarPlant->postal_code }} {{ $solarPlant->city }}
+                {{ $solarPlant->location ?: 'Kein Standort hinterlegt' }}
             </div>
             <div>
                 <strong>Anlagenleistung:</strong><br>
-                {{ number_format($solarPlant->capacity_kwp, 2, ',', '.') }} kWp
+                {{ number_format($solarPlant->total_capacity_kw, 2, ',', '.') }} kWp
             </div>
             <div>
                 <strong>Ihre Beteiligung:</strong><br>
