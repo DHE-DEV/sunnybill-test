@@ -36,6 +36,7 @@ class SupplierContractBillingResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Abrechnungsdetails')
                     ->schema([
+                        // Zeile 1
                         Forms\Components\Select::make('supplier_contract_id')
                             ->label('Lieferantenvertrag')
                             ->relationship('supplierContract', 'title')
@@ -56,17 +57,32 @@ class SupplierContractBillingResource extends Resource
                             ->dehydrated(false)
                             ->placeholder('Wird automatisch generiert'),
 
-                        Forms\Components\TextInput::make('supplier_invoice_number')
-                            ->label('Anbieter-Rechnungsnummer')
+                        // Zeile 2
+                        Forms\Components\TextInput::make('title')
+                            ->label('Titel')
+                            ->required()
                             ->maxLength(255)
-                            ->placeholder('Rechnungsnummer des Anbieters'),
+                            ->columnSpanFull(),
 
+                        // Zeile 3
+                        Forms\Components\Textarea::make('description')
+                            ->label('Beschreibung')
+                            ->rows(3)
+                            ->columnSpanFull(),
+
+                        // Zeile 4
                         Forms\Components\Select::make('billing_type')
                             ->label('Abrechnungstyp')
                             ->options(SupplierContractBilling::getBillingTypeOptions())
                             ->default('invoice')
                             ->required(),
 
+                        Forms\Components\TextInput::make('supplier_invoice_number')
+                            ->label('Anbieter-Rechnungsnummer')
+                            ->maxLength(255)
+                            ->placeholder('Rechnungsnummer des Anbieters'),
+
+                        // Zeile 5
                         Forms\Components\Select::make('billing_year')
                             ->label('Abrechnungsjahr')
                             ->options(function () {
@@ -92,16 +108,7 @@ class SupplierContractBillingResource extends Resource
                             })
                             ->searchable(),
 
-                        Forms\Components\TextInput::make('title')
-                            ->label('Titel')
-                            ->required()
-                            ->maxLength(255),
-
-                        Forms\Components\Textarea::make('description')
-                            ->label('Beschreibung')
-                            ->rows(3)
-                            ->columnSpanFull(),
-
+                        // Zeile 6
                         Forms\Components\DatePicker::make('billing_date')
                             ->label('Abrechnungsdatum')
                             ->required()
@@ -109,8 +116,7 @@ class SupplierContractBillingResource extends Resource
 
                         Forms\Components\DatePicker::make('due_date')
                             ->label('Fälligkeitsdatum')
-                            ->after('billing_date')
-                            ->columnSpanFull(),
+                            ->after('billing_date'),
                     ])
                     ->columns(2),
 
