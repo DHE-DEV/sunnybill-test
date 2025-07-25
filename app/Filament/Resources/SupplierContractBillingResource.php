@@ -543,9 +543,18 @@ class SupplierContractBillingResource extends Resource
                 Tables\Filters\SelectFilter::make('supplier')
                     ->label('Lieferant')
                     ->relationship('supplierContract.supplier', 'name', function ($query) {
-                        return $query->whereNotNull('name')->where('name', '!=', '');
+                        return $query->where(function ($q) {
+                            $q->whereNotNull('name')->where('name', '!=', '')
+                              ->orWhere(function ($q2) {
+                                  $q2->whereNotNull('company_name')->where('company_name', '!=', '');
+                              });
+                        });
                     })
-                    ->searchable()
+                    ->getOptionLabelFromRecordUsing(function (\App\Models\Supplier $record): string {
+                        // Verwende company_name oder fallback zu name
+                        return $record->company_name ?? $record->name ?? 'Unbekannt';
+                    })
+                    ->searchable(['name', 'company_name'])
                     ->preload(),
 
                 Tables\Filters\Filter::make('billing_date')
