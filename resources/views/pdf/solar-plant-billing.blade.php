@@ -409,23 +409,6 @@
         </tbody>
     </table>
 
-    <!-- Summen -->
-    <div class="totals">
-        <table>
-            @if($billing->total_credits > 0)
-            <tr>
-                <td>Einnahmen/Gutschriften:</td>
-                <td class="number">{{ number_format($billing->total_credits, 2, ',', '.') }} €</td>
-            </tr>
-            @endif
-            @if($billing->total_costs > 0)
-            <tr>
-                <td>Kosten:</td>
-                <td class="number">-{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
-            </tr>
-            @endif
-        </table>
-    </div>
 
     <!-- Gesamtergebnis prominent -->
     <div style="clear: both; margin: 30px 0; text-align: center;">
