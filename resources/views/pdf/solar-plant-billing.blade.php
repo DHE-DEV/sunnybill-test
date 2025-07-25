@@ -411,7 +411,7 @@
 
 
     <!-- Gesamtergebnis prominent -->
-    <div style="clear: both; margin: 30px 0; text-align: center;">
+    <div style="clear: both; margin: 44px 0; text-align: center;">
         <div style="display: inline-block; background: #2563eb; color: white; padding: 15px 30px; border-radius: 5px; font-size: 14pt; font-weight: bold;">
             Gesamtergebnis: {{ number_format($billing->net_amount, 2, ',', '.') }} €
         </div>
@@ -419,7 +419,7 @@
 
     <!-- Aufschlüsselung der Gutschriften/Einnahmen -->
     @if(!empty($billing->credit_breakdown))
-    <div class="breakdown">
+    <div class="breakdown" style="page-break-before: always;">
         <h3>Aufschlüsselung der Einnahmen/Gutschriften</h3>
         <table class="breakdown-table">
             <thead>
