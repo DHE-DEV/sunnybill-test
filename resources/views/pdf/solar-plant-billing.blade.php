@@ -106,14 +106,16 @@
             text-align: center;
             margin: 20px 0;
             font-size: 12pt;
-            color: #666;
+            color: #2563eb;
+            #color: #666;
+            border-bottom: 2px solid #2563eb;
         }
         
         .plant-info {
             background: #f8f9fa;
             padding: 15px;
-            margin: 20px 0;
-            border-left: 4px solid #2563eb;
+            margin: 0px 0;
+            #border-left: 4px solid #2563eb;
         }
         
         .plant-info h3 {
@@ -168,7 +170,8 @@
         }
         
         .positions-table th {
-            background: #2563eb;
+            #background: #2563eb;
+            background: #96989aff;
             color: white;
             padding: 10px 8px;
             text-align: left;
@@ -310,7 +313,7 @@
             @endif
         </div>
         <div class="company-info">
-            <h1>{{ $companySetting->company_name }}</h1>
+            <h3>{{ $companySetting->company_name }}</h3>
             <div>{{ $companySetting->full_address }}</div>
             @if($companySetting->phone)
                 <div>Tel: {{ $companySetting->phone }}</div>
@@ -372,11 +375,11 @@
 
     <!-- Titel -->
     <div class="document-title">
-        <h2>Solaranlagen-Abrechnung</h2>
+        <!--<h2>Solaranlagen-Abrechnung</h2>-->
     </div>
-
+    
     <div class="billing-period">
-        Abrechnungsperiode: {{ $monthName }} {{ $billing->billing_year }}
+        <h3>Kundeninformation zur Abrechnungsperiode {{ $monthName }} {{ $billing->billing_year }}</h3>
     </div>
 
     <!-- Anlageninfo -->
@@ -511,22 +514,24 @@
             <thead>
                 <tr>
                     <th>Lieferant</th>
-                    <th>Vertrag</th>
-                    <th>Kundenanteil</th>
+                    <th>Anteil</th>
+                    <th>Netto (€)</th>
+                    <th>MwSt. %<th>
                     <th class="number">Betrag (€)</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($billing->credit_breakdown as $credit)
                 <tr>
-                    <td>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</td>
-                    <td>{{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}</td>
+                    <td><b>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}</td>
                     <td class="number">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
+                    <td>x</td>
+                    <td>x</td>
                     <td class="number">{{ number_format($credit['customer_share'] ?? 0, 6, ',', '.') }}</td>
                 </tr>
                 @if(isset($credit['articles']) && !empty($credit['articles']))
                 <tr>
-                    <td colspan="4" style="padding-left: 20px; background: #f0f8ff; border-top: none;">
+                    <td colspan="5" style="padding-left: 20px; background: #f0f8ff; border-top: none;">
                         <strong>Artikel-Aufschlüsselung:</strong>
                         <table style="width: 100%; margin-top: 5px; font-size: 8pt;">
                             <thead>
@@ -572,17 +577,19 @@
             <thead>
                 <tr>
                     <th>Lieferant</th>
-                    <th>Vertrag</th>
-                    <th>Kundenanteil</th>
+                    <th>Anteil</th>
+                    <th>Netto (€)</th>
+                    <th>MwSt. %<th>
                     <th class="number">Betrag (€)</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($billing->cost_breakdown as $cost)
                 <tr>
-                    <td>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</td>
-                    <td>{{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}</td>
+                    <td><b>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}</td>
                     <td class="number">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
+                    <td>x</td>
+                    <td>x</td>
                     <td class="number">{{ number_format($cost['customer_share'] ?? 0, 6, ',', '.') }}</td>
                 </tr>
                 @if(isset($cost['articles']) && !empty($cost['articles']))
@@ -631,11 +638,9 @@
         <ul>
             <li>Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {{ $solarPlant->name }}.</li>
             <li>Ihr aktueller Beteiligungsanteil beträgt {{ number_format($currentPercentage, 2, ',', '.') }}%.</li>
+            <li>Die Abrechnung der Marktprämie erfolgt Umsatzsteuerfrei.</li>
             @if($billing->total_credits > 0)
-            <li>Die Einnahmen/Gutschriften stammen aus Vertragsabrechnungen für diese Solaranlage.</li>
-            @endif
-            @if($billing->total_costs > 0)
-            <li>Die Kosten beinhalten anteilige Betriebskosten, Wartung und Verwaltung der Anlage.</li>
+            <li>Die Einnahmen/Gutschriften stammen aus Vertragsabrechnungen unserer Lieferanten für diese Solaranlage.</li>
             @endif
             <li>Bei Fragen zu dieser Abrechnung wenden Sie sich bitte an uns.</li>
         </ul>
