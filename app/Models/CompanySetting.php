@@ -216,7 +216,7 @@ class CompanySetting extends Model
             return null;
         }
         
-        return Storage::url($this->logo_path);
+        return Storage::disk('public')->url($this->logo_path);
     }
 
     /**
@@ -224,7 +224,7 @@ class CompanySetting extends Model
      */
     public function hasLogo(): bool
     {
-        return !empty($this->logo_path) && Storage::exists($this->logo_path);
+        return !empty($this->logo_path) && Storage::disk('public')->exists($this->logo_path);
     }
 
     /**

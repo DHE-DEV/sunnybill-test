@@ -311,11 +311,11 @@
             <!-- Leer für Platz -->
         </div>
         <div class="company-info">
-            @if($companySetting->hasLogo())
-                <div style="text-align: right; margin-bottom: 15px;">
-                    <img src="{{ public_path('storage/' . $companySetting->logo_path) }}" alt="Logo" style="max-width: 150px; max-height: 60px;">
-                </div>
-            @endif
+                    @if($companySetting->hasLogo())
+                        <img src="{{ public_path('storage/' . $companySetting->logo_path) }}" 
+                             alt="Firmenlogo" 
+                             style="max-width: 150px; max-height: 60px; object-fit: contain;">
+                    @endif
             <h3>{{ $companySetting->company_name }}</h3>
         </div>
     </div>

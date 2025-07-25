@@ -159,8 +159,8 @@ class CompanySettingResource extends Resource
                                             ])
                                             ->acceptedFileTypes(['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'])
                                             ->maxSize(51200) // 50MB
-                                            ->disk('s3') // Direkt DigitalOcean Spaces verwenden
-                                            ->directory('') // Root-Verzeichnis
+                                            ->disk('public') // Lokaler öffentlicher Storage
+                                            ->directory('logos') // Logos-Verzeichnis
                                             ->preserveFilenames(false)
                                             ->getUploadedFileNameForStorageUsing(function ($file) {
                                                 // Zeitstempel-basierte Benennung für Logos
@@ -182,7 +182,7 @@ class CompanySettingResource extends Resource
                                                 
                                                 return $cleanName . '_' . $timestamp . $extension;
                                             })
-                                            ->helperText('Empfohlene Formate: PNG, JPG, SVG. Wird anstatt des Textes "SunnyBill" angezeigt. Wird automatisch in DigitalOcean Spaces im Root-Verzeichnis gespeichert.'),
+                                            ->helperText('Empfohlene Formate: PNG, JPG, SVG. Wird im lokalen Storage gespeichert und in PDFs verwendet.'),
                                     ]),
                                 
                                 Forms\Components\Section::make('Logo-Größe')
