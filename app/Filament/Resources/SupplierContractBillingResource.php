@@ -381,7 +381,11 @@ class SupplierContractBillingResource extends Resource
                     })
                     ->color('primary')
                     ->weight('medium')
-                    ->searchable(false)
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('supplierContract.solarPlants', function (Builder $query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%");
+                        });
+                    })
                     ->sortable(false)
                     ->placeholder('—')
                     ->toggleable(),
