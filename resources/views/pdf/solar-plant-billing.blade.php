@@ -354,7 +354,19 @@
         <div class="plant-details">
             <div>
                 <strong>Standort:</strong><br>
-                {{ $solarPlant->location ?: 'Kein Standort hinterlegt' }}
+                @if($solarPlant->location)
+                    @php
+                        // Teile den Standort in Zeilen auf (nach Komma, Semikolon oder Pipe)
+                        $locationParts = preg_split('/[,;|]/', $solarPlant->location);
+                        $locationParts = array_map('trim', $locationParts);
+                        $locationParts = array_filter($locationParts);
+                    @endphp
+                    @foreach($locationParts as $part)
+                        {{ $part }}@if(!$loop->last)<br>@endif
+                    @endforeach
+                @else
+                    Kein Standort hinterlegt
+                @endif
             </div>
             <div>
                 <strong>Anlagenleistung:</strong><br>
