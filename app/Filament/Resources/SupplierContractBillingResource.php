@@ -239,6 +239,79 @@ class SupplierContractBillingResource extends Resource
                                     $set('net_amount', round($netAmount, 2));
                                 }
                             }),
+
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('calculate_amount')
+                                ->label('Berechnen')
+                                ->icon('heroicon-o-calculator')
+                                ->color('primary')
+                                ->size('sm')
+                                ->action(function (callable $get, callable $set) {
+                                    $netAmount = floatval($get('net_amount') ?? 0);
+                                    $vatRate = floatval($get('vat_rate') ?? 0);
+                                    $totalAmount = floatval($get('total_amount') ?? 0);
+                                    
+                                    $filledFields = 0;
+                                    if ($netAmount > 0) $filledFields++;
+                                    if ($vatRate >= 0) $filledFields++;
+                                    if ($totalAmount > 0) $filledFields++;
+                                    
+                                    if ($filledFields < 2) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Ungenügend Daten')
+                                            ->body('Bitte geben Sie mindestens 2 Werte ein (Betrag Netto, MwSt. % oder Gesamtbetrag).')
+                                            ->warning()
+                                            ->send();
+                                        return;
+                                    }
+                                    
+                                    // Berechne fehlenden Wert
+                                    if ($netAmount > 0 && $vatRate >= 0 && $totalAmount == 0) {
+                                        // Berechne Gesamtbetrag aus Netto + MwSt%
+                                        $calculatedTotal = $netAmount * (1 + ($vatRate / 100));
+                                        $set('total_amount', round($calculatedTotal, 2));
+                                        
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Berechnung erfolgreich')
+                                            ->body('Gesamtbetrag wurde berechnet: ' . number_format($calculatedTotal, 2, ',', '.') . ' €')
+                                            ->success()
+                                            ->send();
+                                            
+                                    } elseif ($totalAmount > 0 && $vatRate >= 0 && $netAmount == 0) {
+                                        // Berechne Nettobetrag aus Gesamt - MwSt%
+                                        $calculatedNet = $totalAmount / (1 + ($vatRate / 100));
+                                        $set('net_amount', round($calculatedNet, 2));
+                                        
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Berechnung erfolgreich')
+                                            ->body('Nettobetrag wurde berechnet: ' . number_format($calculatedNet, 2, ',', '.') . ' €')
+                                            ->success()
+                                            ->send();
+                                            
+                                    } elseif ($netAmount > 0 && $totalAmount > 0 && $vatRate == 0) {
+                                        // Berechne MwSt% aus Netto und Gesamt
+                                        if ($netAmount > 0) {
+                                            $calculatedVat = (($totalAmount / $netAmount) - 1) * 100;
+                                            $set('vat_rate', round($calculatedVat, 2));
+                                            
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Berechnung erfolgreich')
+                                                ->body('MwSt.-Satz wurde berechnet: ' . number_format($calculatedVat, 2, ',', '.') . ' %')
+                                                ->success()
+                                                ->send();
+                                        }
+                                    } else {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Berechnung nicht erforderlich')
+                                            ->body('Alle Werte sind bereits ausgefüllt oder die Kombination erlaubt keine eindeutige Berechnung.')
+                                            ->info()
+                                            ->send();
+                                    }
+                                })
+                                ->helperText('Berechnet automatisch den fehlenden Wert aus den anderen beiden Werten'),
+                        ])
+                        ->columnSpanFull()
+                        ->alignCenter(),
                     ])
                     ->columns(4),
 
