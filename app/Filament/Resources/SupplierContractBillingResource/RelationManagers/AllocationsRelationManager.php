@@ -264,19 +264,37 @@ class AllocationsRelationManager extends RelationManager
                                 $totalCapacity = 0;
                                 $capacityData = [];
                                 
-                                foreach ($allocations as $allocation) {
-                                    if ($allocation->solarPlant && $allocation->solarPlant->total_capacity_kw) {
-                                        $capacity = $allocation->solarPlant->total_capacity_kw;
-                                        $totalCapacity += $capacity;
-                                        $capacityData[$allocation->id] = $capacity;
+                                // Sammle Beteiligungsprozentsätze aus dem Vertrag
+                                $participationData = [];
+                                $contract = $billing->supplierContract;
+                                
+                                if ($contract) {
+                                    foreach ($allocations as $allocation) {
+                                        if ($allocation->solarPlant) {
+                                            // Hole den Beteiligungsprozentsatz aus der Pivot-Tabelle
+                                            $assignment = $contract->activeSolarPlantAssignments()
+                                                ->where('solar_plant_id', $allocation->solar_plant_id)
+                                                ->first();
+                                            
+                                            if ($assignment) {
+                                                $participationData[$allocation->id] = $assignment->percentage;
+                                            }
+                                            
+                                            // Auch Kapazität für Referenz sammeln
+                                            if ($allocation->solarPlant->total_capacity_kw) {
+                                                $capacity = $allocation->solarPlant->total_capacity_kw;
+                                                $totalCapacity += $capacity;
+                                                $capacityData[$allocation->id] = $capacity;
+                                            }
+                                        }
                                     }
                                 }
                                 
-                                // Zeige Kapazitäts-basierte Berechnung wenn verfügbar
-                                if ($totalCapacity > 0) {
+                                // Zeige Vertragsinformationen
+                                if (!empty($participationData)) {
                                     $content .= '<div class="bg-blue-100 p-3 rounded mb-3">';
-                                    $content .= '<h4 class="font-medium text-blue-900 mb-2">🔋 Kapazitäts-basierte Prozentsätze:</h4>';
-                                    $content .= '<p class="text-blue-800 text-sm mb-2"><strong>Gesamtkapazität:</strong> ' . number_format($totalCapacity, 2, ',', '.') . ' kWp</p>';
+                                    $content .= '<h4 class="font-medium text-blue-900 mb-2">📋 Vertrags-Beteiligungen:</h4>';
+                                    $content .= '<p class="text-blue-800 text-sm mb-2">Beteiligungsprozentsätze aus dem Lieferantenvertrag</p>';
                                     $content .= '</div>';
                                 }
                                 
@@ -298,12 +316,22 @@ class AllocationsRelationManager extends RelationManager
                                     $content .= '<div class="bg-white p-3 rounded border">';
                                     $content .= '<p class="font-medium text-gray-900">' . htmlspecialchars($plantName) . '</p>';
                                     
-                                    // Zeige Kapazität wenn verfügbar
-                                    if ($plantCapacity && $totalCapacity > 0) {
-                                        $capacityPercentage = round(($plantCapacity / $totalCapacity) * 100, 2);
+                                    // Zeige Beteiligungsprozentsatz aus dem Vertrag
+                                    if (isset($participationData[$allocation->id])) {
+                                        $participationPercentage = $participationData[$allocation->id];
+                                        $content .= '<div class="text-xs text-green-600 mb-1 font-medium">';
+                                        $content .= '📋 <strong>Beteiligungssatz (Vertrag):</strong> ' . number_format($participationPercentage, 2, ',', '.') . '%';
+                                        $content .= '</div>';
+                                    }
+                                    
+                                    // Zeige Kapazität als zusätzliche Information
+                                    if ($plantCapacity) {
                                         $content .= '<div class="text-xs text-blue-600 mb-1">';
-                                        $content .= 'Kapazität: ' . number_format($plantCapacity, 2, ',', '.') . ' kWp ';
-                                        $content .= '→ Kapazitäts-Prozentsatz: (' . number_format($plantCapacity, 2, ',', '.') . ' ÷ ' . number_format($totalCapacity, 2, ',', '.') . ') × 100 = ' . number_format($capacityPercentage, 2, ',', '.') . '%';
+                                        $content .= '🔋 Anlagenkapazität: ' . number_format($plantCapacity, 2, ',', '.') . ' kWp';
+                                        if ($totalCapacity > 0) {
+                                            $capacityPercentage = round(($plantCapacity / $totalCapacity) * 100, 2);
+                                            $content .= ' (' . number_format($capacityPercentage, 2, ',', '.') . '% der Gesamtkapazität)';
+                                        }
                                         $content .= '</div>';
                                     }
                                     
