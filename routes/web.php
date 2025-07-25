@@ -75,4 +75,14 @@ Route::middleware(['auth'])->group(function () {
     })->name('admin.download-bulk-pdfs');
 });
 
+// Document routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/documents/{document}/preview', [App\Http\Controllers\DocumentController::class, 'view'])
+        ->name('documents.preview');
+    Route::get('/documents/{document}/download', [App\Http\Controllers\DocumentController::class, 'download'])
+        ->name('documents.download');
+    Route::get('/documents/{document}/thumbnail', [App\Http\Controllers\DocumentController::class, 'thumbnail'])
+        ->name('documents.thumbnail');
+});
+
 require __DIR__.'/auth.php';
