@@ -525,9 +525,9 @@
                 <tr>
                     <td><b>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}</td>
                     <td class="number">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
-                    <td>x</td>
-                    <td>x</td>
-                    <td class="number">{{ number_format($credit['customer_share'] ?? 0, 6, ',', '.') }}</td>
+                    <td class="number">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
+                    <td class="number">{{ number_format(($credit['vat_rate'] ?? 0.19) * 100, 1, ',', '.') }}%</td>
+                    <td class="number">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
                 @if(isset($credit['articles']) && !empty($credit['articles']))
                 <tr>
@@ -588,9 +588,9 @@
                 <tr>
                     <td><b>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}</td>
                     <td class="number">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
-                    <td>x</td>
-                    <td>x</td>
-                    <td class="number">{{ number_format($cost['customer_share'] ?? 0, 6, ',', '.') }}</td>
+                    <td class="number">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
+                    <td class="number">{{ number_format(($cost['vat_rate'] ?? 0.19) * 100, 1, ',', '.') }}%</td>
+                    <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
                 @if(isset($cost['articles']) && !empty($cost['articles']))
                 <tr>

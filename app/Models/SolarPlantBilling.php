@@ -353,6 +353,11 @@ class SolarPlantBilling extends Model
                     ];
                 }
                 
+                // Berechne Netto- und MwSt.-Beträge für diese Gutschrift
+                $customerCreditNet = $billing->net_amount ? (abs($billing->net_amount) * $finalShare) : ($customerCredit / 1.19);
+                $customerCreditVat = $customerCredit - $customerCreditNet;
+                $vatRate = $billing->vat_rate ?? 0.19;
+                
                 $creditBreakdown[] = [
                     'contract_id' => $contract->id,
                     'contract_title' => $contract->title,
@@ -365,6 +370,9 @@ class SolarPlantBilling extends Model
                     'solar_plant_percentage' => $solarPlantPercentage,
                     'customer_percentage' => $percentage,
                     'customer_share' => $customerCredit,
+                    'customer_share_net' => $customerCreditNet,
+                    'customer_share_vat' => $customerCreditVat,
+                    'vat_rate' => $vatRate,
                     'articles' => $articleDetails,
                 ];
             } else {
@@ -412,6 +420,11 @@ class SolarPlantBilling extends Model
                     ];
                 }
 
+                // Berechne Netto- und MwSt.-Beträge für diese Kosten
+                $customerCostNet = $billing->net_amount ? ($billing->net_amount * $finalShare) : ($customerCost / 1.19);
+                $customerCostVat = $customerCost - $customerCostNet;
+                $vatRate = $billing->vat_rate ?? 0.19;
+                
                 $costBreakdown[] = [
                     'contract_id' => $contract->id,
                     'contract_title' => $contract->title,
@@ -424,6 +437,9 @@ class SolarPlantBilling extends Model
                     'solar_plant_percentage' => $solarPlantPercentage,
                     'customer_percentage' => $percentage,
                     'customer_share' => $customerCost,
+                    'customer_share_net' => $customerCostNet,
+                    'customer_share_vat' => $customerCostVat,
+                    'vat_rate' => $vatRate,
                     'articles' => $articleDetails,
                 ];
                 }
