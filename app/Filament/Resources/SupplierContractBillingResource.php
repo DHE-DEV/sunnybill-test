@@ -307,11 +307,15 @@ class SupplierContractBillingResource extends Resource
                                             ->info()
                                             ->send();
                                     }
-                                })
-                                ->helperText('Berechnet automatisch den fehlenden Wert aus den anderen beiden Werten'),
+                                }),
                         ])
                         ->columnSpanFull()
                         ->alignCenter(),
+
+                        Forms\Components\Placeholder::make('calculate_help')
+                            ->label('')
+                            ->content('💡 Tragen Sie mindestens 2 Werte ein und klicken Sie "Berechnen", um den dritten Wert automatisch zu berechnen.')
+                            ->columnSpanFull(),
                     ])
                     ->columns(4),
 
