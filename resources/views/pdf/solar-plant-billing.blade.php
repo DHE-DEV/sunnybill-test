@@ -371,33 +371,33 @@
             </tr>
         </thead>
         <tbody>
-            <!-- Einnahmen -->
-            @if($billing->revenue_amount > 0)
+            <!-- Gutschriften/Einnahmen -->
+            @if($billing->total_credits > 0)
             <tr>
                 <td>1</td>
                 <td>
-                    <strong>Einnahmen aus Direktvermarktung</strong><br>
+                    <strong>Einnahmen/Gutschriften</strong><br>
                     <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 2, ',', '.') }}% Anteil</small>
                 </td>
-                <td class="number">{{ number_format($billing->energy_kwh, 0, ',', '.') }}</td>
-                <td>kWh</td>
-                <td class="number">{{ number_format($billing->revenue_amount / $billing->energy_kwh, 4, ',', '.') }} €</td>
-                <td class="number">{{ number_format($billing->revenue_amount, 2, ',', '.') }} €</td>
+                <td class="number">1</td>
+                <td>Monat</td>
+                <td class="number">{{ number_format($billing->total_credits, 2, ',', '.') }} €</td>
+                <td class="number">{{ number_format($billing->total_credits, 2, ',', '.') }} €</td>
             </tr>
             @endif
 
             <!-- Kosten -->
-            @if($billing->cost_amount > 0)
+            @if($billing->total_costs > 0)
             <tr>
-                <td>2</td>
+                <td>{{ $billing->total_credits > 0 ? 2 : 1 }}</td>
                 <td>
                     <strong>Betriebskosten</strong><br>
                     <small>Anteilige Kosten für {{ $monthName }} {{ $billing->billing_year }}</small>
                 </td>
                 <td class="number">1</td>
                 <td>Monat</td>
-                <td class="number">{{ number_format($billing->cost_amount, 2, ',', '.') }} €</td>
-                <td class="number">-{{ number_format($billing->cost_amount, 2, ',', '.') }} €</td>
+                <td class="number">{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
+                <td class="number">-{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
             </tr>
             @endif
         </tbody>
@@ -406,16 +406,16 @@
     <!-- Summen -->
     <div class="totals">
         <table>
-            @if($billing->revenue_amount > 0)
+            @if($billing->total_credits > 0)
             <tr>
-                <td>Einnahmen:</td>
-                <td class="number">{{ number_format($billing->revenue_amount, 2, ',', '.') }} €</td>
+                <td>Einnahmen/Gutschriften:</td>
+                <td class="number">{{ number_format($billing->total_credits, 2, ',', '.') }} €</td>
             </tr>
             @endif
-            @if($billing->cost_amount > 0)
+            @if($billing->total_costs > 0)
             <tr>
                 <td>Kosten:</td>
-                <td class="number">-{{ number_format($billing->cost_amount, 2, ',', '.') }} €</td>
+                <td class="number">-{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
             </tr>
             @endif
             <tr class="total-row">
@@ -425,28 +425,30 @@
         </table>
     </div>
 
-    <!-- Aufschlüsselung der Einnahmen -->
-    @if($billing->billingBreakdowns->where('type', 'revenue')->count() > 0)
+    <!-- Aufschlüsselung der Gutschriften/Einnahmen -->
+    @if(!empty($billing->credit_breakdown))
     <div class="breakdown">
-        <h3>Aufschlüsselung der Einnahmen</h3>
+        <h3>Aufschlüsselung der Einnahmen/Gutschriften</h3>
         <table class="breakdown-table">
             <thead>
                 <tr>
-                    <th>Zeitraum</th>
-                    <th>Energiemenge</th>
+                    <th>Lieferant</th>
+                    <th>Vertrag</th>
+                    <th>Rechnungsnummer</th>
                     <th>Anlagenanteil</th>
                     <th>Kundenanteil</th>
                     <th class="number">Betrag (€)</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($billing->billingBreakdowns->where('type', 'revenue') as $breakdown)
+                @foreach($billing->credit_breakdown as $credit)
                 <tr>
-                    <td>{{ \Carbon\Carbon::parse($breakdown->period_start)->format('d.m.Y') }} - {{ \Carbon\Carbon::parse($breakdown->period_end)->format('d.m.Y') }}</td>
-                    <td class="number">{{ number_format($breakdown->energy_kwh, 0, ',', '.') }} kWh</td>
-                    <td class="number">{{ number_format($breakdown->solar_plant_percentage, 2, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($breakdown->customer_percentage, 2, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($breakdown->amount, 2, ',', '.') }}</td>
+                    <td>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</td>
+                    <td>{{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}</td>
+                    <td>{{ $credit['billing_number'] ?? 'N/A' }}</td>
+                    <td class="number">{{ number_format($credit['solar_plant_percentage'] ?? 0, 2, ',', '.') }}%</td>
+                    <td class="number">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
+                    <td class="number">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -455,27 +457,29 @@
     @endif
 
     <!-- Aufschlüsselung der Kosten -->
-    @if($billing->billingBreakdowns->where('type', 'cost')->count() > 0)
+    @if(!empty($billing->cost_breakdown))
     <div class="breakdown">
         <h3>Aufschlüsselung der Kosten</h3>
         <table class="breakdown-table">
             <thead>
                 <tr>
-                    <th>Zeitraum</th>
-                    <th>Beschreibung</th>
+                    <th>Lieferant</th>
+                    <th>Vertrag</th>
+                    <th>Rechnungsnummer</th>
                     <th>Anlagenanteil</th>
                     <th>Kundenanteil</th>
                     <th class="number">Betrag (€)</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($billing->billingBreakdowns->where('type', 'cost') as $breakdown)
+                @foreach($billing->cost_breakdown as $cost)
                 <tr>
-                    <td>{{ \Carbon\Carbon::parse($breakdown->period_start)->format('d.m.Y') }} - {{ \Carbon\Carbon::parse($breakdown->period_end)->format('d.m.Y') }}</td>
-                    <td>{{ $breakdown->description ?: 'Betriebskosten' }}</td>
-                    <td class="number">{{ number_format($breakdown->solar_plant_percentage, 2, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($breakdown->customer_percentage, 2, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($breakdown->amount, 2, ',', '.') }}</td>
+                    <td>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</td>
+                    <td>{{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}</td>
+                    <td>{{ $cost['billing_number'] ?? 'N/A' }}</td>
+                    <td class="number">{{ number_format($cost['solar_plant_percentage'] ?? 0, 2, ',', '.') }}%</td>
+                    <td class="number">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
+                    <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -489,8 +493,10 @@
         <ul>
             <li>Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {{ $solarPlant->plant_number }}.</li>
             <li>Ihr aktueller Beteiligungsanteil beträgt {{ number_format($currentPercentage, 2, ',', '.') }}%.</li>
-            <li>Die Einnahmen stammen aus der Direktvermarktung des erzeugten Solarstroms.</li>
-            @if($billing->cost_amount > 0)
+            @if($billing->total_credits > 0)
+            <li>Die Einnahmen/Gutschriften stammen aus Vertragsabrechnungen für diese Solaranlage.</li>
+            @endif
+            @if($billing->total_costs > 0)
             <li>Die Kosten beinhalten anteilige Betriebskosten, Wartung und Verwaltung der Anlage.</li>
             @endif
             <li>Bei Fragen zu dieser Abrechnung wenden Sie sich bitte an uns.</li>

@@ -116,17 +116,78 @@ class SolarPlantBillingPdfService
     /**
      * Erstellt eine Download-Response für die PDF
      */
-    public function downloadBillingPdf(SolarPlantBilling $billing): \Illuminate\Http\Response
+    public function downloadBillingPdf(SolarPlantBilling $billing)
     {
-        $pdfContent = $this->generateBillingPdf($billing);
-        $filename = $this->generatePdfFilename($billing);
+        // Lade alle notwendigen Beziehungen
+        $billing->load(['solarPlant', 'customer']);
+
+        $companySetting = CompanySetting::first();
+        if (!$companySetting) {
+            throw new \Exception('Firmeneinstellungen nicht gefunden');
+        }
+
+        // Aktueller Beteiligungsanteil aus der participation Tabelle
+        $currentParticipation = $billing->solarPlant->participations()
+            ->where('customer_id', $billing->customer_id)
+            ->first();
         
-        return response($pdfContent)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
-            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
-            ->header('Pragma', 'no-cache')
-            ->header('Expires', '0');
+        $currentPercentage = $currentParticipation 
+            ? $currentParticipation->percentage 
+            : $billing->participation_percentage;
+
+        // Generiere aktuelles Datum
+        $generatedAt = now();
+        
+        // Monatsnamen
+        $monthNames = [
+            1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
+            5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
+        ];
+        
+        $monthName = $monthNames[$billing->billing_month];
+
+        // PDF generieren
+        $pdf = Pdf::loadView('pdf.solar-plant-billing', [
+            'billing' => $billing,
+            'solarPlant' => $billing->solarPlant,
+            'customer' => $billing->customer,
+            'companySetting' => $companySetting,
+            'currentPercentage' => $currentPercentage,
+            'generatedAt' => $generatedAt,
+            'monthName' => $monthName,
+        ])
+        ->setPaper('a4', 'portrait')
+        ->setOptions([
+            'dpi' => 150,
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+        ]);
+
+        // Dateiname generieren
+        $customerName = $billing->customer->company_name ?: $billing->customer->name;
+        $plantNumber = $billing->solarPlant->plant_number;
+        $filename = sprintf(
+            'Abrechnung_%s_%s_%d_%02d.pdf',
+            $this->sanitizeFilename($customerName),
+            $this->sanitizeFilename($plantNumber),
+            $billing->billing_year,
+            $billing->billing_month
+        );
+
+        return response()->streamDownload(
+            fn () => print($pdf->output()),
+            $filename
+        );
+    }
+
+    /**
+     * Bereinigt Dateinamen von ungültigen Zeichen
+     */
+    private function sanitizeFilename(string $filename): string
+    {
+        return preg_replace('/[^a-zA-Z0-9\-_]/', '_', $filename);
     }
 
     /**
