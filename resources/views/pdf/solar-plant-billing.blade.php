@@ -682,8 +682,20 @@
             {{ $companySetting->company_name }}
             @if($companySetting->full_address) | {{ $companySetting->full_address }}@endif
             @if($companySetting->phone) | {{ $companySetting->phone }}@endif
-            @if($companySetting->email) | {{ $companySetting->email }}@endif
-            @if($companySetting->website) | {{ $companySetting->website }}@endif
+        </div>
+        
+        <!-- Zeile 3: E-Mail und Website -->
+        <div style="text-align: center; margin-bottom: 8px; font-size: 8pt;">
+            @if($companySetting->email){{ $companySetting->email }}@endif
+            @if($companySetting->email && $companySetting->website) | @endif
+            @if($companySetting->website){{ $companySetting->website }}@endif
+        </div>
+        
+        <!-- Zeile 4: Amtsgericht und Geschäftsführer -->
+        <div style="text-align: center; margin-bottom: 8px; font-size: 8pt;">
+            @if($companySetting->formatted_commercial_register){{ $companySetting->formatted_commercial_register }}@endif
+            @if($companySetting->formatted_commercial_register && $companySetting->management) | @endif
+            @if($companySetting->management)Geschäftsführung: {{ $companySetting->management }}@endif
         </div>
         
         <!-- Bisherige Footer-Inhalte -->
@@ -702,13 +714,7 @@
             </div>
             <div class="footer-section text-center">
                 @if($companySetting->tax_number)
-                Steuernr.: {{ $companySetting->tax_number }}<br>
-                @endif
-                @if($companySetting->formatted_commercial_register)
-                {{ $companySetting->formatted_commercial_register }}<br>
-                @endif
-                @if($companySetting->management)
-                Geschäftsführung: {{ $companySetting->management }}
+                Steuernr.: {{ $companySetting->tax_number }}
                 @endif
             </div>
             <div class="footer-section text-right">
