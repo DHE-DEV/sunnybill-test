@@ -277,7 +277,7 @@
             @endif
         </div>
         <div class="company-info">
-            <h1>{{ $companySetting->full_company_name }}</h1>
+            <h1>{{ $companySetting->company_name }}</h1>
             <div>{{ $companySetting->full_address }}</div>
             @if($companySetting->phone)
                 <div>Tel: {{ $companySetting->phone }}</div>
