@@ -422,12 +422,12 @@ class SupplierContractBillingResource extends Resource
 
                 Tables\Columns\TextColumn::make('supplierContract.supplier.name')
                     ->label('Lieferant')
-                    ->searchable()
+                    ->searchable(['name', 'company_name'])
                     ->sortable()
                     ->limit(30)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->placeholder('Kein Lieferant')
-                    ->getStateUsing(function (SupplierContractBilling $record): ?string {
+                    ->formatStateUsing(function (?string $state, SupplierContractBilling $record): ?string {
                         $supplier = $record->supplierContract?->supplier;
                         if (!$supplier) {
                             return 'Kein Lieferant';
