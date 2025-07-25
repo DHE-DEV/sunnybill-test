@@ -95,21 +95,21 @@ class SolarPlantBillingPdfService
         $customer = $billing->customer;
         $solarPlant = $billing->solarPlant;
         
+        // Solaranlagen-Namen bereinigen (Leerzeichen durch Bindestriche ersetzen)
+        $plantName = $this->sanitizeForFilename($solarPlant->name);
+        
         // Kundennamen bereinigen
         $customerName = $customer->customer_type === 'business' && $customer->company_name 
             ? $customer->company_name 
             : $customer->name;
-        $customerName = preg_replace('/[^a-zA-Z0-9\-_]/', '_', $customerName);
-        
-        // Anlagennummer bereinigen
-        $plantNumber = preg_replace('/[^a-zA-Z0-9\-_]/', '_', $solarPlant->plant_number);
+        $customerName = $this->sanitizeForFilename($customerName);
         
         return sprintf(
-            'Abrechnung_%s_%s_%04d_%02d.pdf',
-            $customerName,
-            $plantNumber,
+            '%04d-%02d_%s_%s.pdf',
             $billing->billing_year,
-            $billing->billing_month
+            $billing->billing_month,
+            $plantName,
+            $customerName
         );
     }
 
@@ -165,16 +165,8 @@ class SolarPlantBillingPdfService
             'isHtml5ParserEnabled' => true,
         ]);
 
-        // Dateiname generieren
-        $customerName = $billing->customer->company_name ?: $billing->customer->name;
-        $plantNumber = $billing->solarPlant->plant_number;
-        $filename = sprintf(
-            'Abrechnung_%s_%s_%d_%02d.pdf',
-            $this->sanitizeFilename($customerName),
-            $this->sanitizeFilename($plantNumber),
-            $billing->billing_year,
-            $billing->billing_month
-        );
+        // Dateiname generieren (neues Format: Solaranlagen-Name_Kunden-Name_YYYY-MM.pdf)
+        $filename = $this->generatePdfFilename($billing);
 
         return response()->streamDownload(
             fn () => print($pdf->output()),
@@ -188,6 +180,32 @@ class SolarPlantBillingPdfService
     private function sanitizeFilename(string $filename): string
     {
         return preg_replace('/[^a-zA-Z0-9\-_]/', '_', $filename);
+    }
+
+    /**
+     * Bereinigt Text für Dateinamen (behält Bindestriche, ersetzt Leerzeichen)
+     */
+    private function sanitizeForFilename(string $text): string
+    {
+        // Entferne führende/trailing Leerzeichen
+        $text = trim($text);
+        
+        // Ersetze mehrere Leerzeichen durch eines
+        $text = preg_replace('/\s+/', ' ', $text);
+        
+        // Ersetze Leerzeichen durch Bindestriche
+        $text = str_replace(' ', '-', $text);
+        
+        // Entferne ungültige Zeichen (behalte Buchstaben, Zahlen, Bindestriche)
+        $text = preg_replace('/[^a-zA-Z0-9\-äöüÄÖÜß]/', '', $text);
+        
+        // Entferne mehrfache Bindestriche
+        $text = preg_replace('/-+/', '-', $text);
+        
+        // Entferne Bindestriche am Anfang und Ende
+        $text = trim($text, '-');
+        
+        return $text;
     }
 
     /**

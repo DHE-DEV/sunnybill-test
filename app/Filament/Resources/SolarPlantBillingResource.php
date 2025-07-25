@@ -543,13 +543,23 @@ class SolarPlantBillingResource extends Resource
                             ])
                             ->default(now()->subMonth()->month)
                             ->required(),
+
+                        Forms\Components\TextInput::make('produced_energy_kwh')
+                            ->label('Produzierte Energie (kWh)')
+                            ->suffix('kWh')
+                            ->numeric()
+                            ->step(0.001)
+                            ->minValue(0)
+                            ->placeholder('z.B. 2500.000')
+                            ->helperText('Gesamte produzierte Energie der Solaranlage für diesen Monat'),
                     ])
                     ->action(function (array $data) {
                         try {
                             $billings = SolarPlantBilling::createBillingsForMonth(
                                 $data['solar_plant_id'],
                                 $data['billing_year'],
-                                $data['billing_month']
+                                $data['billing_month'],
+                                $data['produced_energy_kwh'] ?? null
                             );
 
                             $count = count($billings);
@@ -557,9 +567,14 @@ class SolarPlantBillingResource extends Resource
                                 ->locale('de')
                                 ->translatedFormat('F Y');
 
+                            $energyText = '';
+                            if (isset($data['produced_energy_kwh']) && $data['produced_energy_kwh'] > 0) {
+                                $energyText = " (Produzierte Energie: " . number_format($data['produced_energy_kwh'], 3, ',', '.') . " kWh)";
+                            }
+
                             Notification::make()
                                 ->title('Abrechnungen erfolgreich erstellt')
-                                ->body("{$count} Abrechnungen für {$monthName} wurden erstellt.")
+                                ->body("{$count} Abrechnungen für {$monthName} wurden erstellt.{$energyText}")
                                 ->success()
                                 ->send();
 
@@ -588,6 +603,198 @@ class SolarPlantBillingResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    
+                    Tables\Actions\BulkAction::make('generate_pdfs')
+                        ->label('PDF Abrechnungen generieren')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('primary')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            try {
+                                $pdfService = new \App\Services\SolarPlantBillingPdfService();
+                                $successCount = 0;
+                                $errorCount = 0;
+                                $errors = [];
+                                $downloadUrls = [];
+                                
+                                // Lade notwendige Beziehungen
+                                $records->load(['solarPlant', 'customer']);
+                                
+                                // Erstelle Session-ID für diese Batch
+                                $batchId = uniqid('pdf_batch_');
+                                
+                                foreach ($records as $billing) {
+                                    try {
+                                        // Verwende exakt dieselbe Logik wie der Einzeldownload
+                                        $billing->load(['solarPlant', 'customer']);
+                                        
+                                        $companySetting = \App\Models\CompanySetting::first();
+                                        if (!$companySetting) {
+                                            throw new \Exception('Firmeneinstellungen nicht gefunden');
+                                        }
+
+                                        // Aktueller Beteiligungsanteil aus der participation Tabelle
+                                        $currentParticipation = $billing->solarPlant->participations()
+                                            ->where('customer_id', $billing->customer_id)
+                                            ->first();
+                                        
+                                        $currentPercentage = $currentParticipation 
+                                            ? $currentParticipation->percentage 
+                                            : $billing->participation_percentage;
+
+                                        // Generiere aktuelles Datum
+                                        $generatedAt = now();
+                                        
+                                        // Monatsnamen
+                                        $monthNames = [
+                                            1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
+                                            5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
+                                            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
+                                        ];
+                                        
+                                        $monthName = $monthNames[$billing->billing_month];
+
+                                        // PDF generieren mit exakt denselben Einstellungen wie Einzeldownload
+                                        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.solar-plant-billing', [
+                                            'billing' => $billing,
+                                            'solarPlant' => $billing->solarPlant,
+                                            'customer' => $billing->customer,
+                                            'companySetting' => $companySetting,
+                                            'currentPercentage' => $currentPercentage,
+                                            'generatedAt' => $generatedAt,
+                                            'monthName' => $monthName,
+                                        ])
+                                        ->setPaper('a4', 'portrait')
+                                        ->setOptions([
+                                            'dpi' => 150,
+                                            'defaultFont' => 'DejaVu Sans',
+                                            'isRemoteEnabled' => true,
+                                            'isHtml5ParserEnabled' => true,
+                                        ]);
+                                        
+                                        $pdfContent = $pdf->output();
+                                        
+                                        // Erstelle Dateiname
+                                        $customer = $billing->customer;
+                                        $solarPlant = $billing->solarPlant;
+                                        
+                                        // Solaranlagen-Namen bereinigen
+                                        $plantName = preg_replace('/[^a-zA-Z0-9\-äöüÄÖÜß]/', '', str_replace(' ', '-', trim($solarPlant->name)));
+                                        $plantName = preg_replace('/-+/', '-', $plantName);
+                                        $plantName = trim($plantName, '-');
+                                        
+                                        // Kundennamen bereinigen
+                                        $customerName = $customer->customer_type === 'business' && $customer->company_name 
+                                            ? $customer->company_name 
+                                            : $customer->name;
+                                        $customerName = preg_replace('/[^a-zA-Z0-9\-äöüÄÖÜß]/', '', str_replace(' ', '-', trim($customerName)));
+                                        $customerName = preg_replace('/-+/', '-', $customerName);
+                                        $customerName = trim($customerName, '-');
+                                        
+                                        $filename = sprintf(
+                                            '%04d-%02d_%s_%s.pdf',
+                                            $billing->billing_year,
+                                            $billing->billing_month,
+                                            $plantName,
+                                            $customerName
+                                        );
+                                        
+                                        // Speichere PDF temporär für individuellen Download
+                                        $tempPath = "temp/bulk-pdfs/{$batchId}/{$filename}";
+                                        Storage::disk('public')->put($tempPath, $pdfContent);
+                                        
+                                        // Erstelle Download-URL
+                                        $downloadUrls[] = [
+                                            'filename' => $filename,
+                                            'url' => Storage::disk('public')->url($tempPath),
+                                            'customer_name' => $customerName,
+                                            'period' => sprintf('%04d-%02d', $billing->billing_year, $billing->billing_month),
+                                            'status' => 'success'
+                                        ];
+                                        
+                                        $successCount++;
+                                        
+                                    } catch (\Exception $e) {
+                                        $errorCount++;
+                                        $errors[] = "Fehler bei Abrechnung {$billing->id}: " . $e->getMessage();
+                                    }
+                                }
+                                
+                                // Wenn PDFs erfolgreich generiert wurden, starte automatische Downloads
+                                if ($successCount > 0) {
+                                    // Speichere Download-URLs in Session für Download-Seite
+                                    session([
+                                        'bulk_pdf_downloads' => $downloadUrls,
+                                        'bulk_pdf_batch_id' => $batchId,
+                                        'bulk_pdf_success_count' => $successCount,
+                                        'bulk_pdf_error_count' => $errorCount
+                                    ]);
+                                    
+                                    // Erfolgsmeldung
+                                    $message = "{$successCount} PDF" . ($successCount !== 1 ? 's' : '') . " wurden erstellt und werden jetzt heruntergeladen";
+                                    if ($errorCount > 0) {
+                                        $message .= " ({$errorCount} Fehler aufgetreten)";
+                                    }
+                                    
+                                    $notification = Notification::make()
+                                        ->title('PDFs werden heruntergeladen')
+                                        ->body($message);
+                                    
+                                    if ($errorCount === 0) {
+                                        $notification->success();
+                                    } else {
+                                        $notification->warning();
+                                    }
+                                    
+                                    $notification->send();
+                                    
+                                    // Redirect zur Download-Seite, die automatische Downloads startet
+                                    return redirect()->route('admin.download-bulk-pdfs');
+                                    
+                                } else {
+                                    // Nur Fehlermeldung wenn keine PDFs generiert wurden
+                                    $notification = Notification::make()
+                                        ->title('Keine PDFs generiert')
+                                        ->body('Es konnten keine PDFs erstellt werden. Siehe Fehlerdetails.');
+                                    
+                                    if ($errorCount > 0) {
+                                        $notification->danger();
+                                    } else {
+                                        $notification->warning();
+                                    }
+                                    
+                                    $notification->send();
+                                }
+                                
+                                // Bei Fehlern Details anzeigen
+                                if ($errorCount > 0 && count($errors) > 0) {
+                                    $errorDetails = implode("\n", array_slice($errors, 0, 5));
+                                    if (count($errors) > 5) {
+                                        $errorDetails .= "\n... und " . (count($errors) - 5) . " weitere Fehler";
+                                    }
+                                    
+                                    Notification::make()
+                                        ->title('Fehlerdetails')
+                                        ->body($errorDetails)
+                                        ->danger()
+                                        ->send();
+                                }
+                                
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Fehler bei Bulk-PDF-Generierung')
+                                    ->body('Ein unerwarteter Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('PDF Abrechnungen generieren')
+                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records): string {
+                            $count = $records->count();
+                            return "Möchten Sie für alle {$count} ausgewählten Abrechnungen PDF-Dateien generieren? Die PDFs werden erstellt und können dann heruntergeladen werden.";
+                        })
+                        ->modalSubmitActionLabel('PDFs generieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

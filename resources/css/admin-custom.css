@@ -1,0 +1,25 @@
+/* Custom styling for Filament Admin Panel */
+
+/* Make bulk actions dropdown wider to accommodate longer action names */
+[x-data*="mountedTableBulkAction"] .fi-dropdown-panel,
+.fi-ta-bulk-actions .fi-dropdown-panel {
+    min-width: 280px !important;
+    width: auto !important;
+}
+
+/* Ensure bulk action items have enough space */
+.fi-ta-bulk-actions .fi-dropdown-list-item {
+    white-space: nowrap !important;
+    min-width: 260px !important;
+}
+
+/* Make sure the bulk action button text doesn't wrap */
+.fi-ta-bulk-actions .fi-btn-label {
+    white-space: nowrap !important;
+}
+
+/* Improve dropdown positioning to prevent cutoff */
+.fi-ta-bulk-actions .fi-dropdown-panel {
+    transform: translateX(-50%) !important;
+    left: 50% !important;
+}

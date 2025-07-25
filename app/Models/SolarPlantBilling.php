@@ -161,7 +161,7 @@ class SolarPlantBilling extends Model
     /**
      * Erstellt Abrechnungen für alle Kunden einer Solaranlage für einen bestimmten Monat
      */
-    public static function createBillingsForMonth(string $solarPlantId, int $year, int $month): array
+    public static function createBillingsForMonth(string $solarPlantId, int $year, int $month, ?float $producedEnergyKwh = null): array
     {
         $solarPlant = SolarPlant::find($solarPlantId);
         if (!$solarPlant) {
@@ -211,6 +211,7 @@ class SolarPlantBilling extends Model
                 'billing_year' => $year,
                 'billing_month' => $month,
                 'participation_percentage' => $participation->percentage,
+                'produced_energy_kwh' => $producedEnergyKwh,
                 'total_costs' => $costData['total_costs'],
                 'total_credits' => $costData['total_credits'],
                 'net_amount' => $costData['total_costs'] - $costData['total_credits'],

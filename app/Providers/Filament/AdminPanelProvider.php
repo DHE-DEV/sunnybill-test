@@ -105,6 +105,10 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(1),
             ])
             ->renderHook(
+                'panels::head.end',
+                fn (): string => '<link rel="stylesheet" href="' . \Illuminate\Support\Facades\Vite::asset('resources/css/admin-custom.css') . '">'
+            )
+            ->renderHook(
                 'panels::body.end',
                 fn (): string => !request()->routeIs('filament.admin.auth.login')
                     ? view('layouts.filament-notifications')->render()

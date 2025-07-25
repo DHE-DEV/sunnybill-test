@@ -6,7 +6,7 @@
     <title>Solaranlagen-Abrechnung</title>
     <style>
         @page {
-            margin: 2cm 1.5cm;
+            margin: 1.5cm 1.5cm;
             size: A4;
         }
         
@@ -126,9 +126,38 @@
             width: 100%;
         }
         
-        .plant-details > div {
+        .plant-details > div:first-child {
             display: table-cell;
-            width: 33.33%;
+            width: 56%;
+            vertical-align: top;
+        }
+        
+        .plant-details > div:last-child {
+            display: table-cell;
+            width: 44%;
+            vertical-align: top;
+        }
+        
+        .energy-details {
+            display: table;
+            width: 100%;
+        }
+        
+        .energy-details > div:first-child {
+            display: table-cell;
+            width: 56%;
+            vertical-align: top;
+        }
+        
+        .energy-details > div:nth-child(2) {
+            display: table-cell;
+            width: 27%;
+            vertical-align: top;
+        }
+        
+        .energy-details > div:last-child {
+            display: table-cell;
+            width: 17%;
             vertical-align: top;
         }
         
@@ -157,7 +186,7 @@
         
         .positions-table .number {
             text-align: right;
-            font-family: 'Courier New', monospace;
+            #font-family: 'Courier New', monospace;
         }
         
         .totals {
@@ -221,7 +250,7 @@
         
         .breakdown-table .number {
             text-align: right;
-            font-family: 'Courier New', monospace;
+            #font-family: 'Courier New', monospace;
         }
         
         .footer {
@@ -304,7 +333,9 @@
         @else
             <strong>{{ $customer->name }}</strong><br>
         @endif
-        {{ $customer->address }}<br>
+        @if($customer->street)
+            {{ $customer->street }}<br>
+        @endif
         {{ $customer->postal_code }} {{ $customer->city }}
         @if($customer->country && $customer->country !== 'Deutschland')
             <br>{{ $customer->country }}
@@ -356,26 +387,62 @@
                 <strong>Standort:</strong><br>
                 @if($solarPlant->location)
                     @php
-                        // Teile den Standort in Zeilen auf (nach Komma, Semikolon oder Pipe)
-                        $locationParts = preg_split('/[,;|]/', $solarPlant->location);
-                        $locationParts = array_map('trim', $locationParts);
-                        $locationParts = array_filter($locationParts);
+                        // Formatiere Standort als Straße<br>PLZ Ort
+                        $location = trim($solarPlant->location);
+                        
+                        // Trenne verschiedene Adressteile
+                        $parts = preg_split('/[,;|]/', $location);
+                        $parts = array_map('trim', $parts);
+                        $parts = array_filter($parts);
+                        
+                        if (count($parts) >= 2) {
+                            // Erste Zeile: Straße
+                            $street = $parts[0];
+                            
+                            // Versuche PLZ und Ort aus den restlichen Teilen zu identifizieren
+                            $remaining = array_slice($parts, 1);
+                            $address = implode(' ', $remaining);
+                            
+                            $formattedLocation = $street . '<br>' . $address;
+                        } else {
+                            // Fallback: versuche PLZ + Ort Pattern zu finden
+                            if (preg_match('/^(.+?)[\s]+(\d{5}[\s]+.+)$/u', $location, $matches)) {
+                                $formattedLocation = trim($matches[1]) . '<br>' . trim($matches[2]);
+                            } else {
+                                $formattedLocation = $location;
+                            }
+                        }
                     @endphp
-                    @foreach($locationParts as $part)
-                        {{ $part }}@if(!$loop->last)<br>@endif
-                    @endforeach
+                    {!! $formattedLocation !!}
                 @else
                     Kein Standort hinterlegt
                 @endif
             </div>
             <div>
-                <strong>Anlagenleistung:</strong><br>
-                {{ number_format($solarPlant->total_capacity_kw, 2, ',', '.') }} kWp
-            </div>
-            <div>
                 <strong>Ihre Beteiligung:</strong><br>
                 {{ number_format($currentPercentage, 2, ',', '.') }}%
             </div>
+        </div>
+        @if($billing->produced_energy_kwh)
+        <div style="margin-top: 10px; padding: 10px; background-color: #f0f8ff;">
+            <div class="energy-details">
+                <div>
+                    <strong>Produzierte Energie im {{ $monthName }} {{ $billing->billing_year }}:</strong><br>
+                    {{ number_format($billing->produced_energy_kwh, 3, ',', '.') }} kWh
+                </div>
+                @if($billing->produced_energy_kwh > 0 && $currentPercentage > 0)
+                <div>
+                    <strong>Ihr Anteil:</strong><br>
+                    {{ number_format(($billing->produced_energy_kwh * $currentPercentage / 100), 3, ',', '.') }} kWh
+                </div>
+                @endif
+                <div>
+                    &nbsp;
+                </div>
+            </div>
+        </div>
+        @endif
+        <div style="height: 1px;">
         </div>
     </div>
 
@@ -385,7 +452,7 @@
             <tr>
                 <th>Pos.</th>
                 <th>Beschreibung</th>
-                <th class="number">Menge</th>
+                <th>Menge</th>
                 <th>Einheit</th>
                 <th class="number">Einzelpreis</th>
                 <th class="number">Gesamtpreis</th>
@@ -413,7 +480,7 @@
                 <td>{{ $billing->total_credits > 0 ? 2 : 1 }}</td>
                 <td>
                     <strong>Betriebskosten</strong><br>
-                    <small>Anteilige Kosten für {{ $monthName }} {{ $billing->billing_year }}</small>
+                    <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 2, ',', '.') }}% Anteil</small>
                 </td>
                 <td class="number">1</td>
                 <td>Monat</td>
@@ -457,6 +524,40 @@
                     <td class="number">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
+                @if(isset($credit['articles']) && !empty($credit['articles']))
+                <tr>
+                    <td colspan="4" style="padding-left: 20px; background: #f0f8ff; border-top: none;">
+                        <strong>Artikel-Aufschlüsselung:</strong>
+                        <table style="width: 100%; margin-top: 5px; font-size: 8pt;">
+                            <thead>
+                                <tr style="background: #e6f3ff;">
+                                    <th style="text-align: left; padding: 3px;">Artikel</th>
+                                    <th style="text-align: center; padding: 3px;">Menge</th>
+                                    <th style="text-align: center; padding: 3px;">Einheit</th>
+                                    <th style="text-align: right; padding: 3px;">Einzelpreis</th>
+                                    <th style="text-align: right; padding: 3px;">Gesamtpreis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($credit['articles'] as $article)
+                                <tr>
+                                    <td style="padding: 2px;">
+                                        {{ $article['article_name'] ?? 'Unbekannt' }}
+                                        @if(isset($article['description']) && $article['description'] !== $article['article_name'])
+                                            <br><em style="color: #666;">{{ $article['description'] }}</em>
+                                        @endif
+                                    </td>
+                                    <td style="text-align: center; padding: 2px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }}</td>
+                                    <td style="text-align: center; padding: 2px;">{{ $article['unit'] ?? 'Stk.' }}</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, 6, ',', '.') }} €</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, 2, ',', '.') }} €</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                @endif
                 @endforeach
             </tbody>
         </table>
@@ -484,6 +585,40 @@
                     <td class="number">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
+                @if(isset($cost['articles']) && !empty($cost['articles']))
+                <tr>
+                    <td colspan="4" style="padding-left: 20px; background: #fff0f0; border-top: none;">
+                        <strong>Artikel-Aufschlüsselung:</strong>
+                        <table style="width: 100%; margin-top: 5px; font-size: 8pt;">
+                            <thead>
+                                <tr style="background: #ffe6e6;">
+                                    <th style="text-align: left; padding: 3px;">Artikel</th>
+                                    <th style="text-align: center; padding: 3px;">Menge</th>
+                                    <th style="text-align: center; padding: 3px;">Einheit</th>
+                                    <th style="text-align: right; padding: 3px;">Einzelpreis</th>
+                                    <th style="text-align: right; padding: 3px;">Gesamtpreis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($cost['articles'] as $article)
+                                <tr>
+                                    <td style="padding: 2px;">
+                                        {{ $article['article_name'] ?? 'Unbekannt' }}
+                                        @if(isset($article['description']) && $article['description'] !== $article['article_name'])
+                                            <br><em style="color: #666;">{{ $article['description'] }}</em>
+                                        @endif
+                                    </td>
+                                    <td style="text-align: center; padding: 2px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }}</td>
+                                    <td style="text-align: center; padding: 2px;">{{ $article['unit'] ?? 'Stk.' }}</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, 6, ',', '.') }} €</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, 2, ',', '.') }} €</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                @endif
                 @endforeach
             </tbody>
         </table>
@@ -508,6 +643,15 @@
 
     <!-- Footer -->
     <div class="footer">
+        <!-- Erste Zeile: Abrechnungsnummer mittig -->
+        <div style="text-align: center; margin-bottom: 10px;">
+            Abrechnung-Nr.: {{ $billing->id }}
+        </div>
+        
+        <!-- Leerzeile -->
+        <div style="height: 8px;"></div>
+        
+        <!-- Bisherige Footer-Inhalte -->
         <div class="footer-content">
             <div class="footer-section">
                 @if($companySetting->bank_name)
