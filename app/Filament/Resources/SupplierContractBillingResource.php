@@ -418,7 +418,8 @@ class SupplierContractBillingResource extends Resource
                     ->url(fn (SupplierContractBilling $record): string => 
                         route('filament.admin.resources.supplier-contracts.view', $record->supplier_contract_id)
                     )
-                    ->color('primary'),
+                    ->color('primary')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('supplier_display_name')
                     ->label('Lieferant')
