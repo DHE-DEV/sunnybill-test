@@ -158,8 +158,9 @@
         
         .totals {
             float: right;
-            width: 300px;
+            width: 200px;
             margin: 20px 0;
+            margin-right: 20px;
         }
         
         .totals table {
@@ -168,13 +169,18 @@
         }
         
         .totals td {
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-bottom: 1px solid #ddd;
+            font-size: 9pt;
+        }
+        
+        .totals .subtotal-row {
+            font-weight: normal;
         }
         
         .totals .total-row {
             font-weight: bold;
-            font-size: 12pt;
+            font-size: 10pt;
             background: #2563eb;
             color: white;
         }
