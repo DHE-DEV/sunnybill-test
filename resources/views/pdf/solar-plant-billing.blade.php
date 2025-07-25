@@ -522,7 +522,7 @@
                     <td>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</td>
                     <td>{{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}</td>
                     <td class="number">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                    <td class="number">{{ number_format($credit['customer_share'] ?? 0, 6, ',', '.') }}</td>
                 </tr>
                 @if(isset($credit['articles']) && !empty($credit['articles']))
                 <tr>
@@ -583,7 +583,7 @@
                     <td>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</td>
                     <td>{{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}</td>
                     <td class="number">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                    <td class="number">{{ number_format($cost['customer_share'] ?? 0, 6, ',', '.') }}</td>
                 </tr>
                 @if(isset($cost['articles']) && !empty($cost['articles']))
                 <tr>
