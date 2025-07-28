@@ -35,6 +35,7 @@ class ParticipationsRelationManager extends RelationManager
                     ->required()
                     ->searchable(['name', 'company_name'])
                     ->preload()
+                    ->columnSpanFull()
                     ->createOptionForm([
                         Forms\Components\TextInput::make('name')
                             ->label('Name')
@@ -45,39 +46,107 @@ class ParticipationsRelationManager extends RelationManager
                         Forms\Components\TextInput::make('phone')
                             ->label('Telefon'),
                     ]),
-                Forms\Components\TextInput::make('percentage')
-                    ->label('Beteiligung (%)')
-                    ->required()
-                    ->numeric()
-                    ->step(0.01)
-                    ->suffix('%')
-                    ->minValue(0.01)
-                    ->maxValue(100)
-                    ->placeholder('z.B. 25.50')
-                    ->helperText(function ($livewire) {
-                        $solarPlant = $livewire->getOwnerRecord();
-                        $available = $solarPlant->available_participation;
-                        return "Verfügbar: {$available}% (Gesamt: {$solarPlant->total_participation}% von 100%)";
-                    })
-                    ->rules([
-                        function ($livewire) {
-                            return function (string $attribute, $value, \Closure $fail) use ($livewire) {
-                                $solarPlant = $livewire->getOwnerRecord();
-                                $currentRecord = $livewire->mountedTableActionRecord ?? null;
-                                
-                                $existingParticipation = $solarPlant->participations()
-                                    ->where('id', '!=', $currentRecord?->id ?? 0)
-                                    ->sum('percentage');
-                                
-                                $totalParticipation = $existingParticipation + $value;
-                                
-                                if ($totalParticipation > 100) {
-                                    $available = 100 - $existingParticipation;
-                                    $fail("Die Gesamtbeteiligung würde {$totalParticipation}% betragen. Maximal verfügbar: {$available}%");
+                Forms\Components\Section::make('Beteiligungsdetails')
+                    ->schema([
+                        Forms\Components\TextInput::make('participation_kwp')
+                            ->label('Beteiligung kWp')
+                            ->numeric()
+                            ->step(0.0001)
+                            ->minValue(0)
+                            ->suffix('kWp')
+                            ->placeholder('z.B. 25.0000')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set, $livewire) {
+                                if ($state && $state > 0) {
+                                    $solarPlant = $livewire->getOwnerRecord();
+                                    if ($solarPlant && $solarPlant->total_capacity_kw > 0) {
+                                        $percentage = ($state / $solarPlant->total_capacity_kw) * 100;
+                                        $set('percentage', round($percentage, 4));
+                                    }
                                 }
-                            };
-                        },
-                    ]),
+                            })
+                            ->helperText(function ($livewire) {
+                                $solarPlant = $livewire->getOwnerRecord();
+                                return $solarPlant ? "Anlagenkapazität: " . number_format($solarPlant->total_capacity_kw ?? 0, 4, ',', '.') . " kWp" : '';
+                            }),
+                        
+                        Forms\Components\TextInput::make('percentage')
+                            ->label('Beteiligung (%)')
+                            ->required()
+                            ->numeric()
+                            ->step(0.0001)
+                            ->suffix('%')
+                            ->minValue(0.0001)
+                            ->maxValue(100)
+                            ->placeholder('z.B. 25.5000')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set, $livewire) {
+                                if ($state && $state > 0) {
+                                    $solarPlant = $livewire->getOwnerRecord();
+                                    if ($solarPlant && $solarPlant->total_capacity_kw > 0) {
+                                        $kwp = ($state / 100) * $solarPlant->total_capacity_kw;
+                                        $set('participation_kwp', round($kwp, 4));
+                                    }
+                                }
+                            })
+                            ->helperText(function ($livewire) {
+                                $solarPlant = $livewire->getOwnerRecord();
+                                $available = $solarPlant->available_participation ?? 0;
+                                return "Verfügbar: " . number_format($available, 4, ',', '.') . "% (Gesamt: " . number_format($solarPlant->total_participation ?? 0, 4, ',', '.') . "% von 100%)";
+                            })
+                            ->rules([
+                                function ($livewire) {
+                                    return function (string $attribute, $value, \Closure $fail) use ($livewire) {
+                                        $solarPlant = $livewire->getOwnerRecord();
+                                        $currentRecord = $livewire->mountedTableActionRecord ?? null;
+                                        
+                                        $existingParticipation = $solarPlant->participations()
+                                            ->where('id', '!=', $currentRecord?->id ?? 0)
+                                            ->sum('percentage');
+                                        
+                                        $totalParticipation = $existingParticipation + $value;
+                                        
+                                        if ($totalParticipation > 100) {
+                                            $available = 100 - $existingParticipation;
+                                            $fail("Die Gesamtbeteiligung würde " . number_format($totalParticipation, 4, ',', '.') . "% betragen. Maximal verfügbar: " . number_format($available, 4, ',', '.') . "%");
+                                        }
+                                    };
+                                },
+                            ]),
+                        
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('calculate_from_kwp')
+                                ->label('Aus kWp berechnen')
+                                ->icon('heroicon-m-calculator')
+                                ->color('info')
+                                ->action(function (Forms\Set $set, array $data, $livewire) {
+                                    $kwp = $data['participation_kwp'] ?? 0;
+                                    if ($kwp && $kwp > 0) {
+                                        $solarPlant = $livewire->getOwnerRecord();
+                                        if ($solarPlant && $solarPlant->total_capacity_kw > 0) {
+                                            $percentage = ($kwp / $solarPlant->total_capacity_kw) * 100;
+                                            $set('percentage', round($percentage, 4));
+                                        }
+                                    }
+                                }),
+                            Forms\Components\Actions\Action::make('calculate_from_percentage')
+                                ->label('Aus % berechnen')
+                                ->icon('heroicon-m-calculator')
+                                ->color('success')
+                                ->action(function (Forms\Set $set, array $data, $livewire) {
+                                    $percentage = $data['percentage'] ?? 0;
+                                    if ($percentage && $percentage > 0) {
+                                        $solarPlant = $livewire->getOwnerRecord();
+                                        if ($solarPlant && $solarPlant->total_capacity_kw > 0) {
+                                            $kwp = ($percentage / 100) * $solarPlant->total_capacity_kw;
+                                            $set('participation_kwp', round($kwp, 4));
+                                        }
+                                    }
+                                }),
+                        ])
+                        ->columnSpanFull(),
+                    ])
+                    ->columns(2),
                 
                 Forms\Components\TextInput::make('eeg_compensation_per_kwh')
                     ->label('Vertraglich zugesicherte EEG-Vergütung')
@@ -103,9 +172,14 @@ class ParticipationsRelationManager extends RelationManager
                     ->label('E-Mail')
                     ->searchable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('participation_kwp')
+                    ->label('kWp')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 4, ',', '.') . ' kWp' : '-')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('percentage')
                     ->label('Beteiligung')
-                    ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
+                    ->formatStateUsing(fn ($state) => number_format($state, 4, ',', '.') . '%')
                     ->sortable()
                     ->badge()
                     ->color('success'),
@@ -135,6 +209,12 @@ class ParticipationsRelationManager extends RelationManager
                     }),
             ])
             ->actions([
+                Tables\Actions\Action::make('view_customer')
+                    ->label('Anzeigen')
+                    ->icon('heroicon-m-eye')
+                    ->color('info')
+                    ->url(fn ($record) => route('filament.admin.resources.customers.view', ['record' => $record->customer_id]))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make()
                     ->after(function () {
                         Notification::make()

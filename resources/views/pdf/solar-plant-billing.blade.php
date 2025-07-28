@@ -6,7 +6,7 @@
     <title>Solaranlagen-Abrechnung</title>
     <style>
         @page {
-            margin: 1.5cm 1.5cm;
+            margin: 0.5cm 1.5cm 0.5cm 1.5cm;
             size: A4;
         }
         
@@ -104,6 +104,7 @@
         
         .billing-period {
             text-align: center;
+            padding-top: 20px;
             margin: 20px 0;
             font-size: 12pt;
             color: #2563eb;
@@ -114,12 +115,12 @@
         .plant-info {
             background: #f8f9fa;
             padding: 15px;
-            margin: 0px 0;
+            margin: 20px 0;
             #border-left: 4px solid #2563eb;
         }
         
         .plant-info h3 {
-            margin: 0 0 10px 0;
+            margin: 0 0 15px 0;
             color: #2563eb;
         }
         
@@ -223,7 +224,7 @@
         
         .breakdown {
             clear: both;
-            margin: 30px 0;
+            margin: 10px 0;
         }
         
         .breakdown h3 {
@@ -314,9 +315,8 @@
                     @if($logoBase64)
                         <img src="{{ $logoBase64 }}" 
                              alt="Firmenlogo" 
-                             style="max-width: 150px; max-height: 60px; object-fit: contain;">
+                             style="max-width: 300px; max-height: 120px; object-fit: contain;">
                     @endif
-            <h3>{{ $companySetting->company_name }}</h3>
         </div>
     </div>
 
@@ -353,10 +353,6 @@
                 <td>Datum:</td>
                 <td>{{ $generatedAt->format('d.m.Y') }}</td>
             </tr>
-            <tr>
-                <td>Periode:</td>
-                <td>{{ $monthName }} {{ $billing->billing_year }}</td>
-            </tr>
             @if($companySetting->vat_id)
             <tr>
                 <td>USt-IdNr.:</td>
@@ -367,9 +363,7 @@
     </div>
 
     <!-- Titel -->
-    <div class="document-title">
-        <!--<h2>Solaranlagen-Abrechnung</h2>-->
-    </div>
+    
     
     <div class="billing-period">
         <h3>Kundeninformation zur Abrechnungsperiode {{ $monthName }} {{ $billing->billing_year }}</h3>
@@ -525,34 +519,59 @@
                 @if(isset($credit['articles']) && !empty($credit['articles']))
                 <tr>
                     <td colspan="5" style="padding-left: 20px; background: #f0f8ff; border-top: none;">
-                        <strong>Artikel-Aufschlüsselung:</strong>
-                        <table style="width: 100%; margin-top: 5px; font-size: 8pt;">
-                            <thead>
-                                <tr style="background: #e6f3ff;">
-                                    <th style="text-align: left; padding: 3px;">Artikel</th>
-                                    <th style="text-align: center; padding: 3px;">Menge</th>
-                                    <th style="text-align: center; padding: 3px;">Einheit</th>
-                                    <th style="text-align: right; padding: 3px;">Einzelpreis</th>
-                                    <th style="text-align: right; padding: 3px;">Gesamtpreis</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($credit['articles'] as $article)
-                                <tr>
-                                    <td style="padding: 2px;">
-                                        {{ $article['article_name'] ?? 'Unbekannt' }}
-                                        @if(isset($article['description']) && $article['description'] !== $article['article_name'])
-                                            <br><em style="color: #666;">{{ $article['description'] }}</em>
-                                        @endif
-                                    </td>
-                                    <td style="text-align: center; padding: 2px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }}</td>
-                                    <td style="text-align: center; padding: 2px;">{{ $article['unit'] ?? 'Stk.' }}</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, 6, ',', '.') }} €</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, 6, ',', '.') }} €</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <strong>Details:</strong>
+                        @foreach($credit['articles'] as $article)
+                        <div style="margin-top: 8px;">
+                            <div style="font-weight: 500; margin-bottom: 5px;">{{ $article['article_name'] ?? 'Unbekannt' }}</div>
+                            
+                            @php
+                                // Berechne anteilige Beträge für Marktprämie
+                                $customerPercentage = $credit['customer_percentage'] ?? 0;
+                                $anteiligeMenge = ($article['quantity'] * $customerPercentage) / 100;
+                                $anteiligenNetto = ($article['total_price_net'] * $customerPercentage) / 100;
+                                $anteiligeSteuer = ($article['tax_amount'] * $customerPercentage) / 100;
+                                $anteiligeBrutto = ($article['total_price_gross'] * $customerPercentage) / 100;
+                                
+                                // Berechne Einzelpreis automatisch: Gesamtbetrag / anteilige Menge
+                                $calculatedUnitPrice = $anteiligeMenge > 0 ? ($anteiligenNetto / $anteiligeMenge) : 0;
+                            @endphp
+                            
+                            <!-- Tabellarische Darstellung für Marktprämie -->
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 3px; font-size: 7pt; border: 1px solid #ddd;">
+                                <thead>
+                                    <tr style="background-color: #e6f3ff; border-bottom: 1px solid #ccc;">
+                                        <th style="padding: 2px; text-align: left; font-weight: 500; border-right: 1px solid #ccc;">Typ</th>
+                                        <th style="padding: 2px; text-align: right; font-weight: 500; border-right: 1px solid #ccc;">Menge</th>
+                                        <th style="padding: 2px; text-align: right; font-weight: 500; border-right: 1px solid #ccc;">Preis</th>
+                                        <th style="padding: 2px; text-align: right; font-weight: 500; border-right: 1px solid #ccc;">Netto</th>
+                                        <th style="padding: 2px; text-align: right; font-weight: 500; border-right: 1px solid #ccc;">Steuer</th>
+                                        <th style="padding: 2px; text-align: right; font-weight: 500;">Brutto</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Anlage Gesamt Zeile -->
+                                    <tr style="border-bottom: 1px solid #ccc;">
+                                        <td style="padding: 2px; border-right: 1px solid #ccc;">Anlage Gesamt</td>
+                                        <td style="padding: 2px; text-align: right; border-right: 1px solid #ccc;">{{ number_format($article['quantity'] ?? 0, 4, ',', '.') }} {{ $article['unit'] ?? 'kWh' }}</td>
+                                        <td style="padding: 2px; text-align: right; border-right: 1px solid #ccc;">{{ number_format($article['unit_price'] ?? 0, 6, ',', '.') }} €</td>
+                                        <td style="padding: 2px; text-align: right; border-right: 1px solid #ccc;">{{ number_format($article['total_price_net'] ?? 0, 2, ',', '.') }} €</td>
+                                        <td style="padding: 2px; text-align: right; border-right: 1px solid #ccc;">{{ number_format(($article['tax_rate'] ?? 0) * 100, 1, ',', '.') }}% = {{ number_format($article['tax_amount'] ?? 0, 2, ',', '.') }} €</td>
+                                        <td style="padding: 2px; text-align: right;">{{ number_format($article['total_price_gross'] ?? 0, 2, ',', '.') }} €</td>
+                                    </tr>
+                                    
+                                    <!-- Anteilig Zeile (blau) -->
+                                    <tr>
+                                        <td style="padding: 2px; color: #2563eb; border-right: 1px solid #ccc;">Anteilig {{ number_format($customerPercentage, 2, ',', '.') }}%</td>
+                                        <td style="padding: 2px; text-align: right; color: #2563eb; border-right: 1px solid #ccc;">{{ number_format($anteiligeMenge, 3, ',', '.') }} {{ $article['unit'] ?? 'kWh' }}</td>
+                                        <td style="padding: 2px; text-align: right; color: #2563eb; border-right: 1px solid #ccc;">{{ number_format($calculatedUnitPrice, 6, ',', '.') }} €</td>
+                                        <td style="padding: 2px; text-align: right; color: #2563eb; border-right: 1px solid #ccc;">{{ number_format($anteiligenNetto, 2, ',', '.') }} €</td>
+                                        <td style="padding: 2px; text-align: right; color: #2563eb; border-right: 1px solid #ccc;">{{ number_format(($article['tax_rate'] ?? 0) * 100, 1, ',', '.') }}% = {{ number_format($anteiligeSteuer, 2, ',', '.') }} €</td>
+                                        <td style="padding: 2px; text-align: right; color: #2563eb;">{{ number_format($anteiligeBrutto, 2, ',', '.') }} €</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        @endforeach
                     </td>
                 </tr>
                 @endif
@@ -650,7 +669,7 @@
     </div>
 
     <!-- Hinweise -->
-    <div style="margin-top: 20px; font-size: 9pt; color: #666;">
+    <div style="margin-top: 10px; font-size: 9pt; color: #666;">
         <p><strong>Hinweise:</strong></p>
         <ul>
             <li>Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {{ $solarPlant->name }}.</li>
@@ -671,21 +690,21 @@
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
-        <div style="text-align: center; margin-bottom: 4px; font-size: 8pt;">
+        <div style="text-align: center; margin-bottom: 2px; font-size: 8pt;">
             {{ $companySetting->company_name }}
             @if($companySetting->full_address) | {{ $companySetting->full_address }}@endif
             @if($companySetting->phone) | {{ $companySetting->phone }}@endif
         </div>
         
         <!-- Zeile 3: E-Mail und Website -->
-        <div style="text-align: center; margin-bottom: 4px; font-size: 8pt;">
+        <div style="text-align: center; margin-bottom: 2px; font-size: 8pt;">
             @if($companySetting->email){{ $companySetting->email }}@endif
             @if($companySetting->email && $companySetting->website) | @endif
             @if($companySetting->website){{ $companySetting->website }}@endif
         </div>
         
         <!-- Zeile 4: Amtsgericht und Geschäftsführer -->
-        <div style="text-align: center; margin-bottom: 4px; font-size: 8pt;">
+        <div style="text-align: center; margin-bottom: 2px; font-size: 8pt;">
             @if($companySetting->formatted_commercial_register){{ $companySetting->formatted_commercial_register }}@endif
             @if($companySetting->formatted_commercial_register && $companySetting->management) | @endif
             @if($companySetting->management)Geschäftsführung: {{ $companySetting->management }}@endif

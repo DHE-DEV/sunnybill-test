@@ -123,12 +123,13 @@ class ArticlesRelationManager extends RelationManager
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
-                    ->limit(30),
+                    ->limit(50)
+                    ->width('30%'),
                 Tables\Columns\TextColumn::make('description')
                     ->label('Beschreibung')
                     ->searchable()
                     ->limit(40)
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('pivot.quantity')
                     ->label('Menge')
                     ->numeric(2)
@@ -483,7 +484,7 @@ class ArticlesRelationManager extends RelationManager
                         ->label('Ausgewählte entfernen'),
                 ]),
             ])
-            ->defaultSort('supplier_article.created_at', 'desc')
+            ->defaultSort('name', 'desc')
             ->emptyStateHeading('Keine Artikel zugeordnet')
             ->emptyStateDescription('Fügen Sie diesem Lieferanten Artikel aus der Artikelverwaltung hinzu.')
             ->emptyStateIcon('heroicon-o-cube');

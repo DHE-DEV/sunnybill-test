@@ -153,8 +153,41 @@ class SolarPlantBillingResource extends Resource
                                 
                                 $breakdown = $record->cost_breakdown;
                                 
+                                // Berechne anteilige kWh für den Kunden
+                                $customerEnergyKwh = 0;
+                                if ($record->produced_energy_kwh && $record->participation_percentage) {
+                                    $customerEnergyKwh = ($record->produced_energy_kwh * $record->participation_percentage) / 100;
+                                }
+                                
+                                // Hole EEG-Vergütung aus der Beteiligung
+                                $eegCompensation = null;
+                                $participation = $record->solarPlant->participations()
+                                    ->where('customer_id', $record->customer_id)
+                                    ->first();
+                                if ($participation) {
+                                    $eegCompensation = $participation->eeg_compensation_per_kwh;
+                                }
+                                
                                 // HTML-Tabelle für Kostenpositionen
                                 $html = '<div style="overflow-x: auto;">';
+                                
+                                // Energieinfo anzeigen
+                                if ($record->produced_energy_kwh && $record->participation_percentage) {
+                                    $html .= '<div style="margin-bottom: 1rem; padding: 0.75rem; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.375rem;">';
+                                    $html .= '<div style="font-weight: 600; color: #1e40af; margin-bottom: 0.25rem;">Energieverteilung</div>';
+                                    $html .= '<div style="font-size: 0.875rem; color: #1e40af;">';
+                                    $html .= 'Gesamte produzierte Energie: <strong>' . number_format($record->produced_energy_kwh, 3, ',', '.') . ' kWh</strong><br>';
+                                    $html .= 'Ihr Beteiligungsanteil: <strong>' . number_format($record->participation_percentage, 4, ',', '.') . '%</strong><br>';
+                                    $html .= 'Ihre anteilige Energie: <strong>' . number_format($customerEnergyKwh, 3, ',', '.') . ' kWh</strong><br>';
+                                    if ($eegCompensation && $eegCompensation > 0) {
+                                        $html .= 'Vertraglich zugesicherte EEG-Vergütung: <strong>' . number_format($eegCompensation, 6, ',', '.') . ' €/kWh</strong>';
+                                    } else {
+                                        $html .= 'Vertraglich zugesicherte EEG-Vergütung: <strong>Nicht hinterlegt</strong>';
+                                    }
+                                    $html .= '</div>';
+                                    $html .= '</div>';
+                                }
+                                
                                 $html .= '<table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">';
                                 $html .= '<thead>';
                                 $html .= '<tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">';
@@ -198,13 +231,51 @@ class SolarPlantBillingResource extends Resource
                                         foreach ($item['articles'] as $article) {
                                             $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
                                             $html .= '<div style="font-weight: 500;">' . htmlspecialchars($article['article_name']) . '</div>';
-                                            $html .= '<div style="display: flex; gap: 1rem; flex-wrap: wrap;">';
-                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
-                                            $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt netto: ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</span>';
-                                            $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
-                                            $html .= '</div>';
+                                            
+                                            // Berechne anteilige Beträge
+                                            $customerPercentage = $item['customer_percentage'] ?? 0;
+                                            $anteiligeMenge = ($article['quantity'] * $customerPercentage) / 100;
+                                            $anteiligenNetto = ($article['total_price_net'] * $customerPercentage) / 100;
+                                            $anteiligeSteuer = ($article['tax_amount'] * $customerPercentage) / 100;
+                                            $anteiligeBrutto = ($article['total_price_gross'] * $customerPercentage) / 100;
+                                            
+                                            // Tabellarische Darstellung
+                                            $html .= '<table style="width: 100%; border-collapse: collapse; margin-top: 0.25rem; font-size: 0.75rem;">';
+                                            $html .= '<thead>';
+                                            $html .= '<tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">';
+                                            $html .= '<th style="padding: 0.25rem; text-align: left; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Typ</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Menge</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Preis</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Netto</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Steuer</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151;">Brutto</th>';
+                                            $html .= '</tr>';
+                                            $html .= '</thead>';
+                                            $html .= '<tbody>';
+                                            
+                                            // Anlage Gesamt Zeile
+                                            $html .= '<tr style="border-bottom: 1px solid #e2e8f0;">';
+                                            $html .= '<td style="padding: 0.25rem; color: #374151; border-right: 1px solid #e2e8f0;">Anlage Gesamt</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($article['unit_price'], 6, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($article['total_price_net'], 2, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151;">' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</td>';
+                                            $html .= '</tr>';
+                                            
+                                            // Anteilig Zeile (blau)
+                                            $html .= '<tr>';
+                                            $html .= '<td style="padding: 0.25rem; color: #2563eb; border-right: 1px solid #e2e8f0;">Anteilig ' . number_format($customerPercentage, 2, ',', '.') . '%</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($anteiligeMenge, 3, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($article['unit_price'], 6, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($anteiligenNetto, 2, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($anteiligeSteuer, 2, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb;">' . number_format($anteiligeBrutto, 2, ',', '.') . ' €</td>';
+                                            $html .= '</tr>';
+                                            
+                                            $html .= '</tbody>';
+                                            $html .= '</table>';
+                                            
                                             $html .= '</div>';
                                         }
                                         $html .= '</div>';
@@ -277,25 +348,128 @@ class SolarPlantBillingResource extends Resource
                                     $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
                                     $html .= '</div>';
                                     
-                                    // Artikel-Details anzeigen
+                                    // Artikel-Details immer anzeigen (nicht nur wenn articles vorhanden sind)
+                                    $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
+                                    $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Details:</div>';
+                                    
                                     if (isset($item['articles']) && !empty($item['articles'])) {
-                                        $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
-                                        $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Details:</div>';
-                                        
                                         foreach ($item['articles'] as $article) {
                                             $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
                                             $html .= '<div style="font-weight: 500;">' . htmlspecialchars($article['article_name']) . '</div>';
-                                            $html .= '<div style="display: flex; gap: 1rem; flex-wrap: wrap;">';
-                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
-                                            $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt netto: ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</span>';
-                                            $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
-                                            $html .= '</div>';
+                                            
+                                            // Berechne anteilige Beträge
+                                            $customerPercentage = $item['customer_percentage'] ?? 0;
+                                            $anteiligeMenge = ($article['quantity'] * $customerPercentage) / 100;
+                                            $anteiligenNetto = ($article['total_price_net'] * $customerPercentage) / 100;
+                                            $anteiligeSteuer = ($article['tax_amount'] * $customerPercentage) / 100;
+                                            $anteiligeBrutto = ($article['total_price_gross'] * $customerPercentage) / 100;
+                                            
+                                            // Tabellarische Darstellung
+                                            $html .= '<table style="width: 100%; border-collapse: collapse; margin-top: 0.25rem; font-size: 0.75rem;">';
+                                            $html .= '<thead>';
+                                            $html .= '<tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">';
+                                            $html .= '<th style="padding: 0.25rem; text-align: left; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Typ</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Menge</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Preis</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Netto</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Steuer</th>';
+                                            $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151;">Brutto</th>';
+                                            $html .= '</tr>';
+                                            $html .= '</thead>';
+                                            $html .= '<tbody>';
+                                            
+                                            // Anlage Gesamt Zeile
+                                            $html .= '<tr style="border-bottom: 1px solid #e2e8f0;">';
+                                            $html .= '<td style="padding: 0.25rem; color: #374151; border-right: 1px solid #e2e8f0;">Anlage Gesamt</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($article['unit_price'], 6, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($article['total_price_net'], 2, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151;">' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</td>';
+                                            $html .= '</tr>';
+                                            
+                                            // Anteilig Zeile (blau)
+                                            $html .= '<tr>';
+                                            $html .= '<td style="padding: 0.25rem; color: #2563eb; border-right: 1px solid #e2e8f0;">Anteilig ' . number_format($customerPercentage, 2, ',', '.') . '%</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($anteiligeMenge, 3, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($article['unit_price'], 6, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($anteiligenNetto, 2, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($anteiligeSteuer, 2, ',', '.') . ' €</td>';
+                                            $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb;">' . number_format($anteiligeBrutto, 2, ',', '.') . ' €</td>';
+                                            $html .= '</tr>';
+                                            
+                                            $html .= '</tbody>';
+                                            $html .= '</table>';
+                                            
                                             $html .= '</div>';
                                         }
+                                    } else {
+                                        // Zeige Tabelle basierend auf Hauptposition (für Marktprämie ohne Artikel-Details)
+                                        $customerPercentage = $item['customer_percentage'] ?? 0;
+                                        $gesamtbetrag = $item['customer_share'] ?? 0; // Gesamtbetrag aus Abrechnung
+                                        
+                                        // Verwende kWh-Werte wie bei Direktvermarktung
+                                        $anlageMengeKwh = $record->produced_energy_kwh ?? 0; // Gesamte produzierte Energie
+                                        $anteiligeMengeKwh = ($anlageMengeKwh * $customerPercentage) / 100; // Anteilige kWh
+                                        
+                                        // Einzelpreis berechnen: Gesamtbetrag ÷ anteilige kWh
+                                        $einzelpreisGesamt = $anteiligeMengeKwh > 0 ? ($gesamtbetrag / $anteiligeMengeKwh) : 0;
+                                        $einzelpreisAnteilig = $einzelpreisGesamt; // Derselbe Preis
+                                        
+                                        // Für Marktprämie: Steuer ist immer 0%
+                                        $steuerrate = 0.0;
+                                        $steuerbetragGesamt = 0;
+                                        $steuerbetragAnteilig = 0;
+                                        
+                                        // Brutto = Netto (da keine Steuer)
+                                        $bruttoGesamt = $anlageMengeKwh * $einzelpreisGesamt; // Hochrechnung auf 100%
+                                        $bruttoAnteilig = $gesamtbetrag;
+                                        
+                                        $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
+                                        $html .= '<div style="font-weight: 500;">Einspeisung Marktwert - ' . $record->billing_year . '/' . sprintf('%02d', $record->billing_month) . '</div>';
+                                        
+                                        // Tabellarische Darstellung für Marktprämie
+                                        $html .= '<table style="width: 100%; border-collapse: collapse; margin-top: 0.25rem; font-size: 0.75rem;">';
+                                        $html .= '<thead>';
+                                        $html .= '<tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">';
+                                        $html .= '<th style="padding: 0.25rem; text-align: left; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Typ</th>';
+                                        $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Menge</th>';
+                                        $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Preis</th>';
+                                        $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Netto</th>';
+                                        $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151; border-right: 1px solid #e2e8f0;">Steuer</th>';
+                                        $html .= '<th style="padding: 0.25rem; text-align: right; font-weight: 500; color: #374151;">Brutto</th>';
+                                        $html .= '</tr>';
+                                        $html .= '</thead>';
+                                        $html .= '<tbody>';
+                                        
+                                        // Anlage Gesamt Zeile
+                                        $html .= '<tr style="border-bottom: 1px solid #e2e8f0;">';
+                                        $html .= '<td style="padding: 0.25rem; color: #374151; border-right: 1px solid #e2e8f0;">Anlage Gesamt</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($anlageMengeKwh, 4, ',', '.') . ' kWh</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($einzelpreisGesamt, 6, ',', '.') . ' €</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">' . number_format($bruttoGesamt, 2, ',', '.') . ' €</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151; border-right: 1px solid #e2e8f0;">0,0% = 0,00 €</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #374151;">' . number_format($bruttoGesamt, 2, ',', '.') . ' €</td>';
+                                        $html .= '</tr>';
+                                        
+                                        // Anteilig Zeile (blau)
+                                        $html .= '<tr>';
+                                        $html .= '<td style="padding: 0.25rem; color: #2563eb; border-right: 1px solid #e2e8f0;">Anteilig ' . number_format($customerPercentage, 2, ',', '.') . '%</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($anteiligeMengeKwh, 3, ',', '.') . ' kWh</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($einzelpreisAnteilig, 6, ',', '.') . ' €</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">' . number_format($gesamtbetrag, 2, ',', '.') . ' €</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb; border-right: 1px solid #e2e8f0;">0,0% = 0,00 €</td>';
+                                        $html .= '<td style="padding: 0.25rem; text-align: right; color: #2563eb;">' . number_format($gesamtbetrag, 2, ',', '.') . ' €</td>';
+                                        $html .= '</tr>';
+                                        
+                                        $html .= '</tbody>';
+                                        $html .= '</table>';
+                                        
                                         $html .= '</div>';
                                     }
+                                    
+                                    // Schließe Details-Kasten
+                                    $html .= '</div>';
                                     
                                     $html .= '</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
@@ -305,6 +479,99 @@ class SolarPlantBillingResource extends Resource
                                 
                                 $html .= '</tbody>';
                                 $html .= '</table>';
+                                
+                                // Oranger Kasten mit Preis-Übersicht
+                                $marktpraemiePreis = 0;
+                                $direktvermarktungPreis = 0;
+                                $hasMarktpraemie = false;
+                                $hasDirektvermarktung = false;
+                                
+                                foreach ($breakdown as $item) {
+                                    $contractTitle = strtolower($item['contract_title'] ?? '');
+                                    $customerPercentage = $item['customer_percentage'] ?? 0;
+                                    $gesamtbetrag = $item['customer_share'] ?? 0;
+                                    
+                                    // Preis für Marktprämie extrahieren
+                                    if (strpos($contractTitle, 'marktprämie') !== false || strpos($contractTitle, 'marktwert') !== false) {
+                                        $anteiligeMengeKwh = ($record->produced_energy_kwh * $customerPercentage) / 100;
+                                        $marktpraemiePreis = $anteiligeMengeKwh > 0 ? ($gesamtbetrag / $anteiligeMengeKwh) : 0;
+                                        $hasMarktpraemie = true;
+                                    }
+                                    
+                                    // Preis für Direktvermarktung extrahieren (aus Artikel-Details wenn vorhanden)
+                                    if (strpos($contractTitle, 'direktvermarktung') !== false) {
+                                        $hasDirektvermarktung = true;
+                                        if (isset($item['articles']) && !empty($item['articles'])) {
+                                            $article = $item['articles'][0]; // Nehme ersten Artikel
+                                            $direktvermarktungPreis = $article['unit_price'] ?? 0;
+                                        } else {
+                                            // Fallback: Berechne aus Gesamtbetrag
+                                            $anteiligeMengeKwh = ($record->produced_energy_kwh * $customerPercentage) / 100;
+                                            $direktvermarktungPreis = $anteiligeMengeKwh > 0 ? ($gesamtbetrag / $anteiligeMengeKwh) : 0;
+                                        }
+                                    }
+                                }
+                                
+                                // Hole EEG-Vergütung aus der Beteiligung
+                                $eegCompensation = 0;
+                                $participation = $record->solarPlant->participations()
+                                    ->where('customer_id', $record->customer_id)
+                                    ->first();
+                                if ($participation) {
+                                    $eegCompensation = $participation->eeg_compensation_per_kwh ?? 0;
+                                }
+                                
+                                // Berechne Summe und Differenz
+                                $summeEinzelpreise = $marktpraemiePreis + $direktvermarktungPreis;
+                                $differenzEEG = $eegCompensation - $summeEinzelpreise;
+                                
+                                // Oranger Kasten nur anzeigen wenn relevante Daten vorhanden sind
+                                if ($hasMarktpraemie || $hasDirektvermarktung) {
+                                    $html .= '<div style="margin-top: 0.5rem; margin-bottom: 1rem; padding: 0.75rem; background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 0.375rem;">';
+                                    $html .= '<div style="font-weight: 600; color: #ea580c; margin-bottom: 0.5rem;">Preis-Übersicht (pro kWh)</div>';
+                                    
+                                    if ($hasMarktpraemie) {
+                                        $html .= '<div style="font-size: 0.875rem; color: #ea580c; margin-bottom: 0.25rem;">';
+                                        $html .= 'Einzelpreis Marktprämie: <strong>' . number_format($marktpraemiePreis, 6, ',', '.') . ' €/kWh</strong>';
+                                        $html .= '</div>';
+                                    }
+                                    
+                                    if ($hasDirektvermarktung) {
+                                        $html .= '<div style="font-size: 0.875rem; color: #ea580c; margin-bottom: 0.25rem;">';
+                                        $html .= 'Einzelpreis Direktvermarktung: <strong>' . number_format($direktvermarktungPreis, 6, ',', '.') . ' €/kWh</strong>';
+                                        $html .= '</div>';
+                                    }
+                                    
+                                    if ($hasMarktpraemie || $hasDirektvermarktung) {
+                                        $html .= '<div style="font-size: 0.875rem; color: #ea580c; margin-bottom: 0.25rem; border-top: 1px solid #fed7aa; padding-top: 0.25rem;">';
+                                        $html .= 'Summe Einzelpreise: <strong>' . number_format($summeEinzelpreise, 6, ',', '.') . ' €/kWh</strong>';
+                                        $html .= '</div>';
+                                        
+                                        if ($eegCompensation > 0) {
+                                            $html .= '<div style="font-size: 0.875rem; color: #ea580c; margin-bottom: 0.25rem;">';
+                                            $html .= 'Vertraglich zugesicherte EEG-Vergütung: <strong>' . number_format($eegCompensation, 6, ',', '.') . ' €/kWh</strong>';
+                                            $html .= '</div>';
+                                            
+                                            $differenzColor = $differenzEEG >= 0 ? '#dc2626' : '#059669'; // Rot für negativ, Grün für positiv
+                                            $differenzText = $differenzEEG >= 0 ? 'Differenz (Verlust)' : 'Differenz (Gewinn)';
+                                            
+                                            // Berechne anteilige kWh des Kunden für absoluten Betrag
+                                            $customerEnergyKwh = ($record->produced_energy_kwh * $record->participation_percentage) / 100;
+                                            $differenzAbsolut = abs($differenzEEG) * $customerEnergyKwh;
+                                            
+                                            $html .= '<div style="font-size: 0.875rem; color: ' . $differenzColor . '; font-weight: 600; border-top: 1px solid #fed7aa; padding-top: 0.25rem;">';
+                                            $html .= $differenzText . ': <strong>' . number_format(abs($differenzEEG), 6, ',', '.') . ' €/kWh</strong>';
+                                            $html .= ' | <strong>' . number_format($differenzAbsolut, 2, ',', '.') . ' €</strong>';
+                                            $html .= '</div>';
+                                        } else {
+                                            $html .= '<div style="font-size: 0.875rem; color: #ea580c; font-style: italic;">';
+                                            $html .= 'EEG-Vergütung nicht hinterlegt';
+                                            $html .= '</div>';
+                                        }
+                                    }
+                                    
+                                    $html .= '</div>';
+                                }
                                 
                                 // Gesamtbetrag für Gutschriftenpositionen
                                 $totalCredits = array_sum(array_column($breakdown, 'customer_share'));
