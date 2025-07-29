@@ -123,12 +123,13 @@ class ArticlesRelationManager extends RelationManager
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
-                    ->limit(30),
+                    ->limit(50)
+                    ->width('30%'),
                 Tables\Columns\TextColumn::make('description')
                     ->label('Beschreibung')
                     ->searchable()
                     ->limit(40)
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('pivot.quantity')
                     ->label('Menge')
                     ->numeric(2)
@@ -210,7 +211,171 @@ class ArticlesRelationManager extends RelationManager
                     ->native(false),
             ])
             ->headerActions([
-                // Keine Aktionen zum Hinzufügen von Artikeln
+                Tables\Actions\CreateAction::make()
+                    ->label('Artikel neu anlegen')
+                    ->icon('heroicon-o-plus-circle')
+                    ->modalWidth('4xl')
+                    ->form([
+                        Forms\Components\Section::make('Neuen Artikel erstellen')
+                            ->description('Erstellen Sie einen neuen Artikel und fügen Sie ihn automatisch zu diesem Lieferanten hinzu.')
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Artikelname')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('z.B. Wartungsvertrag Solaranlage')
+                                    ->columnSpanFull(),
+                                
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Beschreibung')
+                                    ->rows(3)
+                                    ->maxLength(1000)
+                                    ->placeholder('Detaillierte Beschreibung des Artikels...')
+                                    ->columnSpanFull(),
+                                
+                                Forms\Components\Select::make('type')
+                                    ->label('Artikeltyp')
+                                    ->options([
+                                        'service' => 'Dienstleistung',
+                                        'product' => 'Produkt',
+                                        'subscription' => 'Abonnement',
+                                        'maintenance' => 'Wartung',
+                                        'other' => 'Sonstiges',
+                                    ])
+                                    ->default('product')
+                                    ->live()
+                                    ->required(),
+                                
+                                Forms\Components\TextInput::make('unit')
+                                    ->label('Einheit')
+                                    ->maxLength(50)
+                                    ->default('Stk.')
+                                    ->placeholder('z.B. Stk., Std., m²')
+                                    ->visible(fn (Forms\Get $get) => !empty($get('type'))),
+                                
+                                Forms\Components\TextInput::make('price')
+                                    ->label('Preis (Netto)')
+                                    ->numeric()
+                                    ->step(0.000001)
+                                    ->minValue(0)
+                                    ->required()
+                                    ->prefix('€')
+                                    ->placeholder('0,000000')
+                                    ->helperText('Bis zu 6 Nachkommastellen möglich'),
+                                
+                                Forms\Components\Select::make('tax_rate_id')
+                                    ->label('Steuersatz')
+                                    ->options(\App\Models\TaxRate::active()->get()->mapWithKeys(function ($taxRate) {
+                                        return [$taxRate->id => $taxRate->name];
+                                    }))
+                                    ->default(function () {
+                                        $defaultTaxRate = \App\Models\TaxRate::getCurrentDefault();
+                                        return $defaultTaxRate?->id;
+                                    })
+                                    ->required()
+                                    ->searchable()
+                                    ->preload(),
+                                
+                                Forms\Components\TextInput::make('decimal_places')
+                                    ->label('Nachkommastellen (Preis)')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(6)
+                                    ->default(2)
+                                    ->helperText('Anzahl der Nachkommastellen für die Preisanzeige'),
+                                
+                                Forms\Components\TextInput::make('total_decimal_places')
+                                    ->label('Nachkommastellen (Gesamtpreis)')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(6)
+                                    ->default(2)
+                                    ->helperText('Anzahl der Nachkommastellen für Gesamtpreise'),
+                            ])->columns(2),
+                        
+                        Forms\Components\Section::make('Lieferantenverknüpfung')
+                            ->description('Konfigurieren Sie, wie dieser Artikel mit dem Lieferanten verknüpft wird.')
+                            ->schema([
+                                Forms\Components\TextInput::make('quantity')
+                                    ->label('Menge')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->minValue(0.01)
+                                    ->required()
+                                    ->default(1.00)
+                                    ->suffix('Stk.')
+                                    ->helperText('Anzahl der Artikel für diesen Lieferanten'),
+                                
+                                Forms\Components\TextInput::make('unit_price_override')
+                                    ->label('Abweichender Stückpreis (optional)')
+                                    ->numeric()
+                                    ->step(0.000001)
+                                    ->minValue(0)
+                                    ->prefix('€')
+                                    ->helperText('Leer lassen um den Standard-Artikelpreis zu verwenden. Bis zu 6 Nachkommastellen möglich.'),
+                                
+                                Forms\Components\Textarea::make('supplier_notes')
+                                    ->label('Lieferantennotizen')
+                                    ->rows(3)
+                                    ->maxLength(1000)
+                                    ->placeholder('Spezielle Notizen für diesen Artikel bei diesem Lieferanten...')
+                                    ->columnSpanFull(),
+                                
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Aktiv')
+                                    ->default(true)
+                                    ->helperText('Nur aktive Artikel werden bei Berechnungen berücksichtigt.'),
+                                Forms\Components\Radio::make('billing_requirement')
+                                    ->label('Anforderung bei Abrechnung')
+                                    ->options([
+                                        'optional' => 'Optional',
+                                        'mandatory' => 'Pflichtartikel',
+                                    ])
+                                    ->default('optional')
+                                    ->required()
+                                    ->helperText('Festlegen, ob dieser Artikel bei der Abrechnung für diesen Lieferanten obligatorisch ist.'),
+                            ])->columns(2),
+                    ])
+                    ->action(function (array $data) {
+                        // Hole den Steuersatz für das alte tax_rate Feld
+                        $taxRate = \App\Models\TaxRate::find($data['tax_rate_id']);
+                        
+                        // Erstelle den neuen Artikel
+                        $articleData = [
+                            'name' => $data['name'],
+                            'description' => $data['description'],
+                            'type' => $data['type'],
+                            'price' => $data['price'],
+                            'tax_rate_id' => $data['tax_rate_id'],
+                            'tax_rate' => $taxRate ? $taxRate->rate : 0.19, // Fallback auf 19%
+                            'unit' => $data['unit'],
+                            'decimal_places' => $data['decimal_places'],
+                            'total_decimal_places' => $data['total_decimal_places'],
+                        ];
+                        
+                        $article = Article::create($articleData);
+                        
+                        // Verknüpfe den Artikel mit dem Lieferanten
+                        $pivotData = [
+                            'quantity' => $data['quantity'],
+                            'unit_price' => $data['unit_price_override'] ?? $article->price,
+                            'notes' => $data['supplier_notes'],
+                            'is_active' => $data['is_active'],
+                            'billing_requirement' => $data['billing_requirement'],
+                        ];
+                        
+                        $this->getOwnerRecord()->articles()->attach($article->id, $pivotData);
+                        
+                        Notification::make()
+                            ->title('Artikel erstellt und hinzugefügt')
+                            ->body("Der Artikel '{$article->name}' wurde erfolgreich erstellt und zum Lieferanten hinzugefügt.")
+                            ->success()
+                            ->send();
+                    })
+                    ->after(function ($livewire) {
+                        // Aktualisiere die Tabelle
+                        $livewire->dispatch('refresh');
+                    }),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -483,7 +648,7 @@ class ArticlesRelationManager extends RelationManager
                         ->label('Ausgewählte entfernen'),
                 ]),
             ])
-            ->defaultSort('supplier_article.created_at', 'desc')
+            ->defaultSort('name', 'desc')
             ->emptyStateHeading('Keine Artikel zugeordnet')
             ->emptyStateDescription('Fügen Sie diesem Lieferanten Artikel aus der Artikelverwaltung hinzu.')
             ->emptyStateIcon('heroicon-o-cube');
@@ -496,6 +661,6 @@ class ArticlesRelationManager extends RelationManager
     
     protected function canAttach(): bool
     {
-        return false;
+        return true;
     }
 }
