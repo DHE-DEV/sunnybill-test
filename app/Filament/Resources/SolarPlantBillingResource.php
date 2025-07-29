@@ -657,7 +657,7 @@ class SolarPlantBillingResource extends Resource
                                 // Kostenseite (blau)
                                 if ($hasCosts) {
                                     $html .= '<div style="padding: 0.75rem; background-color: #eff6ff; border: 2px solid #3b82f6; border-radius: 0.375rem;">';
-                                    $html .= '<div style="font-weight: 600; color: #1d4ed8; margin-bottom: 0.5rem; text-align: center; font-size: 1rem;">📊 Rechnungsbeträge</div>';
+                                    $html .= '<div style="font-weight: 600; color: #1d4ed8; margin-bottom: 0.5rem; text-align: center; font-size: 1rem;">Rechnungsbeträge</div>';
                                     $html .= '<table style="width: 100%; border-collapse: collapse;">';
                                     $html .= '<tr><td style="color: #1d4ed8; padding: 0.25rem 0;">Netto:</td><td style="text-align: right; color: #1d4ed8; font-weight: bold;">' . number_format($totalCostsNet, 2, ',', '.') . ' €</td></tr>';
                                     $html .= '<tr><td style="color: #1d4ed8; padding: 0.25rem 0;">MwSt.:</td><td style="text-align: right; color: #1d4ed8; font-weight: bold;">' . number_format($totalCostVat, 2, ',', '.') . ' €</td></tr>';
@@ -671,7 +671,7 @@ class SolarPlantBillingResource extends Resource
                                 // Gutschriftenseite (grün)
                                 if ($hasCredits) {
                                     $html .= '<div style="padding: 0.75rem; background-color: #f0fdf4; border: 2px solid #22c55e; border-radius: 0.375rem;">';
-                                    $html .= '<div style="font-weight: 600; color: #15803d; margin-bottom: 0.5rem; text-align: center; font-size: 1rem;">💰 Gutschriftsbeträge</div>';
+                                    $html .= '<div style="font-weight: 600; color: #15803d; margin-bottom: 0.5rem; text-align: center; font-size: 1rem;">Gutschriftsbeträge</div>';
                                     $html .= '<table style="width: 100%; border-collapse: collapse;">';
                                     $html .= '<tr><td style="color: #15803d; padding: 0.25rem 0;">Netto:</td><td style="text-align: right; color: #15803d; font-weight: bold;">' . number_format($totalCreditsNet, 2, ',', '.') . ' €</td></tr>';
                                     $html .= '<tr><td style="color: #15803d; padding: 0.25rem 0;">MwSt.:</td><td style="text-align: right; color: #15803d; font-weight: bold;">' . number_format($totalCreditVat, 2, ',', '.') . ' €</td></tr>';
@@ -686,7 +686,7 @@ class SolarPlantBillingResource extends Resource
                                 
                                 // Finale Berechnung
                                 $html .= '<div style="margin-top: 1rem; padding: 1rem; background-color: #fff; border: 2px solid #374151; border-radius: 0.5rem;">';
-                                $html .= '<div style="font-weight: 700; color: #374151; margin-bottom: 0.75rem; text-align: center; font-size: 1.125rem;">🧮 Endergebnis</div>';
+                                $html .= '<div style="font-weight: 700; color: #374151; margin-bottom: 0.75rem; text-align: center; font-size: 1.125rem;">Endergebnis</div>';
                                 
                                 $html .= '<table style="width: 100%; border-collapse: collapse; font-size: 1rem;">';
                                 
@@ -705,10 +705,9 @@ class SolarPlantBillingResource extends Resource
                                 // Finale Summe
                                 $finalAmountColor = $finalAmount >= 0 ? '#dc2626' : '#059669'; // Rot für Rechnung, Grün für Guthaben
                                 $finalAmountText = $finalAmount >= 0 ? 'Rechnungsbetrag' : 'Guthabenbetrag';
-                                $finalAmountIcon = $finalAmount >= 0 ? '📋' : '💚';
                                 
                                 $html .= '<tr style="border-top: 2px solid #374151; border-bottom: 2px solid #374151;">';
-                                $html .= '<td style="color: ' . $finalAmountColor . '; padding: 0.75rem 0; font-weight: bold; font-size: 1.125rem;">' . $finalAmountIcon . ' ' . $finalAmountText . ':</td>';
+                                $html .= '<td style="color: ' . $finalAmountColor . '; padding: 0.75rem 0; font-weight: bold; font-size: 1.125rem;">' . $finalAmountText . ':</td>';
                                 $html .= '<td style="text-align: right; color: ' . $finalAmountColor . '; font-weight: bold; font-size: 1.25rem;">' . number_format(abs($finalAmount), 2, ',', '.') . ' €</td>';
                                 $html .= '</tr>';
                                 
