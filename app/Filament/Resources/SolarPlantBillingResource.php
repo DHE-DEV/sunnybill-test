@@ -431,7 +431,7 @@ class SolarPlantBillingResource extends Resource
                     ->label('Rechnungsnummer')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('produced_energy_kwh')
                     ->label('Produzierte Energie')
