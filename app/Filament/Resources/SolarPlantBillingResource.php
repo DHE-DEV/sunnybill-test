@@ -544,27 +544,34 @@ class SolarPlantBillingResource extends Resource
                                     $html .= '<div style="margin-top: 0.5rem; margin-bottom: 1rem; padding: 0.75rem; background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 0.375rem;">';
                                     $html .= '<div style="font-weight: 600; color: #ea580c; margin-bottom: 0.5rem;">Preis-Übersicht (pro kWh)</div>';
                                     
+                                    // Tabellenlayout für bessere Ausrichtung
+                                    $html .= '<table style="width: 100%; border-collapse: collapse;">';
+                                    
                                     if ($hasMarktpraemie) {
-                                        $html .= '<div style="font-size: 0.875rem; color: #ea580c; margin-bottom: 0.25rem;">';
-                                        $html .= 'Einzelpreis Marktprämie: <strong>' . number_format($marktpraemiePreis, 6, ',', '.') . ' €/kWh</strong>';
-                                        $html .= '</div>';
+                                        $html .= '<tr>';
+                                        $html .= '<td style="font-size: 0.875rem; color: #ea580c; padding: 0.125rem 0;">Einzelpreis Marktprämie:</td>';
+                                        $html .= '<td style="font-size: 0.875rem; color: #ea580c; padding: 0.125rem 0; text-align: right; font-weight: bold;">' . number_format($marktpraemiePreis, 6, ',', '.') . ' €/kWh</td>';
+                                        $html .= '</tr>';
                                     }
                                     
                                     if ($hasDirektvermarktung) {
-                                        $html .= '<div style="font-size: 0.875rem; color: #ea580c; margin-bottom: 0.25rem;">';
-                                        $html .= 'Einzelpreis Direktvermarktung: <strong>' . number_format($direktvermarktungPreis, 6, ',', '.') . ' €/kWh</strong>';
-                                        $html .= '</div>';
+                                        $html .= '<tr>';
+                                        $html .= '<td style="font-size: 0.875rem; color: #ea580c; padding: 0.125rem 0;">Einzelpreis Direktvermarktung:</td>';
+                                        $html .= '<td style="font-size: 0.875rem; color: #ea580c; padding: 0.125rem 0; text-align: right; font-weight: bold;">' . number_format($direktvermarktungPreis, 6, ',', '.') . ' €/kWh</td>';
+                                        $html .= '</tr>';
                                     }
                                     
                                     if ($hasMarktpraemie || $hasDirektvermarktung) {
-                                        $html .= '<div style="font-size: 0.875rem; color: #ea580c; margin-bottom: 0.25rem; border-top: 1px solid #fed7aa; padding-top: 0.25rem;">';
-                                        $html .= 'Summe Einzelpreise: <strong>' . number_format($summeEinzelpreise, 6, ',', '.') . ' €/kWh</strong>';
-                                        $html .= '</div>';
+                                        $html .= '<tr style="border-top: 1px solid #fed7aa;">';
+                                        $html .= '<td style="font-size: 0.875rem; color: #ea580c; padding: 0.25rem 0 0.125rem 0;">Summe Einzelpreise:</td>';
+                                        $html .= '<td style="font-size: 0.875rem; color: #ea580c; padding: 0.25rem 0 0.125rem 0; text-align: right; font-weight: bold;">' . number_format($summeEinzelpreise, 6, ',', '.') . ' €/kWh</td>';
+                                        $html .= '</tr>';
                                         
                                         if ($eegCompensation > 0) {
-                                            $html .= '<div style="font-size: 0.875rem; color: #ea580c; margin-bottom: 0.25rem;">';
-                                            $html .= 'Vertraglich zugesicherte EEG-Vergütung: <strong>' . number_format($eegCompensation, 6, ',', '.') . ' €/kWh</strong>';
-                                            $html .= '</div>';
+                                            $html .= '<tr>';
+                                            $html .= '<td style="font-size: 0.875rem; color: #ea580c; padding: 0.125rem 0;">Vertraglich zugesicherte EEG-Vergütung:</td>';
+                                            $html .= '<td style="font-size: 0.875rem; color: #ea580c; padding: 0.125rem 0; text-align: right; font-weight: bold;">' . number_format($eegCompensation, 6, ',', '.') . ' €/kWh</td>';
+                                            $html .= '</tr>';
                                             
                                             $differenzColor = $differenzEEG >= 0 ? '#dc2626' : '#059669'; // Rot für negativ, Grün für positiv
                                             $differenzText = $differenzEEG >= 0 ? 'Differenz (Verlust)' : 'Differenz (Gewinn)';
@@ -573,17 +580,23 @@ class SolarPlantBillingResource extends Resource
                                             $customerEnergyKwh = ($record->produced_energy_kwh * $record->participation_percentage) / 100;
                                             $differenzAbsolut = abs($differenzEEG) * $customerEnergyKwh;
                                             
-                                            $html .= '<div style="font-size: 0.875rem; color: ' . $differenzColor . '; font-weight: 600; border-top: 1px solid #fed7aa; padding-top: 0.25rem;">';
-                                            $html .= $differenzText . ': <strong>' . number_format(abs($differenzEEG), 6, ',', '.') . ' €/kWh</strong>';
-                                            $html .= ' | <strong>' . number_format($differenzAbsolut, 2, ',', '.') . ' €</strong>';
-                                            $html .= '</div>';
+                                            $html .= '<tr style="border-top: 1px solid #fed7aa;">';
+                                            $html .= '<td style="font-size: 0.875rem; color: ' . $differenzColor . '; padding: 0.25rem 0 0.125rem 0; font-weight: 600;">' . $differenzText . ':</td>';
+                                            $html .= '<td style="font-size: 0.875rem; color: ' . $differenzColor . '; padding: 0.25rem 0 0.125rem 0; text-align: right; font-weight: bold;">' . number_format(abs($differenzEEG), 6, ',', '.') . ' €/kWh</td>';
+                                            $html .= '</tr>';
+                                            
+                                            $html .= '<tr>';
+                                            $html .= '<td style="font-size: 0.875rem; color: ' . $differenzColor . '; padding: 0.125rem 0; font-weight: 600;">Absoluter Betrag:</td>';
+                                            $html .= '<td style="font-size: 0.875rem; color: ' . $differenzColor . '; padding: 0.125rem 0; text-align: right; font-weight: bold;">' . number_format($differenzAbsolut, 2, ',', '.') . ' €</td>';
+                                            $html .= '</tr>';
                                         } else {
-                                            $html .= '<div style="font-size: 0.875rem; color: #ea580c; font-style: italic;">';
-                                            $html .= 'EEG-Vergütung nicht hinterlegt';
-                                            $html .= '</div>';
+                                            $html .= '<tr>';
+                                            $html .= '<td colspan="2" style="font-size: 0.875rem; color: #ea580c; padding: 0.125rem 0; font-style: italic;">EEG-Vergütung nicht hinterlegt</td>';
+                                            $html .= '</tr>';
                                         }
                                     }
                                     
+                                    $html .= '</table>';
                                     $html .= '</div>';
                                 }
                                 
