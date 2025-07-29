@@ -426,12 +426,16 @@ class ContractsRelationManager extends RelationManager
                                                 ->live(onBlur: true)
                                                 ->disabled(fn (callable $get) => $get('is_required_article'))
                                                 ->helperText(fn (callable $get) => $get('is_required_article') ? 'Menge für Pflichtartikel ist festgelegt und kann nicht geändert werden.' : null)
-                                                ->afterStateUpdated(function (callable $get, callable $set) {
-                                                    $quantity = $get('quantity');
-                                                    $unitPrice = $get('unit_price');
-                                                    if ($quantity && $unitPrice) {
-                                                        $set('total_price', $quantity * $unitPrice);
+                                                ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                                    // Wenn das Feld leer ist, setze einen Standardwert
+                                                    if (empty($state) || $state <= 0) {
+                                                        $set('quantity', 1);
+                                                        $state = 1;
                                                     }
+                                                    
+                                                    $quantity = $state;
+                                                    $unitPrice = $get('unit_price') ?: 0;
+                                                    $set('total_price', $quantity * $unitPrice);
                                                 }),
 
                                             Forms\Components\TextInput::make('unit_price')
@@ -444,12 +448,16 @@ class ContractsRelationManager extends RelationManager
                                                 ->live(onBlur: true)
                                                 ->disabled(fn (callable $get) => $get('is_required_article'))
                                                 ->helperText(fn (callable $get) => $get('is_required_article') ? 'Preis für Pflichtartikel ist festgelegt und kann nicht geändert werden.' : null)
-                                                ->afterStateUpdated(function (callable $get, callable $set) {
-                                                    $quantity = $get('quantity');
-                                                    $unitPrice = $get('unit_price');
-                                                    if ($quantity && $unitPrice) {
-                                                        $set('total_price', $quantity * $unitPrice);
+                                                ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                                    // Wenn das Feld leer ist, setze einen Standardwert
+                                                    if (empty($state) || $state < 0) {
+                                                        $set('unit_price', 0);
+                                                        $state = 0;
                                                     }
+                                                    
+                                                    $quantity = $get('quantity') ?: 1;
+                                                    $unitPrice = $state;
+                                                    $set('total_price', $quantity * $unitPrice);
                                                 }),
 
                                             Forms\Components\TextInput::make('total_price')
