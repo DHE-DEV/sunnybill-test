@@ -510,7 +510,13 @@
             <tbody>
                 @foreach($billing->credit_breakdown as $credit)
                 <tr>
-                    <td><b>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}</td>
+                    <td>
+                        <b>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</b><br>
+                        {{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}
+                        @if(!empty($credit['billing_description']) && $credit['billing_description'] !== 'LEER')
+                            <br><em style="color: #666; font-size: 8pt;">{{ $credit['billing_description'] }}</em>
+                        @endif
+                    </td>
                     <td class="number">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
                     <td class="number">{{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
@@ -598,7 +604,13 @@
             <tbody>
                 @foreach($billing->cost_breakdown as $cost)
                 <tr>
-                    <td><b>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}</td>
+                    <td>
+                        <b>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</b><br>
+                        {{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}
+                        @if(!empty($cost['billing_description']) && $cost['billing_description'] !== 'LEER')
+                            <br><em style="color: #666; font-size: 8pt;">{{ $cost['billing_description'] }}</em>
+                        @endif
+                    </td>
                     <td class="number">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
                     <td class="number">{{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
