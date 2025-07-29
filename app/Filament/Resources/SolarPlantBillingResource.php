@@ -629,6 +629,7 @@ class SolarPlantBillingResource extends Resource
                         ($record->credit_breakdown && !empty($record->credit_breakdown))
                     )),
 
+                // Beträge-Sektion ausgeblendet da Informationen bereits in Kostenaufschlüsselung enthalten sind
                 Forms\Components\Section::make('Beträge')
                     ->schema([
                         Forms\Components\Grid::make(2)
@@ -687,7 +688,8 @@ class SolarPlantBillingResource extends Resource
                                     ->disabled()
                                     ->dehydrated(false),
                             ]),
-                    ]),
+                    ])
+                    ->hidden(),
 
                 Forms\Components\Section::make('Zusätzliche Informationen')
                     ->schema([
