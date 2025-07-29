@@ -623,6 +623,106 @@ class SolarPlantBillingResource extends Resource
                                 return new \Illuminate\Support\HtmlString($html);
                             })
                             ->visible(fn ($record) => $record && $record->credit_breakdown && !empty($record->credit_breakdown)),
+
+                        Forms\Components\Placeholder::make('final_summary')
+                            ->label('')
+                            ->content(function ($get, $record) {
+                                if (!$record) return '';
+                                
+                                $hasCosts = $record->cost_breakdown && !empty($record->cost_breakdown);
+                                $hasCredits = $record->credit_breakdown && !empty($record->credit_breakdown);
+                                
+                                if (!$hasCosts && !$hasCredits) return '';
+                                
+                                // Berechne Gesamtwerte
+                                $totalCosts = $hasCosts ? array_sum(array_column($record->cost_breakdown, 'customer_share')) : 0;
+                                $totalCostsNet = $hasCosts ? array_sum(array_column($record->cost_breakdown, 'customer_share_net')) : 0;
+                                $totalCredits = $hasCredits ? array_sum(array_column($record->credit_breakdown, 'customer_share')) : 0;
+                                $totalCreditsNet = $hasCredits ? array_sum(array_column($record->credit_breakdown, 'customer_share_net')) : 0;
+                                
+                                // Berechne MwSt.-Beträge
+                                $totalCostVat = $totalCosts - $totalCostsNet;
+                                $totalCreditVat = $totalCredits - $totalCreditsNet;
+                                $totalVat = $totalCostVat - $totalCreditVat; // Credits reduzieren die MwSt.
+                                
+                                // Berechne Endbetrag
+                                $finalNetAmount = $totalCostsNet - $totalCreditsNet;
+                                $finalAmount = $totalCosts - $totalCredits;
+                                
+                                $html = '<div style="margin-top: 1.5rem; padding: 1rem; background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 0.5rem;">';
+                                $html .= '<div style="font-weight: 700; font-size: 1.125rem; color: #374151; margin-bottom: 1rem; text-align: center; border-bottom: 1px solid #d1d5db; padding-bottom: 0.5rem;">Gesamtübersicht</div>';
+                                
+                                $html .= '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">';
+                                
+                                // Kostenseite (blau)
+                                if ($hasCosts) {
+                                    $html .= '<div style="padding: 0.75rem; background-color: #eff6ff; border: 2px solid #3b82f6; border-radius: 0.375rem;">';
+                                    $html .= '<div style="font-weight: 600; color: #1d4ed8; margin-bottom: 0.5rem; text-align: center; font-size: 1rem;">📊 Rechnungsbeträge</div>';
+                                    $html .= '<table style="width: 100%; border-collapse: collapse;">';
+                                    $html .= '<tr><td style="color: #1d4ed8; padding: 0.25rem 0;">Netto:</td><td style="text-align: right; color: #1d4ed8; font-weight: bold;">' . number_format($totalCostsNet, 2, ',', '.') . ' €</td></tr>';
+                                    $html .= '<tr><td style="color: #1d4ed8; padding: 0.25rem 0;">MwSt.:</td><td style="text-align: right; color: #1d4ed8; font-weight: bold;">' . number_format($totalCostVat, 2, ',', '.') . ' €</td></tr>';
+                                    $html .= '<tr style="border-top: 1px solid #3b82f6;"><td style="color: #1d4ed8; padding: 0.25rem 0; font-weight: bold;">Brutto:</td><td style="text-align: right; color: #1d4ed8; font-weight: bold; font-size: 1.125rem;">' . number_format($totalCosts, 2, ',', '.') . ' €</td></tr>';
+                                    $html .= '</table>';
+                                    $html .= '</div>';
+                                } else {
+                                    $html .= '<div style="padding: 0.75rem; background-color: #f9fafb; border: 1px dashed #d1d5db; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; color: #6b7280; font-style: italic;">Keine Kostenpositionen</div>';
+                                }
+                                
+                                // Gutschriftenseite (grün)
+                                if ($hasCredits) {
+                                    $html .= '<div style="padding: 0.75rem; background-color: #f0fdf4; border: 2px solid #22c55e; border-radius: 0.375rem;">';
+                                    $html .= '<div style="font-weight: 600; color: #15803d; margin-bottom: 0.5rem; text-align: center; font-size: 1rem;">💰 Gutschriftsbeträge</div>';
+                                    $html .= '<table style="width: 100%; border-collapse: collapse;">';
+                                    $html .= '<tr><td style="color: #15803d; padding: 0.25rem 0;">Netto:</td><td style="text-align: right; color: #15803d; font-weight: bold;">' . number_format($totalCreditsNet, 2, ',', '.') . ' €</td></tr>';
+                                    $html .= '<tr><td style="color: #15803d; padding: 0.25rem 0;">MwSt.:</td><td style="text-align: right; color: #15803d; font-weight: bold;">' . number_format($totalCreditVat, 2, ',', '.') . ' €</td></tr>';
+                                    $html .= '<tr style="border-top: 1px solid #22c55e;"><td style="color: #15803d; padding: 0.25rem 0; font-weight: bold;">Brutto:</td><td style="text-align: right; color: #15803d; font-weight: bold; font-size: 1.125rem;">' . number_format($totalCredits, 2, ',', '.') . ' €</td></tr>';
+                                    $html .= '</table>';
+                                    $html .= '</div>';
+                                } else {
+                                    $html .= '<div style="padding: 0.75rem; background-color: #f9fafb; border: 1px dashed #d1d5db; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; color: #6b7280; font-style: italic;">Keine Gutschriftenpositionen</div>';
+                                }
+                                
+                                $html .= '</div>';
+                                
+                                // Finale Berechnung
+                                $html .= '<div style="margin-top: 1rem; padding: 1rem; background-color: #fff; border: 2px solid #374151; border-radius: 0.5rem;">';
+                                $html .= '<div style="font-weight: 700; color: #374151; margin-bottom: 0.75rem; text-align: center; font-size: 1.125rem;">🧮 Endergebnis</div>';
+                                
+                                $html .= '<table style="width: 100%; border-collapse: collapse; font-size: 1rem;">';
+                                
+                                // Netto-Berechnung
+                                $html .= '<tr>';
+                                $html .= '<td style="color: #374151; padding: 0.375rem 0;">Netto-Gesamtbetrag:</td>';
+                                $html .= '<td style="text-align: right; color: #374151; font-weight: bold;">' . number_format($finalNetAmount, 2, ',', '.') . ' €</td>';
+                                $html .= '</tr>';
+                                
+                                // MwSt.-Berechnung
+                                $html .= '<tr>';
+                                $html .= '<td style="color: #374151; padding: 0.375rem 0;">MwSt.-Gesamtbetrag:</td>';
+                                $html .= '<td style="text-align: right; color: #374151; font-weight: bold;">' . number_format($totalVat, 2, ',', '.') . ' €</td>';
+                                $html .= '</tr>';
+                                
+                                // Finale Summe
+                                $finalAmountColor = $finalAmount >= 0 ? '#dc2626' : '#059669'; // Rot für Rechnung, Grün für Guthaben
+                                $finalAmountText = $finalAmount >= 0 ? 'Rechnungsbetrag' : 'Guthabenbetrag';
+                                $finalAmountIcon = $finalAmount >= 0 ? '📋' : '💚';
+                                
+                                $html .= '<tr style="border-top: 2px solid #374151; border-bottom: 2px solid #374151;">';
+                                $html .= '<td style="color: ' . $finalAmountColor . '; padding: 0.75rem 0; font-weight: bold; font-size: 1.125rem;">' . $finalAmountIcon . ' ' . $finalAmountText . ':</td>';
+                                $html .= '<td style="text-align: right; color: ' . $finalAmountColor . '; font-weight: bold; font-size: 1.25rem;">' . number_format(abs($finalAmount), 2, ',', '.') . ' €</td>';
+                                $html .= '</tr>';
+                                
+                                $html .= '</table>';
+                                $html .= '</div>';
+                                
+                                $html .= '</div>';
+                                
+                                return new \Illuminate\Support\HtmlString($html);
+                            })
+                            ->visible(fn ($record) => $record && (
+                                ($record->cost_breakdown && !empty($record->cost_breakdown)) ||
+                                ($record->credit_breakdown && !empty($record->credit_breakdown))
+                            )),
                     ])
                     ->visible(fn ($record) => $record && (
                         ($record->cost_breakdown && !empty($record->cost_breakdown)) ||
