@@ -36,8 +36,8 @@ class SupplierContractBilling extends Model
     protected $casts = [
         'billing_date' => 'date',
         'due_date' => 'date',
-        'total_amount' => 'decimal:2',
-        'net_amount' => 'decimal:2',
+        'total_amount' => 'decimal:6',
+        'net_amount' => 'decimal:6',
         'vat_rate' => 'decimal:2',
     ];
 
