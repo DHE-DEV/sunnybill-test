@@ -211,7 +211,107 @@ class ArticlesRelationManager extends RelationManager
                     ->native(false),
             ])
             ->headerActions([
-                // Keine Aktionen zum Hinzufügen von Artikeln
+                Tables\Actions\AttachAction::make()
+                    ->label('Artikel hinzufügen')
+                    ->icon('heroicon-o-plus')
+                    ->color('success')
+                    ->modalHeading('Artikel zu Lieferant hinzufügen')
+                    ->modalSubheading('Wählen Sie einen existierenden Artikel aus und konfigurieren Sie die Verknüpfung.')
+                    ->modalWidth('4xl')
+                    ->recordSelect(function (Forms\Components\Select $select) {
+                        return $select
+                            ->label('Artikel auswählen')
+                            ->options(Article::query()
+                                ->orderBy('name')
+                                ->get()
+                                ->mapWithKeys(function ($article) {
+                                    return [$article->id => $article->name . ' (' . $article->formatted_price . ')'];
+                                })
+                                ->toArray())
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if ($state) {
+                                    $article = Article::find($state);
+                                    if ($article) {
+                                        $set('unit_price', $article->price);
+                                    }
+                                }
+                            });
+                    })
+                    ->form([
+                        Forms\Components\Placeholder::make('article_info')
+                            ->label('Artikel-Info')
+                            ->content(function ($get) {
+                                $articleId = $get('recordId');
+                                if (!$articleId) return 'Kein Artikel ausgewählt';
+                                
+                                $article = Article::find($articleId);
+                                if (!$article) return 'Artikel nicht gefunden';
+                                
+                                return new \Illuminate\Support\HtmlString(
+                                    '<div class="space-y-1 text-sm">' .
+                                    '<div><strong>Name:</strong> ' . $article->name . '</div>' .
+                                    '<div><strong>Beschreibung:</strong> ' . ($article->description ?? 'Keine Beschreibung') . '</div>' .
+                                    '<div><strong>Standardpreis:</strong> ' . $article->formatted_price . '</div>' .
+                                    '<div><strong>Steuersatz:</strong> ' . $article->tax_rate_percent . '</div>' .
+                                    '<div><strong>Einheit:</strong> ' . $article->unit . '</div>' .
+                                    '</div>'
+                                );
+                            })
+                            ->columnSpanFull()
+                            ->visible(fn ($get) => $get('recordId')),
+
+                        Forms\Components\TextInput::make('quantity')
+                            ->label('Menge')
+                            ->numeric()
+                            ->step(0.01)
+                            ->minValue(0.01)
+                            ->required()
+                            ->default(1.00)
+                            ->suffix('Stk.')
+                            ->helperText('Anzahl der Artikel für diesen Lieferanten'),
+
+                        Forms\Components\TextInput::make('unit_price')
+                            ->label('Abweichender Stückpreis (optional)')
+                            ->numeric()
+                            ->step(0.000001)
+                            ->minValue(0)
+                            ->prefix('€')
+                            ->helperText('Leer lassen um den Standard-Artikelpreis zu verwenden. Bis zu 6 Nachkommastellen möglich.'),
+
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Notizen')
+                            ->rows(3)
+                            ->maxLength(1000)
+                            ->placeholder('Zusätzliche Informationen zu diesem Artikel...')
+                            ->columnSpanFull(),
+
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Aktiv')
+                            ->default(true)
+                            ->helperText('Nur aktive Artikel werden bei Berechnungen berücksichtigt.'),
+
+                        Forms\Components\Radio::make('billing_requirement')
+                            ->label('Anforderung bei Abrechnung')
+                            ->options([
+                                'optional' => 'Optional',
+                                'mandatory' => 'Pflichtartikel',
+                            ])
+                            ->default('optional')
+                            ->required()
+                            ->helperText('Festlegen, ob dieser Artikel bei der Abrechnung für diesen Lieferanten obligatorisch ist.')
+                            ->inline(),
+                    ])
+                    ->attachAnother(false)
+                    ->after(function ($livewire) {
+                        Notification::make()
+                            ->title('Artikel hinzugefügt')
+                            ->body('Der Artikel wurde erfolgreich dem Lieferanten zugeordnet.')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -497,6 +597,6 @@ class ArticlesRelationManager extends RelationManager
     
     protected function canAttach(): bool
     {
-        return false;
+        return true;
     }
 }
