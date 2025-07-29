@@ -199,7 +199,9 @@ class SolarPlantBillingResource extends Resource
                                 $html .= '<tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">';
                                 $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151;">Bezeichnung</th>';
                                 $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151; vertical-align: top;">Anteil</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151; vertical-align: top;">Gesamtbetrag</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151; vertical-align: top;">Netto (€)</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151; vertical-align: top;">MwSt. %</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151; vertical-align: top;">Brutto (€)</th>';
                                 $html .= '</tr>';
                                 $html .= '</thead>';
                                 $html .= '<tbody>';
@@ -289,7 +291,9 @@ class SolarPlantBillingResource extends Resource
                                     
                                     $html .= '</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['customer_share_net'] ?? $item['customer_share'], 2, ',', '.') . '</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format((($item['vat_rate'] ?? 0.19) <= 1 ? ($item['vat_rate'] ?? 0.19) * 100 : ($item['vat_rate'] ?? 19)), 0, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . '</td>';
                                     $html .= '</tr>';
                                 }
                                 
@@ -324,7 +328,9 @@ class SolarPlantBillingResource extends Resource
                                 $html .= '<tr style="background-color: #f0fdf4; border-bottom: 2px solid #bbf7d0;">';
                                 $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #166534;">Bezeichnung</th>';
                                 $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534; vertical-align: top;">Anteil</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534; vertical-align: top;">Gesamtbetrag</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534; vertical-align: top;">Netto (€)</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534; vertical-align: top;">MwSt. %</th>';
+                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534; vertical-align: top;">Brutto (€)</th>';
                                 $html .= '</tr>';
                                 $html .= '</thead>';
                                 $html .= '<tbody>';
@@ -479,7 +485,9 @@ class SolarPlantBillingResource extends Resource
                                     
                                     $html .= '</td>';
                                     $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #166534; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format($item['customer_share_net'] ?? $item['customer_share'], 2, ',', '.') . '</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format((($item['vat_rate'] ?? 0.0) <= 1 ? ($item['vat_rate'] ?? 0.0) * 100 : ($item['vat_rate'] ?? 0.0)), 1, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #166534; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . '</td>';
                                     $html .= '</tr>';
                                 }
                                 
