@@ -423,7 +423,7 @@ class ContractsRelationManager extends RelationManager
                                                 ->numeric()
                                                 ->step(0.01)
                                                 ->minValue(0.01)
-                                                ->reactive()
+                                                ->live(onBlur: true)
                                                 ->disabled(fn (callable $get) => $get('is_required_article'))
                                                 ->helperText(fn (callable $get) => $get('is_required_article') ? 'Menge für Pflichtartikel ist festgelegt und kann nicht geändert werden.' : null)
                                                 ->afterStateUpdated(function (callable $get, callable $set) {
@@ -438,10 +438,10 @@ class ContractsRelationManager extends RelationManager
                                                 ->label('Einzelpreis')
                                                 ->required()
                                                 ->numeric()
-                                                ->step(0.01)
+                                                ->step(0.000001)
                                                 ->prefix('€')
                                                 ->minValue(0)
-                                                ->reactive()
+                                                ->live(onBlur: true)
                                                 ->disabled(fn (callable $get) => $get('is_required_article'))
                                                 ->helperText(fn (callable $get) => $get('is_required_article') ? 'Preis für Pflichtartikel ist festgelegt und kann nicht geändert werden.' : null)
                                                 ->afterStateUpdated(function (callable $get, callable $set) {
