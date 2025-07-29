@@ -144,20 +144,15 @@ class SolarPlantBillingResource extends Resource
 
                 Forms\Components\Section::make('Kostenaufschlüsselung')
                     ->schema([
-                        Forms\Components\Placeholder::make('cost_breakdown_table')
-                            ->label('Kostenpositionen')
+                        Forms\Components\Placeholder::make('energy_distribution')
+                            ->label('')
                             ->content(function ($get, $record) {
-                                if (!$record || !$record->cost_breakdown || empty($record->cost_breakdown)) {
-                                    return 'Keine Kostenpositionen verfügbar';
+                                if (!$record || !$record->produced_energy_kwh || !$record->participation_percentage) {
+                                    return '';
                                 }
-                                
-                                $breakdown = $record->cost_breakdown;
                                 
                                 // Berechne anteilige kWh für den Kunden
-                                $customerEnergyKwh = 0;
-                                if ($record->produced_energy_kwh && $record->participation_percentage) {
-                                    $customerEnergyKwh = ($record->produced_energy_kwh * $record->participation_percentage) / 100;
-                                }
+                                $customerEnergyKwh = ($record->produced_energy_kwh * $record->participation_percentage) / 100;
                                 
                                 // Hole EEG-Vergütung aus der Beteiligung
                                 $eegCompensation = null;
@@ -168,25 +163,36 @@ class SolarPlantBillingResource extends Resource
                                     $eegCompensation = $participation->eeg_compensation_per_kwh;
                                 }
                                 
+                                // HTML für Energieverteilungs-Block
+                                $html = '<div style="margin-bottom: 1rem; padding: 0.75rem; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.375rem;">';
+                                $html .= '<div style="font-weight: 600; color: #1e40af; margin-bottom: 0.25rem;">Energieverteilung</div>';
+                                $html .= '<div style="font-size: 0.875rem; color: #1e40af;">';
+                                $html .= 'Gesamte produzierte Energie: <strong>' . number_format($record->produced_energy_kwh, 3, ',', '.') . ' kWh</strong><br>';
+                                $html .= 'Ihr Beteiligungsanteil: <strong>' . number_format($record->participation_percentage, 4, ',', '.') . '%</strong><br>';
+                                $html .= 'Ihre anteilige Energie: <strong>' . number_format($customerEnergyKwh, 3, ',', '.') . ' kWh</strong><br>';
+                                if ($eegCompensation && $eegCompensation > 0) {
+                                    $html .= 'Vertraglich zugesicherte EEG-Vergütung: <strong>' . number_format($eegCompensation, 6, ',', '.') . ' €/kWh</strong>';
+                                } else {
+                                    $html .= 'Vertraglich zugesicherte EEG-Vergütung: <strong>Nicht hinterlegt</strong>';
+                                }
+                                $html .= '</div>';
+                                $html .= '</div>';
+                                
+                                return new \Illuminate\Support\HtmlString($html);
+                            })
+                            ->visible(fn ($record) => $record && $record->produced_energy_kwh && $record->participation_percentage),
+
+                        Forms\Components\Placeholder::make('cost_breakdown_table')
+                            ->label('Kostenpositionen')
+                            ->content(function ($get, $record) {
+                                if (!$record || !$record->cost_breakdown || empty($record->cost_breakdown)) {
+                                    return 'Keine Kostenpositionen verfügbar';
+                                }
+                                
+                                $breakdown = $record->cost_breakdown;
+                                
                                 // HTML-Tabelle für Kostenpositionen
                                 $html = '<div style="overflow-x: auto;">';
-                                
-                                // Energieinfo anzeigen
-                                if ($record->produced_energy_kwh && $record->participation_percentage) {
-                                    $html .= '<div style="margin-bottom: 1rem; padding: 0.75rem; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.375rem;">';
-                                    $html .= '<div style="font-weight: 600; color: #1e40af; margin-bottom: 0.25rem;">Energieverteilung</div>';
-                                    $html .= '<div style="font-size: 0.875rem; color: #1e40af;">';
-                                    $html .= 'Gesamte produzierte Energie: <strong>' . number_format($record->produced_energy_kwh, 3, ',', '.') . ' kWh</strong><br>';
-                                    $html .= 'Ihr Beteiligungsanteil: <strong>' . number_format($record->participation_percentage, 4, ',', '.') . '%</strong><br>';
-                                    $html .= 'Ihre anteilige Energie: <strong>' . number_format($customerEnergyKwh, 3, ',', '.') . ' kWh</strong><br>';
-                                    if ($eegCompensation && $eegCompensation > 0) {
-                                        $html .= 'Vertraglich zugesicherte EEG-Vergütung: <strong>' . number_format($eegCompensation, 6, ',', '.') . ' €/kWh</strong>';
-                                    } else {
-                                        $html .= 'Vertraglich zugesicherte EEG-Vergütung: <strong>Nicht hinterlegt</strong>';
-                                    }
-                                    $html .= '</div>';
-                                    $html .= '</div>';
-                                }
                                 
                                 $html .= '<table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">';
                                 $html .= '<thead>';
