@@ -302,9 +302,15 @@ class SolarPlantBillingResource extends Resource
                                 
                                 // Gesamtbetrag für Kostenpositionen
                                 $totalCosts = array_sum(array_column($breakdown, 'customer_share'));
-                                $html .= '<div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; display: flex; justify-content: space-between; align-items: center;">';
-                                $html .= '<div style="font-weight: 600; color: #374151;">Gesamtkosten:</div>';
-                                $html .= '<div style="font-weight: 600; color: #374151;">' . number_format($totalCosts, 2, ',', '.') . ' €</div>';
+                                $totalCostsNet = array_sum(array_column($breakdown, 'customer_share_net'));
+                                $html .= '<div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem;">';
+                                $html .= '<table style="width: 100%; border-collapse: collapse;">';
+                                $html .= '<tr>';
+                                $html .= '<td style="font-weight: 600; color: #374151;">Gesamtkosten:</td>';
+                                $html .= '<td style="text-align: right; color: #374151;">Netto: <strong>' . number_format($totalCostsNet, 2, ',', '.') . ' €</strong></td>';
+                                $html .= '<td style="text-align: right; color: #374151;">Brutto: <strong>' . number_format($totalCosts, 2, ',', '.') . ' €</strong></td>';
+                                $html .= '</tr>';
+                                $html .= '</table>';
                                 $html .= '</div>';
                                 $html .= '</div>';
                                 
@@ -602,9 +608,15 @@ class SolarPlantBillingResource extends Resource
                                 
                                 // Gesamtbetrag für Gutschriftenpositionen
                                 $totalCredits = array_sum(array_column($breakdown, 'customer_share'));
-                                $html .= '<div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.375rem; display: flex; justify-content: space-between; align-items: center;">';
-                                $html .= '<div style="font-weight: 600; color: #166534;">Gesamtgutschriften:</div>';
-                                $html .= '<div style="font-weight: 600; color: #166534;">' . number_format($totalCredits, 2, ',', '.') . ' €</div>';
+                                $totalCreditsNet = array_sum(array_column($breakdown, 'customer_share_net'));
+                                $html .= '<div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.375rem;">';
+                                $html .= '<table style="width: 100%; border-collapse: collapse;">';
+                                $html .= '<tr>';
+                                $html .= '<td style="font-weight: 600; color: #166534;">Gesamtgutschriften:</td>';
+                                $html .= '<td style="text-align: right; color: #166534;">Netto: <strong>' . number_format($totalCreditsNet, 2, ',', '.') . ' €</strong></td>';
+                                $html .= '<td style="text-align: right; color: #166534;">Brutto: <strong>' . number_format($totalCredits, 2, ',', '.') . ' €</strong></td>';
+                                $html .= '</tr>';
+                                $html .= '</table>';
                                 $html .= '</div>';
                                 $html .= '</div>';
                                 
