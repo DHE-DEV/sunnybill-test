@@ -386,8 +386,14 @@ class SolarPlantBillingResource extends Resource
                 Forms\Components\Section::make('Zusätzliche Informationen')
                     ->schema([
                         Forms\Components\Textarea::make('notes')
-                            ->label('Notizen')
+                            ->label('Bemerkung')
+                            ->helperText('Wird auf der PDF Abrechnung unter der Gesamtsumme angezeigt.')
                             ->rows(3),
+
+                        Forms\Components\Toggle::make('show_hints')
+                            ->label('Hinweistext auf PDF anzeigen')
+                            ->default(true)
+                            ->helperText('Wenn deaktiviert, wird der Hinweistext am Ende der PDF nicht angezeigt'),
                     ]),
             ]);
     }
@@ -494,7 +500,7 @@ class SolarPlantBillingResource extends Resource
                         
                         return $tooltip ?: null;
                     })
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
@@ -586,6 +592,19 @@ class SolarPlantBillingResource extends Resource
                             ->minValue(0)
                             ->placeholder('z.B. 2500.000')
                             ->helperText('Gesamte produzierte Energie der Solaranlage für diesen Monat'),
+
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Bemerkung')
+                            ->helperText('Wird auf allen PDF-Abrechnungen unter der Gesamtsumme angezeigt.')
+                            ->rows(4)
+                            ->maxLength(2000)
+                            ->columnSpanFull(),
+
+                        Forms\Components\Toggle::make('show_hints')
+                            ->label('Hinweistext auf PDF anzeigen')
+                            ->default(true)
+                            ->helperText('Wenn deaktiviert, wird der Hinweistext am Ende der PDF nicht angezeigt')
+                            ->columnSpanFull(),
                     ])
                     ->action(function (array $data) {
                         try {
@@ -595,6 +614,20 @@ class SolarPlantBillingResource extends Resource
                                 $data['billing_month'],
                                 $data['produced_energy_kwh'] ?? null
                             );
+
+                            // Füge Bemerkung und show_hints zu allen erstellten Abrechnungen hinzu
+                            if (!empty($data['notes']) || isset($data['show_hints'])) {
+                                foreach ($billings as $billing) {
+                                    $updateData = [];
+                                    if (!empty($data['notes'])) {
+                                        $updateData['notes'] = $data['notes'];
+                                    }
+                                    if (isset($data['show_hints'])) {
+                                        $updateData['show_hints'] = $data['show_hints'];
+                                    }
+                                    $billing->update($updateData);
+                                }
+                            }
 
                             $count = count($billings);
                             $monthName = Carbon::createFromDate($data['billing_year'], $data['billing_month'], 1)
@@ -606,9 +639,14 @@ class SolarPlantBillingResource extends Resource
                                 $energyText = " (Produzierte Energie: " . number_format($data['produced_energy_kwh'], 3, ',', '.') . " kWh)";
                             }
 
+                            $notesText = '';
+                            if (!empty($data['notes'])) {
+                                $notesText = " (Bemerkung hinzugefügt)";
+                            }
+
                             Notification::make()
                                 ->title('Abrechnungen erfolgreich erstellt')
-                                ->body("{$count} Abrechnungen für {$monthName} wurden erstellt.{$energyText}")
+                                ->body("{$count} Abrechnungen für {$monthName} wurden erstellt.{$energyText}{$notesText}")
                                 ->success()
                                 ->send();
 
@@ -620,11 +658,50 @@ class SolarPlantBillingResource extends Resource
                                 ->send();
                         }
                     })
-                    ->modalWidth('md'),
+                    ->modalWidth('xl'),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('edit_notes')
+                        ->label('Bemerkung')
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('warning')
+                        ->form([
+                            Forms\Components\Textarea::make('notes')
+                                ->label('Bemerkung')
+                                ->helperText('Wird auf der PDF Abrechnung unter der Gesamtsumme angezeigt.')
+                                ->rows(8)
+                                ->maxLength(2000)
+                                ->columnSpanFull(),
+
+                            Forms\Components\Toggle::make('show_hints')
+                                ->label('Hinweistext auf PDF anzeigen')
+                                ->default(true)
+                                ->helperText('Wenn deaktiviert, wird der Hinweistext am Ende der PDF nicht angezeigt')
+                                ->columnSpanFull(),
+                        ])
+                        ->fillForm(fn (SolarPlantBilling $record): array => [
+                            'notes' => $record->notes,
+                            'show_hints' => $record->show_hints,
+                        ])
+                        ->action(function (array $data, SolarPlantBilling $record): void {
+                            $record->update([
+                                'notes' => $data['notes'],
+                                'show_hints' => $data['show_hints'],
+                            ]);
+                            
+                            Notification::make()
+                                ->title('Bemerkung und Einstellungen aktualisiert')
+                                ->body('Die Bemerkung und Hinweistext-Einstellung wurden erfolgreich gespeichert.')
+                                ->success()
+                                ->send();
+                        })
+                        ->modalHeading('Bemerkung bearbeiten')
+                        ->modalDescription('Bearbeiten Sie die Bemerkung für diese Abrechnung. Sie wird auf der PDF unter der Gesamtsumme angezeigt.')
+                        ->modalSubmitActionLabel('Speichern')
+                        ->modalCancelActionLabel('Abbrechen')
+                        ->modalWidth('2xl'),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                 ])

@@ -13,7 +13,7 @@ class ListSolarPlantBillings extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            // CreateAction entfernt - Abrechnungen werden über "Monatliche Abrechnungen erstellen" erstellt
         ];
     }
 }

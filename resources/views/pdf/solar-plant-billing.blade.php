@@ -6,7 +6,7 @@
     <title>Solaranlagen-Abrechnung</title>
     <style>
         @page {
-            margin: 1.5cm 1.5cm;
+            margin: {{ $companySetting->pdf_margins ?? '1.5cm 1.5cm 1.5cm 1.5cm' }};
             size: A4;
         }
         
@@ -223,7 +223,7 @@
         
         .breakdown {
             clear: both;
-            margin: 30px 0;
+            margin: 15px 0;
         }
         
         .breakdown h3 {
@@ -261,9 +261,9 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 80px;
+            height: 50px;
             border-top: 1px solid #ddd;
-            padding-top: 10px;
+            padding-top: 5px;
             font-size: 8pt;
             color: #666;
         }
@@ -342,8 +342,8 @@
     <div class="billing-info">
         <table>
             <tr>
-                <td>Abrechnungs-Nr.:</td>
-                <td>{{ $billing->id }}</td>
+                <td>Rechnungs-Nr.:</td>
+                <td>{{ $billing->invoice_number }}</td>
             </tr>
             <tr>
                 <td>Kundennummer:</td>
@@ -357,12 +357,6 @@
                 <td>Periode:</td>
                 <td>{{ $monthName }} {{ $billing->billing_year }}</td>
             </tr>
-            @if($companySetting->vat_id)
-            <tr>
-                <td>USt-IdNr.:</td>
-                <td>{{ $companySetting->vat_id }}</td>
-            </tr>
-            @endif
         </table>
     </div>
 
@@ -415,7 +409,7 @@
                 @endif
             </div>
             <div>
-                <strong>Ihre Beteiligung:</strong><br>
+                <strong>Ihr Anlagenanteil:</strong><br>
                 {{ number_format($currentPercentage, 2, ',', '.') }}%
             </div>
         </div>
@@ -490,11 +484,11 @@
 
     <!-- Gesamtergebnis prominent -->
     <div style="clear: both; margin: 44px 0; text-align: center;">
-        <div style="display: inline-block; background: #2563eb; color: white; padding: 15px 30px; border-radius: 5px; font-size: 14pt; font-weight: bold;">
+        <div style="display: inline-block; background: #2563eb; color: white; padding: 5px 30px; border-radius: 5px; font-size: 14pt; font-weight: bold;">
             @if($billing->net_amount < 0)
-                Gutschrift: {{ number_format(abs($billing->net_amount), 2, ',', '.') }} €
+                Ihre Gutschrift beträgt: {{ number_format(abs($billing->net_amount), 2, ',', '.') }} €
             @else
-                Rechnung: {{ number_format($billing->net_amount, 2, ',', '.') }} €
+                Ihre Rechnungssumme beträgt: {{ number_format($billing->net_amount, 2, ',', '.') }} €
             @endif
         </div>
     </div>
@@ -521,6 +515,11 @@
                     <td class="number">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
                     <td class="number">{{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
                     <td class="number">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                </tr>
+                <tr><!-- Beschreibung -->
+                    <td colspan="5" style="background: #e6f3ff; color: #666; padding: 8px; font-size: 9pt;">
+                        {{ $credit['contract_title'] ?? 'Einnahmen/Gutschriften' }} - {{ $credit['supplier_name'] ?? 'Unbekannt' }}
+                    </td>
                 </tr>
                 @if(isset($credit['articles']) && !empty($credit['articles']))
                 <tr>
@@ -585,6 +584,21 @@
                     <td class="number">{{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
                     <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
+                <tr><!-- Beschreibung -->
+                    <td colspan="5" style="background: #e6f3ff; color: #666; padding: 8px; font-size: 9pt;">
+                        @php
+                            $contractBilling = null;
+                            if(isset($cost['contract_billing_id'])) {
+                                $contractBilling = App\Models\SupplierContractBilling::find($cost['contract_billing_id']);
+                            }
+                        @endphp
+                        @if($contractBilling && $contractBilling->description)
+                            {{ $contractBilling->description }}
+                        @else
+                            {{ $cost['contract_title'] ?? 'Betriebskosten' }} - {{ $cost['supplier_name'] ?? 'Unbekannt' }}
+                        @endif
+                    </td>
+                </tr>
                 @if(isset($cost['articles']) && !empty($cost['articles']))
                 <tr>
                     <td colspan="4" style="padding-left: 20px; background: #fff0f0; border-top: none;">
@@ -627,29 +641,48 @@
 
     <!-- MwSt.-Aufschlüsselung -->
     <div style="margin-top: 30px; background: #e6f3ff; color: black; padding: 15px; border-radius: 5px;">
-        <div style="display: table; width: 100%; font-size: 11pt;">
+        <div style="display: table; width: 100%; font-size: 9pt;">
             <div style="display: table-row;">
-                <div style="display: table-cell; padding: 3px 0;">Gesamtsumme netto:</div>
-                <div style="display: table-cell; text-align: right; padding: 3px 0; font-weight: bold;">
-                    {{ number_format(($billing->total_costs_net ?? 0) - ($billing->total_credits_net ?? 0), 2, ',', '.') }} €
+                <div style="display: table-cell; padding: 1px 0;">
+                    Gesamtsumme 
+                    @if($billing->net_amount < 0) der Gutschrift @else der Rechnung @endif
+                    netto:
+                </div>
+                <div style="display: table-cell; text-align: right; padding: 1px 0;">
+                    {{ number_format(abs(($billing->total_costs_net ?? 0) - ($billing->total_credits_net ?? 0)), 2, ',', '.') }} €
                 </div>
             </div>
             <div style="display: table-row;">
-                <div style="display: table-cell; padding: 3px 0;">Zzgl. MwSt. von 19%:</div>
-                <div style="display: table-cell; text-align: right; padding: 3px 0; font-weight: bold;">
-                    {{ number_format($billing->total_vat_amount ?? 0, 2, ',', '.') }} €
+                <div style="display: table-cell; padding: 1px 0;">Zzgl. MwSt. von 19%:</div>
+                <div style="display: table-cell; text-align: right; padding: 1px 0;">
+                    {{ number_format(abs($billing->total_vat_amount ?? 0), 2, ',', '.') }} €
                 </div>
             </div>
             <div style="display: table-row; border-top: 1px solid rgba(255,255,255,0.3);">
-                <div style="display: table-cell; padding: 8px 0 3px 0; font-weight: bold; font-size: 12pt;">Gesamtsumme brutto:</div>
-                <div style="display: table-cell; text-align: right; padding: 8px 0 3px 0; font-weight: bold; font-size: 12pt;">
-                    {{ number_format($billing->net_amount ?? 0, 2, ',', '.') }} €
+                <div style="display: table-cell; padding: 1px 0 1px 0; font-weight: bold; font-size: 9pt;">
+                    Gesamtsumme 
+                    @if($billing->net_amount < 0) der Gutschrift @else der Rechnung @endif
+                    brutto:
+                </div>
+                <div style="display: table-cell; text-align: right; padding: 1px 0 3px 0; font-weight: bold; font-size: 9pt;">
+                    {{ number_format(abs($billing->net_amount ?? 0), 2, ',', '.') }} €
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Bemerkung -->
+    @if($billing->notes)
+    <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
+        <div style="font-weight: 600; color: #2563eb; margin-bottom: 8px; font-size: 10pt;">Bemerkung:</div>
+        <div style="font-size: 9pt; color: #374151; line-height: 1.4;">
+            {!! nl2br(e($billing->notes)) !!}
+        </div>
+    </div>
+    @endif
+
     <!-- Hinweise -->
+    @if($billing->show_hints ?? true)
     <div style="margin-top: 20px; font-size: 9pt; color: #666;">
         <p><strong>Hinweise:</strong></p>
         <ul>
@@ -662,32 +695,30 @@
             <li>Bei Fragen zu dieser Abrechnung wenden Sie sich bitte an uns.</li>
         </ul>
     </div>
+    @endif
 
     <!-- Footer -->
     <div class="footer">
-        <!-- Erste Zeile: Abrechnungsnummer mittig -->
-        <div style="text-align: center; margin-bottom: 10px;">
-            Abrechnung-Nr.: {{ $billing->id }}
+        <!-- Erste Zeile: Rechnungsnummer mittig -->
+        <div style="text-align: center; margin-bottom: 5px;">
+            Rechnungs-Nr.: {{ $billing->invoice_number }}
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
-        <div style="text-align: center; margin-bottom: 4px; font-size: 8pt;">
+        <div style="text-align: center; margin-bottom: 2px; font-size: 6pt; color: #2563eb;">
             {{ $companySetting->company_name }}
             @if($companySetting->full_address) | {{ $companySetting->full_address }}@endif
             @if($companySetting->phone) | {{ $companySetting->phone }}@endif
-        </div>
-        
-        <!-- Zeile 3: E-Mail und Website -->
-        <div style="text-align: center; margin-bottom: 4px; font-size: 8pt;">
             @if($companySetting->email){{ $companySetting->email }}@endif
             @if($companySetting->email && $companySetting->website) | @endif
             @if($companySetting->website){{ $companySetting->website }}@endif
         </div>
         
         <!-- Zeile 4: Amtsgericht und Geschäftsführer -->
-        <div style="text-align: center; margin-bottom: 4px; font-size: 8pt;">
+        <div style="text-align: center; margin-bottom: 2px; font-size: 6pt; color: #2563eb;">
             @if($companySetting->formatted_commercial_register){{ $companySetting->formatted_commercial_register }}@endif
             @if($companySetting->formatted_commercial_register && $companySetting->management) | @endif
+            @if($companySetting->vat_id)USt-IdNr.: {{ $companySetting->vat_id }}@endif
             @if($companySetting->management)Geschäftsführung: {{ $companySetting->management }}@endif
         </div>
         

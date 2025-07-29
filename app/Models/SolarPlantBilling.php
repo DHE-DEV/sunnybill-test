@@ -14,6 +14,20 @@ class SolarPlantBilling extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
 
+    /**
+     * Model Events
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($billing) {
+            if (empty($billing->invoice_number)) {
+                $billing->invoice_number = static::generateInvoiceNumber();
+            }
+        });
+    }
+
     protected $fillable = [
         'solar_plant_id',
         'customer_id',
@@ -29,12 +43,14 @@ class SolarPlantBilling extends Model
         'total_vat_amount',
         'status',
         'notes',
+        'show_hints',
         'cost_breakdown',
         'credit_breakdown',
         'finalized_at',
         'sent_at',
         'paid_at',
         'created_by',
+        'invoice_number',
     ];
 
     protected $casts = [
@@ -130,6 +146,32 @@ class SolarPlantBilling extends Model
     public function getFormattedTotalCreditsAttribute(): string
     {
         return number_format($this->total_credits, 2, ',', '.') . ' €';
+    }
+
+    /**
+     * Generiert eine fortlaufende Rechnungsnummer
+     */
+    public static function generateInvoiceNumber(): string
+    {
+        $currentYear = date('Y');
+        $prefix = "RG-{$currentYear}-";
+        
+        // Hole die letzte Rechnungsnummer für das aktuelle Jahr
+        $lastBilling = static::where('invoice_number', 'LIKE', $prefix . '%')
+            ->orderBy('invoice_number', 'desc')
+            ->first();
+        
+        if ($lastBilling) {
+            // Extrahiere die Nummer aus der letzten Rechnungsnummer
+            $lastNumber = intval(substr($lastBilling->invoice_number, strlen($prefix)));
+            $nextNumber = $lastNumber + 1;
+        } else {
+            // Erste Rechnung des Jahres
+            $nextNumber = 1;
+        }
+        
+        // Formatiere die Nummer mit führenden Nullen (6 Stellen)
+        return $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 
     /**
