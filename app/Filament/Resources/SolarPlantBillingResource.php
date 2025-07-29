@@ -764,6 +764,14 @@ class SolarPlantBillingResource extends Resource
                                         
                                         $monthName = $monthNames[$billing->billing_month];
 
+                                        // Logo laden (falls vorhanden)
+                                        $logoBase64 = null;
+                                        if ($companySetting->logo_path && Storage::disk('public')->exists($companySetting->logo_path)) {
+                                            $logoContent = Storage::disk('public')->get($companySetting->logo_path);
+                                            $logoMimeType = Storage::disk('public')->mimeType($companySetting->logo_path);
+                                            $logoBase64 = 'data:' . $logoMimeType . ';base64,' . base64_encode($logoContent);
+                                        }
+
                                         // PDF generieren mit exakt denselben Einstellungen wie Einzeldownload
                                         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.solar-plant-billing', [
                                             'billing' => $billing,
@@ -773,6 +781,7 @@ class SolarPlantBillingResource extends Resource
                                             'currentPercentage' => $currentPercentage,
                                             'generatedAt' => $generatedAt,
                                             'monthName' => $monthName,
+                                            'logoBase64' => $logoBase64,
                                         ])
                                         ->setPaper('a4', 'portrait')
                                         ->setOptions([
