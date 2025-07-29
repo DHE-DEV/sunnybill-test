@@ -142,6 +142,14 @@ class SolarPlantBillingResource extends Resource
                             ->required(),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Zusätzliche Informationen')
+                    ->schema([
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Notizen')
+                            ->rows(3),
+                    ])
+                    ->collapsed(),
+
                 Forms\Components\Section::make('Kostenaufschlüsselung')
                     ->schema([
                         Forms\Components\Placeholder::make('energy_distribution')
@@ -789,13 +797,6 @@ class SolarPlantBillingResource extends Resource
                             ]),
                     ])
                     ->hidden(),
-
-                Forms\Components\Section::make('Zusätzliche Informationen')
-                    ->schema([
-                        Forms\Components\Textarea::make('notes')
-                            ->label('Notizen')
-                            ->rows(3),
-                    ]),
             ]);
     }
 
