@@ -427,6 +427,12 @@ class SolarPlantBillingResource extends Resource
                     ->label('Abrechnungsmonat')
                     ->sortable(['billing_year', 'billing_month']),
 
+                Tables\Columns\TextColumn::make('invoice_number')
+                    ->label('Rechnungsnummer')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('produced_energy_kwh')
                     ->label('Produzierte Energie')
                     ->suffix(' kWh')
