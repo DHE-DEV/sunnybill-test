@@ -238,16 +238,10 @@ class SolarPlantBillingResource extends Resource
                                     $html .= '<div style="font-size: 0.875rem; color: #6b7280;">';
                                     $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
                                     $html .= '</div>';
-                                    $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['customer_share_net'] ?? $item['customer_share'], 2, ',', '.') . '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format((($item['vat_rate'] ?? 0.19) <= 1 ? ($item['vat_rate'] ?? 0.19) * 100 : ($item['vat_rate'] ?? 19)), 0, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . '</td>';
-                                    $html .= '</tr>';
                                     
                                     // Artikel-Details anzeigen
                                     if (isset($item['articles']) && !empty($item['articles'])) {
-                                        $html .= '<tr><td colspan="5" style="padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
+                                        $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
                                         $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Details:</div>';
                                         
                                         foreach ($item['articles'] as $article) {
@@ -300,8 +294,15 @@ class SolarPlantBillingResource extends Resource
                                             
                                             $html .= '</div>';
                                         }
-                                        $html .= '</td></tr>';
+                                        $html .= '</div>';
                                     }
+                                    
+                                    $html .= '</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['customer_share_net'] ?? $item['customer_share'], 2, ',', '.') . '</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format((($item['vat_rate'] ?? 0.19) <= 1 ? ($item['vat_rate'] ?? 0.19) * 100 : ($item['vat_rate'] ?? 19)), 0, ',', '.') . '%</td>';
+                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . '</td>';
+                                    $html .= '</tr>';
                                 }
                                 
                                 $html .= '</tbody>';
@@ -372,15 +373,9 @@ class SolarPlantBillingResource extends Resource
                                     $html .= '<div style="font-size: 0.875rem; color: #6b7280;">';
                                     $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
                                     $html .= '</div>';
-                                    $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format($item['customer_share_net'] ?? $item['customer_share'], 2, ',', '.') . '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format((($item['vat_rate'] ?? 0.0) <= 1 ? ($item['vat_rate'] ?? 0.0) * 100 : ($item['vat_rate'] ?? 0.0)), 1, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #166534; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . '</td>';
-                                    $html .= '</tr>';
                                     
                                     // Artikel-Details immer anzeigen (nicht nur wenn articles vorhanden sind)
-                                    $html .= '<tr><td colspan="5" style="padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
+                                    $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
                                     $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Details:</div>';
                                     
                                     if (isset($item['articles']) && !empty($item['articles'])) {
