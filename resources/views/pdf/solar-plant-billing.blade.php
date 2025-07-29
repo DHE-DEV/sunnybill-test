@@ -708,7 +708,7 @@
             {{ $companySetting->company_name }}
             @if($companySetting->full_address) | {{ $companySetting->full_address }}@endif
             @if($companySetting->phone) | {{ $companySetting->phone }}@endif
-            @if($companySetting->email){{ $companySetting->email }}@endif
+            @if($companySetting->email) | {{ $companySetting->email }}@endif
             @if($companySetting->email && $companySetting->website) | @endif
             @if($companySetting->website){{ $companySetting->website }}@endif
         </div>
@@ -718,7 +718,7 @@
             @if($companySetting->formatted_commercial_register){{ $companySetting->formatted_commercial_register }}@endif
             @if($companySetting->formatted_commercial_register && $companySetting->management) | @endif
             @if($companySetting->vat_id)USt-IdNr.: {{ $companySetting->vat_id }}@endif
-            @if($companySetting->management)Geschäftsführung: {{ $companySetting->management }}@endif
+            @if($companySetting->management) | Geschäftsführung: {{ $companySetting->management }}@endif
         </div>
         
         <!-- Bisherige Footer-Inhalte -->
