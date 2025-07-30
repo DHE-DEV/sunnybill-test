@@ -19,6 +19,8 @@ use Carbon\Carbon;
 use Filament\Infolists\Components\Actions\Action;
 use Filament\Infolists\Components\TextEntry;
 use Illuminate\Support\Facades\Storage;
+use App\Exports\SolarPlantBillingsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SolarPlantBillingResource extends Resource
 {
@@ -735,6 +737,38 @@ class SolarPlantBillingResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    
+                    Tables\Actions\BulkAction::make('export_excel')
+                        ->label('Excel Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $selectedIds = $records->pluck('id')->toArray();
+                            
+                            try {
+                                $filename = 'solaranlagen-abrechnungen-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+                                
+                                return Excel::download(
+                                    new SolarPlantBillingsExport($selectedIds), 
+                                    $filename
+                                );
+                                
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Fehler beim Excel-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Excel Export')
+                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records): string {
+                            $count = $records->count();
+                            return "Möchten Sie die {$count} ausgewählten Abrechnungen als Excel-Datei exportieren?";
+                        })
+                        ->modalSubmitActionLabel('Excel exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
                     
                     Tables\Actions\BulkAction::make('generate_pdfs')
                         ->label('PDF Abrechnungen generieren')
