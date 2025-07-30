@@ -407,11 +407,6 @@
                                 $formattedLocation = $location;
                             }
                         }
-                        
-                        // Füge Gesamt-kWp hinter dem Standort hinzu
-                        if($solarPlant->total_capacity_kw) {
-                            $formattedLocation .= '<br><span style="color: #2563eb; font-weight: bold;">(' . number_format($solarPlant->total_capacity_kw, 2, ',', '.') . ' kWp)</span>';
-                        }
                     @endphp
                     {!! $formattedLocation !!}
                 @else
