@@ -683,7 +683,7 @@
 
     <!-- Bemerkung -->
     @if($billing->notes)
-    <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
+    <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
         <div style="font-size: 9pt; color: #374151; line-height: 1.4;">
             {!! nl2br(e($billing->notes)) !!}
         </div>
