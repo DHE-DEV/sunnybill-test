@@ -746,19 +746,53 @@ class SolarPlantBillingResource extends Resource
                             $selectedIds = $records->pluck('id')->toArray();
                             
                             try {
+                                // Prüfe ob Datensätze vorhanden sind
+                                if (empty($selectedIds)) {
+                                    Notification::make()
+                                        ->title('Keine Datensätze ausgewählt')
+                                        ->body('Bitte wählen Sie mindestens eine Abrechnung aus.')
+                                        ->warning()
+                                        ->send();
+                                    return;
+                                }
+
+                                // Stelle sicher, dass die Relationen geladen sind
+                                $billings = SolarPlantBilling::whereIn('id', $selectedIds)
+                                    ->with(['solarPlant', 'customer'])
+                                    ->get();
+
+                                if ($billings->isEmpty()) {
+                                    Notification::make()
+                                        ->title('Keine Abrechnungen gefunden')
+                                        ->body('Die ausgewählten Abrechnungen konnten nicht gefunden werden.')
+                                        ->warning()
+                                        ->send();
+                                    return;
+                                }
+
                                 $filename = 'solaranlagen-abrechnungen-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
                                 
-                                return Excel::download(
-                                    new SolarPlantBillingsExport($selectedIds), 
-                                    $filename
-                                );
+                                // Teste den Export
+                                $export = new SolarPlantBillingsExport($selectedIds);
                                 
-                            } catch (\Exception $e) {
+                                return Excel::download($export, $filename);
+                                
+                            } catch (\Throwable $e) {
+                                // Logge den vollständigen Fehler
+                                \Log::error('Excel Export Error', [
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                    'selectedIds' => $selectedIds ?? [],
+                                ]);
+
                                 Notification::make()
                                     ->title('Fehler beim Excel-Export')
-                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage() . ' (Details im Log)')
                                     ->danger()
+                                    ->duration(10000)
                                     ->send();
+                                    
+                                return null;
                             }
                         })
                         ->requiresConfirmation()

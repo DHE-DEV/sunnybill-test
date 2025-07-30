@@ -71,64 +71,139 @@ class SolarPlantBillingsExport implements FromQuery, WithHeadings, WithMapping, 
 
     public function map($billing): array
     {
-        // Hole aktuelle Beteiligung aus der participations Tabelle
-        $participation = $billing->solarPlant->participations()
-            ->where('customer_id', $billing->customer_id)
-            ->first();
+        try {
+            // Sichere Datenextraktion mit Fallback-Werten
+            $solarPlant = $billing->solarPlant;
+            $customer = $billing->customer;
+            
+            // Hole aktuelle Beteiligung aus der participations Tabelle (sicher)
+            $currentPercentage = $billing->participation_percentage ?? 0;
+            $currentKwp = null;
+            
+            try {
+                if ($solarPlant && $customer) {
+                    $participation = $solarPlant->participations()
+                        ->where('customer_id', $customer->id)
+                        ->first();
+                    
+                    if ($participation) {
+                        $currentPercentage = $participation->percentage ?? $billing->participation_percentage ?? 0;
+                        $currentKwp = $participation->participation_kwp ?? null;
+                    }
+                }
+            } catch (\Exception $e) {
+                // Verwende Fallback-Werte bei Fehler
+                $currentPercentage = $billing->participation_percentage ?? 0;
+                $currentKwp = null;
+            }
 
-        $currentPercentage = $participation ? $participation->percentage : $billing->participation_percentage;
-        $currentKwp = $participation ? $participation->participation_kwp : null;
+            // Kundennamen ermitteln (sicher)
+            $customerName = 'Unbekannt';
+            if ($customer) {
+                $customerName = ($customer->customer_type === 'business' && !empty($customer->company_name))
+                    ? $customer->company_name 
+                    : ($customer->name ?? 'Unbekannt');
+            }
 
-        // Kundennamen ermitteln
-        $customerName = $billing->customer->customer_type === 'business' && $billing->customer->company_name 
-            ? $billing->customer->company_name 
-            : $billing->customer->name;
+            // Kundentyp übersetzen (sicher)
+            $customerType = 'Unbekannt';
+            if ($customer && $customer->customer_type) {
+                $customerType = $customer->customer_type === 'business' ? 'Unternehmen' : 'Privatperson';
+            }
 
-        // Kundentyp übersetzen
-        $customerType = $billing->customer->customer_type === 'business' ? 'Unternehmen' : 'Privatperson';
+            // Monatsnamen (sicher)
+            $monthNames = [
+                1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
+                5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
+            ];
+            $monthName = $monthNames[$billing->billing_month] ?? (string)$billing->billing_month;
 
-        // Monatsnamen
-        $monthNames = [
-            1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
-            5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
-        ];
-        $monthName = $monthNames[$billing->billing_month] ?? $billing->billing_month;
+            // Status übersetzen (sicher)
+            $status = $billing->status ?? 'draft';
+            try {
+                $statusOptions = SolarPlantBilling::getStatusOptions();
+                $status = $statusOptions[$billing->status] ?? $billing->status ?? 'Unbekannt';
+            } catch (\Exception $e) {
+                $status = $billing->status ?? 'Unbekannt';
+            }
 
-        // Status übersetzen
-        $statusOptions = SolarPlantBilling::getStatusOptions();
-        $status = $statusOptions[$billing->status] ?? $billing->status;
+            // Kostenpositionen und Gutschriftenpositionen zählen (sicher)
+            $costCount = 0;
+            $creditCount = 0;
+            
+            try {
+                $costCount = is_array($billing->cost_breakdown) ? count($billing->cost_breakdown) : 0;
+                $creditCount = is_array($billing->credit_breakdown) ? count($billing->credit_breakdown) : 0;
+            } catch (\Exception $e) {
+                // Verwende 0 als Fallback
+            }
 
-        // Kostenpositionen und Gutschriftenpositionen zählen
-        $costCount = $billing->cost_breakdown ? count($billing->cost_breakdown) : 0;
-        $creditCount = $billing->credit_breakdown ? count($billing->credit_breakdown) : 0;
+            // Sichere Formatierung numerischer Werte
+            $formatNumber = function($value, $default = '0,00') {
+                try {
+                    return $value !== null ? number_format((float)$value, 2, ',', '.') : $default;
+                } catch (\Exception $e) {
+                    return $default;
+                }
+            };
 
-        return [
-            $billing->solarPlant->plant_number ?? '',
-            $billing->solarPlant->name ?? '',
-            $billing->solarPlant->location ?? '',
-            $billing->solarPlant->total_kwp ?? '',
-            $customerName,
-            $customerType,
-            $monthName,
-            $billing->billing_year,
-            $billing->invoice_number ?? '',
-            $billing->produced_energy_kwh ?? '',
-            $currentPercentage ? number_format($currentPercentage, 2, ',', '.') : '',
-            $currentKwp ? number_format($currentKwp, 2, ',', '.') : '',
-            $billing->total_costs ? number_format($billing->total_costs, 2, ',', '.') : '0,00',
-            $billing->total_costs_net ? number_format($billing->total_costs_net, 2, ',', '.') : '0,00',
-            $billing->total_credits ? number_format($billing->total_credits, 2, ',', '.') : '0,00',
-            $billing->total_credits_net ? number_format($billing->total_credits_net, 2, ',', '.') : '0,00',
-            $billing->total_vat_amount ? number_format($billing->total_vat_amount, 2, ',', '.') : '0,00',
-            $billing->net_amount ? number_format($billing->net_amount, 2, ',', '.') : '0,00',
-            $costCount,
-            $creditCount,
-            $status,
-            $billing->notes ?? '',
-            $billing->show_hints ? 'Ja' : 'Nein',
-            $billing->created_at ? $billing->created_at->format('d.m.Y H:i') : '',
-        ];
+            return [
+                $solarPlant->plant_number ?? '',
+                $solarPlant->name ?? '',
+                $solarPlant->location ?? '',
+                $solarPlant->total_kwp ? $formatNumber($solarPlant->total_kwp) : '',
+                $customerName,
+                $customerType,
+                $monthName,
+                $billing->billing_year ?? '',
+                $billing->invoice_number ?? '',
+                $billing->produced_energy_kwh ? $formatNumber($billing->produced_energy_kwh, '') : '',
+                $currentPercentage ? $formatNumber($currentPercentage) : '',
+                $currentKwp ? $formatNumber($currentKwp) : '',
+                $formatNumber($billing->total_costs),
+                $formatNumber($billing->total_costs_net),
+                $formatNumber($billing->total_credits),
+                $formatNumber($billing->total_credits_net),
+                $formatNumber($billing->total_vat_amount),
+                $formatNumber($billing->net_amount),
+                (string)$costCount,
+                (string)$creditCount,
+                $status,
+                $billing->notes ?? '',
+                $billing->show_hints ? 'Ja' : 'Nein',
+                $billing->created_at ? $billing->created_at->format('d.m.Y H:i') : '',
+            ];
+            
+        } catch (\Exception $e) {
+            // Fallback für kompletten Fehler
+            return [
+                'Fehler',
+                'Daten konnten nicht geladen werden',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '0,00',
+                '0,00',
+                '0,00',
+                '0,00',
+                '0,00',
+                '0,00',
+                '0',
+                '0',
+                'Fehler',
+                'Fehler beim Laden der Daten: ' . $e->getMessage(),
+                'Nein',
+                '',
+            ];
+        }
     }
 
     public function styles(Worksheet $sheet)
