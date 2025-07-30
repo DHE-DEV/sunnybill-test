@@ -938,8 +938,93 @@ class SolarPlantBillingResource extends Resource
                         ->modalIcon('heroicon-o-document-arrow-down'),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->poll('10s')
+            ->persistFiltersInSession()
+            ->persistSortInSession()
+            ->persistSearchInSession()
+            ->selectCurrentPageOnly()
+            ->checkIfRecordIsSelectableUsing(
+                fn (\App\Models\SolarPlantBilling $record): bool => true,
+            )
+            ->summarize([
+                \Filament\Tables\Columns\Summarizers\Group::make()
+                    ->label('Ausgewählte Statistiken')
+                    ->selectedRecordsOnly()
+                    ->summarizers([
+                        \Filament\Tables\Columns\Summarizers\Count::make()
+                            ->label('Anzahl Datensätze'),
+                        
+                        \Filament\Tables\Columns\Summarizers\Summarizer::make('participation_kwp')
+                            ->label('Gesamt kWp (Beteiligungen)')
+                            ->using(function (\Illuminate\Database\Eloquent\Builder $query): string {
+                                $records = $query->with(['solarPlant.participations'])->get();
+                                
+                                $totalKwp = $records->sum(function ($billing) {
+                                    $participation = $billing->solarPlant->participations()
+                                        ->where('customer_id', $billing->customer_id)
+                                        ->first();
+                                    return $participation ? $participation->participation_kwp : 0;
+                                });
+                                
+                                return number_format($totalKwp, 2, ',', '.') . ' kWp';
+                            }),
+                        
+                        \Filament\Tables\Columns\Summarizers\Summarizer::make('total_costs') 
+                            ->label('Gesamt Kosten')
+                            ->using(function (\Illuminate\Database\Eloquent\Builder $query): string {
+                                $records = $query->get();
+                                    
+                                $totalCosts = $records->sum(function ($billing) {
+                                    return $billing->cost_breakdown 
+                                        ? collect($billing->cost_breakdown)->sum('customer_share')
+                                        : 0;
+                                });
+                                
+                                return number_format($totalCosts, 2, ',', '.') . ' €';
+                            }),
+                        
+                        \Filament\Tables\Columns\Summarizers\Summarizer::make('total_credits')
+                            ->label('Gesamt Gutschriften')
+                            ->using(function (\Illuminate\Database\Eloquent\Builder $query): string {
+                                $records = $query->get();
+                                    
+                                $totalCredits = $records->sum(function ($billing) {
+                                    return $billing->credit_breakdown 
+                                        ? collect($billing->credit_breakdown)->sum('customer_share')
+                                        : 0;
+                                });
+                                
+                                return number_format($totalCredits, 2, ',', '.') . ' €';
+                            }),
+                        
+                        \Filament\Tables\Columns\Summarizers\Summarizer::make('net_amount')
+                            ->label('Gesamtbetrag')
+                            ->using(function (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Support\HtmlString {
+                                $records = $query->get();
+                                    
+                                $totalAmount = $records->sum(function ($billing) {
+                                    $costs = $billing->cost_breakdown 
+                                        ? collect($billing->cost_breakdown)->sum('customer_share')
+                                        : 0;
+                                    $credits = $billing->credit_breakdown 
+                                        ? collect($billing->credit_breakdown)->sum('customer_share')
+                                        : 0;
+                                    return $credits - $costs; // Gutschriften minus Kosten
+                                });
+                                
+                                $color = $totalAmount >= 0 ? 'text-green-600' : 'text-red-600';
+                                return new \Illuminate\Support\HtmlString(
+                                    '<span class="' . $color . ' font-bold">' . 
+                                    number_format($totalAmount, 2, ',', '.') . ' €</span>'
+                                );
+                            })
+                    ])
+                    ->collapsible()
+                    ->collapsed()
+            ]);
     }
+
 
     public static function getRelations(): array
     {
