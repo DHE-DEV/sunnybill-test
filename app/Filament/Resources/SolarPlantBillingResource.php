@@ -440,8 +440,23 @@ class SolarPlantBillingResource extends Resource
                     ->alignRight()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                Tables\Columns\TextColumn::make('participation_kwp')
+                    ->label('Beteiligung (kWp)')
+                    ->suffix(' kWp')
+                    ->numeric(2)
+                    ->alignRight()
+                    ->getStateUsing(function (SolarPlantBilling $record): ?float {
+                        // Hole die aktuelle kWp-Beteiligung aus der participations Tabelle
+                        $participation = $record->solarPlant->participations()
+                            ->where('customer_id', $record->customer_id)
+                            ->first();
+                        
+                        return $participation ? $participation->participation_kwp : null;
+                    })
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('participation_percentage')
-                    ->label('Beteiligung')
+                    ->label('Beteiligung (%)')
                     ->suffix('%')
                     ->numeric(2)
                     ->alignRight()
