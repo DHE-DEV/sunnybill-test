@@ -722,7 +722,6 @@
             @if($companySetting->full_address) | {{ $companySetting->full_address }}@endif
             @if($companySetting->phone) | {{ $companySetting->phone }}@endif
             @if($companySetting->email) | {{ $companySetting->email }}@endif
-            @if($companySetting->email && $companySetting->website) | @endif
         </div>
         
         <!-- Zeile 4: Amtsgericht und Geschäftsführer -->
