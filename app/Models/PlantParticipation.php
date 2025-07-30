@@ -14,11 +14,13 @@ class PlantParticipation extends Model
         'customer_id',
         'solar_plant_id',
         'percentage',
+        'participation_kwp',
         'eeg_compensation_per_kwh',
     ];
 
     protected $casts = [
-        'percentage' => 'decimal:2',
+        'percentage' => 'decimal:4',
+        'participation_kwp' => 'decimal:4',
         'eeg_compensation_per_kwh' => 'decimal:6',
     ];
 

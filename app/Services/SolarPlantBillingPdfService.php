@@ -61,12 +61,13 @@ class SolarPlantBillingPdfService
         $customer = $billing->customer;
         $solarPlant = $billing->solarPlant;
         
-        // Beteiligungsprozentsatz aus der aktuellen participation Tabelle holen
+        // Beteiligungsprozentsatz und kWp aus der aktuellen participation Tabelle holen
         $participation = $solarPlant->participations()
             ->where('customer_id', $customer->id)
             ->first();
         
         $currentPercentage = $participation ? $participation->percentage : $billing->participation_percentage;
+        $currentParticipationKwp = $participation ? $participation->participation_kwp : null;
         
         // Monatsnamen
         $monthNames = [
@@ -96,6 +97,7 @@ class SolarPlantBillingPdfService
             'solarPlant' => $solarPlant,
             'companySetting' => $companySetting,
             'currentPercentage' => $currentPercentage,
+            'currentParticipationKwp' => $currentParticipationKwp,
             'monthName' => $monthNames[$billing->billing_month],
             'billingDate' => Carbon::createFromDate($billing->billing_year, $billing->billing_month, 1),
             'generatedAt' => now(),

@@ -372,6 +372,11 @@
     <!-- Anlageninfo -->
     <div class="plant-info">
         <h3>Solaranlage: {{ $solarPlant->name }}</h3>
+        @if($solarPlant->total_capacity_kw)
+            <div style="color: #2563eb; margin: -10px 0 10px 0;">
+                Gesamtleistung: {{ number_format($solarPlant->total_capacity_kw, 2, ',', '.') }} kWp
+            </div>
+        @endif
         <div class="plant-details">
             <div>
                 <strong>Standort:</strong><br>
@@ -410,7 +415,12 @@
             </div>
             <div>
                 <strong>Ihr Anlagenanteil:</strong><br>
-                {{ number_format($currentPercentage, 2, ',', '.') }}%
+                @if($currentParticipationKwp)
+                    {{ number_format($currentParticipationKwp, 2, ',', '.') }} kWp 
+                    ({{ number_format($currentPercentage, 2, ',', '.') }}%)
+                @else
+                    {{ number_format($currentPercentage, 2, ',', '.') }}%
+                @endif
             </div>
         </div>
         @if($billing->produced_energy_kwh)
