@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(php artisan test:*)",
+      "Bash(./vendor/bin/pest:*)",
+      "Bash(where php)",
+      "Bash(\"C:\\Users\\dh\\.config\\herd\\bin\\php.bat\" artisan test tests/Feature/Api/)",
+      "Bash(powershell:*)",
+      "Bash(\"C:\\Users\\dh\\.config\\herd\\bin\\php.bat\" run_tests.php)",
+      "Bash(herd php artisan test:*)",
+      "Bash(C:/Users/dh/.config/herd/bin/php artisan test tests/Feature/Api/)",
+      "Bash(/c/Users/dh/.config/herd/bin/php artisan test tests/Feature/Api/)",
+      "Bash(/mnt/c/Users/dh/.config/herd/bin/php.exe artisan test tests/Feature/Api/)",
+      "Bash(ls:*)",
+      "Bash(cmd.exe /c \"php artisan test tests/Feature/Api/\")",
+      "Bash(cmd.exe:*)",
+      "Bash(php artisan:*)"
+    ],
+    "deny": []
+  }
+}

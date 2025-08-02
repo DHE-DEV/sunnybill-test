@@ -1,0 +1,629 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SunnyBill API",
+    "description": "SunnyBill Solar Management System API",
+    "version": "1.0.0",
+    "contact": {
+      "email": "support@sunnybill.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://sunnybill-test.test/api",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "sanctum": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Laravel Sanctum Token"
+      },
+      "app_token": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Token",
+        "description": "App Token für API-Zugriff mit granularen Berechtigungen"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string",
+            "example": "Solar Panel Installation"
+          },
+          "description": {
+            "type": "string",
+            "example": "Install solar panels on customer roof"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["open", "in_progress", "waiting_external", "waiting_internal", "completed", "cancelled"],
+            "example": "open"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "urgent"],
+            "example": "medium"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "example": "2024-12-31"
+          },
+          "assigned_to": {
+            "type": "integer",
+            "nullable": true
+          },
+          "customer_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "supplier_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "project_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string",
+            "example": "Max Mustermann"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "max@example.com"
+          },
+          "customer_type": {
+            "type": "string",
+            "enum": ["private", "business"],
+            "example": "private"
+          },
+          "company_name": {
+            "type": "string",
+            "nullable": true,
+            "example": "Mustermann GmbH"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+49 123 456789"
+          },
+          "street": {
+            "type": "string",
+            "example": "Musterstraße 1"
+          },
+          "city": {
+            "type": "string",
+            "example": "München"
+          },
+          "postal_code": {
+            "type": "string",
+            "example": "80331"
+          }
+        }
+      },
+      "SolarPlant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "plant_number": {
+            "type": "string",
+            "example": "PVA-001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Solar Plant Munich"
+          },
+          "location": {
+            "type": "string",
+            "example": "München, Deutschland"
+          },
+          "total_capacity_kw": {
+            "type": "number",
+            "format": "float",
+            "example": 100.5
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string",
+            "example": "Solar Installation Project"
+          },
+          "description": {
+            "type": "string",
+            "example": "Complete solar panel installation"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planning", "in_progress", "on_hold", "completed", "cancelled"],
+            "example": "planning"
+          },
+          "customer_id": {
+            "type": "integer"
+          },
+          "supplier_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "budget": {
+            "type": "number",
+            "format": "float",
+            "example": 50000.00
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "An error occurred"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/users/search": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Search users for @mentions",
+        "description": "Sucht Benutzer basierend auf Namen für @mention Funktionalität",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search term for username",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "john"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of found users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "example": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                      },
+                      "email": {
+                        "type": "string",
+                        "example": "john@example.com"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/all": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all users",
+        "description": "Gibt alle Benutzer für @mention Funktionalität zurück",
+        "responses": {
+          "200": {
+            "description": "List of all users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get current authenticated user",
+        "description": "Gibt die Informationen des aktuell authentifizierten Benutzers zurück",
+        "security": [
+          {
+            "sanctum": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/app/profile": {
+      "get": {
+        "tags": ["App Token API"],
+        "summary": "Get user profile",
+        "description": "Gibt das Profil des authentifizierten Benutzers zurück (App Token erforderlich)",
+        "security": [
+          {
+            "app_token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden - no permission"
+          }
+        }
+      }
+    },
+    "/app/tasks": {
+      "get": {
+        "tags": ["App Token API"],
+        "summary": "Get tasks",
+        "description": "Gibt eine paginierte Liste von Aufgaben zurück",
+        "security": [
+          {
+            "app_token": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "type": "integer",
+              "example": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Task"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing tasks:read permission"
+          }
+        }
+      },
+      "post": {
+        "tags": ["App Token API"],
+        "summary": "Create new task",
+        "description": "Erstellt eine neue Aufgabe",
+        "security": [
+          {
+            "app_token": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "status", "priority"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Solar Panel Installation"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Install solar panels on customer roof"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["open", "in_progress", "completed", "cancelled"],
+                    "example": "open"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": ["low", "medium", "high", "urgent"],
+                    "example": "medium"
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2024-12-31"
+                  },
+                  "assigned_to": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "customer_id": {
+                    "type": "integer",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Task created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Task"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error"
+          },
+          "403": {
+            "description": "Missing tasks:create permission"
+          }
+        }
+      }
+    },
+    "/app/customers": {
+      "get": {
+        "tags": ["App Token API"],
+        "summary": "Get customers",
+        "description": "Gibt eine paginierte Liste von Kunden zurück",
+        "security": [
+          {
+            "app_token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of customers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Customer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing customers:read permission"
+          }
+        }
+      }
+    },
+    "/app/solar-plants": {
+      "get": {
+        "tags": ["App Token API"],
+        "summary": "Get solar plants",
+        "description": "Gibt eine Liste von Solaranlagen zurück",
+        "security": [
+          {
+            "app_token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of solar plants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SolarPlant"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing solar-plants:read permission"
+          }
+        }
+      }
+    },
+    "/app/projects": {
+      "get": {
+        "tags": ["App Token API"],
+        "summary": "Get projects",
+        "description": "Gibt eine Liste von Projekten zurück",
+        "security": [
+          {
+            "app_token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of projects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Project"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing projects:read permission"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Users",
+      "description": "User search and management"
+    },
+    {
+      "name": "Authentication",
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "App Token API",
+      "description": "API endpoints requiring App Token authentication with specific permissions"
+    }
+  ]
+}
