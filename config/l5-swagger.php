@@ -38,14 +38,15 @@ return [
                 /*
                  * Set this to `json` or `yaml` to determine which documentation file to use in UI
                  */
-                'format_to_use_for_docs' => env('L5_FORMAT_TO_USE_FOR_DOCS', 'yaml'),
+                'format_to_use_for_docs' => env('L5_FORMAT_TO_USE_FOR_DOCS', 'json'),
 
 
                 /*
                  * Absolute paths to directory containing the swagger annotations are stored.
                  */
                 'annotations' => [
-                    base_path('app'),
+                    base_path('app/Http/Controllers'),
+                    base_path('app/Models'),
                 ],
             ],
         ],
@@ -157,7 +158,21 @@ return [
              * @note This option overwrites `paths.excludes`
              * @see \OpenApi\scan
              */
-            'exclude' => [],
+            'exclude' => [
+                base_path('app/Livewire'),
+                base_path('app/Filament'),
+                base_path('app/Console'),
+                base_path('app/Events'),
+                base_path('app/Jobs'),
+                base_path('app/Mail'),
+                base_path('app/Notifications'),
+                base_path('app/Observers'),
+                base_path('app/Providers'),
+                base_path('app/Services'),
+                base_path('app/Traits'),
+                base_path('app/Helpers'),
+                base_path('app/Exports'),
+            ],
 
             /*
              * Allows to generate specs either for OpenAPI 3.0.0 or OpenAPI 3.1.0.
