@@ -111,8 +111,24 @@ class ViewSolarPlantBilling extends ViewRecord
                         Infolists\Components\Section::make('Bankverbindung')
                             ->icon('heroicon-o-credit-card')
                             ->schema([
-                                Infolists\Components\Grid::make(4)
+                                Infolists\Components\Grid::make(3)
                                     ->schema([
+                                        Infolists\Components\TextEntry::make('customer.payment_method')
+                                            ->label('Zahlungsart')
+                                            ->formatStateUsing(fn (?string $state): string => match($state) {
+                                                'transfer' => 'Überweisung',
+                                                'direct_debit' => 'Lastschrift (Einzeln)',
+                                                'sepa_direct_debit' => 'SEPA Sammellastschrift',
+                                                default => $state ?: 'Nicht festgelegt',
+                                            })
+                                            ->badge()
+                                            ->color(fn (?string $state): string => match($state) {
+                                                'transfer' => 'info',
+                                                'direct_debit' => 'warning', 
+                                                'sepa_direct_debit' => 'success',
+                                                default => 'gray',
+                                            })
+                                            ->icon('heroicon-o-credit-card'),
                                         Infolists\Components\TextEntry::make('customer.account_holder')
                                             ->label('Kontoinhaber')
                                             ->placeholder('Nicht hinterlegt')
@@ -123,6 +139,9 @@ class ViewSolarPlantBilling extends ViewRecord
                                             ->placeholder('Nicht hinterlegt')
                                             ->icon('heroicon-o-building-office')
                                             ->color('gray'),
+                                    ]),
+                                Infolists\Components\Grid::make(2)
+                                    ->schema([
                                         Infolists\Components\TextEntry::make('customer.iban')
                                             ->label('IBAN')
                                             ->placeholder('Nicht hinterlegt')

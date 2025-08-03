@@ -305,6 +305,15 @@ class CustomerResource extends Resource
                             ->default(14)
                             ->minValue(0)
                             ->maxValue(365),
+                        Forms\Components\Select::make('payment_method')
+                            ->label('Zahlungsart')
+                            ->options([
+                                'transfer' => 'Überweisung',
+                                'direct_debit' => 'Lastschrift (Einzeln)',
+                                'sepa_direct_debit' => 'SEPA Sammellastschrift',
+                            ])
+                            ->placeholder('Zahlungsart auswählen')
+                            ->helperText('Art der Zahlungsabwicklung'),
                         Forms\Components\TextInput::make('account_holder')
                             ->label('Kontoinhaber')
                             ->maxLength(255)
@@ -917,6 +926,21 @@ class CustomerResource extends Resource
                         \Filament\Infolists\Components\TextEntry::make('payment_days')
                             ->label('Zahlungsziel (Tage)')
                             ->suffix(' Tage'),
+                        \Filament\Infolists\Components\TextEntry::make('payment_method')
+                            ->label('Zahlungsart')
+                            ->formatStateUsing(fn (?string $state): string => match($state) {
+                                'transfer' => 'Überweisung',
+                                'direct_debit' => 'Lastschrift (Einzeln)',
+                                'sepa_direct_debit' => 'SEPA Sammellastschrift',
+                                default => $state ?: 'Nicht festgelegt',
+                            })
+                            ->badge()
+                            ->color(fn (?string $state): string => match($state) {
+                                'transfer' => 'info',
+                                'direct_debit' => 'warning',
+                                'sepa_direct_debit' => 'success',
+                                default => 'gray',
+                            }),
                         \Filament\Infolists\Components\TextEntry::make('account_holder')
                             ->label('Kontoinhaber'),
                         \Filament\Infolists\Components\TextEntry::make('bank_name')

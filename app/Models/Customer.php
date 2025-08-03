@@ -65,6 +65,7 @@ class Customer extends Model
         'iban',
         'bic',
         'account_holder',
+        'payment_method',
         'notes',
         'lexoffice_synced_at',
         'is_active',
