@@ -739,6 +739,67 @@ class ViewSolarPlant extends ViewRecord
                                     ->color('info')
                                     ->size('xl'),
                             ]),
+                        Infolists\Components\Section::make('Dokumente pro Typ')
+                            ->schema([
+                                Infolists\Components\Grid::make(4)
+                                    ->schema([
+                                        Infolists\Components\TextEntry::make('documents_by_type')
+                                            ->label('')
+                                            ->state(function ($record) {
+                                                $documentTypes = \App\Models\DocumentType::withCount(['documents' => function ($query) use ($record) {
+                                                    $query->where('documentable_type', 'App\Models\SolarPlant')
+                                                          ->where('documentable_id', $record->id);
+                                                }])->having('documents_count', '>', 0)->get();
+
+                                                if ($documentTypes->isEmpty()) {
+                                                    return 'Keine Dokumente nach Typ kategorisiert';
+                                                }
+
+                                                return $documentTypes->map(function ($type) {
+                                                    return $type->name . ': ' . $type->documents_count;
+                                                })->join(' | ');
+                                            })
+                                            ->columnSpanFull()
+                                            ->color('gray'),
+                                    ])
+                                    ->schema(function ($record) {
+                                        $documentTypes = \App\Models\DocumentType::withCount(['documents' => function ($query) use ($record) {
+                                            $query->where('documentable_type', 'App\Models\SolarPlant')
+                                                  ->where('documentable_id', $record->id);
+                                        }])->having('documents_count', '>', 0)->get();
+
+                                        if ($documentTypes->isEmpty()) {
+                                            return [
+                                                Infolists\Components\TextEntry::make('no_document_types')
+                                                    ->label('Dokumenttypen')
+                                                    ->state('Keine Dokumente nach Typ kategorisiert')
+                                                    ->columnSpanFull()
+                                                    ->color('gray'),
+                                            ];
+                                        }
+
+                                        return $documentTypes->map(function ($type) {
+                                            return Infolists\Components\TextEntry::make("document_type_{$type->id}")
+                                                ->label($type->name)
+                                                ->state($type->documents_count)
+                                                ->badge()
+                                                ->color(match($type->name) {
+                                                    'Verträge' => 'primary',
+                                                    'Rechnungen' => 'danger',
+                                                    'Pläne' => 'info',
+                                                    'Genehmigungen' => 'warning',
+                                                    'Zertifikate' => 'success',
+                                                    'Fotos' => 'purple',
+                                                    'Protokolle' => 'gray',
+                                                    default => 'secondary',
+                                                })
+                                                ->size('lg');
+                                        })->toArray();
+                                    }),
+                            ])
+                            ->compact()
+                            ->collapsible()
+                            ->collapsed(false),
                         \Filament\Infolists\Components\Livewire::make(\App\Livewire\DocumentsTable::class, ['solarPlant' => $this->record])
                             ->key('documents-table'),
                     ])
