@@ -29,15 +29,14 @@ class SuppliersTable extends Component implements HasForms, HasTable
 
     public function table(Table $table): Table
     {
+        // Hole alle Supplier-IDs, die zu dieser SolarPlant gehören
+        $supplierIds = $this->solarPlant->suppliers()->pluck('suppliers.id');
+        
         return $table
             ->query(
                 Supplier::query()
-                    ->whereHas('solarPlants', function ($query) {
-                        $query->where('solar_plants.id', $this->solarPlant->id);
-                    })
-                    ->with(['supplierContracts' => function ($query) {
-                        $query->where('solar_plant_id', $this->solarPlant->id);
-                    }])
+                    ->whereIn('id', $supplierIds)
+                    ->with(['contracts'])
             )
             ->columns([
                 Tables\Columns\TextColumn::make('supplier_number')
@@ -163,16 +162,16 @@ class SuppliersTable extends Component implements HasForms, HasTable
                     ->placeholder('Nicht angegeben')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('supplierContracts')
+                Tables\Columns\TextColumn::make('contracts_count')
                     ->label('Verträge')
-                    ->state(fn ($record) => $record->supplierContracts->count())
+                    ->state(fn ($record) => $record->contracts->count())
                     ->badge()
                     ->color('info')
                     ->alignCenter(),
 
                 Tables\Columns\TextColumn::make('active_contracts')
                     ->label('Aktive Verträge')
-                    ->state(fn ($record) => $record->supplierContracts->where('status', 'active')->count())
+                    ->state(fn ($record) => $record->contracts->where('status', 'active')->count())
                     ->badge()
                     ->color('success')
                     ->alignCenter(),
@@ -242,29 +241,25 @@ class SuppliersTable extends Component implements HasForms, HasTable
 
                 Tables\Filters\Filter::make('has_contracts')
                     ->label('Mit Verträgen')
-                    ->query(fn (Builder $query): Builder => $query->whereHas('supplierContracts', function ($query) {
-                        $query->where('solar_plant_id', $this->solarPlant->id);
-                    }))
+                    ->query(fn (Builder $query): Builder => $query->whereHas('contracts'))
                     ->toggle(),
 
                 Tables\Filters\Filter::make('has_active_contracts')
                     ->label('Mit aktiven Verträgen')
-                    ->query(fn (Builder $query): Builder => $query->whereHas('supplierContracts', function ($query) {
-                        $query->where('solar_plant_id', $this->solarPlant->id)
-                              ->where('status', 'active');
+                    ->query(fn (Builder $query): Builder => $query->whereHas('contracts', function ($query) {
+                        $query->where('status', 'active');
                     }))
                     ->toggle(),
 
                 Tables\Filters\SelectFilter::make('city')
                     ->label('Ort')
                     ->options(function () {
-                        return Supplier::whereHas('solarPlants', function ($query) {
-                            $query->where('solar_plants.id', $this->solarPlant->id);
-                        })
-                        ->whereNotNull('city')
-                        ->distinct()
-                        ->orderBy('city')
-                        ->pluck('city', 'city');
+                        $supplierIds = $this->solarPlant->suppliers()->pluck('suppliers.id');
+                        return Supplier::whereIn('id', $supplierIds)
+                            ->whereNotNull('city')
+                            ->distinct()
+                            ->orderBy('city')
+                            ->pluck('city', 'city');
                     })
                     ->searchable(),
 
@@ -341,16 +336,6 @@ class SuppliersTable extends Component implements HasForms, HasTable
             ->poll('30s'); // Automatische Aktualisierung alle 30 Sekunden
     }
 
-    protected function getTableQuery(): Builder
-    {
-        return Supplier::query()
-            ->whereHas('solarPlants', function ($query) {
-                $query->where('solar_plants.id', $this->solarPlant->id);
-            })
-            ->with(['supplierContracts' => function ($query) {
-                $query->where('solar_plant_id', $this->solarPlant->id);
-            }]);
-    }
 
     public function getTableRecordKey($record): string
     {
