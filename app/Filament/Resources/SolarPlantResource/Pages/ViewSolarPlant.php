@@ -836,6 +836,42 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsible()
                     ->collapsed($savedState['important-notes'] ?? false)
                     ->extraAttributes(['data-section-id' => 'important-notes']),
+
+                Infolists\Components\Section::make('Standard Notizen')
+                    ->id('standard-notes')
+                    ->icon('heroicon-o-document-text')
+                    ->description('Allgemeine Notizen und Bemerkungen zur Solaranlage')
+                    ->extraAttributes([
+                        'class' => 'standard-notes-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('standard_notes_count')
+                                    ->label('Standard Notizen')
+                                    ->state(fn ($record) => $record->notes()->where('is_important', false)->count())
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('draft_notes_count')
+                                    ->label('Entwürfe')
+                                    ->state(fn ($record) => $record->notes()->where('is_draft', true)->count())
+                                    ->badge()
+                                    ->color('warning')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('archived_notes_count')
+                                    ->label('Archivierte Notizen')
+                                    ->state(fn ($record) => $record->notes()->where('is_archived', true)->count())
+                                    ->badge()
+                                    ->color('gray')
+                                    ->size('xl'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['standard-notes'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'standard-notes']),
            ]);
    }
 
@@ -1041,6 +1077,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .important-notes-section-gray,
             .important-notes-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Standard Notizen Section Styling */
+            [data-section-id="standard-notes"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            
+            [data-section-id="standard-notes"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Alternative selector falls der erste nicht funktioniert */
+            .standard-notes-section-gray,
+            .standard-notes-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
