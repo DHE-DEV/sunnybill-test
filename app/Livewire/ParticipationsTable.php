@@ -265,79 +265,86 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                     ->modalWidth('lg'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('Anzeigen')
-                    ->icon('heroicon-o-eye')
-                    ->color('info')
-                    ->url(fn ($record) => $record->customer ? route('filament.admin.resources.customers.view', $record->customer) : null)
-                    ->openUrlInNewTab(false),
-                
-                Tables\Actions\EditAction::make()
-                    ->label('Bearbeiten')
-                    ->icon('heroicon-o-pencil')
-                    ->color('warning')
-                    ->form([
-                        Forms\Components\Select::make('customer_id')
-                            ->label('Kunde')
-                            ->options(Customer::all()->mapWithKeys(function ($customer) {
-                                $displayName = $customer->customer_type === 'business'
-                                    ? ($customer->company_name ?: $customer->name)
-                                    : $customer->name;
-                                return [$customer->id => $displayName];
-                            }))
-                            ->required()
-                            ->searchable()
-                            ->preload(),
-                        
-                        Forms\Components\TextInput::make('percentage')
-                            ->label('Beteiligung (%)')
-                            ->required()
-                            ->numeric()
-                            ->step(0.01)
-                            ->suffix('%')
-                            ->minValue(0.01)
-                            ->maxValue(100)
-                            ->placeholder('z.B. 25,50')
-                            ->inputMode('decimal')
-                            ->extraInputAttributes(['pattern' => '[0-9]+([,\.][0-9]+)?'])
-                            ->helperText(function ($record) {
-                                $currentPercentage = $record->percentage;
-                                $otherParticipation = $this->solarPlant->participations()
-                                    ->where('id', '!=', $record->id)
-                                    ->sum('percentage');
-                                $available = 100 - $otherParticipation;
-                                return "Verfügbar (inkl. aktueller Beteiligung): {$available}% | Aktuelle Beteiligung: {$currentPercentage}%";
-                            })
-                            ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
-                            ->rules([
-                                function ($record) {
-                                    return function (string $attribute, $value, \Closure $fail) use ($record) {
-                                        // Komma durch Punkt ersetzen für Berechnung
-                                        $numericValue = (float) str_replace(',', '.', $value);
-                                        $otherParticipation = $this->solarPlant->participations()
-                                            ->where('id', '!=', $record->id)
-                                            ->sum('percentage');
-                                        $totalParticipation = $otherParticipation + $numericValue;
-                                        
-                                        if ($totalParticipation > 100) {
-                                            $available = 100 - $otherParticipation;
-                                            $fail("Die Gesamtbeteiligung würde {$totalParticipation}% betragen. Maximal verfügbar: {$available}%");
-                                        }
-                                    };
-                                },
-                            ]),
-                    ])
-                    ->successNotificationTitle('Beteiligung aktualisiert'),
-                
-                Tables\Actions\DeleteAction::make()
-                    ->label('Löschen')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading('Beteiligung löschen')
-                    ->modalDescription('Sind Sie sicher, dass Sie diese Beteiligung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.')
-                    ->modalSubmitActionLabel('Ja, löschen')
-                    ->successNotificationTitle('Beteiligung gelöscht'),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->label('Anzeigen')
+                        ->icon('heroicon-o-eye')
+                        ->color('info')
+                        ->url(fn ($record) => $record->customer ? route('filament.admin.resources.customers.view', $record->customer) : null)
+                        ->openUrlInNewTab(false),
+                    
+                    Tables\Actions\EditAction::make()
+                        ->label('Bearbeiten')
+                        ->icon('heroicon-o-pencil')
+                        ->color('warning')
+                        ->form([
+                            Forms\Components\Select::make('customer_id')
+                                ->label('Kunde')
+                                ->options(Customer::all()->mapWithKeys(function ($customer) {
+                                    $displayName = $customer->customer_type === 'business'
+                                        ? ($customer->company_name ?: $customer->name)
+                                        : $customer->name;
+                                    return [$customer->id => $displayName];
+                                }))
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+                            
+                            Forms\Components\TextInput::make('percentage')
+                                ->label('Beteiligung (%)')
+                                ->required()
+                                ->numeric()
+                                ->step(0.01)
+                                ->suffix('%')
+                                ->minValue(0.01)
+                                ->maxValue(100)
+                                ->placeholder('z.B. 25,50')
+                                ->inputMode('decimal')
+                                ->extraInputAttributes(['pattern' => '[0-9]+([,\.][0-9]+)?'])
+                                ->helperText(function ($record) {
+                                    $currentPercentage = $record->percentage;
+                                    $otherParticipation = $this->solarPlant->participations()
+                                        ->where('id', '!=', $record->id)
+                                        ->sum('percentage');
+                                    $available = 100 - $otherParticipation;
+                                    return "Verfügbar (inkl. aktueller Beteiligung): {$available}% | Aktuelle Beteiligung: {$currentPercentage}%";
+                                })
+                                ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
+                                ->rules([
+                                    function ($record) {
+                                        return function (string $attribute, $value, \Closure $fail) use ($record) {
+                                            // Komma durch Punkt ersetzen für Berechnung
+                                            $numericValue = (float) str_replace(',', '.', $value);
+                                            $otherParticipation = $this->solarPlant->participations()
+                                                ->where('id', '!=', $record->id)
+                                                ->sum('percentage');
+                                            $totalParticipation = $otherParticipation + $numericValue;
+                                            
+                                            if ($totalParticipation > 100) {
+                                                $available = 100 - $otherParticipation;
+                                                $fail("Die Gesamtbeteiligung würde {$totalParticipation}% betragen. Maximal verfügbar: {$available}%");
+                                            }
+                                        };
+                                    },
+                                ]),
+                        ])
+                        ->successNotificationTitle('Beteiligung aktualisiert'),
+                    
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Löschen')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Beteiligung löschen')
+                        ->modalDescription('Sind Sie sicher, dass Sie diese Beteiligung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.')
+                        ->modalSubmitActionLabel('Ja, löschen')
+                        ->successNotificationTitle('Beteiligung gelöscht'),
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

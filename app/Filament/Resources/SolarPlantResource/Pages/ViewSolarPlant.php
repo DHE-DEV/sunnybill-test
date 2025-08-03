@@ -586,7 +586,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Kundenabrechnungen')
                     ->id('customer-billings')
                     ->icon('heroicon-o-document-currency-euro')
-                    ->description('Übersicht der Abrechnungen aller Kunden zur Solaranlage.')
+                    ->description('Übersicht der Kundenabrechnungen aller Kunden zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'customer-billings-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -624,7 +624,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Vertragspartner')
                     ->id('suppliers')
                     ->icon('heroicon-o-building-office-2')
-                    ->description('Übersicht der Lieferanten, Dienstleister und weitere Vertragspartner zur Solaranlage.')
+                    ->description('Übersicht der Lieferanten, Dienstleister und weiterer Vertragspartner zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'suppliers-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -660,7 +660,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Verträge')
                     ->id('contracts')
                     ->icon('heroicon-o-document-text')
-                    ->description('Übersicht der Lieferantenverträge zur Solaranlage')
+                    ->description('Übersicht der Lieferantenverträge zur Solaranlage ' . $this->record->name . '. Diese Verträge sind die Grundlage für Kundenabrechnungen.')
                     ->extraAttributes([
                         'class' => 'contracts-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -696,7 +696,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Dokumente')
                     ->id('documents')
                     ->icon('heroicon-o-folder')
-                    ->description('Übersicht der Dokumente zur Solaranlage')
+                    ->description('Übersicht der Dokumente zur Solaranlage ' . $this->record->name . '. Diese Dokumente können Verträge, Pläne und weitere wichtige Dateien enthalten.')
                     ->extraAttributes([
                         'class' => 'documents-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -732,7 +732,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Artikel')
                     ->id('articles')
                     ->icon('heroicon-o-squares-plus')
-                    ->description('Übersicht der Artikel und Komponenten zur Solaranlage')
+                    ->description('Übersicht der Artikel und zur Solaranlage ' . $this->record->name . '. Artikel können Komponenten, Ersatzteile und weitere Materialien sein, die zur Rechnungserstellung herangezogen werden können.')
                     ->extraAttributes([
                         'class' => 'articles-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -770,7 +770,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Aufgaben')
                     ->id('tasks')
                     ->icon('heroicon-o-clipboard-document-list')
-                    ->description('Übersicht der Aufgaben und To-Dos zur Solaranlage')
+                    ->description('Übersicht der Aufgaben und To-Dos zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'tasks-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -806,7 +806,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Projekte')
                     ->id('projects')
                     ->icon('heroicon-o-briefcase')
-                    ->description('Übersicht der Projekte und Projektmanagement zur Solaranlage')
+                    ->description('Übersicht der Projekte zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'projects-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -842,7 +842,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Termine')
                     ->id('milestones')
                     ->icon('heroicon-o-calendar-days')
-                    ->description('Übersicht der Meilensteine und Termine zur Solaranlage')
+                    ->description('Übersicht der Termine zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'milestones-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -878,7 +878,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Favoriten Notizen')
                     ->id('favorite-notes')
                     ->icon('heroicon-o-star')
-                    ->description('Favorisierte Notizen und wichtige Hinweise zur Solaranlage')
+                    ->description('Favorisierte Notizen und wichtige Hinweise zur Solaranlage ' . $this->record->name . '. Diese Notizen sind für alle Beteiligten von Bedeutung und sollten hervorgehoben werden.')
                     ->extraAttributes([
                         'class' => 'favorite-notes-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -914,7 +914,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Standard Notizen')
                     ->id('standard-notes')
                     ->icon('heroicon-o-document-text')
-                    ->description('Allgemeine Notizen und Bemerkungen zur Solaranlage')
+                    ->description('Allgemeine Notizen und Bemerkungen zur Solaranlage ' . $this->record->name . '. Diese Notizen sind nicht favorisiert, aber dennoch wichtig für die Dokumentation und Kommunikation.')
                     ->extraAttributes([
                         'class' => 'standard-notes-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
