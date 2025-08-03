@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SolarPlantBillingResource\Pages;
 
 use App\Filament\Resources\SolarPlantBillingResource;
 use App\Services\SolarPlantBillingPdfService;
+use App\Services\EpcQrCodeService;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Notifications\Notification;
@@ -310,6 +311,85 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->prose()
                                     ->color('gray'),
                             ]),
+                        
+                        // QR-Code für Banking-Apps
+                        Infolists\Components\Grid::make(2)
+                            ->schema([
+                                Infolists\Components\ImageEntry::make('epc_qr_code')
+                                    ->label('QR-Code für Banking-App')
+                                    ->state(function ($record) {
+                                        $qrService = new EpcQrCodeService();
+                                        
+                                        if (!$qrService->canGenerateQrCode($record)) {
+                                            return null;
+                                        }
+                                        
+                                        try {
+                                            $base64QrCode = $qrService->generateEpcQrCode($record);
+                                            return 'data:image/png;base64,' . $base64QrCode;
+                                        } catch (\Exception $e) {
+                                            return null;
+                                        }
+                                    })
+                                    ->size(200)
+                                    ->extraAttributes(['style' => 'border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px;'])
+                                    ->visible(function ($record) {
+                                        $qrService = new EpcQrCodeService();
+                                        return $qrService->canGenerateQrCode($record);
+                                    }),
+                                
+                                Infolists\Components\TextEntry::make('qr_code_info')
+                                    ->label('QR-Code Informationen')
+                                    ->state(function ($record) {
+                                        $qrService = new EpcQrCodeService();
+                                        
+                                        if (!$qrService->canGenerateQrCode($record)) {
+                                            return $qrService->getQrCodeErrorMessage($record);
+                                        }
+                                        
+                                        $customer = $record->customer;
+                                        $solarPlant = $record->solarPlant;
+                                        
+                                        $info = [];
+                                        $info[] = "📱 **Banking-App QR-Code**";
+                                        $info[] = "Empfänger: {$customer->account_holder}";
+                                        $info[] = "IBAN: " . chunk_split($customer->iban, 4, ' ');
+                                        if ($customer->bic) {
+                                            $info[] = "BIC: {$customer->bic}";
+                                        }
+                                        $info[] = "Betrag: € " . number_format($record->net_amount, 2, ',', '.');
+                                        
+                                        $reference = [];
+                                        if ($solarPlant && $solarPlant->name) {
+                                            $reference[] = $solarPlant->name;
+                                        }
+                                        if ($record->invoice_number) {
+                                            $reference[] = "Rechnung: {$record->invoice_number}";
+                                        }
+                                        $month = \Carbon\Carbon::createFromDate($record->billing_year, $record->billing_month, 1);
+                                        $reference[] = "Zeitraum: " . $month->locale('de')->translatedFormat('m/Y');
+                                        
+                                        $info[] = "Verwendungszweck: " . implode(' | ', $reference);
+                                        $info[] = "";
+                                        $info[] = "*Scannen Sie den QR-Code mit Ihrer Banking-App für eine schnelle Überweisung.*";
+                                        
+                                        return implode("\n", $info);
+                                    })
+                                    ->prose()
+                                    ->markdown()
+                                    ->color(function ($record) {
+                                        $qrService = new EpcQrCodeService();
+                                        return $qrService->canGenerateQrCode($record) ? 'success' : 'warning';
+                                    })
+                                    ->visible(function ($record) {
+                                        // Zeige Info immer an, aber Inhalt abhängig von QR-Code Verfügbarkeit
+                                        return true;
+                                    }),
+                            ])
+                            ->visible(function ($record) {
+                                // Zeige gesamtes Grid nur bei positiven Beträgen an
+                                return $record->net_amount > 0;
+                            }),
                     ])
                     ->compact()
                     ->collapsible()
