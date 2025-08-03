@@ -27,9 +27,9 @@ class SolarPlantBillingOverviewResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Abrechnungsübersicht';
 
-    protected static ?string $navigationGroup = 'Fakturierung';
+    protected static ?string $navigationGroup = 'Solar Management';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
