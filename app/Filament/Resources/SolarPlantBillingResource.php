@@ -28,7 +28,7 @@ class SolarPlantBillingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
 
-    protected static ?string $navigationLabel = 'Abrechnung Solaranlagen';
+    protected static ?string $navigationLabel = 'Abrechnungen';
 
     protected static ?string $modelLabel = 'Solaranlagen-Abrechnung';
 
