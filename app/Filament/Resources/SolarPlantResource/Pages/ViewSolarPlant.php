@@ -563,16 +563,31 @@ class ViewSolarPlant extends ViewRecord
                                     ->color('primary')
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('total_participation')
-                                    ->label('Gesamtbeteiligung')
+                                    ->label('Gesamtbeteiligung (%)')
                                     ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . '%')
                                     ->badge()
                                     ->color(fn ($state) => $state >= 100 ? 'success' : 'warning')
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('available_participation')
-                                    ->label('Verfügbare Beteiligung')
+                                    ->label('Verfügbare Beteiligung (%)')
                                     ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . '%')
                                     ->badge()
                                     ->color(fn ($state) => $state > 0 ? 'info' : 'gray')
+                                    ->size('xl'),
+                            ]),
+                        Infolists\Components\Grid::make(2)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('total_participation_kwp')
+                                    ->label('Gesamtbeteiligung (kWp)')
+                                    ->state(fn ($record) => number_format(($record->total_participation / 100) * $record->total_capacity_kw, 3, ',', '.') . ' kWp')
+                                    ->badge()
+                                    ->color('success')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('available_participation_kwp')
+                                    ->label('Verfügbare Beteiligung (kWp)')
+                                    ->state(fn ($record) => number_format(($record->available_participation / 100) * $record->total_capacity_kw, 3, ',', '.') . ' kWp')
+                                    ->badge()
+                                    ->color('info')
                                     ->size('xl'),
                             ]),
                         \Filament\Infolists\Components\Livewire::make(\App\Livewire\ParticipationsTable::class, ['solarPlant' => $this->record])
