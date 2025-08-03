@@ -116,7 +116,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                         Infolists\Components\TextEntry::make('customer.payment_method')
                                             ->label('Zahlungsart')
                                             ->formatStateUsing(fn (?string $state): string => match($state) {
-                                                'transfer' => 'Überweisung',
+                                                'transfer' => 'Überweisung (Einzeln)',
                                                 'sepa_bulk_transfer' => 'SEPA Sammelüberweisung',
                                                 'direct_debit' => 'Lastschrift (Einzeln)',
                                                 'sepa_direct_debit' => 'SEPA Sammellastschrift',

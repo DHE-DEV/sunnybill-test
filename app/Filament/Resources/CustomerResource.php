@@ -308,7 +308,7 @@ class CustomerResource extends Resource
                         Forms\Components\Select::make('payment_method')
                             ->label('Zahlungsart')
                             ->options([
-                                'transfer' => 'Überweisung',
+                                'transfer' => 'Überweisung (Einzeln)',
                                 'sepa_bulk_transfer' => 'SEPA Sammelüberweisung',
                                 'direct_debit' => 'Lastschrift (Einzeln)',
                                 'sepa_direct_debit' => 'SEPA Sammellastschrift',
@@ -930,7 +930,7 @@ class CustomerResource extends Resource
                         \Filament\Infolists\Components\TextEntry::make('payment_method')
                             ->label('Zahlungsart')
                             ->formatStateUsing(fn (?string $state): string => match($state) {
-                                'transfer' => 'Überweisung',
+                                'transfer' => 'Überweisung (Einzeln)',
                                 'sepa_bulk_transfer' => 'SEPA Sammelüberweisung',
                                 'direct_debit' => 'Lastschrift (Einzeln)',
                                 'sepa_direct_debit' => 'SEPA Sammellastschrift',
