@@ -549,7 +549,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Kundenbeteiligungen')
                     ->id('customers')
                     ->icon('heroicon-o-users')
-                    ->description('Übersicht der beteiligten Kunden zur Solaranlage')
+                    ->description('Übersicht der beteiligten Kunden zur Solaranlage.')
                     ->extraAttributes([
                         'class' => 'customers-section-gray',
                         'style' => 'background-color: #1e6fc0ff !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #af9a3aff !important;'
@@ -586,7 +586,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Kundenabrechnungen')
                     ->id('customer-billings')
                     ->icon('heroicon-o-document-currency-euro')
-                    ->description('Übersicht der Abrechnungen aller Kunden zur Solaranlage')
+                    ->description('Übersicht der Abrechnungen aller Kunden zur Solaranlage.')
                     ->extraAttributes([
                         'class' => 'customer-billings-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -619,10 +619,10 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsed($savedState['customer-billings'] ?? true)
                     ->extraAttributes(['data-section-id' => 'customer-billings']),
 
-                Infolists\Components\Section::make('Lieferanten')
+                Infolists\Components\Section::make('Vertragspartner')
                     ->id('suppliers')
                     ->icon('heroicon-o-building-office-2')
-                    ->description('Übersicht der Lieferanten und Vertragspartner zur Solaranlage')
+                    ->description('Übersicht der Lieferanten, Dienstleister und weitere Vertragspartner zur Solaranlage.')
                     ->extraAttributes([
                         'class' => 'suppliers-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -690,6 +690,42 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsible()
                     ->collapsed($savedState['contracts'] ?? false)
                     ->extraAttributes(['data-section-id' => 'contracts']),
+
+                Infolists\Components\Section::make('Dokumente')
+                    ->id('documents')
+                    ->icon('heroicon-o-folder')
+                    ->description('Übersicht der Dokumente zur Solaranlage')
+                    ->extraAttributes([
+                        'class' => 'documents-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('total_documents_count')
+                                    ->label('Gesamte Dokumente')
+                                    ->state(fn ($record) => $record->documents()->count())
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('favorite_documents_count')
+                                    ->label('Favorisierte Dokumente')
+                                    ->state(fn ($record) => $record->documents()->where('is_favorite', true)->count())
+                                    ->badge()
+                                    ->color('warning')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('recent_documents_count')
+                                    ->label('Letzte 30 Tage')
+                                    ->state(fn ($record) => $record->documents()->where('created_at', '>=', now()->subDays(30))->count())
+                                    ->badge()
+                                    ->color('info')
+                                    ->size('xl'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['documents'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'documents']),
            ]);
    }
 
@@ -799,6 +835,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .contracts-section-gray,
             .contracts-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Dokumente Section Styling */
+            [data-section-id="documents"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            
+            [data-section-id="documents"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Alternative selector falls der erste nicht funktioniert */
+            .documents-section-gray,
+            .documents-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
