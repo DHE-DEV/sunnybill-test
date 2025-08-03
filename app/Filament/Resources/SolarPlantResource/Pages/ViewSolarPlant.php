@@ -800,6 +800,42 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsible()
                     ->collapsed($savedState['milestones'] ?? false)
                     ->extraAttributes(['data-section-id' => 'milestones']),
+
+                Infolists\Components\Section::make('Wichtige Notizen')
+                    ->id('important-notes')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->description('Wichtige Notizen und Hinweise zur Solaranlage')
+                    ->extraAttributes([
+                        'class' => 'important-notes-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('total_notes_count')
+                                    ->label('Gesamte Notizen')
+                                    ->state(fn ($record) => $record->notes()->count())
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('important_notes_count')
+                                    ->label('Als wichtig markiert')
+                                    ->state(fn ($record) => $record->notes()->where('is_important', true)->count())
+                                    ->badge()
+                                    ->color('danger')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('recent_notes_count')
+                                    ->label('Letzte 7 Tage')
+                                    ->state(fn ($record) => $record->notes()->where('created_at', '>=', now()->subDays(7))->count())
+                                    ->badge()
+                                    ->color('info')
+                                    ->size('xl'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['important-notes'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'important-notes']),
            ]);
    }
 
@@ -981,6 +1017,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .milestones-section-gray,
             .milestones-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Wichtige Notizen Section Styling */
+            [data-section-id="important-notes"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            
+            [data-section-id="important-notes"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Alternative selector falls der erste nicht funktioniert */
+            .important-notes-section-gray,
+            .important-notes-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
