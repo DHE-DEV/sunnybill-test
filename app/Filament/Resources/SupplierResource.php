@@ -20,11 +20,11 @@ class SupplierResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
 
-    protected static ?string $navigationLabel = 'Lieferanten';
+    protected static ?string $navigationLabel = 'Kontakte';
 
-    protected static ?string $modelLabel = 'Lieferant';
+    protected static ?string $modelLabel = 'Lieferanten';
 
-    protected static ?string $pluralModelLabel = 'Lieferanten';
+    protected static ?string $pluralModelLabel = 'Lieferanten - Kontakte';
 
     protected static ?string $navigationGroup = 'Lieferanten';
 

@@ -24,7 +24,7 @@ class SupplierContractBillingResource extends Resource
 
     protected static ?string $modelLabel = 'Abrechnung';
 
-    protected static ?string $pluralModelLabel = 'Abrechnungen';
+    protected static ?string $pluralModelLabel = 'Lieferanten - Abrechnungen';
 
     protected static ?string $navigationGroup = 'Lieferanten';
 

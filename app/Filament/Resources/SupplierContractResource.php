@@ -26,7 +26,7 @@ class SupplierContractResource extends Resource
 
     protected static ?string $modelLabel = 'Lieferantenvertrag';
 
-    protected static ?string $pluralModelLabel = 'Lieferantenverträge';
+    protected static ?string $pluralModelLabel = 'Lieferanten - Verträge';
 
     protected static ?string $navigationGroup = 'Lieferanten';
 
@@ -258,41 +258,41 @@ class SupplierContractResource extends Resource
                     ->label('Start')
                     ->date()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('end_date')
                     ->label('Ende')
                     ->date()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('formatted_contract_value')
                     ->label('Wert')
                     ->sortable(query: function (Builder $query, string $direction): Builder {
                         return $query->orderBy('contract_value', $direction);
                     })
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
                     ->boolean()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('contractNotes_count')
                     ->label('Notizen')
                     ->counts('contractNotes')
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('documents_count')
                     ->label('Dokumente')
                     ->counts('documents')
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('solarPlantAssignments_count')
                     ->label('Solaranlagen')
                     ->counts('solarPlantAssignments')
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('total_solar_plant_percentage')
                     ->label('Gesamt %')
                     ->suffix('%')
                     ->numeric(2)
                     ->alignRight()
-                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->badge()
                     ->color(fn ($state) => $state >= 100 ? 'success' : ($state >= 50 ? 'warning' : 'gray')),
                 Tables\Columns\TextColumn::make('created_at')
