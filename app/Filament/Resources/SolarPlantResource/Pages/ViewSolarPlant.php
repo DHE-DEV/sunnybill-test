@@ -726,6 +726,44 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsible()
                     ->collapsed($savedState['documents'] ?? false)
                     ->extraAttributes(['data-section-id' => 'documents']),
+
+                Infolists\Components\Section::make('Artikel')
+                    ->id('articles')
+                    ->icon('heroicon-o-squares-plus')
+                    ->description('Übersicht der Artikel und Komponenten zur Solaranlage')
+                    ->extraAttributes([
+                        'class' => 'articles-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('total_articles_count')
+                                    ->label('Gesamte Artikel')
+                                    ->state(fn ($record) => $record->articles()->count())
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('active_articles_count')
+                                    ->label('Aktive Artikel')
+                                    ->state(fn ($record) => $record->articles()->wherePivot('is_active', true)->count())
+                                    ->badge()
+                                    ->color('success')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('total_article_value')
+                                    ->label('Gesamtwert')
+                                    ->state(fn ($record) => '€ ' . number_format($record->articles()->get()->sum(function($article) {
+                                        return $article->pivot->quantity * $article->pivot->unit_price;
+                                    }), 2, ',', '.'))
+                                    ->badge()
+                                    ->color('info')
+                                    ->size('xl'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['articles'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'articles']),
            ]);
    }
 
@@ -859,6 +897,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .documents-section-gray,
             .documents-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Artikel Section Styling */
+            [data-section-id="articles"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            
+            [data-section-id="articles"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Alternative selector falls der erste nicht funktioniert */
+            .articles-section-gray,
+            .articles-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
