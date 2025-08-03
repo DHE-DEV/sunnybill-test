@@ -545,6 +545,168 @@ class ViewSolarPlant extends ViewRecord
                             ]),
                     ])
                     ->columnSpanFull(),
+                    
+                Infolists\Components\Section::make('Kunden')
+                    ->id('customers')
+                    ->icon('heroicon-o-users')
+                    ->description('Übersicht der beteiligten Kunden und deren Informationen')
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('participations_count')
+                                    ->label('Anzahl Beteiligte')
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('total_participation')
+                                    ->label('Gesamtbeteiligung')
+                                    ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . '%')
+                                    ->badge()
+                                    ->color(fn ($state) => $state >= 100 ? 'success' : 'warning')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('available_participation')
+                                    ->label('Verfügbare Beteiligung')
+                                    ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . '%')
+                                    ->badge()
+                                    ->color(fn ($state) => $state > 0 ? 'info' : 'gray')
+                                    ->size('xl'),
+                            ]),
+                        Infolists\Components\RepeatableEntry::make('participations')
+                            ->label('Beteiligte Kunden')
+                            ->schema([
+                                Infolists\Components\Grid::make(5)
+                                    ->schema([
+                                        Infolists\Components\TextEntry::make('customer_name')
+                                            ->label('Kunde')
+                                            ->state(function ($record) {
+                                                $customer = $record->customer;
+                                                if (!$customer) return 'Kunde nicht gefunden';
+                                                
+                                                return $customer->customer_type === 'business'
+                                                    ? ($customer->company_name ?: $customer->name)
+                                                    : $customer->name;
+                                            })
+                                            ->weight('medium')
+                                            ->size('lg')
+                                            ->color('primary')
+                                            ->url(fn ($record) => $record->customer ? route('filament.admin.resources.customers.view', $record->customer) : null)
+                                            ->openUrlInNewTab(false),
+                                        Infolists\Components\TextEntry::make('customer.email')
+                                            ->label('E-Mail')
+                                            ->placeholder('Keine E-Mail')
+                                            ->color('gray')
+                                            ->url(fn ($record) => $record->customer?->email ? 'mailto:' . $record->customer->email : null)
+                                            ->openUrlInNewTab(false),
+                                        Infolists\Components\TextEntry::make('customer.phone')
+                                            ->label('Telefon')
+                                            ->placeholder('Keine Telefonnummer')
+                                            ->color('gray')
+                                            ->url(fn ($record) => $record->customer?->phone ? 'tel:' . $record->customer->phone : null)
+                                            ->openUrlInNewTab(false),
+                                        Infolists\Components\TextEntry::make('percentage')
+                                            ->label('Beteiligung')
+                                            ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
+                                            ->badge()
+                                            ->color('success')
+                                            ->size('lg'),
+                                        Infolists\Components\TextEntry::make('created_at')
+                                            ->label('Beitritt')
+                                            ->date('d.m.Y')
+                                            ->color('gray'),
+                                    ]),
+                            ])
+                            ->contained(true)
+                            ->grid(1),
+                    ])
+                    ->headerActions([
+                        Infolists\Components\Actions\Action::make('manage_participations')
+                            ->label('Beteiligungen verwalten')
+                            ->icon('heroicon-o-cog-6-tooth')
+                            ->color('primary')
+                            ->url(fn ($record) => route('filament.admin.resources.solar-plants.view', $record) . '#participations')
+                            ->openUrlInNewTab(false),
+                        Infolists\Components\Actions\Action::make('create_participation')
+                            ->label('Neue Beteiligung')
+                            ->icon('heroicon-o-plus')
+                            ->color('success')
+                            ->visible(fn ($record) => $record->total_participation < 100)
+                            ->form([
+                                Forms\Components\Select::make('customer_id')
+                                    ->label('Kunde')
+                                    ->options(Customer::all()->mapWithKeys(function ($customer) {
+                                        $displayName = $customer->customer_type === 'business'
+                                            ? ($customer->company_name ?: $customer->name)
+                                            : $customer->name;
+                                        return [$customer->id => $displayName];
+                                    }))
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('name')
+                                            ->label('Name')
+                                            ->required(),
+                                        Forms\Components\TextInput::make('email')
+                                            ->label('E-Mail')
+                                            ->email(),
+                                        Forms\Components\TextInput::make('phone')
+                                            ->label('Telefon'),
+                                    ])
+                                    ->createOptionUsing(function (array $data) {
+                                        return Customer::create($data)->id;
+                                    }),
+                                Forms\Components\TextInput::make('percentage')
+                                    ->label('Beteiligung (%)')
+                                    ->required()
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->suffix('%')
+                                    ->minValue(0.01)
+                                    ->maxValue(100)
+                                    ->placeholder('z.B. 25,50')
+                                    ->inputMode('decimal')
+                                    ->extraInputAttributes(['pattern' => '[0-9]+([,\.][0-9]+)?'])
+                                    ->helperText(function ($record) {
+                                        $available = $record->available_participation;
+                                        return "Verfügbar: {$available}% (Gesamt: {$record->total_participation}% von 100%)";
+                                    })
+                                    ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
+                                    ->rules([
+                                        function ($record) {
+                                            return function (string $attribute, $value, \Closure $fail) use ($record) {
+                                                // Komma durch Punkt ersetzen für Berechnung
+                                                $numericValue = (float) str_replace(',', '.', $value);
+                                                $existingParticipation = $record->participations()->sum('percentage');
+                                                $totalParticipation = $existingParticipation + $numericValue;
+                                                
+                                                if ($totalParticipation > 100) {
+                                                    $available = 100 - $existingParticipation;
+                                                    $fail("Die Gesamtbeteiligung würde {$totalParticipation}% betragen. Maximal verfügbar: {$available}%");
+                                                }
+                                            };
+                                        },
+                                    ]),
+                            ])
+                            ->action(function (array $data, $record, $livewire) {
+                                $record->participations()->create($data);
+                                
+                                Notification::make()
+                                    ->title('Beteiligung hinzugefügt')
+                                    ->body('Die Kundenbeteiligung wurde erfolgreich erstellt.')
+                                    ->success()
+                                    ->send();
+                                    
+                                // Livewire-Komponente aktualisieren
+                                $livewire->dispatch('$refresh');
+                            })
+                            ->modalHeading('Neue Beteiligung hinzufügen')
+                            ->modalSubmitActionLabel('Beteiligung erstellen')
+                            ->modalWidth('lg'),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['customers'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'customers']),
            ]);
    }
 
