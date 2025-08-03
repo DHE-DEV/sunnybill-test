@@ -111,8 +111,13 @@ class ViewSolarPlantBilling extends ViewRecord
                         Infolists\Components\Section::make('Bankverbindung')
                             ->icon('heroicon-o-credit-card')
                             ->schema([
-                                Infolists\Components\Grid::make(3)
+                                Infolists\Components\Grid::make(4)
                                     ->schema([
+                                        Infolists\Components\TextEntry::make('customer.account_holder')
+                                            ->label('Kontoinhaber')
+                                            ->placeholder('Nicht hinterlegt')
+                                            ->icon('heroicon-o-user')
+                                            ->color('warning'),
                                         Infolists\Components\TextEntry::make('customer.bank_name')
                                             ->label('Bank')
                                             ->placeholder('Nicht hinterlegt')
