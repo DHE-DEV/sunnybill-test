@@ -108,6 +108,38 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->color('success')
                                     ->size('lg'),
                             ]),
+                        Infolists\Components\Section::make('Bankverbindung')
+                            ->icon('heroicon-o-credit-card')
+                            ->schema([
+                                Infolists\Components\Grid::make(3)
+                                    ->schema([
+                                        Infolists\Components\TextEntry::make('customer.bank_name')
+                                            ->label('Bank')
+                                            ->placeholder('Nicht hinterlegt')
+                                            ->icon('heroicon-o-building-office')
+                                            ->color('gray'),
+                                        Infolists\Components\TextEntry::make('customer.iban')
+                                            ->label('IBAN')
+                                            ->placeholder('Nicht hinterlegt')
+                                            ->formatStateUsing(function ($state) {
+                                                if (!$state) return 'Nicht hinterlegt';
+                                                // IBAN formatieren: DE89 3704 0044 0532 0130 00
+                                                return chunk_split($state, 4, ' ');
+                                            })
+                                            ->copyable()
+                                            ->icon('heroicon-o-identification')
+                                            ->color('primary'),
+                                        Infolists\Components\TextEntry::make('customer.bic')
+                                            ->label('BIC')
+                                            ->placeholder('Nicht hinterlegt')
+                                            ->copyable()
+                                            ->icon('heroicon-o-globe-europe-africa')
+                                            ->color('info'),
+                                    ]),
+                            ])
+                            ->compact()
+                            ->collapsible()
+                            ->collapsed(false),
                     ])
                     ->compact()
                     ->collapsible()
