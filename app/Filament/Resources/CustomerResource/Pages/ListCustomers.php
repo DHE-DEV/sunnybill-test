@@ -6,12 +6,15 @@ use App\Filament\Resources\CustomerResource;
 use App\Filament\Widgets\CustomerStatsWidget;
 use App\Filament\Widgets\CustomerGrowthChartWidget;
 use App\Filament\Widgets\CustomerTypeDistributionChartWidget;
+use App\Traits\HasPersistentTableState;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Actions\Action;
 
 class ListCustomers extends ListRecords
 {
+    use HasPersistentTableState;
+
     protected static string $resource = CustomerResource::class;
 
     public bool $showStats = false;
@@ -44,5 +47,4 @@ class ListCustomers extends ListRecords
             CustomerTypeDistributionChartWidget::class,
         ];
     }
-
 }

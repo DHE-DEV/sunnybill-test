@@ -6,12 +6,15 @@ use App\Filament\Resources\SupplierResource;
 use App\Filament\Widgets\SupplierStatsWidget;
 use App\Filament\Widgets\SupplierGrowthChartWidget;
 use App\Filament\Widgets\SupplierEmployeeChartWidget;
+use App\Traits\HasPersistentTableState;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Actions\Action;
 
 class ListSuppliers extends ListRecords
 {
+    use HasPersistentTableState;
+
     protected static string $resource = SupplierResource::class;
 
     public bool $showStats = false;

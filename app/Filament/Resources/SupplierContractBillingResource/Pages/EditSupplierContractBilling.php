@@ -36,4 +36,18 @@ class EditSupplierContractBilling extends EditRecord
     {
         return $this->getResource()::getUrl('view', ['record' => $this->getRecord()]);
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Finde die verknüpfte Solaranlage über den Lieferantenvertrag
+        $record = $this->getRecord();
+        if ($record && $record->supplierContract) {
+            $solarPlant = $record->supplierContract->solarPlants()->first();
+            if ($solarPlant) {
+                $data['temp_solar_plant_id'] = $solarPlant->id;
+            }
+        }
+
+        return $data;
+    }
 }

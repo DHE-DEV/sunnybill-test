@@ -5,12 +5,15 @@ namespace App\Filament\Resources\SolarPlantResource\Pages;
 use App\Filament\Resources\SolarPlantResource;
 use App\Filament\Widgets\SolarPlantStatsWidget;
 use App\Filament\Widgets\SolarPlantCapacityChartWidget;
+use App\Traits\HasPersistentTableState;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Actions\Action;
 
 class ListSolarPlants extends ListRecords
 {
+    use HasPersistentTableState;
+
     protected static string $resource = SolarPlantResource::class;
 
     public bool $showStats = false;
@@ -42,4 +45,5 @@ class ListSolarPlants extends ListRecords
             SolarPlantCapacityChartWidget::class,
         ];
     }
+
 }
