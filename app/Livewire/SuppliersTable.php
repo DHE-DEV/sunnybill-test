@@ -79,6 +79,14 @@ class SuppliersTable extends Component implements HasForms, HasTable
                     ->placeholder('Keine Telefonnummer')
                     ->toggleable(),
 
+                Tables\Columns\TextColumn::make('city')
+                    ->label('Ort')
+                    ->searchable()
+                    ->sortable()
+                    ->color('gray')
+                    ->placeholder('Nicht angegeben')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('supplierType.name')
                     ->label('Lieferantentyp')
                     ->searchable()
@@ -96,14 +104,6 @@ class SuppliersTable extends Component implements HasForms, HasTable
                         default => 'gray',
                     })
                     ->placeholder('Nicht definiert'),
-
-                Tables\Columns\TextColumn::make('city')
-                    ->label('Ort')
-                    ->searchable()
-                    ->sortable()
-                    ->color('gray')
-                    ->placeholder('Nicht angegeben')
-                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('postal_code')
                     ->label('PLZ')
@@ -143,7 +143,7 @@ class SuppliersTable extends Component implements HasForms, HasTable
                     ->trueColor('success')
                     ->falseColor('danger')
                     ->alignCenter()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Erstellt am')
