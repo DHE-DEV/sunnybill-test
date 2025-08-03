@@ -571,52 +571,8 @@ class ViewSolarPlant extends ViewRecord
                                     ->color(fn ($state) => $state > 0 ? 'info' : 'gray')
                                     ->size('xl'),
                             ]),
-                        Infolists\Components\RepeatableEntry::make('participations')
-                            ->label('Beteiligte Kunden')
-                            ->schema([
-                                Infolists\Components\Grid::make(5)
-                                    ->schema([
-                                        Infolists\Components\TextEntry::make('customer_name')
-                                            ->label('Kunde')
-                                            ->state(function ($record) {
-                                                $customer = $record->customer;
-                                                if (!$customer) return 'Kunde nicht gefunden';
-                                                
-                                                return $customer->customer_type === 'business'
-                                                    ? ($customer->company_name ?: $customer->name)
-                                                    : $customer->name;
-                                            })
-                                            ->weight('medium')
-                                            ->size('lg')
-                                            ->color('primary')
-                                            ->url(fn ($record) => $record->customer ? route('filament.admin.resources.customers.view', $record->customer) : null)
-                                            ->openUrlInNewTab(false),
-                                        Infolists\Components\TextEntry::make('customer.email')
-                                            ->label('E-Mail')
-                                            ->placeholder('Keine E-Mail')
-                                            ->color('gray')
-                                            ->url(fn ($record) => $record->customer?->email ? 'mailto:' . $record->customer->email : null)
-                                            ->openUrlInNewTab(false),
-                                        Infolists\Components\TextEntry::make('customer.phone')
-                                            ->label('Telefon')
-                                            ->placeholder('Keine Telefonnummer')
-                                            ->color('gray')
-                                            ->url(fn ($record) => $record->customer?->phone ? 'tel:' . $record->customer->phone : null)
-                                            ->openUrlInNewTab(false),
-                                        Infolists\Components\TextEntry::make('percentage')
-                                            ->label('Beteiligung')
-                                            ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
-                                            ->badge()
-                                            ->color('success')
-                                            ->size('lg'),
-                                        Infolists\Components\TextEntry::make('created_at')
-                                            ->label('Beitritt')
-                                            ->date('d.m.Y')
-                                            ->color('gray'),
-                                    ]),
-                            ])
-                            ->contained(true)
-                            ->grid(1),
+                        \Filament\Infolists\Components\Livewire::make(\App\Livewire\ParticipationsTable::class, ['solarPlant' => fn() => $this->record])
+                            ->key('participations-table'),
                     ])
                     ->headerActions([
                         Infolists\Components\Actions\Action::make('manage_participations')
