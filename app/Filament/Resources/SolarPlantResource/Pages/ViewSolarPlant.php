@@ -582,6 +582,42 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsible()
                     ->collapsed($savedState['customers'] ?? true)
                     ->extraAttributes(['data-section-id' => 'customers']),
+
+                Infolists\Components\Section::make('Kundenabrechnungen')
+                    ->id('customer-billings')
+                    ->icon('heroicon-o-document-currency-euro')
+                    ->description('Übersicht der Abrechnungen zu der Solaranlage von allen Kunden')
+                    ->extraAttributes([
+                        'class' => 'customer-billings-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('billings_count')
+                                    ->label('Anzahl Abrechnungen')
+                                    ->state(fn ($record) => $record->billings()->count())
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('total_billing_amount')
+                                    ->label('Gesamtbetrag')
+                                    ->state(fn ($record) => '€ ' . number_format($record->billings()->sum('total_amount'), 2, ',', '.'))
+                                    ->badge()
+                                    ->color('success')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('paid_billings_count')
+                                    ->label('Bezahlte Rechnungen')
+                                    ->state(fn ($record) => $record->billings()->where('status', 'paid')->count())
+                                    ->badge()
+                                    ->color('info')
+                                    ->size('xl'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['customer-billings'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'customer-billings']),
            ]);
    }
 
@@ -619,6 +655,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .customers-section-gray,
             .customers-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Kundenabrechnungen Section Styling */
+            [data-section-id="customer-billings"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            
+            [data-section-id="customer-billings"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Alternative selector falls der erste nicht funktioniert */
+            .customer-billings-section-gray,
+            .customer-billings-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
