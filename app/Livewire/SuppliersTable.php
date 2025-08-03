@@ -36,7 +36,7 @@ class SuppliersTable extends Component implements HasForms, HasTable
             ->query(
                 Supplier::query()
                     ->whereIn('id', $supplierIds)
-                    ->with(['contracts'])
+                    ->with(['supplierType'])
             )
             ->columns([
                 Tables\Columns\TextColumn::make('supplier_number')
@@ -46,7 +46,8 @@ class SuppliersTable extends Component implements HasForms, HasTable
                     ->weight('medium')
                     ->color('primary')
                     ->copyable()
-                    ->placeholder('Nicht vergeben'),
+                    ->placeholder('Nicht vergeben')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('display_name')
                     ->label('Name')
@@ -57,23 +58,6 @@ class SuppliersTable extends Component implements HasForms, HasTable
                     ->color('primary')
                     ->url(fn ($record) => route('filament.admin.resources.suppliers.view', $record))
                     ->openUrlInNewTab(false),
-
-                Tables\Columns\TextColumn::make('company_type')
-                    ->label('Unternehmenstyp')
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'sole_proprietorship' => 'Einzelunternehmen',
-                        'partnership' => 'Personengesellschaft',
-                        'corporation' => 'Kapitalgesellschaft',
-                        'cooperative' => 'Genossenschaft',
-                        'association' => 'Verein',
-                        'other' => 'Sonstiges',
-                        default => $state,
-                    })
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color('info')
-                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-Mail')
@@ -95,35 +79,23 @@ class SuppliersTable extends Component implements HasForms, HasTable
                     ->placeholder('Keine Telefonnummer')
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('supplier_type')
+                Tables\Columns\TextColumn::make('supplierType.name')
                     ->label('Lieferantentyp')
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'installer' => 'Installateur',
-                        'equipment_supplier' => 'Gerätehändler',
-                        'maintenance' => 'Wartung',
-                        'planning' => 'Planung',
-                        'financing' => 'Finanzierung',
-                        'insurance' => 'Versicherung',
-                        'legal' => 'Rechtsberatung',
-                        'consulting' => 'Beratung',
-                        'other' => 'Sonstiges',
-                        default => $state,
-                    })
                     ->searchable()
                     ->sortable()
                     ->badge()
-                    ->color(fn ($state) => match($state) {
-                        'installer' => 'warning',
-                        'equipment_supplier' => 'success',
-                        'maintenance' => 'info',
-                        'planning' => 'primary',
-                        'financing' => 'danger',
-                        'insurance' => 'gray',
-                        'legal' => 'purple',
-                        'consulting' => 'orange',
-                        'other' => 'gray',
+                    ->color(fn ($record) => match($record->supplierType?->name) {
+                        'Installateur' => 'warning',
+                        'Gerätehändler' => 'success',
+                        'Wartung' => 'info',
+                        'Planung' => 'primary',
+                        'Finanzierung' => 'danger',
+                        'Versicherung' => 'gray',
+                        'Rechtsberatung' => 'purple',
+                        'Beratung' => 'orange',
                         default => 'gray',
-                    }),
+                    })
+                    ->placeholder('Nicht definiert'),
 
                 Tables\Columns\TextColumn::make('city')
                     ->label('Ort')
@@ -162,20 +134,6 @@ class SuppliersTable extends Component implements HasForms, HasTable
                     ->color('gray')
                     ->placeholder('Nicht angegeben')
                     ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('contracts_count')
-                    ->label('Verträge')
-                    ->state(fn ($record) => $record->contracts->count())
-                    ->badge()
-                    ->color('info')
-                    ->alignCenter(),
-
-                Tables\Columns\TextColumn::make('active_contracts')
-                    ->label('Aktive Verträge')
-                    ->state(fn ($record) => $record->contracts->where('status', 'active')->count())
-                    ->badge()
-                    ->color('success')
-                    ->alignCenter(),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
@@ -239,18 +197,6 @@ class SuppliersTable extends Component implements HasForms, HasTable
                         false: fn (Builder $query) => $query->where('is_active', false),
                         blank: fn (Builder $query) => $query,
                     ),
-
-                Tables\Filters\Filter::make('has_contracts')
-                    ->label('Mit Verträgen')
-                    ->query(fn (Builder $query): Builder => $query->whereHas('contracts'))
-                    ->toggle(),
-
-                Tables\Filters\Filter::make('has_active_contracts')
-                    ->label('Mit aktiven Verträgen')
-                    ->query(fn (Builder $query): Builder => $query->whereHas('contracts', function ($query) {
-                        $query->where('status', 'active');
-                    }))
-                    ->toggle(),
 
                 Tables\Filters\SelectFilter::make('city')
                     ->label('Ort')
