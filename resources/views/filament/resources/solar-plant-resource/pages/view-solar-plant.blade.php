@@ -13,7 +13,9 @@
 
     {{-- Header Actions --}}
     <x-slot name="headerActions">
-        {{ ($this->getHeaderActions()) }}
+        <x-filament-actions::actions 
+            :actions="$this->getHeaderActions()" 
+            :alignment="\Filament\Support\Enums\Alignment::Start" />
     </x-slot>
 
     {{-- Infolist Section --}}
