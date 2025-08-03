@@ -19,7 +19,6 @@ class ViewSolarPlant extends ViewRecord
     
     protected static string $resource = SolarPlantResource::class;
     
-    protected static string $view = 'filament.resources.solar-plant-resource.pages.view-solar-plant';
 
     public function getRelationManagers(): array
     {
@@ -35,35 +34,6 @@ class ViewSolarPlant extends ViewRecord
         ];
     }
 
-    public function getRelationManagerInstance(string $name): ?\Filament\Resources\RelationManagers\RelationManager
-    {
-        // Prüfe ob das Record existiert
-        if (!$this->record) {
-            return null;
-        }
-
-        $relationshipMap = [
-            'articles' => RelationManagers\ArticlesRelationManager::class,
-            'participations' => RelationManagers\ParticipationsRelationManager::class,
-            'billings' => RelationManagers\BillingsRelationManager::class,
-            'monthlyResults' => RelationManagers\MonthlyResultsRelationManager::class,
-            'documents' => RelationManagers\DocumentsRelationManager::class,
-            'contracts' => RelationManagers\ContractsRelationManager::class,
-            'supplierAssignments' => RelationManagers\SuppliersRelationManager::class,
-            'milestones' => RelationManagers\MilestonesRelationManager::class,
-        ];
-
-        if (!array_key_exists($name, $relationshipMap)) {
-            return null;
-        }
-
-        $relationManagerClass = $relationshipMap[$name];
-        $relationManager = app($relationManagerClass);
-        $relationManager->ownerRecord($this->record);
-        $relationManager->pageClass(static::class);
-
-        return $relationManager;
-    }
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
