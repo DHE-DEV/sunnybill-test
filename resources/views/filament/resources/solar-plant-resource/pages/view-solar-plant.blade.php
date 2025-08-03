@@ -92,7 +92,58 @@
             </x-filament::section>
         </div>
 
-        {{-- Section 2: Lieferanten --}}
+        {{-- Section 2: Kundenabrechnungen --}}
+        <div data-section-id="customer-billings" class="customer-billings-section-gray" style="background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;">
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center gap-x-3">
+                        <x-heroicon-o-document-currency-euro class="h-6 w-6 text-gray-500" />
+                        <span>Kundenabrechnungen</span>
+                    </div>
+                </x-slot>
+
+                <x-slot name="description">
+                    Abrechnungen und Rechnungen der Kunden für diese Solaranlage
+                </x-slot>
+
+                <div class="space-y-6">
+                    {{-- Abrechnungsübersicht --}}
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="text-center">
+                            <div class="text-xl font-bold text-primary-600">{{ $this->record->billings_count ?? 0 }}</div>
+                            <div class="text-sm text-gray-600">Anzahl Abrechnungen</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xl font-bold text-green-600">
+                                €{{ number_format($this->record->billings()->sum('total_amount') ?? 0, 2, ',', '.') }}
+                            </div>
+                            <div class="text-sm text-gray-600">Gesamtbetrag</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xl font-bold text-blue-600">
+                                {{ $this->record->billings()->where('status', 'paid')->count() ?? 0 }}
+                            </div>
+                            <div class="text-sm text-gray-600">Bezahlt</div>
+                        </div>
+                    </div>
+
+                    {{-- Kundenabrechnungen RelationManager --}}
+                    <div data-section-id="customer-billings-table" class="relation-section">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-x-2">
+                            <x-heroicon-o-table-cells class="h-5 w-5 text-gray-500" />
+                            Abrechnungstabelle
+                        </h3>
+                        @if($this->record)
+                            {{ $this->getRelationManagerInstance('billings') }}
+                        @else
+                            <p class="text-gray-500">Daten werden geladen...</p>
+                        @endif
+                    </div>
+                </div>
+            </x-filament::section>
+        </div>
+
+        {{-- Section 3: Lieferanten --}}
         <x-filament::section>
             <x-slot name="heading">
                 <div class="flex items-center gap-x-3">
@@ -278,6 +329,30 @@
         /* Override any background colors for the customers section */
         section[data-section-id="customers"],
         section[data-section-id="customers"] > div {
+            background-color: #f9fafb !important;
+            border-radius: 8px !important;
+            padding: 16px !important;
+        }
+
+        /* Kundenabrechnungen Section Gray Background - Direct CSS injection */
+        .fi-in-section[data-section-id="customer-billings"],
+        .customer-billings-section-gray,
+        [data-section-id="customer-billings"] {
+            background-color: #f9fafb !important;
+            border-radius: 8px !important;
+            padding: 16px !important;
+            margin: 8px 0 !important;
+            border: 1px solid #e5e7eb !important;
+        }
+
+        .fi-in-section[data-section-id="customer-billings"] > div,
+        .fi-in-section[data-section-id="customer-billings"] .fi-in-section-content {
+            background-color: #f9fafb !important;
+        }
+        
+        /* Override any background colors for the customer-billings section */
+        section[data-section-id="customer-billings"],
+        section[data-section-id="customer-billings"] > div {
             background-color: #f9fafb !important;
             border-radius: 8px !important;
             padding: 16px !important;
