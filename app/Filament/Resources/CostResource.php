@@ -34,6 +34,11 @@ class CostResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Kosten';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->teams()->exists() ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
