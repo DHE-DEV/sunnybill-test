@@ -701,6 +701,8 @@ class ViewSolarPlant extends ViewRecord
                                     ->color('info')
                                     ->size('xl'),
                             ]),
+                        \Filament\Infolists\Components\Livewire::make(\App\Livewire\ContractsTable::class, ['solarPlant' => $this->record])
+                            ->key('contracts-table'),
                     ])
                     ->compact()
                     ->collapsible()
