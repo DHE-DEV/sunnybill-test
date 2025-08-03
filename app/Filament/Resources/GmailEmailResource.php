@@ -33,6 +33,11 @@ class GmailEmailResource extends Resource
 
     protected static ?int $navigationSort = 10;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->teams()->exists() ?? false;
+    }
+
     public string $currentSort = 'date';
     public string $activeTab = 'inbox';
     public bool $showStatistics = false;
