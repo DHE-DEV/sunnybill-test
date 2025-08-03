@@ -2,11 +2,10 @@
 
 namespace App\Services;
 
-use Endroid\QrCode\QrCode;
-use Endroid\QrCode\Writer\PngWriter;
+use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\RoundBlockSizeMode;
+use Endroid\QrCode\Writer\PngWriter;
 use App\Models\SolarPlantBilling;
 
 class EpcQrCodeService
@@ -46,16 +45,15 @@ class EpcQrCodeService
             reference: $reference
         );
         
-        // QR-Code generieren
-        $qrCode = new QrCode($epcData);
-        $qrCode->setEncoding(new Encoding('UTF-8'));
-        $qrCode->setErrorCorrectionLevel(ErrorCorrectionLevel::Medium);
-        $qrCode->setSize(300);
-        $qrCode->setMargin(10);
-        $qrCode->setRoundBlockSizeMode(RoundBlockSizeMode::Margin);
-        
-        $writer = new PngWriter();
-        $result = $writer->write($qrCode);
+        // QR-Code generieren mit Builder für Version 6.x
+        $result = Builder::create()
+            ->writer(new PngWriter())
+            ->data($epcData)
+            ->encoding(new Encoding('UTF-8'))
+            ->errorCorrectionLevel(ErrorCorrectionLevel::Medium)
+            ->size(300)
+            ->margin(10)
+            ->build();
         
         return base64_encode($result->getString());
     }
