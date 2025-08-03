@@ -546,10 +546,10 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->columnSpanFull(),
                     
-                Infolists\Components\Section::make('Kunden')
+                Infolists\Components\Section::make('Kundenbeteiligungen')
                     ->id('customers')
                     ->icon('heroicon-o-users')
-                    ->description('Übersicht der beteiligten Kunden und deren Informationen')
+                    ->description('Übersicht der beteiligten Kunden zur Solaranlage')
                     ->extraAttributes([
                         'class' => 'customers-section-gray',
                         'style' => 'background-color: #1e6fc0ff !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #af9a3aff !important;'
@@ -586,7 +586,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Kundenabrechnungen')
                     ->id('customer-billings')
                     ->icon('heroicon-o-document-currency-euro')
-                    ->description('Übersicht der Abrechnungen zu der Solaranlage von allen Kunden')
+                    ->description('Übersicht der Abrechnungen aller Kunden zur Solaranlage')
                     ->extraAttributes([
                         'class' => 'customer-billings-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
@@ -616,8 +616,44 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['customer-billings'] ?? false)
+                    ->collapsed($savedState['customer-billings'] ?? true)
                     ->extraAttributes(['data-section-id' => 'customer-billings']),
+
+                Infolists\Components\Section::make('Lieferanten')
+                    ->id('suppliers')
+                    ->icon('heroicon-o-building-office-2')
+                    ->description('Übersicht der Lieferanten und Vertragspartner zur Solaranlage')
+                    ->extraAttributes([
+                        'class' => 'suppliers-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('suppliers_count')
+                                    ->label('Anzahl Lieferanten')
+                                    ->state(fn ($record) => $record->supplierAssignments()->count())
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('contracts_count')
+                                    ->label('Aktive Verträge')
+                                    ->state(fn ($record) => $record->contracts()->count())
+                                    ->badge()
+                                    ->color('success')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('contract_billings_count')
+                                    ->label('Lieferantenrechnungen')
+                                    ->state(fn ($record) => $record->contracts()->withCount('billings')->get()->sum('billings_count'))
+                                    ->badge()
+                                    ->color('info')
+                                    ->size('xl'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['suppliers'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'suppliers']),
            ]);
    }
 
@@ -679,6 +715,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .customer-billings-section-gray,
             .customer-billings-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Lieferanten Section Styling */
+            [data-section-id="suppliers"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            
+            [data-section-id="suppliers"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Alternative selector falls der erste nicht funktioniert */
+            .suppliers-section-gray,
+            .suppliers-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
