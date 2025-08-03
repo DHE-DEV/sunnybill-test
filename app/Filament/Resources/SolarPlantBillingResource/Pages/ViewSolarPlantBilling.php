@@ -7,10 +7,257 @@ use App\Services\SolarPlantBillingPdfService;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Notifications\Notification;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 
 class ViewSolarPlantBilling extends ViewRecord
 {
     protected static string $resource = SolarPlantBillingResource::class;
+
+    public function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Abrechnungsübersicht')
+                    ->icon('heroicon-o-document-currency-euro')
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('invoice_number')
+                                    ->label('Rechnungsnummer')
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color('primary')
+                                    ->copyable(),
+                                Infolists\Components\TextEntry::make('status')
+                                    ->label('Status')
+                                    ->formatStateUsing(fn ($state) => match($state) {
+                                        'draft' => 'Entwurf',
+                                        'finalized' => 'Finalisiert',
+                                        'sent' => 'Versendet',
+                                        'paid' => 'Bezahlt',
+                                        default => $state,
+                                    })
+                                    ->badge()
+                                    ->size('lg')
+                                    ->color(fn ($state) => match($state) {
+                                        'draft' => 'gray',
+                                        'finalized' => 'info',
+                                        'sent' => 'warning',
+                                        'paid' => 'success',
+                                        default => 'gray',
+                                    }),
+                                Infolists\Components\TextEntry::make('formatted_month')
+                                    ->label('Abrechnungszeitraum')
+                                    ->state(fn ($record) => \Carbon\Carbon::createFromDate($record->billing_year, $record->billing_month, 1)->locale('de')->translatedFormat('F Y'))
+                                    ->badge()
+                                    ->size('lg')
+                                    ->color('info'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed(false),
+
+                Infolists\Components\Section::make('Kunde & Solaranlage')
+                    ->icon('heroicon-o-users')
+                    ->schema([
+                        Infolists\Components\Grid::make(2)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('customer.name')
+                                    ->label('Kunde')
+                                    ->state(function ($record) {
+                                        $customer = $record->customer;
+                                        if (!$customer) return 'Kunde nicht gefunden';
+                                        
+                                        return $customer->customer_type === 'business'
+                                            ? ($customer->company_name ?: $customer->name)
+                                            : $customer->name;
+                                    })
+                                    ->weight('medium')
+                                    ->size('lg')
+                                    ->color('primary')
+                                    ->url(fn ($record) => $record->customer ? route('filament.admin.resources.customers.view', $record->customer) : null)
+                                    ->openUrlInNewTab(false),
+                                Infolists\Components\TextEntry::make('solarPlant.name')
+                                    ->label('Solaranlage')
+                                    ->weight('medium')
+                                    ->size('lg')
+                                    ->color('success')
+                                    ->url(fn ($record) => $record->solarPlant ? route('filament.admin.resources.solar-plants.view', $record->solarPlant) : null)
+                                    ->openUrlInNewTab(false),
+                            ]),
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('participation_percentage')
+                                    ->label('Beteiligung')
+                                    ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
+                                    ->badge()
+                                    ->color('info')
+                                    ->size('lg'),
+                                Infolists\Components\TextEntry::make('produced_energy_kwh')
+                                    ->label('Produzierte Energie')
+                                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 3, ',', '.') . ' kWh' : 'Nicht erfasst')
+                                    ->badge()
+                                    ->color('warning')
+                                    ->size('lg'),
+                                Infolists\Components\TextEntry::make('solarPlant.total_capacity_kw')
+                                    ->label('Anlagenleistung')
+                                    ->formatStateUsing(fn ($state) => number_format($state, 3, ',', '.') . ' kWp')
+                                    ->badge()
+                                    ->color('success')
+                                    ->size('lg'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed(true),
+
+                Infolists\Components\Section::make('Finanzübersicht')
+                    ->icon('heroicon-o-calculator')
+                    ->schema([
+                        Infolists\Components\Grid::make(4)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('total_costs')
+                                    ->label('Gesamtkosten')
+                                    ->formatStateUsing(fn ($state) => '€ ' . number_format($state, 2, ',', '.'))
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color('danger'),
+                                Infolists\Components\TextEntry::make('total_credits')
+                                    ->label('Gesamtgutschriften')
+                                    ->formatStateUsing(fn ($state) => '€ ' . number_format($state, 2, ',', '.'))
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color('success'),
+                                Infolists\Components\TextEntry::make('total_vat_amount')
+                                    ->label('MwSt.-Betrag')
+                                    ->formatStateUsing(fn ($state) => '€ ' . number_format($state, 2, ',', '.'))
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color('info'),
+                                Infolists\Components\TextEntry::make('net_amount')
+                                    ->label('Rechnungsbetrag')
+                                    ->formatStateUsing(fn ($state) => '€ ' . number_format($state, 2, ',', '.'))
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color(fn ($state) => $state >= 0 ? 'warning' : 'success'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed(false),
+
+                Infolists\Components\Section::make('Zusätzliche Informationen')
+                    ->icon('heroicon-o-information-circle')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('notes')
+                            ->label('Notizen')
+                            ->placeholder('Keine Notizen vorhanden')
+                            ->prose()
+                            ->markdown(),
+                        Infolists\Components\TextEntry::make('createdBy.name')
+                            ->label('Erstellt von')
+                            ->placeholder('Unbekannt'),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed(true),
+
+                Infolists\Components\Section::make('Zahlungsinformationen')
+                    ->icon('heroicon-o-credit-card')
+                    ->description('Informationen zum Zahlungsstatus und wichtigen Terminen dieser Abrechnung.')
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('finalized_at')
+                                    ->label('Finalisiert am')
+                                    ->dateTime('d.m.Y H:i')
+                                    ->placeholder('Noch nicht finalisiert')
+                                    ->icon('heroicon-o-check-circle')
+                                    ->color('info'),
+                                Infolists\Components\TextEntry::make('sent_at')
+                                    ->label('Versendet am')
+                                    ->dateTime('d.m.Y H:i')
+                                    ->placeholder('Noch nicht versendet')
+                                    ->icon('heroicon-o-paper-airplane')
+                                    ->color('warning'),
+                                Infolists\Components\TextEntry::make('paid_at')
+                                    ->label('Bezahlt am')
+                                    ->dateTime('d.m.Y H:i')
+                                    ->placeholder('Noch nicht bezahlt')
+                                    ->icon('heroicon-o-currency-euro')
+                                    ->color('success'),
+                            ]),
+                        Infolists\Components\Grid::make(2)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('payment_status')
+                                    ->label('Zahlungsstatus')
+                                    ->state(function ($record) {
+                                        if ($record->paid_at) {
+                                            return 'Bezahlt';
+                                        } elseif ($record->sent_at) {
+                                            return 'Ausstehend';
+                                        } elseif ($record->finalized_at) {
+                                            return 'Bereit zum Versand';
+                                        } else {
+                                            return 'In Bearbeitung';
+                                        }
+                                    })
+                                    ->badge()
+                                    ->color(function ($record) {
+                                        if ($record->paid_at) {
+                                            return 'success';
+                                        } elseif ($record->sent_at) {
+                                            return 'warning';
+                                        } elseif ($record->finalized_at) {
+                                            return 'info';
+                                        } else {
+                                            return 'gray';
+                                        }
+                                    })
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('payment_amount')
+                                    ->label('Zahlungsbetrag')
+                                    ->state(fn ($record) => $record->net_amount >= 0 
+                                        ? 'Forderung: € ' . number_format($record->net_amount, 2, ',', '.') 
+                                        : 'Guthaben: € ' . number_format(abs($record->net_amount), 2, ',', '.'))
+                                    ->badge()
+                                    ->color(fn ($record) => $record->net_amount >= 0 ? 'danger' : 'success')
+                                    ->size('xl'),
+                            ]),
+                        Infolists\Components\Grid::make(1)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('payment_timeline')
+                                    ->label('Zahlungsverlauf')
+                                    ->state(function ($record) {
+                                        $timeline = [];
+                                        
+                                        $timeline[] = '📝 Erstellt: ' . $record->created_at->format('d.m.Y H:i');
+                                        
+                                        if ($record->finalized_at) {
+                                            $timeline[] = '✅ Finalisiert: ' . $record->finalized_at->format('d.m.Y H:i');
+                                        }
+                                        
+                                        if ($record->sent_at) {
+                                            $timeline[] = '📧 Versendet: ' . $record->sent_at->format('d.m.Y H:i');
+                                        }
+                                        
+                                        if ($record->paid_at) {
+                                            $timeline[] = '💰 Bezahlt: ' . $record->paid_at->format('d.m.Y H:i');
+                                        }
+                                        
+                                        return implode(' → ', $timeline);
+                                    })
+                                    ->prose()
+                                    ->color('gray'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed(false),
+            ]);
+    }
 
     protected function getHeaderActions(): array
     {
