@@ -29,6 +29,11 @@ class CompanySettingResource extends Resource
     
     protected static bool $isNavigationGroupCollapsed = true;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->teams()->exists() ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
