@@ -654,6 +654,42 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsible()
                     ->collapsed($savedState['suppliers'] ?? false)
                     ->extraAttributes(['data-section-id' => 'suppliers']),
+
+                Infolists\Components\Section::make('Verträge')
+                    ->id('contracts')
+                    ->icon('heroicon-o-document-text')
+                    ->description('Übersicht der Lieferantenverträge zur Solaranlage')
+                    ->extraAttributes([
+                        'class' => 'contracts-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('total_contracts_count')
+                                    ->label('Gesamte Verträge')
+                                    ->state(fn ($record) => $record->supplierContracts()->count())
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('active_contracts_count')
+                                    ->label('Aktive Verträge')
+                                    ->state(fn ($record) => $record->activeSupplierContracts()->count())
+                                    ->badge()
+                                    ->color('success')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('total_contract_percentage')
+                                    ->label('Gesamte Vertragsanteile')
+                                    ->state(fn ($record) => number_format($record->total_supplier_contract_percentage, 2, ',', '.') . '%')
+                                    ->badge()
+                                    ->color('info')
+                                    ->size('xl'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['contracts'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'contracts']),
            ]);
    }
 
@@ -739,6 +775,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .suppliers-section-gray,
             .suppliers-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Verträge Section Styling */
+            [data-section-id="contracts"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            
+            [data-section-id="contracts"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Alternative selector falls der erste nicht funktioniert */
+            .contracts-section-gray,
+            .contracts-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
