@@ -2,130 +2,169 @@
 
 namespace App\Services;
 
-use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\Writer\PngWriter;
 use App\Models\SolarPlantBilling;
 
 class EpcQrCodeService
 {
     /**
-     * Generiert einen EPC QR-Code für Banking-Apps
-     * 
-     * @param SolarPlantBilling $billing
-     * @return string Base64-encoded PNG
+     * Prüft ob QR-Code generiert werden kann
+     */
+    public function canGenerateQrCode(SolarPlantBilling $billing): bool
+    {
+        $customer = $billing->customer;
+        
+        return $customer && 
+               $customer->iban && 
+               $customer->account_holder && 
+               $billing->net_amount != 0;
+    }
+    
+    /**
+     * Gibt Fehlermeldung zurück warum QR-Code nicht generiert werden kann
+     */
+    public function getQrCodeErrorMessage(SolarPlantBilling $billing): string
+    {
+        $customer = $billing->customer;
+        
+        if (!$customer) {
+            return 'Kein Kunde zugeordnet.';
+        }
+        
+        if (!$customer->iban) {
+            return 'IBAN nicht hinterlegt.';
+        }
+        
+        if (!$customer->account_holder) {
+            return 'Kontoinhaber nicht hinterlegt.';
+        }
+        
+        if ($billing->net_amount == 0) {
+            return 'QR-Code kann nicht für Betrag 0 generiert werden.';
+        }
+        
+        return 'QR-Code kann nicht generiert werden.';
+    }
+
+    /**
+     * Generiert einen EPC-QR-Code für eine Solaranlagen-Abrechnung
      */
     public function generateEpcQrCode(SolarPlantBilling $billing): string
+    {
+        return $this->generateDynamicEpcQrCode($billing);
+    }
+
+    /**
+     * Generiert einen EPC-QR-Code mit dynamischen Daten (für Live-Updates in Formularen)
+     */
+    public function generateDynamicEpcQrCode(SolarPlantBilling $billing, ?float $amount = null, ?string $reference = null): string
+    {
+        if (!$this->canGenerateQrCode($billing)) {
+            throw new \Exception($this->getQrCodeErrorMessage($billing));
+        }
+
+        $customer = $billing->customer;
+        
+        // Verwende übergebenen Betrag oder Standard
+        $finalAmount = $amount !== null ? abs($amount) : abs($billing->net_amount);
+        
+        // Verwende übergebene Referenz oder generiere Standard
+        if ($reference !== null) {
+            $finalReference = $reference;
+        } else {
+            $solarPlant = $billing->solarPlant;
+            $referenceArray = [];
+            if ($billing->invoice_number) {
+                $referenceArray[] = $billing->invoice_number;
+            }
+            if ($customer && $customer->customer_number) {
+                $referenceArray[] = "Kunde: {$customer->customer_number}";
+            }
+            if ($solarPlant && $solarPlant->name) {
+                $referenceArray[] = $solarPlant->name;
+            }
+            
+            // Zeitraum hinzufügen
+            $month = \Carbon\Carbon::createFromDate($billing->billing_year, $billing->billing_month, 1);
+            $referenceArray[] = "Zeitraum: " . $month->locale('de')->translatedFormat('m/Y');
+            
+            $finalReference = implode(' | ', $referenceArray);
+        }
+        
+        return $this->generateEpcQrCodeData(
+            $customer->account_holder,
+            $customer->iban,
+            $customer->bic,
+            $finalAmount,
+            $finalReference
+        );
+    }
+
+    /**
+     * Generiert den Standard-Verwendungszweck für eine Abrechnung
+     */
+    public function getDefaultReference(SolarPlantBilling $billing): string
     {
         $customer = $billing->customer;
         $solarPlant = $billing->solarPlant;
         
-        // Validierung der notwendigen Daten
-        if (!$customer->iban || !$customer->account_holder) {
-            throw new \Exception('IBAN und Kontoinhaber müssen hinterlegt sein, um einen QR-Code zu generieren.');
-        }
-        
-        if ($billing->net_amount == 0) {
-            throw new \Exception('QR-Code kann nicht für Betrag 0 generiert werden.');
-        }
-        
-        // Betrag immer als positiver Wert verwenden (auch bei Gutschriften)
-        $amount = abs($billing->net_amount);
-        
-        // Verwendungszweck zusammenstellen
-        $reference = $this->buildPaymentReference($billing, $solarPlant, $customer);
-        
-        // EPC QR-Code Datenformat erstellen
-        $epcData = $this->buildEpcData(
-            bic: $customer->bic ?: '',
-            accountHolder: $customer->account_holder,
-            iban: $customer->iban,
-            amount: $amount,
-            reference: $reference
-        );
-        
-        // QR-Code generieren mit Builder für Version 6.x
-        $result = Builder::create()
-            ->writer(new PngWriter())
-            ->data($epcData)
-            ->encoding(new Encoding('UTF-8'))
-            ->errorCorrectionLevel(ErrorCorrectionLevel::Medium)
-            ->size(300)
-            ->margin(10)
-            ->build();
-        
-        return base64_encode($result->getString());
-    }
-    
-    /**
-     * Erstellt den Verwendungszweck für die Zahlung
-     */
-    private function buildPaymentReference(SolarPlantBilling $billing, $solarPlant, $customer): string
-    {
-        $parts = [];
-        
-        // Kundennummer (statt UUID)
-        if ($customer && $customer->customer_number) {
-            $parts[] = 'Kunde: ' . $customer->customer_number;
-        }
-        
-        // Solaranlage Name
-        if ($solarPlant && $solarPlant->name) {
-            $parts[] = $solarPlant->name;
-        }
-        
-        // Rechnungsnummer
+        $reference = [];
         if ($billing->invoice_number) {
-            $parts[] = 'Rechnung: ' . $billing->invoice_number;
+            $reference[] = $billing->invoice_number;
+        }
+        if ($customer && $customer->customer_number) {
+            $reference[] = "Kunde: {$customer->customer_number}";
+        }
+        if ($solarPlant && $solarPlant->name) {
+            $reference[] = $solarPlant->name;
         }
         
-        // Zeitraum
+        // Zeitraum hinzufügen
         $month = \Carbon\Carbon::createFromDate($billing->billing_year, $billing->billing_month, 1);
-        $parts[] = 'Zeitraum: ' . $month->locale('de')->translatedFormat('m/Y');
+        $reference[] = "Zeitraum: " . $month->locale('de')->translatedFormat('m/Y');
         
-        $reference = implode(' | ', $parts);
-        
-        // EPC Standard erlaubt max. 140 Zeichen für Verwendungszweck
-        if (strlen($reference) > 140) {
-            $reference = substr($reference, 0, 137) . '...';
-        }
-        
-        return $reference;
+        return implode(' | ', $reference);
     }
-    
+
     /**
-     * Erstellt die EPC QR-Code Datenstruktur
-     * 
-     * EPC QR-Code Format:
-     * BCD = Service Tag
-     * 002 = Version
-     * 1 = Character Set (UTF-8)
-     * SCT = Identification
-     * BIC = Bank Identifier Code (optional)
-     * Name = Account Holder Name
-     * IBAN = International Bank Account Number
-     * EUR[Amount] = Currency and Amount
-     * [Reference] = Payment Reference
+     * Generiert EPC QR-Code Daten
      */
-    private function buildEpcData(string $bic, string $accountHolder, string $iban, float $amount, string $reference): string
+    private function generateEpcQrCodeData(string $accountHolder, string $iban, ?string $bic, float $amount, string $reference): string
     {
+        // EPC QR-Code Datenstruktur
         $lines = [
             'BCD',                              // Service Tag
             '002',                              // Version
             '1',                                // Character Set (UTF-8)
             'SCT',                              // Identification (SEPA Credit Transfer)
-            $bic,                               // BIC (kann leer sein)
+            $bic ?: '',                         // BIC (kann leer sein)
             $accountHolder,                     // Account Holder Name
             $this->formatIban($iban),           // IBAN (ohne Leerzeichen)
             'EUR' . number_format($amount, 2, '.', ''), // Currency + Amount
             '',                                 // Purpose (leer)
-            '',                                 // Structured Reference (leer, da wir unstructured nutzen)
+            '',                                 // Structured Reference (leer)
             $reference,                         // Unstructured Reference/Verwendungszweck
             ''                                  // Beneficiary to originator information (leer)
         ];
         
-        return implode("\n", $lines);
+        $epcData = implode("\n", $lines);
+        
+        // QR-Code generieren
+        $qrCode = new QrCode(
+            $epcData,
+            new Encoding('UTF-8'),
+            ErrorCorrectionLevel::Medium,
+            300, // size
+            10   // margin
+        );
+        
+        $writer = new PngWriter();
+        $result = $writer->write($qrCode);
+        
+        return base64_encode($result->getString());
     }
     
     /**
@@ -134,44 +173,5 @@ class EpcQrCodeService
     private function formatIban(string $iban): string
     {
         return strtoupper(str_replace(' ', '', $iban));
-    }
-    
-    /**
-     * Validiert ob alle notwendigen Daten für QR-Code vorhanden sind
-     */
-    public function canGenerateQrCode(SolarPlantBilling $billing): bool
-    {
-        $customer = $billing->customer;
-        
-        return $customer->iban && 
-               $customer->account_holder && 
-               $billing->net_amount != 0; // Auch negative Beträge (Gutschriften) erlauben
-    }
-    
-    /**
-     * Gibt Fehlermeldung zurück falls QR-Code nicht generiert werden kann
-     */
-    public function getQrCodeErrorMessage(SolarPlantBilling $billing): ?string
-    {
-        $customer = $billing->customer;
-        $errors = [];
-        
-        if (!$customer->iban) {
-            $errors[] = 'IBAN fehlt';
-        }
-        
-        if (!$customer->account_holder) {
-            $errors[] = 'Kontoinhaber fehlt';
-        }
-        
-        if ($billing->net_amount == 0) {
-            $errors[] = 'Betrag ist 0';
-        }
-        
-        if (empty($errors)) {
-            return null;
-        }
-        
-        return 'QR-Code kann nicht generiert werden: ' . implode(', ', $errors);
     }
 }

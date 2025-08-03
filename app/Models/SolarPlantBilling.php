@@ -102,6 +102,14 @@ class SolarPlantBilling extends Model
     }
 
     /**
+     * Beziehung zu Zahlungen
+     */
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SolarPlantBillingPayment::class);
+    }
+
+    /**
      * Status-Optionen
      */
     public static function getStatusOptions(): array

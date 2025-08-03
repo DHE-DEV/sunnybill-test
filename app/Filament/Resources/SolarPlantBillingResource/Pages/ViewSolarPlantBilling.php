@@ -5,11 +5,13 @@ namespace App\Filament\Resources\SolarPlantBillingResource\Pages;
 use App\Filament\Resources\SolarPlantBillingResource;
 use App\Services\SolarPlantBillingPdfService;
 use App\Services\EpcQrCodeService;
+use App\Models\SolarPlantBillingPayment;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Notifications\Notification;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Forms;
 
 class ViewSolarPlantBilling extends ViewRecord
 {
@@ -172,10 +174,236 @@ class ViewSolarPlantBilling extends ViewRecord
                     ->collapsible()
                     ->collapsed(true),
 
+                Infolists\Components\Section::make('Zusätzliche Informationen')
+                    ->icon('heroicon-o-information-circle')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('notes')
+                            ->label('Notizen')
+                            ->placeholder('Keine Notizen vorhanden')
+                            ->prose()
+                            ->markdown(),
+                        Infolists\Components\TextEntry::make('createdBy.name')
+                            ->label('Erstellt von')
+                            ->placeholder('Unbekannt'),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed(true),
+
+                Infolists\Components\Section::make('Abrechnungsdetails')
+                    ->icon('heroicon-o-document-text')
+                    ->description('Detaillierte Aufschlüsselung der Abrechnungsperiode entsprechend der PDF-Abrechnung')
+                    ->schema([
+                        // Abrechnungsperiode Info
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('billing_period')
+                                    ->label('Abrechnungsperiode')
+                                    ->state(function ($record) {
+                                        $monthNames = [
+                                            1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
+                                            5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August', 
+                                            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
+                                        ];
+                                        return $monthNames[$record->billing_month] . ' ' . $record->billing_year;
+                                    })
+                                    ->badge()
+                                    ->size('xl')
+                                    ->color('primary'),
+                                Infolists\Components\TextEntry::make('current_participation_percentage')
+                                    ->label('Aktueller Beteiligungsanteil')
+                                    ->state(function ($record) {
+                                        $solarPlant = $record->solarPlant;
+                                        $customer = $record->customer;
+                                        $participation = $solarPlant->participations()
+                                            ->where('customer_id', $customer->id)
+                                            ->first();
+                                        $currentPercentage = $participation ? $participation->percentage : $record->participation_percentage;
+                                        $currentParticipationKwp = $participation ? $participation->participation_kwp : null;
+                                        
+                                        return $currentParticipationKwp 
+                                            ? number_format($currentParticipationKwp, 2, ',', '.') . ' kWp (' . number_format($currentPercentage, 2, ',', '.') . '%)'
+                                            : number_format($currentPercentage, 2, ',', '.') . '%';
+                                    })
+                                    ->badge()
+                                    ->size('xl')
+                                    ->color('success'),
+                                Infolists\Components\TextEntry::make('energy_production')
+                                    ->label('Produzierte Energie')
+                                    ->state(function ($record) {
+                                        if (!$record->produced_energy_kwh) {
+                                            return 'Nicht erfasst';
+                                        }
+                                        
+                                        $solarPlant = $record->solarPlant;
+                                        $customer = $record->customer;
+                                        $participation = $solarPlant->participations()
+                                            ->where('customer_id', $customer->id)
+                                            ->first();
+                                        $currentPercentage = $participation ? $participation->percentage : $record->participation_percentage;
+                                        
+                                        $totalEnergy = number_format($record->produced_energy_kwh, 3, ',', '.') . ' kWh';
+                                        $customerShare = number_format(($record->produced_energy_kwh * $currentPercentage / 100), 3, ',', '.') . ' kWh';
+                                        
+                                        return "Total: {$totalEnergy}\nIhr Anteil: {$customerShare}";
+                                    })
+                                    ->badge()
+                                    ->size('xl')
+                                    ->color('warning'),
+                            ]),
+
+                        // Einnahmen/Gutschriften Details
+                        Infolists\Components\Section::make('Einnahmen/Gutschriften Aufschlüsselung')
+                            ->icon('heroicon-o-plus-circle')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('credit_breakdown_details')
+                                    ->label('')
+                                    ->state(function ($record) {
+                                        if (empty($record->credit_breakdown)) {
+                                            return 'Keine Einnahmen/Gutschriften in dieser Periode';
+                                        }
+
+                                        $details = [];
+                                        foreach ($record->credit_breakdown as $credit) {
+                                            $supplierName = $credit['supplier_name'] ?? 'Unbekannt';
+                                            $contractTitle = $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt');
+                                            $percentage = number_format($credit['customer_percentage'] ?? 0, 2, ',', '.');
+                                            $netAmount = number_format($credit['customer_share_net'] ?? 0, 2, ',', '.');
+                                            $vatRate = number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.');
+                                            $totalAmount = number_format($credit['customer_share'] ?? 0, 2, ',', '.');
+
+                                            $details[] = "**{$supplierName}**";
+                                            $details[] = "Vertrag: {$contractTitle}";
+                                            $details[] = "Anteil: {$percentage}% | Netto: €{$netAmount} | MwSt: {$vatRate}% | Gesamt: €{$totalAmount}";
+                                            
+                                            if (isset($credit['articles']) && !empty($credit['articles'])) {
+                                                $details[] = "*Artikel:*";
+                                                foreach ($credit['articles'] as $article) {
+                                                    $articleName = $article['article_name'] ?? 'Unbekannt';
+                                                    $quantity = number_format($article['quantity'] ?? 0, 3, ',', '.');
+                                                    $unit = $article['unit'] ?? 'Stk.';
+                                                    $unitPrice = number_format($article['unit_price'] ?? 0, 6, ',', '.');
+                                                    $totalPrice = number_format($article['total_price_net'] ?? 0, 6, ',', '.');
+                                                    $details[] = "• {$articleName}: {$quantity} {$unit} × €{$unitPrice} = €{$totalPrice}";
+                                                }
+                                            }
+                                            $details[] = "";
+                                        }
+
+                                        return implode("\n", $details);
+                                    })
+                                    ->prose()
+                                    ->markdown()
+                                    ->color('success')
+                                    ->visible(fn ($record) => !empty($record->credit_breakdown)),
+                            ])
+                            ->compact()
+                            ->collapsible()
+                            ->collapsed(true)
+                            ->visible(fn ($record) => !empty($record->credit_breakdown)),
+
+                        // Kosten Details
+                        Infolists\Components\Section::make('Betriebskosten Aufschlüsselung')
+                            ->icon('heroicon-o-minus-circle')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('cost_breakdown_details')
+                                    ->label('')
+                                    ->state(function ($record) {
+                                        if (empty($record->cost_breakdown)) {
+                                            return 'Keine Betriebskosten in dieser Periode';
+                                        }
+
+                                        $details = [];
+                                        foreach ($record->cost_breakdown as $cost) {
+                                            $supplierName = $cost['supplier_name'] ?? 'Unbekannt';
+                                            $contractTitle = $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt');
+                                            $percentage = number_format($cost['customer_percentage'] ?? 0, 2, ',', '.');
+                                            $netAmount = number_format($cost['customer_share_net'] ?? 0, 2, ',', '.');
+                                            $vatRate = number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.');
+                                            $totalAmount = number_format($cost['customer_share'] ?? 0, 2, ',', '.');
+
+                                            $details[] = "**{$supplierName}**";
+                                            $details[] = "Vertrag: {$contractTitle}";
+                                            $details[] = "Anteil: {$percentage}% | Netto: €{$netAmount} | MwSt: {$vatRate}% | Gesamt: €{$totalAmount}";
+                                            
+                                            if (isset($cost['articles']) && !empty($cost['articles'])) {
+                                                $details[] = "*Artikel:*";
+                                                foreach ($cost['articles'] as $article) {
+                                                    $articleName = $article['article_name'] ?? 'Unbekannt';
+                                                    $quantity = number_format($article['quantity'] ?? 0, 3, ',', '.');
+                                                    $unit = $article['unit'] ?? 'Stk.';
+                                                    $unitPrice = number_format($article['unit_price'] ?? 0, 6, ',', '.');
+                                                    $totalPrice = number_format($article['total_price_net'] ?? 0, 6, ',', '.');
+                                                    $details[] = "• {$articleName}: {$quantity} {$unit} × €{$unitPrice} = €{$totalPrice}";
+                                                }
+                                            }
+                                            $details[] = "";
+                                        }
+
+                                        return implode("\n", $details);
+                                    })
+                                    ->prose()
+                                    ->markdown()
+                                    ->color('danger')
+                                    ->visible(fn ($record) => !empty($record->cost_breakdown)),
+                            ])
+                            ->compact()
+                            ->collapsible()
+                            ->collapsed(true)
+                            ->visible(fn ($record) => !empty($record->cost_breakdown)),
+
+                        // MwSt. Aufschlüsselung
+                        Infolists\Components\Section::make('Steuerliche Aufschlüsselung')
+                            ->icon('heroicon-o-calculator')
+                            ->schema([
+                                Infolists\Components\Grid::make(3)
+                                    ->schema([
+                                        Infolists\Components\TextEntry::make('total_costs_net')
+                                            ->label('Gesamtkosten (Netto)')
+                                            ->formatStateUsing(fn ($state) => '€ ' . number_format($state ?? 0, 2, ',', '.'))
+                                            ->badge()
+                                            ->color('danger'),
+                                        Infolists\Components\TextEntry::make('total_credits_net')
+                                            ->label('Gesamtgutschriften (Netto)')
+                                            ->formatStateUsing(fn ($state) => '€ ' . number_format($state ?? 0, 2, ',', '.'))
+                                            ->badge()
+                                            ->color('success'),
+                                        Infolists\Components\TextEntry::make('net_amount_before_vat')
+                                            ->label('Nettobetrag')
+                                            ->state(function ($record) {
+                                                $netBeforeVat = ($record->total_credits_net ?? 0) - ($record->total_costs_net ?? 0);
+                                                return '€ ' . number_format($netBeforeVat, 2, ',', '.');
+                                            })
+                                            ->badge()
+                                            ->color('info'),
+                                    ]),
+                                Infolists\Components\TextEntry::make('vat_calculation')
+                                    ->label('MwSt. Berechnung')
+                                    ->state(function ($record) {
+                                        $netBeforeVat = ($record->total_credits_net ?? 0) - ($record->total_costs_net ?? 0);
+                                        $vatAmount = $record->total_vat_amount ?? 0;
+                                        $grossAmount = $record->net_amount ?? 0;
+                                        
+                                        return "Nettobetrag: € " . number_format(abs($netBeforeVat), 2, ',', '.') . "\n" .
+                                               "zzgl. 19% MwSt.: € " . number_format(abs($vatAmount), 2, ',', '.') . "\n" .
+                                               "**Bruttobetrag: € " . number_format(abs($grossAmount), 2, ',', '.') . "**";
+                                    })
+                                    ->prose()
+                                    ->markdown()
+                                    ->color('primary'),
+                            ])
+                            ->compact()
+                            ->collapsible()
+                            ->collapsed(true),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed(false),
+
                 Infolists\Components\Section::make('Finanzübersicht')
                     ->icon('heroicon-o-calculator')
                     ->schema([
-                        Infolists\Components\Grid::make(4)
+                        Infolists\Components\Grid::make(3)
                             ->schema([
                                 Infolists\Components\TextEntry::make('total_costs')
                                     ->label('Gesamtkosten')
@@ -195,33 +423,294 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->size('xl')
                                     ->weight('bold')
                                     ->color('info'),
+                            ]),
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
                                 Infolists\Components\TextEntry::make('net_amount')
                                     ->label('Rechnungsbetrag')
                                     ->formatStateUsing(fn ($state) => '€ ' . number_format($state, 2, ',', '.'))
                                     ->size('xl')
                                     ->weight('bold')
                                     ->color(fn ($state) => $state >= 0 ? 'warning' : 'success'),
+                                Infolists\Components\TextEntry::make('total_paid')
+                                    ->label('Gesamt gezahlt')
+                                    ->state(function ($record) {
+                                        $totalPaid = $record->payments()->sum('amount');
+                                        return '€ ' . number_format($totalPaid, 2, ',', '.');
+                                    })
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color('primary'),
+                                Infolists\Components\TextEntry::make('remaining_amount')
+                                    ->label('Restbetrag')
+                                    ->state(function ($record) {
+                                        $totalPaid = $record->payments()->sum('amount');
+                                        
+                                        if ($record->net_amount < 0) {
+                                            // Bei Gutschriften: negativer Betrag + gezahlter Betrag = verbleibendes Guthaben
+                                            $remainingAmount = $record->net_amount + $totalPaid;
+                                            $label = $remainingAmount < 0 ? 'Noch auszuzahlen' : 'Überzahlt';
+                                        } else {
+                                            // Bei normalen Rechnungen: Rechnungsbetrag - gezahlter Betrag = offener Betrag
+                                            $remainingAmount = $record->net_amount - $totalPaid;
+                                            $label = $remainingAmount > 0 ? 'Noch offen' : 'Überzahlt';
+                                        }
+                                        
+                                        return '€ ' . number_format(abs($remainingAmount), 2, ',', '.') . ' (' . $label . ')';
+                                    })
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color(function ($record) {
+                                        $totalPaid = $record->payments()->sum('amount');
+                                        $remainingAmount = $record->net_amount < 0 
+                                            ? $record->net_amount + $totalPaid 
+                                            : $record->net_amount - $totalPaid;
+                                        
+                                        if ($remainingAmount == 0) {
+                                            return 'success'; // Vollständig bezahlt
+                                        } elseif (($record->net_amount >= 0 && $remainingAmount > 0) || ($record->net_amount < 0 && $remainingAmount < 0)) {
+                                            return 'warning'; // Noch offen/auszuzahlen
+                                        } else {
+                                            return 'info'; // Überzahlt
+                                        }
+                                    }),
                             ]),
                     ])
                     ->compact()
                     ->collapsible()
                     ->collapsed(false),
 
-                Infolists\Components\Section::make('Zusätzliche Informationen')
-                    ->icon('heroicon-o-information-circle')
+                Infolists\Components\Section::make('Erfasste Zahlungen')
+                    ->icon('heroicon-o-banknotes')
+                    ->description('Übersicht aller erfassten Zahlungen zu dieser Abrechnung.')
                     ->schema([
-                        Infolists\Components\TextEntry::make('notes')
-                            ->label('Notizen')
-                            ->placeholder('Keine Notizen vorhanden')
-                            ->prose()
-                            ->markdown(),
-                        Infolists\Components\TextEntry::make('createdBy.name')
-                            ->label('Erstellt von')
-                            ->placeholder('Unbekannt'),
+                        Infolists\Components\TextEntry::make('payments_table')
+                            ->label('Zahlungsdetails')
+                            ->state(function ($record) {
+                                $payments = $record->payments()->orderBy('payment_date', 'desc')->get();
+                                
+                                if ($payments->isEmpty()) {
+                                    return 'Keine Zahlungen erfasst.';
+                                }
+                                
+                                $table = '<div class="overflow-x-auto">';
+                                $table .= '<table class="min-w-full border border-gray-300">';
+                                $table .= '<thead class="bg-gray-50">';
+                                $table .= '<tr>';
+                                $table .= '<th class="px-4 py-2 border-b border-gray-300 text-left font-medium text-gray-900">Datum</th>';
+                                $table .= '<th class="px-4 py-2 border-b border-gray-300 text-left font-medium text-gray-900">Betrag</th>';
+                                $table .= '<th class="px-4 py-2 border-b border-gray-300 text-left font-medium text-gray-900">Zahlungsart</th>';
+                                $table .= '<th class="px-4 py-2 border-b border-gray-300 text-left font-medium text-gray-900">Referenz</th>';
+                                $table .= '<th class="px-4 py-2 border-b border-gray-300 text-left font-medium text-gray-900">Erfasst von</th>';
+                                $table .= '</tr>';
+                                $table .= '</thead>';
+                                $table .= '<tbody>';
+                                
+                                foreach ($payments as $payment) {
+                                    $table .= '<tr class="hover:bg-gray-50">';
+                                    $table .= '<td class="px-4 py-2 border-b border-gray-200">' . $payment->payment_date->format('d.m.Y') . '</td>';
+                                    $table .= '<td class="px-4 py-2 border-b border-gray-200 font-medium">' . number_format($payment->amount, 2, ',', '.') . '</td>';
+                                    $table .= '<td class="px-4 py-2 border-b border-gray-200">' . $payment->formatted_payment_type . '</td>';
+                                    
+                                    // Referenz-Spalte mit Notizen kombiniert
+                                    $referenceContent = '';
+                                    if ($payment->reference) {
+                                        $referenceContent .= $payment->reference;
+                                    } else {
+                                        $referenceContent .= '<em class="text-gray-500">Keine Referenz</em>';
+                                    }
+                                    
+                                    if ($payment->notes) {
+                                        $referenceContent .= '<br><small class="text-gray-600"><strong>Notiz:</strong> ' . $payment->notes . '</small>';
+                                    }
+                                    
+                                    $table .= '<td class="px-4 py-2 border-b border-gray-200">' . $referenceContent . '</td>';
+                                    $table .= '<td class="px-4 py-2 border-b border-gray-200">' . ($payment->recordedByUser->name ?? '<em class="text-gray-500">Unbekannt</em>') . '</td>';
+                                    $table .= '</tr>';
+                                }
+                                
+                                $table .= '</tbody>';
+                                $table .= '</table>';
+                                $table .= '</div>';
+                                
+                                return $table;
+                            })
+                            ->html()
+                            ->visible(function ($record) {
+                                return $record->payments()->exists();
+                            }),
+                            
+                        Infolists\Components\Actions::make([
+                            Infolists\Components\Actions\Action::make('recordPayment')
+                                ->label('Zahlung erfassen')
+                                ->icon('heroicon-o-plus')
+                                ->color('success')
+                                ->modalHeading('Zahlung erfassen')
+                                ->modalDescription('Erfassen Sie eine neue Zahlung zu dieser Abrechnung.')
+                                ->modalWidth('4xl')
+                                ->form([
+                                    Forms\Components\Grid::make(2)
+                                        ->schema([
+                                            Forms\Components\Select::make('payment_type')
+                                                ->label('Zahlungsart')
+                                                ->options([
+                                                    'bank_transfer' => 'Überweisung',
+                                                    'instant_transfer' => 'Sofortüberweisung',
+                                                    'direct_debit' => 'Lastschrift/Abbuchung',
+                                                    'cash' => 'Barzahlung',
+                                                    'check' => 'Scheck',
+                                                    'credit_card' => 'Kreditkarte',
+                                                    'paypal' => 'PayPal',
+                                                    'other' => 'Sonstiges',
+                                                ])
+                                                ->required()
+                                                ->native(false)
+                                                ->default('bank_transfer')
+                                                ->live(),
+                                            Forms\Components\TextInput::make('amount')
+                                                ->label('Zahlungsbetrag')
+                                                ->numeric()
+                                                ->step(0.01)
+                                                ->prefix('€')
+                                                ->required()
+                                                ->default(fn ($livewire) => abs($livewire->record->net_amount))
+                                                ->minValue(0.01)
+                                                ->live(debounce: 500), // Live-Updates mit Debounce
+                                        ]),
+                                    Forms\Components\DatePicker::make('payment_date')
+                                        ->label('Zahlungsdatum')
+                                        ->required()
+                                        ->default(now())
+                                        ->maxDate(now()),
+                                    Forms\Components\Textarea::make('reference')
+                                        ->label('Referenz/Verwendungszweck')
+                                        ->placeholder('z.B. Überweisungsreferenz')
+                                        ->default(function ($livewire) {
+                                            $qrService = new EpcQrCodeService();
+                                            return $qrService->getDefaultReference($livewire->record);
+                                        })
+                                        ->rows(3)
+                                        ->live(debounce: 500), // Live-Updates mit Debounce
+                                    Forms\Components\Textarea::make('notes')
+                                        ->label('Notizen')
+                                        ->placeholder('Zusätzliche Informationen zur Zahlung...')
+                                        ->rows(3),
+                                        
+                                    // QR-Code Section - nur bei Überweisung/Sofortüberweisung
+                                    Forms\Components\Section::make('QR-Code für Banking-App')
+                                        ->icon('heroicon-o-qr-code')
+                                        ->description('Scannen Sie den QR-Code mit Ihrer Banking-App für eine schnelle Überweisung.')
+                                        ->schema([
+                                            Forms\Components\Grid::make(2)
+                                                ->schema([
+                                                    Forms\Components\Placeholder::make('qr_code_image')
+                                                        ->label('')
+                                                        ->content(function ($livewire, Forms\Get $get) {
+                                                            $qrService = new EpcQrCodeService();
+                                                            $record = $livewire->record;
+                                                            
+                                                            if (!$qrService->canGenerateQrCode($record)) {
+                                                                return new \Illuminate\Support\HtmlString('<div class="text-gray-500 text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">' . $qrService->getQrCodeErrorMessage($record) . '</div>');
+                                                            }
+                                                            
+                                                            try {
+                                                                // Dynamische Werte aus dem Formular verwenden
+                                                                $amount = $get('amount') ?: abs($record->net_amount);
+                                                                $reference = $get('reference') ?: $qrService->getDefaultReference($record);
+                                                                
+                                                                $base64QrCode = $qrService->generateDynamicEpcQrCode($record, (float)$amount, $reference);
+                                                                return new \Illuminate\Support\HtmlString('<div class="text-center"><img src="data:image/png;base64,' . $base64QrCode . '" alt="QR-Code" style="width: 200px; height: 200px; border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; margin: 0 auto;" /></div>');
+                                                            } catch (\Exception $e) {
+                                                                \Log::error('QR-Code generation failed: ' . $e->getMessage());
+                                                                return new \Illuminate\Support\HtmlString('<div class="text-red-500 text-center p-4 border-2 border-dashed border-red-300 rounded-lg">QR-Code konnte nicht generiert werden: ' . $e->getMessage() . '</div>');
+                                                            }
+                                                        }),
+                                                        
+                                                    Forms\Components\Placeholder::make('qr_code_info')
+                                                        ->label('')
+                                                        ->content(function ($livewire, Forms\Get $get) {
+                                                            $record = $livewire->record;
+                                                            $customer = $record->customer;
+                                                            $qrService = new EpcQrCodeService();
+                                                            
+                                                            // Dynamische Werte aus dem Formular verwenden
+                                                            $amount = $get('amount') ?: abs($record->net_amount);
+                                                            $reference = $get('reference') ?: $qrService->getDefaultReference($record);
+                                                            
+                                                            $info = [];
+                                                            $info[] = '<strong>Banking-App QR-Code</strong>';
+                                                            $info[] = 'Empfänger: ' . ($customer->account_holder ?? 'Nicht hinterlegt');
+                                                            if ($customer->iban) {
+                                                                $info[] = 'IBAN: ' . chunk_split($customer->iban, 4, ' ');
+                                                            }
+                                                            if ($customer->bic) {
+                                                                $info[] = 'BIC: ' . $customer->bic;
+                                                            }
+                                                            $info[] = 'Betrag: € ' . number_format($amount, 2, ',', '.');
+                                                            $info[] = 'Verwendungszweck: ' . $reference;
+                                                            $info[] = '';
+                                                            if ($record->net_amount < 0) {
+                                                                $info[] = '<em>Dies ist eine Gutschrift. Der QR-Code zeigt den Betrag als positive Überweisung an.</em>';
+                                                            } else {
+                                                                $info[] = '<em>Scannen Sie den QR-Code mit Ihrer Banking-App für eine schnelle Überweisung.</em>';
+                                                            }
+                                                            
+                                                            return new \Illuminate\Support\HtmlString(implode('<br>', $info));
+                                                        }),
+                                                ]),
+                                        ])
+                                        ->visible(function (Forms\Get $get, $livewire) {
+                                            $paymentType = $get('payment_type');
+                                            $qrService = new EpcQrCodeService();
+                                            return in_array($paymentType, ['bank_transfer', 'instant_transfer']) && 
+                                                   $qrService->canGenerateQrCode($livewire->record);
+                                        })
+                                        ->compact(),
+                                ])
+                                ->action(function (array $data, $livewire) {
+                                    try {
+                                        SolarPlantBillingPayment::create([
+                                            'solar_plant_billing_id' => $livewire->record->id,
+                                            'recorded_by_user_id' => auth()->id(),
+                                            'payment_type' => $data['payment_type'],
+                                            'amount' => $data['amount'],
+                                            'payment_date' => $data['payment_date'],
+                                            'reference' => $data['reference'],
+                                            'notes' => $data['notes'],
+                                        ]);
+
+                                        // Prüfe ob die Abrechnung vollständig bezahlt ist
+                                        $totalPaid = $livewire->record->payments()->sum('amount');
+                                        if ($totalPaid >= $livewire->record->net_amount && $livewire->record->net_amount > 0) {
+                                            $livewire->record->update([
+                                                'status' => 'paid',
+                                                'paid_at' => now(),
+                                            ]);
+                                        }
+
+                                        Notification::make()
+                                            ->title('Zahlung erfasst')
+                                            ->body('Die Zahlung wurde erfolgreich erfasst.')
+                                            ->success()
+                                            ->send();
+
+                                        // Seite neu laden um die aktualisierten Daten anzuzeigen
+                                        return redirect()->to($livewire->getUrl());
+                                    } catch (\Exception $e) {
+                                        Notification::make()
+                                            ->title('Fehler beim Erfassen der Zahlung')
+                                            ->body('Die Zahlung konnte nicht erfasst werden: ' . $e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                    }
+                                }),
+                        ])
+                        ->alignment('center'),
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed(true),
+                    ->collapsed(false)
+                    ->visible(fn ($record) => $record->net_amount != 0), // Nur anzeigen wenn Betrag != 0
 
                 Infolists\Components\Section::make('Zahlungsinformationen')
                     ->icon('heroicon-o-credit-card')
@@ -313,6 +802,7 @@ class ViewSolarPlantBilling extends ViewRecord
                             ]),
                         
                         // QR-Code für Banking-Apps - Debug Version
+                        /*
                         Infolists\Components\Grid::make(1)
                             ->schema([
                                 Infolists\Components\TextEntry::make('qr_code_debug')
@@ -349,7 +839,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->markdown()
                                     ->color('info'),
                             ]),
-                        
+                        */
                         // QR-Code für Banking-Apps
                         Infolists\Components\Grid::make(2)
                             ->schema([
@@ -390,7 +880,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                         $solarPlant = $record->solarPlant;
                                         
                                         $info = [];
-                                        $info[] = "📱 **Banking-App QR-Code**";
+                                        $info[] = "**Banking-App QR-Code**";
                                         $info[] = "Empfänger: {$customer->account_holder}";
                                         $info[] = "IBAN: " . chunk_split($customer->iban, 4, ' ');
                                         if ($customer->bic) {
@@ -399,14 +889,14 @@ class ViewSolarPlantBilling extends ViewRecord
                                         $info[] = "Betrag: € " . number_format(abs($record->net_amount), 2, ',', '.');
                                         
                                         $reference = [];
+                                        if ($record->invoice_number) {
+                                            $reference[] = $record->invoice_number;
+                                        }
                                         if ($customer && $customer->customer_number) {
                                             $reference[] = "Kunde: {$customer->customer_number}";
                                         }
                                         if ($solarPlant && $solarPlant->name) {
                                             $reference[] = $solarPlant->name;
-                                        }
-                                        if ($record->invoice_number) {
-                                            $reference[] = "Rechnung: {$record->invoice_number}";
                                         }
                                         $month = \Carbon\Carbon::createFromDate($record->billing_year, $record->billing_month, 1);
                                         $reference[] = "Zeitraum: " . $month->locale('de')->translatedFormat('m/Y');
@@ -446,6 +936,92 @@ class ViewSolarPlantBilling extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('recordPayment')
+                ->label('Zahlung erfassen')
+                ->icon('heroicon-o-plus')
+                ->color('success')
+                ->visible(fn () => $this->record->net_amount != 0) // Nur anzeigen wenn Betrag != 0
+                ->form([
+                    Forms\Components\Grid::make(2)
+                        ->schema([
+                            Forms\Components\Select::make('payment_type')
+                                ->label('Zahlungsart')
+                                ->options([
+                                    'bank_transfer' => 'Überweisung',
+                                    'instant_transfer' => 'Sofortüberweisung',
+                                    'direct_debit' => 'Lastschrift/Abbuchung',
+                                    'cash' => 'Barzahlung',
+                                    'check' => 'Scheck',
+                                    'credit_card' => 'Kreditkarte',
+                                    'paypal' => 'PayPal',
+                                    'other' => 'Sonstiges',
+                                ])
+                                ->required()
+                                ->native(false)
+                                ->default('bank_transfer'),
+                            Forms\Components\TextInput::make('amount')
+                                ->label('Zahlungsbetrag')
+                                ->numeric()
+                                ->step(0.01)
+                                ->prefix('€')
+                                ->required()
+                                ->default(fn () => abs($this->record->net_amount))
+                                ->minValue(0.01),
+                        ]),
+                    Forms\Components\Grid::make(2)
+                        ->schema([
+                            Forms\Components\DatePicker::make('payment_date')
+                                ->label('Zahlungsdatum')
+                                ->required()
+                                ->default(now())
+                                ->maxDate(now()),
+                            Forms\Components\TextInput::make('reference')
+                                ->label('Referenz/Verwendungszweck')
+                                ->placeholder('z.B. Überweisungsreferenz')
+                                ->maxLength(255),
+                        ]),
+                    Forms\Components\Textarea::make('notes')
+                        ->label('Notizen')
+                        ->placeholder('Zusätzliche Informationen zur Zahlung...')
+                        ->rows(3),
+                ])
+                ->action(function (array $data) {
+                    try {
+                        SolarPlantBillingPayment::create([
+                            'solar_plant_billing_id' => $this->record->id,
+                            'recorded_by_user_id' => auth()->id(),
+                            'payment_type' => $data['payment_type'],
+                            'amount' => $data['amount'],
+                            'payment_date' => $data['payment_date'],
+                            'reference' => $data['reference'],
+                            'notes' => $data['notes'],
+                        ]);
+
+                        // Prüfe ob die Abrechnung vollständig bezahlt ist
+                        $totalPaid = $this->record->payments()->sum('amount');
+                        if ($totalPaid >= $this->record->net_amount && $this->record->net_amount > 0) {
+                            $this->record->update([
+                                'status' => 'paid',
+                                'paid_at' => now(),
+                            ]);
+                        }
+
+                        Notification::make()
+                            ->title('Zahlung erfasst')
+                            ->body('Die Zahlung wurde erfolgreich erfasst.')
+                            ->success()
+                            ->send();
+
+                        // Seite neu laden um die aktualisierten Daten anzuzeigen
+                        return redirect()->to($this->getUrl());
+                    } catch (\Exception $e) {
+                        Notification::make()
+                            ->title('Fehler beim Erfassen der Zahlung')
+                            ->body('Die Zahlung konnte nicht erfasst werden: ' . $e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
             Actions\Action::make('generatePdf')
                 ->label('PDF Abrechnung generieren')
                 ->icon('heroicon-o-document-arrow-down')
