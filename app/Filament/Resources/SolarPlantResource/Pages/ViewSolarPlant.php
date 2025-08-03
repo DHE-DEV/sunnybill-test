@@ -638,13 +638,13 @@ class ViewSolarPlant extends ViewRecord
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('contracts_count')
                                     ->label('Aktive Verträge')
-                                    ->state(fn ($record) => $record->contracts()->count())
+                                    ->state(fn ($record) => $record->activeSupplierContracts()->count())
                                     ->badge()
                                     ->color('success')
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('contract_billings_count')
                                     ->label('Lieferantenrechnungen')
-                                    ->state(fn ($record) => $record->contracts()->withCount('billings')->get()->sum('billings_count'))
+                                    ->state(fn ($record) => $record->activeSupplierContracts()->withCount('billings')->get()->sum('billings_count'))
                                     ->badge()
                                     ->color('info')
                                     ->size('xl'),
