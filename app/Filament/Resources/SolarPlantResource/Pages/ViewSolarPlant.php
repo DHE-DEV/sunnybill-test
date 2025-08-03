@@ -850,21 +850,21 @@ class ViewSolarPlant extends ViewRecord
                             ->schema([
                                 Infolists\Components\TextEntry::make('standard_notes_count')
                                     ->label('Standard Notizen')
-                                    ->state(fn ($record) => $record->notes()->where('is_important', false)->count())
+                                    ->state(fn ($record) => $record->notes()->where('is_favorite', false)->count())
                                     ->badge()
                                     ->color('primary')
                                     ->size('xl'),
-                                Infolists\Components\TextEntry::make('draft_notes_count')
-                                    ->label('Entwürfe')
-                                    ->state(fn ($record) => $record->notes()->where('is_draft', true)->count())
+                                Infolists\Components\TextEntry::make('maintenance_notes_count')
+                                    ->label('Wartungsnotizen')
+                                    ->state(fn ($record) => $record->notes()->where('type', 'maintenance')->count())
                                     ->badge()
                                     ->color('warning')
                                     ->size('xl'),
-                                Infolists\Components\TextEntry::make('archived_notes_count')
-                                    ->label('Archivierte Notizen')
-                                    ->state(fn ($record) => $record->notes()->where('is_archived', true)->count())
+                                Infolists\Components\TextEntry::make('issue_notes_count')
+                                    ->label('Problem-Notizen')
+                                    ->state(fn ($record) => $record->notes()->where('type', 'issue')->count())
                                     ->badge()
-                                    ->color('gray')
+                                    ->color('danger')
                                     ->size('xl'),
                             ]),
                     ])
