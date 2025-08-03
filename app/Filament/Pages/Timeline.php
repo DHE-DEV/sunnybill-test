@@ -20,6 +20,11 @@ class Timeline extends Page
 
     protected static ?string $navigationLabel = 'Timeline';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->teams()->exists() ?? false;
+    }
+
     public function getTimelineData(): Collection
     {
         // Sammle Aufgaben und Projekttermine
