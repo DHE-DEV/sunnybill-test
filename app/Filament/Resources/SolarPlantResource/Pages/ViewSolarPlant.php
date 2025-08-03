@@ -801,12 +801,12 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsed($savedState['milestones'] ?? false)
                     ->extraAttributes(['data-section-id' => 'milestones']),
 
-                Infolists\Components\Section::make('Wichtige Notizen')
-                    ->id('important-notes')
-                    ->icon('heroicon-o-exclamation-triangle')
-                    ->description('Wichtige Notizen und Hinweise zur Solaranlage')
+                Infolists\Components\Section::make('Favoriten Notizen')
+                    ->id('favorite-notes')
+                    ->icon('heroicon-o-star')
+                    ->description('Favorisierte Notizen und wichtige Hinweise zur Solaranlage')
                     ->extraAttributes([
-                        'class' => 'important-notes-section-gray',
+                        'class' => 'favorite-notes-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
                     ])
                     ->schema([
@@ -818,11 +818,11 @@ class ViewSolarPlant extends ViewRecord
                                     ->badge()
                                     ->color('primary')
                                     ->size('xl'),
-                                Infolists\Components\TextEntry::make('important_notes_count')
-                                    ->label('Als wichtig markiert')
-                                    ->state(fn ($record) => $record->notes()->where('is_important', true)->count())
+                                Infolists\Components\TextEntry::make('favorite_notes_count')
+                                    ->label('Favorisierte Notizen')
+                                    ->state(fn ($record) => $record->notes()->where('is_favorite', true)->count())
                                     ->badge()
-                                    ->color('danger')
+                                    ->color('warning')
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('recent_notes_count')
                                     ->label('Letzte 7 Tage')
@@ -834,8 +834,8 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['important-notes'] ?? false)
-                    ->extraAttributes(['data-section-id' => 'important-notes']),
+                    ->collapsed($savedState['favorite-notes'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'favorite-notes']),
 
                 Infolists\Components\Section::make('Standard Notizen')
                     ->id('standard-notes')
@@ -1060,8 +1060,8 @@ class ViewSolarPlant extends ViewRecord
                 border: 1px solid #e5e7eb !important;
             }
 
-            /* Wichtige Notizen Section Styling */
-            [data-section-id="important-notes"] {
+            /* Favoriten Notizen Section Styling */
+            [data-section-id="favorite-notes"] {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
@@ -1069,14 +1069,14 @@ class ViewSolarPlant extends ViewRecord
                 border: 1px solid #e5e7eb !important;
             }
             
-            [data-section-id="important-notes"] > div {
+            [data-section-id="favorite-notes"] > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
             }
             
             /* Alternative selector falls der erste nicht funktioniert */
-            .important-notes-section-gray,
-            .important-notes-section-gray > div {
+            .favorite-notes-section-gray,
+            .favorite-notes-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
