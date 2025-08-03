@@ -580,7 +580,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['customers'] ?? false)
+                    ->collapsed($savedState['customers'] ?? true)
                     ->extraAttributes(['data-section-id' => 'customers']),
            ]);
    }
