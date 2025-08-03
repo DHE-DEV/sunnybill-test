@@ -47,12 +47,12 @@ class EpcQrCodeService
         );
         
         // QR-Code generieren
-        $qrCode = QrCode::create($epcData)
-            ->setEncoding(new Encoding('UTF-8'))
-            ->setErrorCorrectionLevel(ErrorCorrectionLevel::Medium)
-            ->setSize(300)
-            ->setMargin(10)
-            ->setRoundBlockSizeMode(RoundBlockSizeMode::Margin);
+        $qrCode = new QrCode($epcData);
+        $qrCode->setEncoding(new Encoding('UTF-8'));
+        $qrCode->setErrorCorrectionLevel(ErrorCorrectionLevel::Medium);
+        $qrCode->setSize(300);
+        $qrCode->setMargin(10);
+        $qrCode->setRoundBlockSizeMode(RoundBlockSizeMode::Margin);
         
         $writer = new PngWriter();
         $result = $writer->write($qrCode);
