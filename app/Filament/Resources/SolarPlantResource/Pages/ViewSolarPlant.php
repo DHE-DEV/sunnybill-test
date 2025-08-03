@@ -18,6 +18,47 @@ class ViewSolarPlant extends ViewRecord
     use HasPersistentInfolistState;
     
     protected static string $resource = SolarPlantResource::class;
+    
+    protected static string $view = 'filament.resources.solar-plant-resource.pages.view-solar-plant';
+
+    public function getRelationManagers(): array
+    {
+        return [
+            RelationManagers\ArticlesRelationManager::class,
+            RelationManagers\ParticipationsRelationManager::class,
+            RelationManagers\BillingsRelationManager::class,
+            RelationManagers\MonthlyResultsRelationManager::class,
+            RelationManagers\DocumentsRelationManager::class,
+            RelationManagers\ContractsRelationManager::class,
+            RelationManagers\SuppliersRelationManager::class,
+            RelationManagers\MilestonesRelationManager::class,
+        ];
+    }
+
+    public function getRelationManagerInstance(string $name): ?\Filament\Resources\RelationManagers\RelationManager
+    {
+        $relationshipMap = [
+            'articles' => RelationManagers\ArticlesRelationManager::class,
+            'participations' => RelationManagers\ParticipationsRelationManager::class,
+            'billings' => RelationManagers\BillingsRelationManager::class,
+            'monthlyResults' => RelationManagers\MonthlyResultsRelationManager::class,
+            'documents' => RelationManagers\DocumentsRelationManager::class,
+            'contracts' => RelationManagers\ContractsRelationManager::class,
+            'supplierAssignments' => RelationManagers\SuppliersRelationManager::class,
+            'milestones' => RelationManagers\MilestonesRelationManager::class,
+        ];
+
+        if (!array_key_exists($name, $relationshipMap)) {
+            return null;
+        }
+
+        $relationManagerClass = $relationshipMap[$name];
+        $relationManager = app($relationManagerClass);
+        $relationManager->ownerRecord($this->record);
+        $relationManager->pageClass(static::class);
+
+        return $relationManager;
+    }
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
