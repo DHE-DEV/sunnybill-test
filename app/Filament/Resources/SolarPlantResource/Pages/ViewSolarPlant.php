@@ -927,33 +927,69 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Termine')
                     ->id('milestones')
                     ->icon('heroicon-o-calendar-days')
-                    ->description('Übersicht der Termine zur Solaranlage ' . $this->record->name . '.')
+                    ->description('Übersicht der Termine und Meilensteine zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'milestones-section-gray',
                         'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
                     ])
                     ->schema([
-                        Infolists\Components\Grid::make(3)
+                        Infolists\Components\Grid::make(4)
                             ->schema([
                                 Infolists\Components\TextEntry::make('total_milestones_count')
-                                    ->label('Gesamte Termine')
-                                    ->state(fn ($record) => $record->milestones()->count())
+                                    ->label('Gesamte Meilensteine')
+                                    ->state(function ($record) {
+                                        return \App\Models\ProjectMilestone::whereHas('project', function ($query) use ($record) {
+                                            $query->where('solar_plant_id', $record->id);
+                                        })->count();
+                                    })
                                     ->badge()
                                     ->color('primary')
                                     ->size('xl'),
+                                Infolists\Components\TextEntry::make('total_appointments_count')
+                                    ->label('Gesamte Termine')
+                                    ->state(function ($record) {
+                                        return \App\Models\ProjectAppointment::whereHas('project', function ($query) use ($record) {
+                                            $query->where('solar_plant_id', $record->id);
+                                        })->count();
+                                    })
+                                    ->badge()
+                                    ->color('info')
+                                    ->size('xl'),
                                 Infolists\Components\TextEntry::make('completed_milestones_count')
-                                    ->label('Abgeschlossene Termine')
-                                    ->state(fn ($record) => $record->milestones()->where('status', 'completed')->count())
+                                    ->label('Abgeschlossene')
+                                    ->state(function ($record) {
+                                        $milestones = \App\Models\ProjectMilestone::whereHas('project', function ($query) use ($record) {
+                                            $query->where('solar_plant_id', $record->id);
+                                        })->where('status', 'completed')->count();
+                                        
+                                        $appointments = \App\Models\ProjectAppointment::whereHas('project', function ($query) use ($record) {
+                                            $query->where('solar_plant_id', $record->id);
+                                        })->where('status', 'completed')->count();
+                                        
+                                        return $milestones + $appointments;
+                                    })
                                     ->badge()
                                     ->color('success')
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('upcoming_milestones_count')
-                                    ->label('Anstehende Termine')
-                                    ->state(fn ($record) => $record->milestones()->where('planned_date', '>=', now())->where('status', '!=', 'completed')->count())
+                                    ->label('Anstehende')
+                                    ->state(function ($record) {
+                                        $milestones = \App\Models\ProjectMilestone::whereHas('project', function ($query) use ($record) {
+                                            $query->where('solar_plant_id', $record->id);
+                                        })->where('planned_date', '>=', now())->where('status', '!=', 'completed')->count();
+                                        
+                                        $appointments = \App\Models\ProjectAppointment::whereHas('project', function ($query) use ($record) {
+                                            $query->where('solar_plant_id', $record->id);
+                                        })->where('start_datetime', '>=', now())->whereNotIn('status', ['completed', 'cancelled'])->count();
+                                        
+                                        return $milestones + $appointments;
+                                    })
                                     ->badge()
                                     ->color('warning')
                                     ->size('xl'),
                             ]),
+                        \Filament\Infolists\Components\Livewire::make(\App\Livewire\MilestonesTable::class, ['solarPlant' => $this->record])
+                            ->key('milestones-table'),
                     ])
                     ->compact()
                     ->collapsible()
@@ -990,6 +1026,8 @@ class ViewSolarPlant extends ViewRecord
                                     ->color('info')
                                     ->size('xl'),
                             ]),
+                        \Filament\Infolists\Components\Livewire::make(\App\Livewire\NotesTable::class, ['solarPlant' => $this->record, 'showOnlyFavorites' => true])
+                            ->key('favorite-notes-table'),
                     ])
                     ->compact()
                     ->collapsible()
@@ -1026,6 +1064,8 @@ class ViewSolarPlant extends ViewRecord
                                     ->color('danger')
                                     ->size('xl'),
                             ]),
+                        \Filament\Infolists\Components\Livewire::make(\App\Livewire\NotesTable::class, ['solarPlant' => $this->record, 'showOnlyFavorites' => false])
+                            ->key('standard-notes-table'),
                     ])
                     ->compact()
                     ->collapsible()
