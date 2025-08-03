@@ -13,7 +13,7 @@
 
     {{-- Header Actions --}}
     <x-slot name="headerActions">
-        {{ $this->getHeaderActionsPosition() }}
+        {{ ($this->getHeaderActions()) }}
     </x-slot>
 
     {{-- Infolist Section --}}
