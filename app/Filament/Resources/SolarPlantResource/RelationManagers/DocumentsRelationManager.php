@@ -3,13 +3,14 @@
 namespace App\Filament\Resources\SolarPlantResource\RelationManagers;
 
 use App\Traits\DocumentUploadTrait;
+use App\Traits\HasPersistentTableState;
 use App\Services\DocumentUploadConfig;
 use Filament\Resources\RelationManagers\RelationManager;
 use Illuminate\Database\Eloquent\Model;
 
 class DocumentsRelationManager extends RelationManager
 {
-    use DocumentUploadTrait;
+    use DocumentUploadTrait, HasPersistentTableState;
 
     protected static string $relationship = 'documents';
 

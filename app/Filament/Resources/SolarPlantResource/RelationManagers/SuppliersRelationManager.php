@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SolarPlantResource\RelationManagers;
 
+use App\Traits\HasPersistentTableState;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
@@ -16,6 +17,8 @@ use App\Models\SupplierEmployee;
 
 class SuppliersRelationManager extends RelationManager
 {
+    use HasPersistentTableState;
+    
     protected static string $relationship = 'supplierAssignments';
 
     protected static ?string $title = 'Lieferanten';
@@ -138,11 +141,11 @@ class SuppliersRelationManager extends RelationManager
                         'Support' => 'danger',
                         default => 'gray'
                     }),
-                Tables\Columns\TextColumn::make('supplierEmployee.full_name')
+                Tables\Columns\TextColumn::make('supplierEmployee.display_name')
                     ->label('Ansprechpartner')
-                    ->searchable()
                     ->toggleable()
-                    ->placeholder('-'),
+                    ->placeholder('-')
+                    ->searchable(['first_name', 'last_name']),
                 Tables\Columns\TextColumn::make('supplierEmployee.primary_phone')
                     ->label('Telefon')
                     ->toggleable()

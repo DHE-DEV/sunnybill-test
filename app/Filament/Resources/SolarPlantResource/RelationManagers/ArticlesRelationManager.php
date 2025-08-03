@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SolarPlantResource\RelationManagers;
 
+use App\Traits\HasPersistentTableState;
 use App\Models\Article;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -13,6 +14,8 @@ use Filament\Notifications\Notification;
 
 class ArticlesRelationManager extends RelationManager
 {
+    use HasPersistentTableState;
+    
     protected static string $relationship = 'articles';
 
     protected static ?string $title = 'Artikel';

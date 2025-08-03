@@ -32,6 +32,14 @@ class DocumentController extends Controller
     }
 
     /**
+     * Preview the specified document (alias for view)
+     */
+    public function preview(Document $document): Response
+    {
+        return $this->view($document);
+    }
+
+    /**
      * Download the specified document
      */
     public function download(Document $document): StreamedResponse

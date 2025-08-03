@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SolarPlantResource\RelationManagers;
 
+use App\Traits\HasPersistentTableState;
 use App\Models\SolarPlantBilling;
 use App\Models\Customer;
 use Filament\Forms;
@@ -17,6 +18,8 @@ use Carbon\Carbon;
 
 class BillingsRelationManager extends RelationManager
 {
+    use HasPersistentTableState;
+    
     protected static string $relationship = 'billings';
 
     protected static ?string $title = 'Kundenabrechnungen';

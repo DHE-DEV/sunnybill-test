@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SolarPlantResource\RelationManagers;
 
+use App\Traits\HasPersistentTableState;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ParticipationsRelationManager extends RelationManager
 {
+    use HasPersistentTableState;
+    
     protected static string $relationship = 'participations';
 
     protected static ?string $title = 'Beteiligungen';
@@ -166,11 +169,11 @@ class ParticipationsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('customer.display_name')
                     ->label('Kunde')
-                    ->searchable(['customer.name', 'customer.company_name'])
+                    ->searchable(['customers.name', 'customers.company_name'])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('customer.email')
                     ->label('E-Mail')
-                    ->searchable()
+                    ->searchable(['customers.email'])
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('participation_kwp')
                     ->label('kWp')

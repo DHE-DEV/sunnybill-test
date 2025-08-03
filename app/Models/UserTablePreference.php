@@ -17,6 +17,7 @@ class UserTablePreference extends Model
         'search',
         'sort',
         'column_searches',
+        'infolist_state',
     ];
 
     protected $casts = [
@@ -24,6 +25,7 @@ class UserTablePreference extends Model
         'search' => 'array',
         'sort' => 'array',
         'column_searches' => 'array',
+        'infolist_state' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -46,6 +48,7 @@ class UserTablePreference extends Model
                 'search' => $data['search'] ?? null,
                 'sort' => $data['sort'] ?? null,
                 'column_searches' => $data['column_searches'] ?? null,
+                'infolist_state' => $data['infolist_state'] ?? null,
             ], fn($value) => !is_null($value))
         );
     }
@@ -68,6 +71,35 @@ class UserTablePreference extends Model
             'search' => $preference->search,
             'sort' => $preference->sort,
             'column_searches' => $preference->column_searches,
+            'infolist_state' => $preference->infolist_state,
         ], fn($value) => !is_null($value));
+    }
+
+    /**
+     * Speichere speziell den Infolist-Status
+     */
+    public static function saveInfolistState(int $userId, string $tableName, array $infolistState): void
+    {
+        static::updateOrCreate(
+            [
+                'user_id' => $userId,
+                'table_name' => $tableName,
+            ],
+            [
+                'infolist_state' => $infolistState,
+            ]
+        );
+    }
+
+    /**
+     * Lade speziell den Infolist-Status
+     */
+    public static function getInfolistState(int $userId, string $tableName): ?array
+    {
+        $preference = static::where('user_id', $userId)
+            ->where('table_name', $tableName)
+            ->first();
+
+        return $preference?->infolist_state;
     }
 }

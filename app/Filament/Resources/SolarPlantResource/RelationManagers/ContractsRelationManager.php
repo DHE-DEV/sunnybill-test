@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SolarPlantResource\RelationManagers;
 
+use App\Traits\HasPersistentTableState;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -16,6 +17,8 @@ use Filament\Notifications\Notification;
 
 class ContractsRelationManager extends RelationManager
 {
+    use HasPersistentTableState;
+    
     protected static string $relationship = 'supplierContracts';
 
     protected static ?string $title = 'Verträge';

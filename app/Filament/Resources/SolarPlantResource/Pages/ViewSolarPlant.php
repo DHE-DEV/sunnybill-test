@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SolarPlantResource\Pages;
 
 use App\Filament\Resources\SolarPlantResource;
 use App\Filament\Resources\SolarPlantResource\RelationManagers;
+use App\Traits\HasPersistentInfolistState;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
@@ -14,6 +15,8 @@ use App\Models\Customer;
 
 class ViewSolarPlant extends ViewRecord
 {
+    use HasPersistentInfolistState;
+    
     protected static string $resource = SolarPlantResource::class;
 
     protected function mutateFormDataBeforeFill(array $data): array
@@ -42,9 +45,14 @@ class ViewSolarPlant extends ViewRecord
 
     public function infolist(Infolist $infolist): Infolist
     {
+        // Lade gespeicherte Infolist-Zustände
+        $savedState = $this->loadInfolistState();
+        
         return $infolist
+            ->extraAttributes(['data-table-name' => $this->getInfolistTableName()])
             ->schema([
                 Infolists\Components\Section::make('Übersicht')
+                    ->id('overview')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
                         Infolists\Components\Grid::make(3)
@@ -88,7 +96,8 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed(false),
+                    ->collapsed($savedState['overview'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'overview']),
                 Infolists\Components\Tabs::make('Tabs')
                     ->extraAttributes(['class' => 'solar-plant-detail'])
                     ->tabs([
@@ -96,6 +105,7 @@ class ViewSolarPlant extends ViewRecord
                             ->icon('heroicon-o-information-circle')
                             ->schema([
                                 Infolists\Components\Section::make('Standort & Status')
+                                    ->id('location-status')
                                     ->icon('heroicon-o-map-pin')
                                     ->schema([
                                         Infolists\Components\Grid::make(2)
@@ -210,8 +220,10 @@ class ViewSolarPlant extends ViewRecord
                                     ])
                                     ->compact()
                                     ->collapsible()
-                                    ->collapsed(false),
+                                    ->collapsed($savedState['location-status'] ?? false)
+                                    ->extraAttributes(['data-section-id' => 'location-status']),
                                 Infolists\Components\Section::make('Beschreibung')
+                                    ->id('description')
                                     ->icon('heroicon-o-document-text')
                                     ->schema([
                                         Infolists\Components\TextEntry::make('description')
@@ -222,12 +234,14 @@ class ViewSolarPlant extends ViewRecord
                                     ])
                                     ->compact()
                                     ->collapsible()
-                                    ->collapsed(true),
+                                    ->collapsed($savedState['description'] ?? true)
+                                    ->extraAttributes(['data-section-id' => 'description']),
                             ]),
                         Infolists\Components\Tabs\Tab::make('Technische Daten')
                             ->icon('heroicon-o-cog-6-tooth')
                             ->schema([
                                 Infolists\Components\Section::make('Anlagenkomponenten')
+                                    ->id('components')
                                     ->icon('heroicon-o-squares-2x2')
                                     ->schema([
                                         Infolists\Components\Grid::make(3)
@@ -254,7 +268,8 @@ class ViewSolarPlant extends ViewRecord
                                     ])
                                     ->compact()
                                     ->collapsible()
-                                    ->collapsed(false),
+                                    ->collapsed($savedState['components'] ?? false)
+                                    ->extraAttributes(['data-section-id' => 'components']),
                             ]),
                         Infolists\Components\Tabs\Tab::make('Projekttermine')
                             ->icon('heroicon-o-calendar')
@@ -517,4 +532,17 @@ class ViewSolarPlant extends ViewRecord
            ]);
    }
 
+    public function getHeaderScripts(): array
+    {
+        return [
+            asset('js/infolist-state.js'),
+        ];
+    }
+
+    protected function getViewData(): array
+    {
+        return array_merge(parent::getViewData(), [
+            'infolistTableName' => $this->getInfolistTableName(),
+        ]);
+    }
 }

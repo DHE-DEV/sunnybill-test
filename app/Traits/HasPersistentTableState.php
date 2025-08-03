@@ -9,7 +9,18 @@ trait HasPersistentTableState
 {
     protected function getTableName(): string
     {
-        return class_basename(static::$resource::getModel());
+        // Für RelationManager
+        if (property_exists($this, 'relationship')) {
+            return static::$relationship . '_relation';
+        }
+        
+        // Für Resource Pages
+        if (property_exists(static::class, 'resource')) {
+            return class_basename(static::$resource::getModel());
+        }
+        
+        // Fallback: Klassenname verwenden
+        return class_basename(static::class);
     }
 
     public function updatedTableFilters(): void
