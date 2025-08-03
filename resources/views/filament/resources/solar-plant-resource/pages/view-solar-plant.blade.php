@@ -26,50 +26,71 @@
     {{-- RelationManager Sections --}}
     <div class="space-y-6" data-table-name="{{ $infolistTableName }}">
         {{-- Section 1: Kunden --}}
-        <x-filament::section>
-            <x-slot name="heading">
-                <div class="flex items-center gap-x-3">
-                    <x-heroicon-o-users class="h-6 w-6 text-gray-500" />
-                    <span>Kunden</span>
+        <div data-section-id="customers" class="customers-section-gray" style="background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;">
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center gap-x-3">
+                        <x-heroicon-o-users class="h-6 w-6 text-gray-500" />
+                        <span>Kunden</span>
+                    </div>
+                </x-slot>
+
+                <x-slot name="description">
+                    Übersicht der beteiligten Kunden und deren Informationen
+                </x-slot>
+
+                <div class="space-y-6">
+                    {{-- Beteiligungsübersicht --}}
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="text-center">
+                            <div class="text-xl font-bold text-primary-600">{{ $this->record->participations_count }}</div>
+                            <div class="text-sm text-gray-600">Anzahl Beteiligte</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xl font-bold {{ $this->record->total_participation >= 100 ? 'text-green-600' : 'text-yellow-600' }}">
+                                {{ number_format($this->record->total_participation, 1, ',', '.') }}%
+                            </div>
+                            <div class="text-sm text-gray-600">Gesamtbeteiligung</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xl font-bold {{ $this->record->available_participation > 0 ? 'text-blue-600' : 'text-gray-600' }}">
+                                {{ number_format($this->record->available_participation, 1, ',', '.') }}%
+                            </div>
+                            <div class="text-sm text-gray-600">Verfügbare Beteiligung</div>
+                        </div>
+                    </div>
+
+                    {{-- Livewire Tabelle --}}
+                    @livewire(\App\Livewire\ParticipationsTable::class, ['solarPlant' => $this->record], key('participations-table'))
+
+                    {{-- Fallback: Standard Beteiligungen RelationManager --}}
+                    <div data-section-id="customers-participations" class="relation-section">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-x-2">
+                            <x-heroicon-o-chart-pie class="h-5 w-5 text-gray-500" />
+                            Beteiligungen (Standard)
+                        </h3>
+                        @if($this->record)
+                            {{ $this->getRelationManagerInstance('participations') }}
+                        @else
+                            <p class="text-gray-500">Daten werden geladen...</p>
+                        @endif
+                    </div>
+
+                    {{-- Kundenabrechnungen (Index 2) --}}
+                    <div data-section-id="customers-billings" class="relation-section">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-x-2">
+                            <x-heroicon-o-document-currency-euro class="h-5 w-5 text-gray-500" />
+                            Kundenabrechnungen
+                        </h3>
+                        @if($this->record)
+                            {{ $this->getRelationManagerInstance('billings') }}
+                        @else
+                            <p class="text-gray-500">Daten werden geladen...</p>
+                        @endif
+                    </div>
                 </div>
-            </x-slot>
-
-            <x-slot name="description">
-                Beteiligungen und Abrechnungen der Kunden
-            </x-slot>
-
-            <x-slot name="headerActions">
-                {{-- Optional: Header actions for this section --}}
-            </x-slot>
-
-            <div class="space-y-6">
-                {{-- Beteiligungen (Index 1) --}}
-                <div data-section-id="customers-participations" class="relation-section">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-x-2">
-                        <x-heroicon-o-chart-pie class="h-5 w-5 text-gray-500" />
-                        Beteiligungen
-                    </h3>
-                    @if($this->record)
-                        {{ $this->getRelationManagerInstance('participations') }}
-                    @else
-                        <p class="text-gray-500">Daten werden geladen...</p>
-                    @endif
-                </div>
-
-                {{-- Kundenabrechnungen (Index 2) --}}
-                <div data-section-id="customers-billings" class="relation-section">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-x-2">
-                        <x-heroicon-o-document-currency-euro class="h-5 w-5 text-gray-500" />
-                        Kundenabrechnungen
-                    </h3>
-                    @if($this->record)
-                        {{ $this->getRelationManagerInstance('billings') }}
-                    @else
-                        <p class="text-gray-500">Daten werden geladen...</p>
-                    @endif
-                </div>
-            </div>
-        </x-filament::section>
+            </x-filament::section>
+        </div>
 
         {{-- Section 2: Lieferanten --}}
         <x-filament::section>
@@ -236,6 +257,30 @@
         /* Ensure proper section collapsibility */
         [data-section-id] {
             transition: all 0.2s ease-in-out;
+        }
+
+        /* Kunden Section Gray Background - Direct CSS injection */
+        .fi-in-section[data-section-id="customers"],
+        .customers-section-gray,
+        [data-section-id="customers"] {
+            background-color: #f9fafb !important;
+            border-radius: 8px !important;
+            padding: 16px !important;
+            margin: 8px 0 !important;
+            border: 1px solid #e5e7eb !important;
+        }
+
+        .fi-in-section[data-section-id="customers"] > div,
+        .fi-in-section[data-section-id="customers"] .fi-in-section-content {
+            background-color: #f9fafb !important;
+        }
+        
+        /* Override any background colors for the customers section */
+        section[data-section-id="customers"],
+        section[data-section-id="customers"] > div {
+            background-color: #f9fafb !important;
+            border-radius: 8px !important;
+            padding: 16px !important;
         }
     </style>
 

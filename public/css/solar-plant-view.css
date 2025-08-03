@@ -1,0 +1,40 @@
+/* Kunden Section Gray Background */
+.fi-in-section[data-section-id="customers"],
+.fi-in-section-customers,
+[data-section-id="customers"] {
+    background-color: #f9fafb !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin: 8px 0 !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+.fi-in-section[data-section-id="customers"] > div,
+.fi-in-section[data-section-id="customers"] .fi-in-section-content,
+.fi-in-section[data-section-id="customers"] .fi-in-section-header,
+.fi-in-section[data-section-id="customers"] .fi-in-section-body {
+    background-color: #f9fafb !important;
+}
+
+/* Alternative selectors for different Filament versions */
+section[data-section-id="customers"],
+.customers-section-gray {
+    background-color: #f9fafb !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin: 8px 0 !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+/* Catch-all for any child elements */
+[data-section-id="customers"] * {
+    background-color: #f9fafb !important;
+}
+
+/* Special styling for Livewire table within the section */
+.customers-section-gray .fi-ta,
+[data-section-id="customers"] .fi-ta {
+    background-color: #ffffff !important;
+    border-radius: 6px !important;
+    margin-top: 8px !important;
+}
