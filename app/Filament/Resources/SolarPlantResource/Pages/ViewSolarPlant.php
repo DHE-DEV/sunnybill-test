@@ -44,7 +44,8 @@ class ViewSolarPlant extends ViewRecord
     {
         return $infolist
             ->schema([
-                Infolists\Components\Section::make()
+                Infolists\Components\Section::make('Übersicht')
+                    ->icon('heroicon-o-information-circle')
                     ->schema([
                         Infolists\Components\Grid::make(3)
                             ->schema([
@@ -85,7 +86,9 @@ class ViewSolarPlant extends ViewRecord
                                     ->color('success'),
                             ]),
                     ])
-                    ->compact(),
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed(false),
                 Infolists\Components\Tabs::make('Tabs')
                     ->extraAttributes(['class' => 'solar-plant-detail'])
                     ->tabs([
@@ -248,7 +251,10 @@ class ViewSolarPlant extends ViewRecord
                                                     ->size('lg')
                                                     ->color(fn ($state) => $state ? 'warning' : 'gray'),
                                             ]),
-                                    ])->compact(),
+                                    ])
+                                    ->compact()
+                                    ->collapsible()
+                                    ->collapsed(false),
                             ]),
                         Infolists\Components\Tabs\Tab::make('Projekttermine')
                             ->icon('heroicon-o-calendar')
@@ -274,7 +280,10 @@ class ViewSolarPlant extends ViewRecord
                                                     ->size('lg')
                                                     ->weight('medium'),
                                             ]),
-                                    ])->compact(),
+                                    ])
+                                    ->compact()
+                                    ->collapsible()
+                                    ->collapsed(false),
                             ]),
                         Infolists\Components\Tabs\Tab::make('Finanzen')
                             ->icon('heroicon-o-currency-euro')
@@ -294,7 +303,10 @@ class ViewSolarPlant extends ViewRecord
                                                     ->label('Jährliche Betriebskosten')
                                                     ->formatStateUsing(fn ($state) => $state ? '€ ' . number_format($state, 0, ',', '.') : 'Nicht angegeben')
                                                     ->color('warning'),
-                                            ])->compact(),
+                                            ])
+                                            ->compact()
+                                            ->collapsible()
+                                            ->collapsed(false),
                                         Infolists\Components\Section::make('Tarife')
                                             ->icon('heroicon-o-calculator')
                                             ->schema([
@@ -308,7 +320,10 @@ class ViewSolarPlant extends ViewRecord
                                                     ->formatStateUsing(fn ($state) => $state ? number_format($state, 4, ',', '.') . ' ct/kWh' : 'Nicht angegeben')
                                                     ->badge()
                                                     ->color('info'),
-                                            ])->compact(),
+                                            ])
+                                            ->compact()
+                                            ->collapsible()
+                                            ->collapsed(false),
                                         Infolists\Components\Section::make('Ertragsprognose')
                                             ->icon('heroicon-o-chart-bar')
                                             ->schema([
@@ -318,7 +333,10 @@ class ViewSolarPlant extends ViewRecord
                                                     ->size('xl')
                                                     ->weight('bold')
                                                     ->color('success'),
-                                            ])->compact(),
+                                            ])
+                                            ->compact()
+                                            ->collapsible()
+                                            ->collapsed(false),
                                     ]),
                             ]),
                         Infolists\Components\Tabs\Tab::make('Beteiligungen')
@@ -490,7 +508,9 @@ class ViewSolarPlant extends ViewRecord
                                             ->prose()
                                             ->markdown(),
                                     ])
-                                    ->compact(),
+                                    ->compact()
+                                    ->collapsible()
+                                    ->collapsed(false),
                             ]),
                     ])
                     ->columnSpanFull(),
