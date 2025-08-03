@@ -602,7 +602,7 @@ class ViewSolarPlant extends ViewRecord
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('total_billing_amount')
                                     ->label('Gesamtbetrag')
-                                    ->state(fn ($record) => '€ ' . number_format($record->billings()->sum('total_amount'), 2, ',', '.'))
+                                    ->state(fn ($record) => '€ ' . number_format($record->billings()->sum('net_amount'), 2, ',', '.'))
                                     ->badge()
                                     ->color('success')
                                     ->size('xl'),
