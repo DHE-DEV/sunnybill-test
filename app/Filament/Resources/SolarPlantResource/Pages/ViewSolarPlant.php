@@ -37,6 +37,11 @@ class ViewSolarPlant extends ViewRecord
 
     public function getRelationManagerInstance(string $name): ?\Filament\Resources\RelationManagers\RelationManager
     {
+        // Prüfe ob das Record existiert
+        if (!$this->record) {
+            return null;
+        }
+
         $relationshipMap = [
             'articles' => RelationManagers\ArticlesRelationManager::class,
             'participations' => RelationManagers\ParticipationsRelationManager::class,

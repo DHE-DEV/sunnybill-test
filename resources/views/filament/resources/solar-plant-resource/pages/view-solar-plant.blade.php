@@ -49,7 +49,11 @@
                         <x-heroicon-o-chart-pie class="h-5 w-5 text-gray-500" />
                         Beteiligungen
                     </h3>
-                    {{ $this->getRelationManagerInstance('participations') }}
+                    @if($this->record)
+                        {{ $this->getRelationManagerInstance('participations') }}
+                    @else
+                        <p class="text-gray-500">Daten werden geladen...</p>
+                    @endif
                 </div>
 
                 {{-- Kundenabrechnungen (Index 2) --}}
@@ -58,7 +62,11 @@
                         <x-heroicon-o-document-currency-euro class="h-5 w-5 text-gray-500" />
                         Kundenabrechnungen
                     </h3>
-                    {{ $this->getRelationManagerInstance('billings') }}
+                    @if($this->record)
+                        {{ $this->getRelationManagerInstance('billings') }}
+                    @else
+                        <p class="text-gray-500">Daten werden geladen...</p>
+                    @endif
                 </div>
             </div>
         </x-filament::section>
@@ -83,7 +91,11 @@
                         <x-heroicon-o-building-office class="h-5 w-5 text-gray-500" />
                         Lieferanten
                     </h3>
-                    {{ $this->getRelationManagerInstance('supplierAssignments') }}
+                    @if($this->record)
+                        {{ $this->getRelationManagerInstance('supplierAssignments') }}
+                    @else
+                        <p class="text-gray-500">Daten werden geladen...</p>
+                    @endif
                 </div>
 
                 {{-- Verträge (Index 5) --}}
@@ -92,7 +104,11 @@
                         <x-heroicon-o-document-text class="h-5 w-5 text-gray-500" />
                         Verträge
                     </h3>
-                    {{ $this->getRelationManagerInstance('contracts') }}
+                    @if($this->record)
+                        {{ $this->getRelationManagerInstance('contracts') }}
+                    @else
+                        <p class="text-gray-500">Daten werden geladen...</p>
+                    @endif
                 </div>
             </div>
         </x-filament::section>
@@ -117,7 +133,11 @@
                         <x-heroicon-o-document-arrow-down class="h-5 w-5 text-gray-500" />
                         Dokumente
                     </h3>
-                    {{ $this->getRelationManagerInstance('documents') }}
+                    @if($this->record)
+                        {{ $this->getRelationManagerInstance('documents') }}
+                    @else
+                        <p class="text-gray-500">Daten werden geladen...</p>
+                    @endif
                 </div>
 
                 {{-- Artikel (Index 0) --}}
@@ -126,7 +146,11 @@
                         <x-heroicon-o-squares-plus class="h-5 w-5 text-gray-500" />
                         Artikel
                     </h3>
-                    {{ $this->getRelationManagerInstance('articles') }}
+                    @if($this->record)
+                        {{ $this->getRelationManagerInstance('articles') }}
+                    @else
+                        <p class="text-gray-500">Daten werden geladen...</p>
+                    @endif
                 </div>
 
                 {{-- Abrechnungen (Index 3) --}}
@@ -135,7 +159,11 @@
                         <x-heroicon-o-chart-bar class="h-5 w-5 text-gray-500" />
                         Abrechnungen
                     </h3>
-                    {{ $this->getRelationManagerInstance('monthlyResults') }}
+                    @if($this->record)
+                        {{ $this->getRelationManagerInstance('monthlyResults') }}
+                    @else
+                        <p class="text-gray-500">Daten werden geladen...</p>
+                    @endif
                 </div>
 
                 {{-- Termine (Index 7) --}}
@@ -144,7 +172,11 @@
                         <x-heroicon-o-calendar-days class="h-5 w-5 text-gray-500" />
                         Termine
                     </h3>
-                    {{ $this->getRelationManagerInstance('milestones') }}
+                    @if($this->record)
+                        {{ $this->getRelationManagerInstance('milestones') }}
+                    @else
+                        <p class="text-gray-500">Daten werden geladen...</p>
+                    @endif
                 </div>
 
                 {{-- Notizen (Favoriten) --}}
