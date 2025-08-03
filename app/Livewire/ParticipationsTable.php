@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Models\Participation;
 use App\Models\SolarPlant;
 use App\Models\Customer;
-use App\Traits\HasPersistentTableState;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -21,7 +20,6 @@ class ParticipationsTable extends Component implements HasForms, HasTable
 {
     use InteractsWithTable;
     use InteractsWithForms;
-    use HasPersistentTableState;
 
     public SolarPlant $solarPlant;
 
