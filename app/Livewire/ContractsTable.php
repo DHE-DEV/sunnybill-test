@@ -45,7 +45,8 @@ class ContractsTable extends Component implements HasForms, HasTable
                     ->weight('medium')
                     ->color('primary')
                     ->copyable()
-                    ->placeholder('Nicht vergeben'),
+                    ->placeholder('Nicht vergeben')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('title')
                     ->label('Titel')
@@ -57,9 +58,10 @@ class ContractsTable extends Component implements HasForms, HasTable
                     ->openUrlInNewTab(false)
                     ->limit(50),
 
-                Tables\Columns\TextColumn::make('supplier.name')
+                Tables\Columns\TextColumn::make('supplier_display_name')
                     ->label('Lieferant')
-                    ->searchable()
+                    ->state(fn ($record) => $record->supplier ? ($record->supplier->company_name ?: $record->supplier->name) : 'Kein Lieferant')
+                    ->searchable(['supplier.name', 'supplier.company_name'])
                     ->sortable()
                     ->color('gray')
                     ->url(fn ($record) => $record->supplier ? route('filament.admin.resources.suppliers.view', $record->supplier) : null)
@@ -104,7 +106,8 @@ class ContractsTable extends Component implements HasForms, HasTable
                     ->formatStateUsing(fn ($state, $record) => $state ? '€ ' . number_format($state, 2, ',', '.') : 'Nicht angegeben')
                     ->sortable()
                     ->color('success')
-                    ->alignEnd(),
+                    ->alignEnd()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('solar_plant_percentage')
                     ->label('Anteil (%)')
@@ -116,7 +119,8 @@ class ContractsTable extends Component implements HasForms, HasTable
                     })
                     ->badge()
                     ->color('info')
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
