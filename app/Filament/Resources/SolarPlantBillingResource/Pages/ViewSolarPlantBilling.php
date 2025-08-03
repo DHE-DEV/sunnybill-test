@@ -312,6 +312,44 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->color('gray'),
                             ]),
                         
+                        // QR-Code für Banking-Apps - Debug Version
+                        Infolists\Components\Grid::make(1)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('qr_code_debug')
+                                    ->label('QR-Code Debug Information')
+                                    ->state(function ($record) {
+                                        $qrService = new EpcQrCodeService();
+                                        $customer = $record->customer;
+                                        
+                                        $debug = [];
+                                        $debug[] = "**Debug Informationen:**";
+                                        $debug[] = "Net Amount: " . $record->net_amount;
+                                        $debug[] = "Customer ID: " . ($customer ? $customer->id : 'NULL');
+                                        $debug[] = "Customer Number: " . ($customer?->customer_number ?: 'LEER');
+                                        $debug[] = "Account Holder: " . ($customer?->account_holder ?: 'LEER');
+                                        $debug[] = "IBAN: " . ($customer?->iban ?: 'LEER');
+                                        $debug[] = "BIC: " . ($customer?->bic ?: 'LEER');
+                                        $debug[] = "Can Generate QR: " . ($qrService->canGenerateQrCode($record) ? 'JA' : 'NEIN');
+                                        
+                                        if (!$qrService->canGenerateQrCode($record)) {
+                                            $debug[] = "Error: " . $qrService->getQrCodeErrorMessage($record);
+                                        } else {
+                                            try {
+                                                $base64QrCode = $qrService->generateEpcQrCode($record);
+                                                $debug[] = "QR-Code generiert: " . strlen($base64QrCode) . " Zeichen";
+                                                $debug[] = "Base64 Prefix: " . substr($base64QrCode, 0, 50) . "...";
+                                            } catch (\Exception $e) {
+                                                $debug[] = "QR-Code Fehler: " . $e->getMessage();
+                                            }
+                                        }
+                                        
+                                        return implode("\n", $debug);
+                                    })
+                                    ->prose()
+                                    ->markdown()
+                                    ->color('info'),
+                            ]),
+                        
                         // QR-Code für Banking-Apps
                         Infolists\Components\Grid::make(2)
                             ->schema([
@@ -358,9 +396,12 @@ class ViewSolarPlantBilling extends ViewRecord
                                         if ($customer->bic) {
                                             $info[] = "BIC: {$customer->bic}";
                                         }
-                                        $info[] = "Betrag: € " . number_format($record->net_amount, 2, ',', '.');
+                                        $info[] = "Betrag: € " . number_format(abs($record->net_amount), 2, ',', '.');
                                         
                                         $reference = [];
+                                        if ($customer && $customer->customer_number) {
+                                            $reference[] = "Kunde: {$customer->customer_number}";
+                                        }
                                         if ($solarPlant && $solarPlant->name) {
                                             $reference[] = $solarPlant->name;
                                         }
@@ -372,7 +413,11 @@ class ViewSolarPlantBilling extends ViewRecord
                                         
                                         $info[] = "Verwendungszweck: " . implode(' | ', $reference);
                                         $info[] = "";
-                                        $info[] = "*Scannen Sie den QR-Code mit Ihrer Banking-App für eine schnelle Überweisung.*";
+                                        if ($record->net_amount < 0) {
+                                            $info[] = "*Dies ist eine Gutschrift. Der QR-Code zeigt den Betrag als positive Überweisung an.*";
+                                        } else {
+                                            $info[] = "*Scannen Sie den QR-Code mit Ihrer Banking-App für eine schnelle Überweisung.*";
+                                        }
                                         
                                         return implode("\n", $info);
                                     })
@@ -388,8 +433,8 @@ class ViewSolarPlantBilling extends ViewRecord
                                     }),
                             ])
                             ->visible(function ($record) {
-                                // Zeige gesamtes Grid nur bei positiven Beträgen an
-                                return $record->net_amount > 0;
+                                // Zeige gesamtes Grid für alle Beträge außer 0 an (auch Gutschriften)
+                                return $record->net_amount != 0;
                             }),
                     ])
                     ->compact()

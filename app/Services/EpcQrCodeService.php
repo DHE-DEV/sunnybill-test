@@ -27,19 +27,22 @@ class EpcQrCodeService
             throw new \Exception('IBAN und Kontoinhaber müssen hinterlegt sein, um einen QR-Code zu generieren.');
         }
         
-        if ($billing->net_amount <= 0) {
-            throw new \Exception('QR-Code kann nur für positive Beträge generiert werden.');
+        if ($billing->net_amount == 0) {
+            throw new \Exception('QR-Code kann nicht für Betrag 0 generiert werden.');
         }
         
+        // Betrag immer als positiver Wert verwenden (auch bei Gutschriften)
+        $amount = abs($billing->net_amount);
+        
         // Verwendungszweck zusammenstellen
-        $reference = $this->buildPaymentReference($billing, $solarPlant);
+        $reference = $this->buildPaymentReference($billing, $solarPlant, $customer);
         
         // EPC QR-Code Datenformat erstellen
         $epcData = $this->buildEpcData(
             bic: $customer->bic ?: '',
             accountHolder: $customer->account_holder,
             iban: $customer->iban,
-            amount: $billing->net_amount,
+            amount: $amount,
             reference: $reference
         );
         
@@ -60,9 +63,14 @@ class EpcQrCodeService
     /**
      * Erstellt den Verwendungszweck für die Zahlung
      */
-    private function buildPaymentReference(SolarPlantBilling $billing, $solarPlant): string
+    private function buildPaymentReference(SolarPlantBilling $billing, $solarPlant, $customer): string
     {
         $parts = [];
+        
+        // Kundennummer (statt UUID)
+        if ($customer && $customer->customer_number) {
+            $parts[] = 'Kunde: ' . $customer->customer_number;
+        }
         
         // Solaranlage Name
         if ($solarPlant && $solarPlant->name) {
@@ -139,7 +147,7 @@ class EpcQrCodeService
         
         return $customer->iban && 
                $customer->account_holder && 
-               $billing->net_amount > 0;
+               $billing->net_amount != 0; // Auch negative Beträge (Gutschriften) erlauben
     }
     
     /**
@@ -158,8 +166,8 @@ class EpcQrCodeService
             $errors[] = 'Kontoinhaber fehlt';
         }
         
-        if ($billing->net_amount <= 0) {
-            $errors[] = 'Betrag muss positiv sein';
+        if ($billing->net_amount == 0) {
+            $errors[] = 'Betrag ist 0';
         }
         
         if (empty($errors)) {
