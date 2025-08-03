@@ -551,8 +551,8 @@ class ViewSolarPlant extends ViewRecord
                     ->icon('heroicon-o-users')
                     ->description('Übersicht der beteiligten Kunden und deren Informationen')
                     ->extraAttributes([
-                        'class' => 'bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4',
-                        'style' => 'background-color: rgb(249 250 251); border-radius: 0.5rem; padding: 1rem; margin: 0.5rem 0;'
+                        'class' => 'customers-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
                     ])
                     ->schema([
                         Infolists\Components\Grid::make(3)
