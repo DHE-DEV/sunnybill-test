@@ -765,6 +765,42 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsed($savedState['articles'] ?? false)
                     ->extraAttributes(['data-section-id' => 'articles']),
 
+                Infolists\Components\Section::make('Aufgaben')
+                    ->id('tasks')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->description('Übersicht der Aufgaben und To-Dos zur Solaranlage')
+                    ->extraAttributes([
+                        'class' => 'tasks-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('total_tasks_count')
+                                    ->label('Gesamte Aufgaben')
+                                    ->state(fn ($record) => $record->tasks()->count())
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('open_tasks_count')
+                                    ->label('Offene Aufgaben')
+                                    ->state(fn ($record) => $record->tasks()->whereIn('status', ['open', 'in_progress'])->count())
+                                    ->badge()
+                                    ->color('warning')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('completed_tasks_count')
+                                    ->label('Abgeschlossene Aufgaben')
+                                    ->state(fn ($record) => $record->tasks()->where('status', 'completed')->count())
+                                    ->badge()
+                                    ->color('success')
+                                    ->size('xl'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['tasks'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'tasks']),
+
                 Infolists\Components\Section::make('Termine')
                     ->id('milestones')
                     ->icon('heroicon-o-calendar-days')
@@ -1029,6 +1065,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .articles-section-gray,
             .articles-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Aufgaben Section Styling */
+            [data-section-id="tasks"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            
+            [data-section-id="tasks"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Alternative selector falls der erste nicht funktioniert */
+            .tasks-section-gray,
+            .tasks-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
