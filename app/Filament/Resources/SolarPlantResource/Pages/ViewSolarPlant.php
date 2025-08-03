@@ -555,7 +555,7 @@ class ViewSolarPlant extends ViewRecord
                         'style' => 'background-color: #1e6fc0ff !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #af9a3aff !important;'
                     ])
                     ->schema([
-                        Infolists\Components\Grid::make(3)
+                        Infolists\Components\Grid::make(5)
                             ->schema([
                                 Infolists\Components\TextEntry::make('participations_count')
                                     ->label('Anzahl Beteiligte')
@@ -574,9 +574,6 @@ class ViewSolarPlant extends ViewRecord
                                     ->badge()
                                     ->color(fn ($state) => $state > 0 ? 'info' : 'gray')
                                     ->size('xl'),
-                            ]),
-                        Infolists\Components\Grid::make(2)
-                            ->schema([
                                 Infolists\Components\TextEntry::make('total_participation_kwp')
                                     ->label('Gesamtbeteiligung (kWp)')
                                     ->state(fn ($record) => number_format(($record->total_participation / 100) * $record->total_capacity_kw, 3, ',', '.') . ' kWp')
