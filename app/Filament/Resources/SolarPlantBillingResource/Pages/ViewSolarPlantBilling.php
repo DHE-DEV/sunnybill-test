@@ -117,6 +117,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                             ->label('Zahlungsart')
                                             ->formatStateUsing(fn (?string $state): string => match($state) {
                                                 'transfer' => 'Überweisung',
+                                                'sepa_bulk_transfer' => 'SEPA Sammelüberweisung',
                                                 'direct_debit' => 'Lastschrift (Einzeln)',
                                                 'sepa_direct_debit' => 'SEPA Sammellastschrift',
                                                 default => $state ?: 'Nicht festgelegt',
@@ -124,6 +125,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                             ->badge()
                                             ->color(fn (?string $state): string => match($state) {
                                                 'transfer' => 'info',
+                                                'sepa_bulk_transfer' => 'primary',
                                                 'direct_debit' => 'warning', 
                                                 'sepa_direct_debit' => 'success',
                                                 default => 'gray',

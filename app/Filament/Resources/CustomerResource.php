@@ -309,6 +309,7 @@ class CustomerResource extends Resource
                             ->label('Zahlungsart')
                             ->options([
                                 'transfer' => 'Überweisung',
+                                'sepa_bulk_transfer' => 'SEPA Sammelüberweisung',
                                 'direct_debit' => 'Lastschrift (Einzeln)',
                                 'sepa_direct_debit' => 'SEPA Sammellastschrift',
                             ])
@@ -930,6 +931,7 @@ class CustomerResource extends Resource
                             ->label('Zahlungsart')
                             ->formatStateUsing(fn (?string $state): string => match($state) {
                                 'transfer' => 'Überweisung',
+                                'sepa_bulk_transfer' => 'SEPA Sammelüberweisung',
                                 'direct_debit' => 'Lastschrift (Einzeln)',
                                 'sepa_direct_debit' => 'SEPA Sammellastschrift',
                                 default => $state ?: 'Nicht festgelegt',
@@ -937,6 +939,7 @@ class CustomerResource extends Resource
                             ->badge()
                             ->color(fn (?string $state): string => match($state) {
                                 'transfer' => 'info',
+                                'sepa_bulk_transfer' => 'primary',
                                 'direct_debit' => 'warning',
                                 'sepa_direct_debit' => 'success',
                                 default => 'gray',
