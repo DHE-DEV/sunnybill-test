@@ -23,14 +23,14 @@ class ViewSolarPlant extends ViewRecord
     public function getRelationManagers(): array
     {
         return [
-            RelationManagers\ArticlesRelationManager::class,
-            RelationManagers\ParticipationsRelationManager::class,
-            RelationManagers\BillingsRelationManager::class,
-            RelationManagers\MonthlyResultsRelationManager::class,
-            RelationManagers\DocumentsRelationManager::class,
-            RelationManagers\ContractsRelationManager::class,
-            RelationManagers\SuppliersRelationManager::class,
-            RelationManagers\MilestonesRelationManager::class,
+            //RelationManagers\ArticlesRelationManager::class,
+            //RelationManagers\ParticipationsRelationManager::class,
+            //RelationManagers\BillingsRelationManager::class,
+            //RelationManagers\MonthlyResultsRelationManager::class,
+            //RelationManagers\DocumentsRelationManager::class,
+            //RelationManagers\ContractsRelationManager::class,
+            //RelationManagers\SuppliersRelationManager::class,
+            //RelationManagers\MilestonesRelationManager::class,
         ];
     }
 
@@ -236,7 +236,7 @@ class ViewSolarPlant extends ViewRecord
                                     ])
                                     ->compact()
                                     ->collapsible()
-                                    ->collapsed($savedState['location-status'] ?? false)
+                                    ->collapsed($savedState['location-status'] ?? true)
                                     ->extraAttributes(['data-section-id' => 'location-status']),
                                 Infolists\Components\Section::make('Beschreibung')
                                     ->id('description')
@@ -549,7 +549,7 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Kundenbeteiligungen')
                     ->id('customers')
                     ->icon('heroicon-o-users')
-                    ->description('Übersicht der beteiligten Kunden zur Solaranlage.')
+                    ->description('Übersicht der beteiligten Kunden zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'customers-section-gray',
                         'style' => 'background-color: #1e6fc0ff !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #af9a3aff !important;'
@@ -654,7 +654,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['suppliers'] ?? false)
+                    ->collapsed($savedState['suppliers'] ?? true)
                     ->extraAttributes(['data-section-id' => 'suppliers']),
 
                 Infolists\Components\Section::make('Verträge')
@@ -690,7 +690,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['contracts'] ?? false)
+                    ->collapsed($savedState['contracts'] ?? true)
                     ->extraAttributes(['data-section-id' => 'contracts']),
 
                 Infolists\Components\Section::make('Dokumente')
@@ -726,7 +726,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['documents'] ?? false)
+                    ->collapsed($savedState['documents'] ?? true)
                     ->extraAttributes(['data-section-id' => 'documents']),
 
                 Infolists\Components\Section::make('Artikel')
@@ -764,7 +764,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['articles'] ?? false)
+                    ->collapsed($savedState['articles'] ?? true)
                     ->extraAttributes(['data-section-id' => 'articles']),
 
                 Infolists\Components\Section::make('Aufgaben')
@@ -800,7 +800,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['tasks'] ?? false)
+                    ->collapsed($savedState['tasks'] ?? true)
                     ->extraAttributes(['data-section-id' => 'tasks']),
 
                 Infolists\Components\Section::make('Projekte')
@@ -836,7 +836,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['projects'] ?? false)
+                    ->collapsed($savedState['projects'] ?? true)
                     ->extraAttributes(['data-section-id' => 'projects']),
 
                 Infolists\Components\Section::make('Termine')
@@ -872,7 +872,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['milestones'] ?? false)
+                    ->collapsed($savedState['milestones'] ?? true)
                     ->extraAttributes(['data-section-id' => 'milestones']),
 
                 Infolists\Components\Section::make('Favoriten Notizen')
@@ -908,7 +908,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['favorite-notes'] ?? false)
+                    ->collapsed($savedState['favorite-notes'] ?? true)
                     ->extraAttributes(['data-section-id' => 'favorite-notes']),
 
                 Infolists\Components\Section::make('Standard Notizen')
@@ -944,7 +944,7 @@ class ViewSolarPlant extends ViewRecord
                     ])
                     ->compact()
                     ->collapsible()
-                    ->collapsed($savedState['standard-notes'] ?? false)
+                    ->collapsed($savedState['standard-notes'] ?? true)
                     ->extraAttributes(['data-section-id' => 'standard-notes']),
            ]);
    }
