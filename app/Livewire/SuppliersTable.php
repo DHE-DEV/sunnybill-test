@@ -48,9 +48,10 @@ class SuppliersTable extends Component implements HasForms, HasTable
                     ->copyable()
                     ->placeholder('Nicht vergeben'),
 
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('display_name')
                     ->label('Name')
-                    ->searchable()
+                    ->state(fn ($record) => $record->company_name ?: $record->name)
+                    ->searchable(['name', 'company_name'])
                     ->sortable()
                     ->weight('medium')
                     ->color('primary')
