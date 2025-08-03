@@ -68,11 +68,19 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                     ->openUrlInNewTab(false),
                 
                 Tables\Columns\TextColumn::make('percentage')
-                    ->label('Beteiligung')
+                    ->label('Beteiligung (%)')
                     ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
                     ->sortable()
                     ->badge()
                     ->color('success')
+                    ->alignCenter(),
+                
+                Tables\Columns\TextColumn::make('participation_kwp')
+                    ->label('Beteiligung (kWp)')
+                    ->state(fn ($record) => number_format(($record->percentage / 100) * $this->solarPlant->total_capacity_kw, 3, ',', '.') . ' kWp')
+                    ->sortable(false)
+                    ->badge()
+                    ->color('info')
                     ->alignCenter(),
                 
                 Tables\Columns\TextColumn::make('created_at')
@@ -80,7 +88,8 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                     ->date('d.m.Y')
                     ->sortable()
                     ->color('gray')
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Letzte Änderung')
