@@ -305,6 +305,10 @@ class CustomerResource extends Resource
                             ->default(14)
                             ->minValue(0)
                             ->maxValue(365),
+                        Forms\Components\TextInput::make('account_holder')
+                            ->label('Kontoinhaber')
+                            ->maxLength(255)
+                            ->placeholder('Name des Kontoinhabers'),
                         Forms\Components\TextInput::make('bank_name')
                             ->label('Bankname')
                             ->maxLength(255),
@@ -913,6 +917,8 @@ class CustomerResource extends Resource
                         \Filament\Infolists\Components\TextEntry::make('payment_days')
                             ->label('Zahlungsziel (Tage)')
                             ->suffix(' Tage'),
+                        \Filament\Infolists\Components\TextEntry::make('account_holder')
+                            ->label('Kontoinhaber'),
                         \Filament\Infolists\Components\TextEntry::make('bank_name')
                             ->label('Bankname'),
                         \Filament\Infolists\Components\TextEntry::make('iban')
