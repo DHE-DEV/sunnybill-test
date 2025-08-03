@@ -53,37 +53,6 @@ class DocumentsTable extends Component implements HasForms, HasTable
                     ->openUrlInNewTab(true)
                     ->limit(50),
 
-                Tables\Columns\TextColumn::make('category')
-                    ->label('Kategorie')
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'planning' => 'Planung',
-                        'permits' => 'Genehmigungen',
-                        'installation' => 'Installation',
-                        'maintenance' => 'Wartung',
-                        'invoices' => 'Rechnungen',
-                        'certificates' => 'Zertifikate',
-                        'contracts' => 'Verträge',
-                        'correspondence' => 'Korrespondenz',
-                        'technical' => 'Technische Unterlagen',
-                        'photos' => 'Fotos',
-                        default => 'Sonstige',
-                    })
-                    ->badge()
-                    ->color(fn ($state) => match($state) {
-                        'planning' => 'info',
-                        'permits' => 'warning',
-                        'installation' => 'primary',
-                        'maintenance' => 'success',
-                        'invoices' => 'danger',
-                        'certificates' => 'success',
-                        'contracts' => 'primary',
-                        'correspondence' => 'gray',
-                        'technical' => 'info',
-                        'photos' => 'purple',
-                        default => 'gray',
-                    })
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('documentType.name')
                     ->label('Dokumenttyp')
                     ->searchable()
@@ -96,6 +65,34 @@ class DocumentsTable extends Component implements HasForms, HasTable
                     ->state(fn ($record) => $record->formatted_size)
                     ->alignEnd()
                     ->color('gray'),
+
+                Tables\Columns\TextColumn::make('file_type')
+                    ->label('Dateityp')
+                    ->state(fn ($record) => match(true) {
+                        str_contains($record->mime_type, 'pdf') => 'PDF',
+                        str_contains($record->mime_type, 'image/jpeg') => 'JPEG',
+                        str_contains($record->mime_type, 'image/png') => 'PNG',
+                        str_contains($record->mime_type, 'image/gif') => 'GIF',
+                        str_contains($record->mime_type, 'image/') => 'Bild',
+                        str_contains($record->mime_type, 'wordprocessingml') => 'Word',
+                        str_contains($record->mime_type, 'spreadsheetml') => 'Excel',
+                        str_contains($record->mime_type, 'presentationml') => 'PowerPoint',
+                        str_contains($record->mime_type, 'zip') => 'ZIP',
+                        str_contains($record->mime_type, 'rar') => 'RAR',
+                        str_contains($record->mime_type, 'text/plain') => 'Text',
+                        str_contains($record->mime_type, 'text/csv') => 'CSV',
+                        default => strtoupper(pathinfo($record->original_name, PATHINFO_EXTENSION)) ?: 'Unbekannt',
+                    })
+                    ->badge()
+                    ->color(fn ($record) => match(true) {
+                        str_contains($record->mime_type, 'pdf') => 'danger',
+                        str_contains($record->mime_type, 'image/') => 'success',
+                        str_contains($record->mime_type, 'wordprocessingml') => 'info',
+                        str_contains($record->mime_type, 'spreadsheetml') => 'warning',
+                        str_contains($record->mime_type, 'zip') || str_contains($record->mime_type, 'rar') => 'gray',
+                        default => 'primary',
+                    })
+                    ->sortable(),
 
                 Tables\Columns\IconColumn::make('is_favorite')
                     ->label('Favorit')
