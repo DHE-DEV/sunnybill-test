@@ -182,6 +182,14 @@ class SolarPlant extends Model
     }
 
     /**
+     * Beziehung zu Projekten
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    /**
      * Beziehung zu Meilensteinen/Projektterminen
      */
     public function milestones(): HasMany
