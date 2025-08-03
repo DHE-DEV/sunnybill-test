@@ -328,6 +328,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                             $base64QrCode = $qrService->generateEpcQrCode($record);
                                             return 'data:image/png;base64,' . $base64QrCode;
                                         } catch (\Exception $e) {
+                                            \Log::error('QR-Code generation failed: ' . $e->getMessage());
                                             return null;
                                         }
                                     })
