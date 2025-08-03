@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Models\Participation;
+use App\Models\PlantParticipation;
 use App\Models\SolarPlant;
 use App\Models\Customer;
 use Filament\Forms;
@@ -32,7 +32,7 @@ class ParticipationsTable extends Component implements HasForms, HasTable
     {
         return $table
             ->query(
-                Participation::query()
+                PlantParticipation::query()
                     ->where('solar_plant_id', $this->solarPlant->id)
                     ->with(['customer'])
             )
@@ -253,7 +253,7 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                             ]),
                     ])
                     ->using(function (array $data) {
-                        return Participation::create([
+                        return PlantParticipation::create([
                             'solar_plant_id' => $this->solarPlant->id,
                             'customer_id' => $data['customer_id'],
                             'percentage' => $data['percentage'],
@@ -369,7 +369,7 @@ class ParticipationsTable extends Component implements HasForms, HasTable
 
     protected function getTableQuery(): Builder
     {
-        return Participation::query()
+        return PlantParticipation::query()
             ->where('solar_plant_id', $this->solarPlant->id)
             ->with(['customer']);
     }

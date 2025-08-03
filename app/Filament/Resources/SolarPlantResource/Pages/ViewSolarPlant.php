@@ -550,6 +550,10 @@ class ViewSolarPlant extends ViewRecord
                     ->id('customers')
                     ->icon('heroicon-o-users')
                     ->description('Übersicht der beteiligten Kunden und deren Informationen')
+                    ->extraAttributes([
+                        'class' => 'bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4',
+                        'style' => 'background-color: rgb(249 250 251); border-radius: 0.5rem; padding: 1rem; margin: 0.5rem 0;'
+                    ])
                     ->schema([
                         Infolists\Components\Grid::make(3)
                             ->schema([
@@ -571,7 +575,7 @@ class ViewSolarPlant extends ViewRecord
                                     ->color(fn ($state) => $state > 0 ? 'info' : 'gray')
                                     ->size('xl'),
                             ]),
-                        \Filament\Infolists\Components\Livewire::make(\App\Livewire\ParticipationsTable::class, ['solarPlant' => fn() => $this->record])
+                        \Filament\Infolists\Components\Livewire::make(\App\Livewire\ParticipationsTable::class, ['solarPlant' => $this->record])
                             ->key('participations-table'),
                     ])
                     ->headerActions([
