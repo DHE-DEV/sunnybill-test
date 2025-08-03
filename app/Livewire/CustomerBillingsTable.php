@@ -83,7 +83,7 @@ class CustomerBillingsTable extends Component implements HasForms, HasTable
                     ->sortable()
                     ->color('success')
                     ->alignCenter()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                 Tables\Columns\TextColumn::make('total_costs')
                     ->label('Gesamtkosten')
@@ -299,19 +299,26 @@ class CustomerBillingsTable extends Component implements HasForms, HasTable
                     ),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('Anzeigen')
-                    ->icon('heroicon-o-eye')
-                    ->color('info')
-                    ->url(fn ($record) => route('filament.admin.resources.solar-plant-billings.view', $record))
-                    ->openUrlInNewTab(false),
-                
-                Tables\Actions\EditAction::make()
-                    ->label('Bearbeiten')
-                    ->icon('heroicon-o-pencil')
-                    ->color('warning')
-                    ->url(fn ($record) => route('filament.admin.resources.solar-plant-billings.edit', $record))
-                    ->openUrlInNewTab(false),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->label('Anzeigen')
+                        ->icon('heroicon-o-eye')
+                        ->color('info')
+                        ->url(fn ($record) => route('filament.admin.resources.solar-plant-billings.view', $record))
+                        ->openUrlInNewTab(false),
+                    
+                    Tables\Actions\EditAction::make()
+                        ->label('Bearbeiten')
+                        ->icon('heroicon-o-pencil')
+                        ->color('warning')
+                        ->url(fn ($record) => route('filament.admin.resources.solar-plant-billings.edit', $record))
+                        ->openUrlInNewTab(false),
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

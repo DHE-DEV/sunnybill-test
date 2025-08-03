@@ -562,6 +562,12 @@ class ViewSolarPlant extends ViewRecord
                                     ->badge()
                                     ->color('primary')
                                     ->size('xl'),
+                                Infolists\Components\TextEntry::make('total_participation_kwp')
+                                    ->label('Gesamtbeteiligung (kWp)')
+                                    ->state(fn ($record) => number_format(($record->total_participation / 100) * $record->total_capacity_kw, 3, ',', '.') . ' kWp')
+                                    ->badge()
+                                    ->color('success')
+                                    ->size('xl'),
                                 Infolists\Components\TextEntry::make('total_participation')
                                     ->label('Gesamtbeteiligung (%)')
                                     ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . '%')
@@ -573,12 +579,6 @@ class ViewSolarPlant extends ViewRecord
                                     ->formatStateUsing(fn ($state) => number_format($state, 1, ',', '.') . '%')
                                     ->badge()
                                     ->color(fn ($state) => $state > 0 ? 'info' : 'gray')
-                                    ->size('xl'),
-                                Infolists\Components\TextEntry::make('total_participation_kwp')
-                                    ->label('Gesamtbeteiligung (kWp)')
-                                    ->state(fn ($record) => number_format(($record->total_participation / 100) * $record->total_capacity_kw, 3, ',', '.') . ' kWp')
-                                    ->badge()
-                                    ->color('success')
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('available_participation_kwp')
                                     ->label('Verfügbare Beteiligung (kWp)')
