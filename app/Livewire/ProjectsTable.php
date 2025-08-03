@@ -397,18 +397,32 @@ class ProjectsTable extends Component implements HasForms, HasTable
                 Tables\Filters\Filter::make('progress_filter')
                     ->label('Fortschritt')
                     ->form([
-                        Forms\Components\RangeSlider::make('progress_range')
-                            ->label('Fortschritt (%)')
-                            ->min(0)
-                            ->max(100)
-                            ->step(5),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('progress_min')
+                                    ->label('Fortschritt min (%)')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->placeholder('0'),
+                                Forms\Components\TextInput::make('progress_max')
+                                    ->label('Fortschritt max (%)')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->placeholder('100'),
+                            ]),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
-                        $range = $data['progress_range'] ?? null;
-                        if (!$range || count($range) !== 2) return $query;
-                        
-                        return $query->where('progress_percentage', '>=', $range[0])
-                                    ->where('progress_percentage', '<=', $range[1]);
+                        return $query
+                            ->when(
+                                $data['progress_min'],
+                                fn (Builder $query, $value): Builder => $query->where('progress_percentage', '>=', $value),
+                            )
+                            ->when(
+                                $data['progress_max'],
+                                fn (Builder $query, $value): Builder => $query->where('progress_percentage', '<=', $value),
+                            );
                     }),
             ])
             ->actions([
