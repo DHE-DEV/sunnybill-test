@@ -80,6 +80,7 @@ class AdminPanelProvider extends PanelProvider
                 'Kunden',
                 'Lieferanten',
                 'Solar Management',
+                'Projektverwaltung',
                 'Fakturierung',
                 'Rechnungen',
                 'Stammdaten',
