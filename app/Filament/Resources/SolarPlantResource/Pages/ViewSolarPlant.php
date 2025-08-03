@@ -764,6 +764,42 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsible()
                     ->collapsed($savedState['articles'] ?? false)
                     ->extraAttributes(['data-section-id' => 'articles']),
+
+                Infolists\Components\Section::make('Termine')
+                    ->id('milestones')
+                    ->icon('heroicon-o-calendar-days')
+                    ->description('Übersicht der Meilensteine und Termine zur Solaranlage')
+                    ->extraAttributes([
+                        'class' => 'milestones-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('total_milestones_count')
+                                    ->label('Gesamte Termine')
+                                    ->state(fn ($record) => $record->milestones()->count())
+                                    ->badge()
+                                    ->color('primary')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('completed_milestones_count')
+                                    ->label('Abgeschlossene Termine')
+                                    ->state(fn ($record) => $record->milestones()->where('status', 'completed')->count())
+                                    ->badge()
+                                    ->color('success')
+                                    ->size('xl'),
+                                Infolists\Components\TextEntry::make('upcoming_milestones_count')
+                                    ->label('Anstehende Termine')
+                                    ->state(fn ($record) => $record->milestones()->where('planned_date', '>=', now())->where('status', '!=', 'completed')->count())
+                                    ->badge()
+                                    ->color('warning')
+                                    ->size('xl'),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['milestones'] ?? false)
+                    ->extraAttributes(['data-section-id' => 'milestones']),
            ]);
    }
 
@@ -921,6 +957,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .articles-section-gray,
             .articles-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Termine Section Styling */
+            [data-section-id="milestones"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            
+            [data-section-id="milestones"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Alternative selector falls der erste nicht funktioniert */
+            .milestones-section-gray,
+            .milestones-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;
