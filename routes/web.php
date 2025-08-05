@@ -32,17 +32,4 @@ Route::get('/documents/{document}/download', [\App\Http\Controllers\DocumentCont
     ->name('documents.download')
     ->middleware('auth');
 
-// API Documentation JSON Route
-Route::get('/docs', function () {
-    $jsonPath = public_path('api-docs/api-docs.json');
-    if (!file_exists($jsonPath)) {
-        abort(404, 'API Documentation not found');
-    }
-    
-    return response()->file($jsonPath, [
-        'Content-Type' => 'application/json',
-        'Access-Control-Allow-Origin' => '*',
-        'Access-Control-Allow-Methods' => 'GET',
-        'Access-Control-Allow-Headers' => 'Origin, Content-Type, Accept, Authorization'
-    ]);
-})->name('api.docs.json');
+// Remove conflicting route - let L5-Swagger handle its own routes
