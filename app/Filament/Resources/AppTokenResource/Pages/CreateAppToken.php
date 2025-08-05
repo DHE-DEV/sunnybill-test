@@ -63,7 +63,6 @@ class CreateAppToken extends CreateRecord
                         <div class='grid grid-cols-2 gap-4 text-sm'>
                             <div><strong>Name:</strong> {$appToken->name}</div>
                             <div><strong>App-Typ:</strong> {$appToken->app_type_label}</div>
-                            <div><strong>Berechtigungen:</strong> " . implode(', ', $appToken->abilities_labels ?? []) . "</div>
                             <div><strong>Gültig bis:</strong> {$appToken->expires_at->format('d.m.Y H:i')}</div>
                         </div>
                     </div>
