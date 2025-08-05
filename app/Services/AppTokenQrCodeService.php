@@ -67,14 +67,14 @@ class AppTokenQrCodeService
     }
     
     /**
-     * Generiert einen einfachen Token QR-Code (nur der Token)
+     * Generiert einen einfachen Token QR-Code (nur der Token) - optimiert für maximale Lesbarkeit
      */
     public function generateSimpleTokenQrCode(string $token): string
     {
         return $this->generateTokenQrCode($token, [
-            'size' => 400,
-            'margin' => 20,
-            'errorCorrectionLevel' => ErrorCorrectionLevel::Medium
+            'size' => 500,  // Größer für bessere Lesbarkeit
+            'margin' => 40, // Mehr Rand für bessere Scanner-Erkennung
+            'errorCorrectionLevel' => ErrorCorrectionLevel::High // Höhere Fehlerkorrektur
         ]);
     }
     
