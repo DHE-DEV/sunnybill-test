@@ -63,11 +63,14 @@ class CreateAppToken extends CreateRecord
                         <strong>API-Token:</strong><br>
                         <code class='bg-gray-100 p-2 rounded text-sm font-mono break-all'>{$plainTextToken}</code>
                     </div>
-                    <div class='text-center'>
-                        <strong>QR-Code ({$qrCodeType}):</strong><br>
-                        <img src='data:image/png;base64,{$qrCodeBase64}' alt='Token QR-Code' style='width: 200px; height: 200px; border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; margin: 10px auto; display: block;' />
-                        <div class='text-xs text-gray-500 mt-2'>
-                            Scannen Sie den QR-Code mit Ihrer App für eine schnelle Konfiguration
+                    <div class='text-center bg-white p-4 rounded-lg border border-gray-200'>
+                        <strong class='text-lg'>QR-Code ({$qrCodeType}):</strong><br>
+                        <div class='bg-white p-4 rounded-lg inline-block mt-3 shadow-sm border'>
+                            <img src='data:image/png;base64,{$qrCodeBase64}' alt='Token QR-Code' style='width: 300px; height: 300px; display: block;' />
+                        </div>
+                        <div class='text-sm text-gray-600 mt-3 max-w-md mx-auto'>
+                            📱 Scannen Sie den QR-Code mit Ihrer App für eine schnelle Konfiguration<br>
+                            <span class='text-xs text-gray-500'>Optimiert für bessere Lesbarkeit</span>
                         </div>
                     </div>
                     <div class='text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200'>

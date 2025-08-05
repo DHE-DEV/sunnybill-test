@@ -14,11 +14,11 @@ class AppTokenQrCodeService
      */
     public function generateTokenQrCode(string $token, array $config = []): string
     {
-        // Standard-Konfiguration für Token QR-Codes
+        // Standard-Konfiguration für Token QR-Codes - optimiert für bessere Lesbarkeit
         $defaultConfig = [
-            'size' => 300,
-            'margin' => 10,
-            'errorCorrectionLevel' => ErrorCorrectionLevel::Medium,
+            'size' => 400,
+            'margin' => 20,
+            'errorCorrectionLevel' => ErrorCorrectionLevel::High,
             'encoding' => 'UTF-8'
         ];
         
@@ -44,23 +44,24 @@ class AppTokenQrCodeService
      */
     public function generateMobileAppQrCode(string $token, array $appConfig = []): string
     {
-        // Erstelle eine JSON-Struktur für Mobile Apps
+        // Erstelle eine kompakte JSON-Struktur für Mobile Apps
         $qrData = [
-            'type' => 'voltmaster_api_token',
+            'type' => 'voltmaster_token',
             'token' => $token,
-            'api_url' => config('app.url', 'https://prosoltec.voltmaster.cloud'),
-            'version' => '1.0'
+            'url' => config('app.url', 'https://prosoltec.voltmaster.cloud'),
+            'v' => '1.0'
         ];
         
-        // Füge zusätzliche App-Konfiguration hinzu
+        // Füge zusätzliche App-Konfiguration hinzu (kompakt)
         if (!empty($appConfig)) {
-            $qrData['config'] = $appConfig;
+            $qrData['cfg'] = $appConfig;
         }
         
         $jsonData = json_encode($qrData, JSON_UNESCAPED_SLASHES);
         
         return $this->generateTokenQrCode($jsonData, [
-            'size' => 350, // Größer für bessere Lesbarkeit bei JSON
+            'size' => 500, // Größer für bessere Lesbarkeit bei JSON
+            'margin' => 30,
             'errorCorrectionLevel' => ErrorCorrectionLevel::High // Höhere Fehlerkorrektur für komplexere Daten
         ]);
     }
@@ -71,35 +72,34 @@ class AppTokenQrCodeService
     public function generateSimpleTokenQrCode(string $token): string
     {
         return $this->generateTokenQrCode($token, [
-            'size' => 250,
-            'margin' => 8
+            'size' => 400,
+            'margin' => 20,
+            'errorCorrectionLevel' => ErrorCorrectionLevel::Medium
         ]);
     }
     
     /**
-     * Generiert einen QR-Code mit API-Konfiguration
+     * Generiert einen QR-Code mit API-Konfiguration (kompakt für bessere Lesbarkeit)
      */
     public function generateApiConfigQrCode(string $token, string $tokenName, array $abilities = []): string
     {
+        // Kompakte JSON-Struktur für bessere QR-Code-Lesbarkeit
         $qrData = [
-            'type' => 'voltmaster_api_config',
+            'type' => 'vm_api',
             'token' => $token,
-            'token_name' => $tokenName,
-            'api_url' => config('app.url', 'https://prosoltec.voltmaster.cloud'),
-            'api_version' => '1.0',
-            'abilities' => $abilities,
-            'endpoints' => [
-                'base' => config('app.url', 'https://prosoltec.voltmaster.cloud'),
-                'api' => '/api/app',
-                'docs' => '/api/documentation'
-            ],
-            'generated_at' => now()->toISOString()
+            'name' => $tokenName,
+            'url' => config('app.url', 'https://prosoltec.voltmaster.cloud'),
+            'v' => '1.0',
+            'perms' => $abilities,
+            'api' => '/api/app'
         ];
         
-        $jsonData = json_encode($qrData, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        // Kompakte JSON ohne Pretty Print für kleineren QR-Code
+        $jsonData = json_encode($qrData, JSON_UNESCAPED_SLASHES);
         
         return $this->generateTokenQrCode($jsonData, [
-            'size' => 400,
+            'size' => 500,
+            'margin' => 30,
             'errorCorrectionLevel' => ErrorCorrectionLevel::High
         ]);
     }
