@@ -1,0 +1,595 @@
+{
+  "info": {
+    "name": "VoltMaster API",
+    "description": "VoltMaster Solar Management System API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://prosoltec.voltmaster.cloud",
+      "type": "string"
+    },
+    {
+      "key": "api_token",
+      "value": "YOUR_APP_TOKEN_HERE",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Get Tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/tasks?page=1&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "tasks"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Solar Panel Installation\",\n  \"description\": \"Install solar panels on customer roof\",\n  \"status\": \"open\",\n  \"priority\": \"medium\",\n  \"due_date\": \"2024-12-31\",\n  \"assigned_to\": 1,\n  \"customer_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/app/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "tasks"]
+            }
+          }
+        },
+        {
+          "name": "Get Task",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/tasks/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "tasks", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Task Title\",\n  \"description\": \"Updated description\",\n  \"status\": \"in_progress\",\n  \"priority\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/app/tasks/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "tasks", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Task Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/app/tasks/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "tasks", "1", "status"]
+            }
+          }
+        },
+        {
+          "name": "Assign Task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assigned_to\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/app/tasks/1/assign",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "tasks", "1", "assign"]
+            }
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/tasks/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "tasks", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Get Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "customers"]
+            }
+          }
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Max Mustermann\",\n  \"email\": \"max@example.com\",\n  \"customer_type\": \"private\",\n  \"phone\": \"+49 123 456789\",\n  \"address\": \"Musterstraße 123, 12345 Musterstadt\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/app/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "customers"]
+            }
+          }
+        },
+        {
+          "name": "Get Customer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/customers/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "customers", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Customer Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/customers/1/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "customers", "1", "projects"]
+            }
+          }
+        },
+        {
+          "name": "Get Customer Tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/customers/1/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "customers", "1", "tasks"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Solar Plants",
+      "item": [
+        {
+          "name": "Get Solar Plants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/solar-plants",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "solar-plants"]
+            }
+          }
+        },
+        {
+          "name": "Create Solar Plant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plant_number\": \"SP-001\",\n  \"name\": \"Solaranlage Mustermann\",\n  \"location\": \"Musterstraße 123, 12345 Musterstadt\",\n  \"total_capacity_kw\": 10.5,\n  \"customer_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/app/solar-plants",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "solar-plants"]
+            }
+          }
+        },
+        {
+          "name": "Get Solar Plant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/solar-plants/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "solar-plants", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Solar Plant Components",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/solar-plants/1/components",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "solar-plants", "1", "components"]
+            }
+          }
+        },
+        {
+          "name": "Get Solar Plant Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/solar-plants/1/statistics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "solar-plants", "1", "statistics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Get Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "projects"]
+            }
+          }
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Solar Installation Project\",\n  \"description\": \"Complete solar panel installation\",\n  \"status\": \"planning\",\n  \"customer_id\": 1,\n  \"start_date\": \"2024-01-01\",\n  \"end_date\": \"2024-03-31\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/app/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "projects"]
+            }
+          }
+        },
+        {
+          "name": "Get Project",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/projects/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "projects", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Project Progress",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/projects/1/progress",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "projects", "1", "progress"]
+            }
+          }
+        },
+        {
+          "name": "Get Project Milestones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/projects/1/milestones",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "projects", "1", "milestones"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Suppliers",
+      "item": [
+        {
+          "name": "Get Suppliers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/suppliers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "suppliers"]
+            }
+          }
+        },
+        {
+          "name": "Create Supplier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Solar Components GmbH\",\n  \"email\": \"info@solarcomponents.de\",\n  \"phone\": \"+49 123 456789\",\n  \"address\": \"Industriestraße 1, 12345 Musterstadt\",\n  \"supplier_type\": \"components\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/app/suppliers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "suppliers"]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/suppliers/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "suppliers", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier Contracts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/suppliers/1/contracts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "suppliers", "1", "contracts"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Costs",
+      "item": [
+        {
+          "name": "Get Costs Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/costs/overview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "costs", "overview"]
+            }
+          }
+        },
+        {
+          "name": "Get Costs Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/costs/reports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "costs", "reports"]
+            }
+          }
+        },
+        {
+          "name": "Get Project Costs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/projects/1/costs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "projects", "1", "costs"]
+            }
+          }
+        },
+        {
+          "name": "Add Project Cost",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Solar panels\",\n  \"amount\": 5000.00,\n  \"cost_category_id\": 1,\n  \"date\": \"2024-01-15\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/app/projects/1/costs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "projects", "1", "costs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Options & Dropdowns",
+      "item": [
+        {
+          "name": "Get Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get Task Options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/options/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "options", "tasks"]
+            }
+          }
+        },
+        {
+          "name": "Get Project Options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/options/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "options", "projects"]
+            }
+          }
+        },
+        {
+          "name": "Get Customer Options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/app/options/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "app", "options", "customers"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
