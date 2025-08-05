@@ -31,3 +31,18 @@ Route::get('/documents/{document}/preview', [\App\Http\Controllers\DocumentContr
 Route::get('/documents/{document}/download', [\App\Http\Controllers\DocumentController::class, 'download'])
     ->name('documents.download')
     ->middleware('auth');
+
+// API Documentation JSON Route
+Route::get('/docs', function () {
+    $jsonPath = public_path('api-docs/api-docs.json');
+    if (!file_exists($jsonPath)) {
+        abort(404, 'API Documentation not found');
+    }
+    
+    return response()->file($jsonPath, [
+        'Content-Type' => 'application/json',
+        'Access-Control-Allow-Origin' => '*',
+        'Access-Control-Allow-Methods' => 'GET',
+        'Access-Control-Allow-Headers' => 'Origin, Content-Type, Accept, Authorization'
+    ]);
+})->name('api.docs.json');
