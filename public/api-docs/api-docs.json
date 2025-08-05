@@ -1,0 +1,1035 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "VoltMaster API Documentation",
+        "description": "API Documentation für das VoltMaster Solar Management System",
+        "contact": {
+            "email": "api@voltmaster.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://my-default-host.com",
+            "description": "VoltMaster API Server"
+        }
+    ],
+    "paths": {
+        "/api/users/search": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Benutzer suchen für @mentions",
+                "description": "Sucht Benutzer basierend auf Namen für @mention Funktionalität",
+                "operationId": "08df4fcf174091898caca87bbd63ed89",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Suchterm für Benutzername",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "john"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste der gefundenen Benutzer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "John Doe"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "example": "john@example.com"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/all": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Alle Benutzer abrufen",
+                "description": "Gibt alle Benutzer für @mention Funktionalität zurück",
+                "operationId": "555c143a9d06b0d623d573f266064db3",
+                "responses": {
+                    "200": {
+                        "description": "Liste aller Benutzer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "John Doe"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "example": "john@example.com"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Aktueller authentifizierter Benutzer",
+                "description": "Gibt die Informationen des aktuell authentifizierten Benutzers zurück",
+                "operationId": "94984d47c429c7ebd55c0d7884b2b7ec",
+                "responses": {
+                    "200": {
+                        "description": "Benutzerinformationen",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "John Doe"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "john@example.com"
+                                        },
+                                        "email_verified_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Nicht authentifiziert"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/app/profile": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Benutzer-Profil (App Token)",
+                "description": "Gibt das Profil des authentifizierten Benutzers zurück (App Token erforderlich)",
+                "operationId": "b01e88bb53b5adf19324cf0f99161b46",
+                "responses": {
+                    "200": {
+                        "description": "Profil-Informationen",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Nicht authentifiziert"
+                    },
+                    "403": {
+                        "description": "Keine Berechtigung"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            }
+        },
+        "/api/app/tasks": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Aufgaben abrufen",
+                "description": "Gibt eine paginierte Liste von Aufgaben zurück",
+                "operationId": "d8e0c1c5263ccc59daca43e18204fa9d",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Seitennummer",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Anzahl Einträge pro Seite",
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste der Aufgaben",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "open",
+                                                            "in_progress",
+                                                            "completed",
+                                                            "cancelled"
+                                                        ]
+                                                    },
+                                                    "priority": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "low",
+                                                            "medium",
+                                                            "high",
+                                                            "urgent"
+                                                        ]
+                                                    },
+                                                    "due_date": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    },
+                                                    "assigned_to": {
+                                                        "type": "integer"
+                                                    },
+                                                    "customer_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Nicht authentifiziert"
+                    },
+                    "403": {
+                        "description": "Keine tasks:read Berechtigung"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Neue Aufgabe erstellen",
+                "description": "Erstellt eine neue Aufgabe",
+                "operationId": "623903e3bbd3b4ba8ca17f1efeecec05",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "status",
+                                    "priority"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Solar Panel Installation"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Install solar panels on customer roof"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "open",
+                                            "in_progress",
+                                            "completed",
+                                            "cancelled"
+                                        ],
+                                        "example": "open"
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "enum": [
+                                            "low",
+                                            "medium",
+                                            "high",
+                                            "urgent"
+                                        ],
+                                        "example": "medium"
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-31"
+                                    },
+                                    "assigned_to": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "customer_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "supplier_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "project_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Aufgabe erfolgreich erstellt",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "priority": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validierungsfehler"
+                    },
+                    "401": {
+                        "description": "Nicht authentifiziert"
+                    },
+                    "403": {
+                        "description": "Keine tasks:create Berechtigung"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            }
+        },
+        "/api/app/customers": {
+            "get": {
+                "tags": [
+                    "Customers"
+                ],
+                "summary": "Kunden abrufen",
+                "description": "Gibt eine paginierte Liste von Kunden zurück",
+                "operationId": "f6e3246928793a0d70fef5eaef48ce56",
+                "responses": {
+                    "200": {
+                        "description": "Liste der Kunden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "email": {
+                                                        "type": "string"
+                                                    },
+                                                    "customer_type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "private",
+                                                            "business"
+                                                        ]
+                                                    },
+                                                    "company_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Keine customers:read Berechtigung"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            }
+        },
+        "/api/app/solar-plants": {
+            "get": {
+                "tags": [
+                    "Solar Plants"
+                ],
+                "summary": "Solaranlagen abrufen",
+                "description": "Gibt eine Liste von Solaranlagen zurück",
+                "operationId": "def4e069c442fbb093fee67cb92cd020",
+                "responses": {
+                    "200": {
+                        "description": "Liste der Solaranlagen",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "plant_number": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "location": {
+                                                        "type": "string"
+                                                    },
+                                                    "total_capacity_kw": {
+                                                        "type": "number"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Keine solar-plants:read Berechtigung"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            }
+        },
+        "/users/search": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Search users for @mentions",
+                "operationId": "4dfe164803028941cedcfa8e6dd9f19f",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search term for username",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "john"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of found users",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "John Doe"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "example": "john@example.com"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/all": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get all users",
+                "operationId": "ab05a976f24e794f11d2d2647daadd44",
+                "responses": {
+                    "200": {
+                        "description": "List of all users",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "email": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get current authenticated user",
+                "operationId": "09e7a5ef30bf12a954242d449ec40d1c",
+                "responses": {
+                    "200": {
+                        "description": "User information",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/app/profile": {
+            "get": {
+                "tags": [
+                    "App Token API"
+                ],
+                "summary": "Get user profile (App Token)",
+                "operationId": "b03a2d845f400389b2f4c7e5759f044e",
+                "responses": {
+                    "200": {
+                        "description": "Profile information",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            }
+        },
+        "/app/tasks": {
+            "get": {
+                "tags": [
+                    "App Token API"
+                ],
+                "summary": "Get tasks",
+                "operationId": "5b1752595a41213d7e06f90494d2eb08",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of tasks",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "priority": {
+                                                        "type": "string"
+                                                    },
+                                                    "due_date": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing tasks:read permission"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            }
+        },
+        "/app/customers": {
+            "get": {
+                "tags": [
+                    "App Token API"
+                ],
+                "summary": "Get customers",
+                "operationId": "d3411fb5aafc0d86c15e59f37e6d4bb7",
+                "responses": {
+                    "200": {
+                        "description": "List of customers",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "email": {
+                                                        "type": "string"
+                                                    },
+                                                    "customer_type": {
+                                                        "type": "string"
+                                                    },
+                                                    "company_name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing customers:read permission"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            }
+        },
+        "/app/solar-plants": {
+            "get": {
+                "tags": [
+                    "App Token API"
+                ],
+                "summary": "Get solar plants",
+                "operationId": "8f53921fd8b30497ddaf91400d4717cf",
+                "responses": {
+                    "200": {
+                        "description": "List of solar plants",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "plant_number": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "location": {
+                                                        "type": "string"
+                                                    },
+                                                    "total_capacity_kw": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing solar-plants:read permission"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            }
+        },
+        "/app/projects": {
+            "get": {
+                "tags": [
+                    "App Token API"
+                ],
+                "summary": "Get projects",
+                "operationId": "484c9703a98d4a597e5492378a2442da",
+                "responses": {
+                    "200": {
+                        "description": "List of projects",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "customer_id": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing projects:read permission"
+                    }
+                },
+                "security": [
+                    {
+                        "app_token": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "app_token": {
+                "type": "http",
+                "description": "App Token für API-Zugriff",
+                "bearerFormat": "App Token",
+                "scheme": "bearer"
+            },
+            "sanctum": {
+                "type": "http",
+                "description": "Laravel Sanctum Token",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "Authentifizierung und Autorisierung"
+        },
+        {
+            "name": "Users",
+            "description": "Benutzer-Management"
+        },
+        {
+            "name": "Tasks",
+            "description": "Aufgaben-Management"
+        },
+        {
+            "name": "Customers",
+            "description": "Kunden-Management"
+        },
+        {
+            "name": "Solar Plants",
+            "description": "Solaranlagen-Management"
+        },
+        {
+            "name": "App Token API",
+            "description": "App Token API"
+        }
+    ]
+}
