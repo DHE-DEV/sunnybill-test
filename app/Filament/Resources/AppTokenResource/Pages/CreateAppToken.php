@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AppTokenResource\Pages;
 
 use App\Filament\Resources\AppTokenResource;
 use App\Models\AppToken;
+use App\Services\AppTokenQrCodeService;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Notifications\Notification;
@@ -32,11 +33,29 @@ class CreateAppToken extends CreateRecord
             'notes' => $data['notes'],
         ]);
 
-        // Zeige den Token in einer Benachrichtigung
+        // Generiere QR-Code für den Token
+        $qrCodeService = new AppTokenQrCodeService();
+        
+        // Wähle QR-Code-Typ basierend auf App-Typ
+        if (in_array($data['app_type'] ?? 'mobile_app', ['mobile_app', 'desktop_app'])) {
+            // Für Mobile/Desktop Apps: Vollständige Konfiguration
+            $qrCodeBase64 = $qrCodeService->generateApiConfigQrCode(
+                $plainTextToken,
+                $appToken->name,
+                $data['abilities'] ?? ['tasks:read']
+            );
+            $qrCodeType = 'API-Konfiguration';
+        } else {
+            // Für andere Apps: Einfacher Token
+            $qrCodeBase64 = $qrCodeService->generateSimpleTokenQrCode($plainTextToken);
+            $qrCodeType = 'Token';
+        }
+
+        // Zeige den Token mit QR-Code in einer Benachrichtigung
         Notification::make()
             ->title('Token erfolgreich erstellt')
             ->body("
-                <div class='space-y-4'>
+                <div class='space-y-6'>
                     <div>
                         <strong>Token-Name:</strong> {$appToken->name}
                     </div>
@@ -44,8 +63,15 @@ class CreateAppToken extends CreateRecord
                         <strong>API-Token:</strong><br>
                         <code class='bg-gray-100 p-2 rounded text-sm font-mono break-all'>{$plainTextToken}</code>
                     </div>
-                    <div class='text-sm text-gray-600'>
-                        <strong>Wichtig:</strong> Kopieren Sie diesen Token jetzt. Er wird aus Sicherheitsgründen nicht mehr angezeigt.
+                    <div class='text-center'>
+                        <strong>QR-Code ({$qrCodeType}):</strong><br>
+                        <img src='data:image/png;base64,{$qrCodeBase64}' alt='Token QR-Code' style='width: 200px; height: 200px; border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; margin: 10px auto; display: block;' />
+                        <div class='text-xs text-gray-500 mt-2'>
+                            Scannen Sie den QR-Code mit Ihrer App für eine schnelle Konfiguration
+                        </div>
+                    </div>
+                    <div class='text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200'>
+                        <strong>⚠️ Wichtig:</strong> Kopieren Sie diesen Token jetzt und speichern Sie ihn sicher. Er wird aus Sicherheitsgründen nicht mehr angezeigt.
                     </div>
                 </div>
             ")
