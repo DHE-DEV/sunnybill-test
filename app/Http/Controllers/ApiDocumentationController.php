@@ -8,17 +8,17 @@ use Illuminate\Routing\Controller as BaseController;
 
 /**
  * @OA\Info(
- *     title="SunnyBill API Documentation",
+ *     title="VoltMaster API Documentation",
  *     version="1.0.0",
- *     description="API Documentation für das SunnyBill Solar Management System",
+ *     description="API Documentation für das VoltMaster Solar Management System",
  *     @OA\Contact(
- *         email="api@sunnybill.com"
+ *         email="api@voltmaster.com"
  *     )
  * )
  * 
  * @OA\Server(
  *     url=L5_SWAGGER_CONST_HOST,
- *     description="SunnyBill API Server"
+ *     description="VoltMaster API Server"
  * )
  * 
  * @OA\SecurityScheme(

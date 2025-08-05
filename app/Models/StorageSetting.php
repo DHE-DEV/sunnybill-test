@@ -386,7 +386,7 @@ class StorageSetting extends Model
                 'http' => [
                     'method' => 'HEAD',
                     'timeout' => 10,
-                    'user_agent' => 'Laravel-SunnyBill-Test/1.0',
+                    'user_agent' => 'Laravel-VoltMaster-Test/1.0',
                     'header' => [
                         'Accept: */*',
                         'Connection: close'

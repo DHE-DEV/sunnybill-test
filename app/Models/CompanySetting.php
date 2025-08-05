@@ -163,7 +163,7 @@ class CompanySetting extends Model
         } catch (\Exception $e) {
             // Fallback wenn Tabelle noch nicht existiert (z.B. während Migration)
             return new static([
-                'company_name' => 'SunnyBill',
+                'company_name' => 'VoltMaster',
                 'default_payment_days' => 14,
                 'article_price_decimal_places' => 2,
                 'total_price_decimal_places' => 2,
@@ -417,10 +417,10 @@ class CompanySetting extends Model
     public function getPortalName(): string
     {
         try {
-            return $this->portal_name ?: config('app.name', 'SunnyBill');
+            return $this->portal_name ?: config('app.name', 'VoltMaster');
         } catch (\Exception $e) {
             // Spalte existiert noch nicht
-            return config('app.name', 'SunnyBill');
+            return config('app.name', 'VoltMaster');
         }
     }
 
