@@ -89,16 +89,12 @@ class AppTokenResource extends Resource
                                         Forms\Components\Section::make('Aufgaben-Verwaltung')
                                             ->description('Grundlegende CRUD-Operationen für Aufgaben')
                                             ->schema([
-                                                Forms\Components\CheckboxList::make('task_management_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'tasks:read' => 'Aufgaben lesen',
-                                                        'tasks:create' => 'Aufgaben erstellen',
-                                                        'tasks:update' => 'Aufgaben bearbeiten',
-                                                        'tasks:delete' => 'Aufgaben löschen',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('task_management_abilities', [
+                                                    'tasks:read' => 'Aufgaben lesen',
+                                                    'tasks:create' => 'Aufgaben erstellen',
+                                                    'tasks:update' => 'Aufgaben bearbeiten',
+                                                    'tasks:delete' => 'Aufgaben löschen',
+                                                ]),
                                             ])
                                             ->collapsible()
                                             ->persistCollapsed(),
@@ -106,17 +102,13 @@ class AppTokenResource extends Resource
                                         Forms\Components\Section::make('Aufgaben-Aktionen')
                                             ->description('Spezifische Aktionen und Funktionen')
                                             ->schema([
-                                                Forms\Components\CheckboxList::make('task_actions_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'tasks:assign' => 'Aufgaben zuweisen',
-                                                        'tasks:status' => 'Status ändern',
-                                                        'tasks:notes' => 'Notizen verwalten',
-                                                        'tasks:documents' => 'Dokumente verwalten',
-                                                        'tasks:time' => 'Zeiten erfassen',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('task_actions_abilities', [
+                                                    'tasks:assign' => 'Aufgaben zuweisen',
+                                                    'tasks:status' => 'Status ändern',
+                                                    'tasks:notes' => 'Notizen verwalten',
+                                                    'tasks:documents' => 'Dokumente verwalten',
+                                                    'tasks:time' => 'Zeiten erfassen',
+                                                ]),
                                             ])
                                             ->collapsible()
                                             ->persistCollapsed(),
@@ -124,16 +116,12 @@ class AppTokenResource extends Resource
                                         Forms\Components\Section::make('Solaranlagen-Verwaltung')
                                             ->description('Verwaltung von Solaranlagen')
                                             ->schema([
-                                                Forms\Components\CheckboxList::make('solar_plants_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'solar-plants:read' => 'Solaranlagen lesen',
-                                                        'solar-plants:create' => 'Solaranlagen erstellen',
-                                                        'solar-plants:update' => 'Solaranlagen bearbeiten',
-                                                        'solar-plants:delete' => 'Solaranlagen löschen',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('solar_plants_abilities', [
+                                                    'solar-plants:read' => 'Solaranlagen lesen',
+                                                    'solar-plants:create' => 'Solaranlagen erstellen',
+                                                    'solar-plants:update' => 'Solaranlagen bearbeiten',
+                                                    'solar-plants:delete' => 'Solaranlagen löschen',
+                                                ]),
                                             ])
                                             ->collapsible()
                                             ->persistCollapsed(),
@@ -145,17 +133,13 @@ class AppTokenResource extends Resource
                                         Forms\Components\Section::make('Kunden-Verwaltung')
                                             ->description('Verwaltung von Kunden')
                                             ->schema([
-                                                Forms\Components\CheckboxList::make('customers_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'customers:read' => 'Kunden lesen',
-                                                        'customers:create' => 'Kunden erstellen',
-                                                        'customers:update' => 'Kunden bearbeiten',
-                                                        'customers:delete' => 'Kunden löschen',
-                                                        'customers:status' => 'Kunden-Status ändern',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('customers_abilities', [
+                                                    'customers:read' => 'Kunden lesen',
+                                                    'customers:create' => 'Kunden erstellen',
+                                                    'customers:update' => 'Kunden bearbeiten',
+                                                    'customers:delete' => 'Kunden löschen',
+                                                    'customers:status' => 'Kunden-Status ändern',
+                                                ]),
                                             ])
                                             ->collapsible()
                                             ->persistCollapsed(),
@@ -163,17 +147,13 @@ class AppTokenResource extends Resource
                                         Forms\Components\Section::make('Lieferanten-Verwaltung')
                                             ->description('Verwaltung von Lieferanten')
                                             ->schema([
-                                                Forms\Components\CheckboxList::make('suppliers_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'suppliers:read' => 'Lieferanten lesen',
-                                                        'suppliers:create' => 'Lieferanten erstellen',
-                                                        'suppliers:update' => 'Lieferanten bearbeiten',
-                                                        'suppliers:delete' => 'Lieferanten löschen',
-                                                        'suppliers:status' => 'Lieferanten-Status ändern',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('suppliers_abilities', [
+                                                    'suppliers:read' => 'Lieferanten lesen',
+                                                    'suppliers:create' => 'Lieferanten erstellen',
+                                                    'suppliers:update' => 'Lieferanten bearbeiten',
+                                                    'suppliers:delete' => 'Lieferanten löschen',
+                                                    'suppliers:status' => 'Lieferanten-Status ändern',
+                                                ]),
                                             ])
                                             ->collapsible()
                                             ->persistCollapsed(),
@@ -181,17 +161,13 @@ class AppTokenResource extends Resource
                                         Forms\Components\Section::make('Projekt-Verwaltung')
                                             ->description('Verwaltung von Projekten')
                                             ->schema([
-                                                Forms\Components\CheckboxList::make('projects_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'projects:read' => 'Projekte lesen',
-                                                        'projects:create' => 'Projekte erstellen',
-                                                        'projects:update' => 'Projekte bearbeiten',
-                                                        'projects:delete' => 'Projekte löschen',
-                                                        'projects:status' => 'Projekt-Status ändern',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('projects_abilities', [
+                                                    'projects:read' => 'Projekte lesen',
+                                                    'projects:create' => 'Projekte erstellen',
+                                                    'projects:update' => 'Projekte bearbeiten',
+                                                    'projects:delete' => 'Projekte löschen',
+                                                    'projects:status' => 'Projekt-Status ändern',
+                                                ]),
                                             ])
                                             ->collapsible()
                                             ->persistCollapsed(),
@@ -203,29 +179,21 @@ class AppTokenResource extends Resource
                                         Forms\Components\Section::make('Meilensteine & Termine')
                                             ->description('Projektmeilensteine und Termine')
                                             ->schema([
-                                                Forms\Components\CheckboxList::make('milestones_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'milestones:read' => 'Meilensteine lesen',
-                                                        'milestones:create' => 'Meilensteine erstellen',
-                                                        'milestones:update' => 'Meilensteine bearbeiten',
-                                                        'milestones:delete' => 'Meilensteine löschen',
-                                                        'milestones:status' => 'Meilenstein-Status ändern',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('milestones_abilities', [
+                                                    'milestones:read' => 'Meilensteine lesen',
+                                                    'milestones:create' => 'Meilensteine erstellen',
+                                                    'milestones:update' => 'Meilensteine bearbeiten',
+                                                    'milestones:delete' => 'Meilensteine löschen',
+                                                    'milestones:status' => 'Meilenstein-Status ändern',
+                                                ]),
 
-                                                Forms\Components\CheckboxList::make('appointments_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'appointments:read' => 'Termine lesen',
-                                                        'appointments:create' => 'Termine erstellen',
-                                                        'appointments:update' => 'Termine bearbeiten',
-                                                        'appointments:delete' => 'Termine löschen',
-                                                        'appointments:status' => 'Termin-Status ändern',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('appointments_abilities', [
+                                                    'appointments:read' => 'Termine lesen',
+                                                    'appointments:create' => 'Termine erstellen',
+                                                    'appointments:update' => 'Termine bearbeiten',
+                                                    'appointments:delete' => 'Termine löschen',
+                                                    'appointments:status' => 'Termin-Status ändern',
+                                                ]),
                                             ])
                                             ->collapsible()
                                             ->persistCollapsed(),
@@ -233,32 +201,20 @@ class AppTokenResource extends Resource
                                         Forms\Components\Section::make('Kosten & System')
                                             ->description('Kostenmanagement und Systemfunktionen')
                                             ->schema([
-                                                Forms\Components\CheckboxList::make('costs_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'costs:read' => 'Kosten lesen',
-                                                        'costs:create' => 'Kosten erstellen',
-                                                        'costs:reports' => 'Kostenberichte',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('costs_abilities', [
+                                                    'costs:read' => 'Kosten lesen',
+                                                    'costs:create' => 'Kosten erstellen',
+                                                    'costs:reports' => 'Kostenberichte',
+                                                ]),
 
-                                                Forms\Components\CheckboxList::make('user_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'user:profile' => 'Profil lesen',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('user_abilities', [
+                                                    'user:profile' => 'Profil lesen',
+                                                ]),
 
-                                                Forms\Components\CheckboxList::make('notification_abilities')
-                                                    ->label('')
-                                                    ->options([
-                                                        'notifications:read' => 'Benachrichtigungen lesen',
-                                                        'notifications:create' => 'Benachrichtigungen erstellen',
-                                                    ])
-                                                    ->columns(1)
-                                                    ->bulkToggleable(),
+                                                static::createAbilityCheckboxList('notification_abilities', [
+                                                    'notifications:read' => 'Benachrichtigungen lesen',
+                                                    'notifications:create' => 'Benachrichtigungen erstellen',
+                                                ]),
                                             ])
                                             ->collapsible()
                                             ->persistCollapsed(),
@@ -458,6 +414,25 @@ class AppTokenResource extends Resource
                             ->default(true),
                     ])->columns(2),
             ]);
+    }
+
+    /**
+     * Erstellt eine CheckboxList für Berechtigungen mit automatischem Hydration
+     */
+    protected static function createAbilityCheckboxList(string $name, array $options): Forms\Components\CheckboxList
+    {
+        return Forms\Components\CheckboxList::make($name)
+            ->label('')
+            ->options($options)
+            ->columns(1)
+            ->bulkToggleable()
+            ->afterStateHydrated(function ($component, $state, $record) use ($options) {
+                if ($record && $record->abilities) {
+                    $allowedAbilities = array_keys($options);
+                    $matchedAbilities = array_intersect($record->abilities, $allowedAbilities);
+                    $component->state($matchedAbilities);
+                }
+            });
     }
 
     public static function table(Table $table): Table
