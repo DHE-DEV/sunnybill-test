@@ -81,8 +81,9 @@ class AppTokenResource extends Resource
                 Section::make('Berechtigungen')
                     ->description('Granulare Rechteverwaltung für den API-Token')
                     ->schema([
-                        Forms\Components\Grid::make(2)
+                        Forms\Components\Grid::make(3)
                             ->schema([
+                                // Spalte 1: Aufgaben
                                 Forms\Components\Group::make()
                                     ->schema([
                                         Forms\Components\Section::make('Aufgaben-Verwaltung')
@@ -119,17 +120,39 @@ class AppTokenResource extends Resource
                                             ])
                                             ->collapsible()
                                             ->persistCollapsed(),
-                                    ]),
 
-                                Forms\Components\Group::make()
-                                    ->schema([
-                                        Forms\Components\Section::make('Benutzer & Profil')
-                                            ->description('Zugriff auf Benutzerinformationen')
+                                        Forms\Components\Section::make('Solaranlagen-Verwaltung')
+                                            ->description('Verwaltung von Solaranlagen')
                                             ->schema([
-                                                Forms\Components\CheckboxList::make('user_abilities')
+                                                Forms\Components\CheckboxList::make('solar_plants_abilities')
                                                     ->label('')
                                                     ->options([
-                                                        'user:profile' => 'Profil lesen',
+                                                        'solar-plants:read' => 'Solaranlagen lesen',
+                                                        'solar-plants:create' => 'Solaranlagen erstellen',
+                                                        'solar-plants:update' => 'Solaranlagen bearbeiten',
+                                                        'solar-plants:delete' => 'Solaranlagen löschen',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+                                            ])
+                                            ->collapsible()
+                                            ->persistCollapsed(),
+                                    ]),
+
+                                // Spalte 2: Ressourcen-Verwaltung
+                                Forms\Components\Group::make()
+                                    ->schema([
+                                        Forms\Components\Section::make('Kunden-Verwaltung')
+                                            ->description('Verwaltung von Kunden')
+                                            ->schema([
+                                                Forms\Components\CheckboxList::make('customers_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'customers:read' => 'Kunden lesen',
+                                                        'customers:create' => 'Kunden erstellen',
+                                                        'customers:update' => 'Kunden bearbeiten',
+                                                        'customers:delete' => 'Kunden löschen',
+                                                        'customers:status' => 'Kunden-Status ändern',
                                                     ])
                                                     ->columns(1)
                                                     ->bulkToggleable(),
@@ -137,9 +160,97 @@ class AppTokenResource extends Resource
                                             ->collapsible()
                                             ->persistCollapsed(),
 
-                                        Forms\Components\Section::make('Benachrichtigungen')
-                                            ->description('Push-Notifications und Mitteilungen')
+                                        Forms\Components\Section::make('Lieferanten-Verwaltung')
+                                            ->description('Verwaltung von Lieferanten')
                                             ->schema([
+                                                Forms\Components\CheckboxList::make('suppliers_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'suppliers:read' => 'Lieferanten lesen',
+                                                        'suppliers:create' => 'Lieferanten erstellen',
+                                                        'suppliers:update' => 'Lieferanten bearbeiten',
+                                                        'suppliers:delete' => 'Lieferanten löschen',
+                                                        'suppliers:status' => 'Lieferanten-Status ändern',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+                                            ])
+                                            ->collapsible()
+                                            ->persistCollapsed(),
+
+                                        Forms\Components\Section::make('Projekt-Verwaltung')
+                                            ->description('Verwaltung von Projekten')
+                                            ->schema([
+                                                Forms\Components\CheckboxList::make('projects_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'projects:read' => 'Projekte lesen',
+                                                        'projects:create' => 'Projekte erstellen',
+                                                        'projects:update' => 'Projekte bearbeiten',
+                                                        'projects:delete' => 'Projekte löschen',
+                                                        'projects:status' => 'Projekt-Status ändern',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+                                            ])
+                                            ->collapsible()
+                                            ->persistCollapsed(),
+                                    ]),
+
+                                // Spalte 3: Erweiterte Funktionen
+                                Forms\Components\Group::make()
+                                    ->schema([
+                                        Forms\Components\Section::make('Meilensteine & Termine')
+                                            ->description('Projektmeilensteine und Termine')
+                                            ->schema([
+                                                Forms\Components\CheckboxList::make('milestones_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'milestones:read' => 'Meilensteine lesen',
+                                                        'milestones:create' => 'Meilensteine erstellen',
+                                                        'milestones:update' => 'Meilensteine bearbeiten',
+                                                        'milestones:delete' => 'Meilensteine löschen',
+                                                        'milestones:status' => 'Meilenstein-Status ändern',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+
+                                                Forms\Components\CheckboxList::make('appointments_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'appointments:read' => 'Termine lesen',
+                                                        'appointments:create' => 'Termine erstellen',
+                                                        'appointments:update' => 'Termine bearbeiten',
+                                                        'appointments:delete' => 'Termine löschen',
+                                                        'appointments:status' => 'Termin-Status ändern',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+                                            ])
+                                            ->collapsible()
+                                            ->persistCollapsed(),
+
+                                        Forms\Components\Section::make('Kosten & System')
+                                            ->description('Kostenmanagement und Systemfunktionen')
+                                            ->schema([
+                                                Forms\Components\CheckboxList::make('costs_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'costs:read' => 'Kosten lesen',
+                                                        'costs:create' => 'Kosten erstellen',
+                                                        'costs:reports' => 'Kostenberichte',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+
+                                                Forms\Components\CheckboxList::make('user_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'user:profile' => 'Profil lesen',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+
                                                 Forms\Components\CheckboxList::make('notification_abilities')
                                                     ->label('')
                                                     ->options([
@@ -164,42 +275,32 @@ class AppTokenResource extends Resource
                                                         ->action(function (callable $set) {
                                                             $set('task_management_abilities', ['tasks:read']);
                                                             $set('task_actions_abilities', []);
+                                                            $set('solar_plants_abilities', ['solar-plants:read']);
+                                                            $set('customers_abilities', ['customers:read']);
+                                                            $set('suppliers_abilities', ['suppliers:read']);
+                                                            $set('projects_abilities', ['projects:read']);
+                                                            $set('milestones_abilities', ['milestones:read']);
+                                                            $set('appointments_abilities', ['appointments:read']);
+                                                            $set('costs_abilities', ['costs:read']);
                                                             $set('user_abilities', ['user:profile']);
                                                             $set('notification_abilities', ['notifications:read']);
                                                         }),
 
-                                                    Forms\Components\Actions\Action::make('set_basic_user')
-                                                        ->label('Standard-User')
-                                                        ->icon('heroicon-m-user')
-                                                        ->color('success')
-                                                        ->size('sm')
-                                                        ->action(function (callable $set) {
-                                                            $set('task_management_abilities', ['tasks:read', 'tasks:create']);
-                                                            $set('task_actions_abilities', ['tasks:status', 'tasks:notes']);
-                                                            $set('user_abilities', ['user:profile']);
-                                                            $set('notification_abilities', ['notifications:read']);
-                                                        }),
-
-                                                    Forms\Components\Actions\Action::make('set_power_user')
-                                                        ->label('Power-User')
+                                                    Forms\Components\Actions\Action::make('set_extended')
+                                                        ->label('Erweiterte Berechtigungen')
                                                         ->icon('heroicon-m-bolt')
                                                         ->color('warning')
                                                         ->size('sm')
                                                         ->action(function (callable $set) {
-                                                            $set('task_management_abilities', ['tasks:read', 'tasks:create', 'tasks:update']);
-                                                            $set('task_actions_abilities', ['tasks:assign', 'tasks:status', 'tasks:notes', 'tasks:documents', 'tasks:time']);
-                                                            $set('user_abilities', ['user:profile']);
-                                                            $set('notification_abilities', ['notifications:read', 'notifications:create']);
-                                                        }),
-
-                                                    Forms\Components\Actions\Action::make('set_admin')
-                                                        ->label('Administrator')
-                                                        ->icon('heroicon-m-shield-check')
-                                                        ->color('danger')
-                                                        ->size('sm')
-                                                        ->action(function (callable $set) {
                                                             $set('task_management_abilities', ['tasks:read', 'tasks:create', 'tasks:update', 'tasks:delete']);
                                                             $set('task_actions_abilities', ['tasks:assign', 'tasks:status', 'tasks:notes', 'tasks:documents', 'tasks:time']);
+                                                            $set('solar_plants_abilities', ['solar-plants:read', 'solar-plants:create', 'solar-plants:update', 'solar-plants:delete']);
+                                                            $set('customers_abilities', ['customers:read', 'customers:create', 'customers:update', 'customers:delete', 'customers:status']);
+                                                            $set('suppliers_abilities', ['suppliers:read', 'suppliers:create', 'suppliers:update', 'suppliers:delete', 'suppliers:status']);
+                                                            $set('projects_abilities', ['projects:read', 'projects:create', 'projects:update', 'projects:delete', 'projects:status']);
+                                                            $set('milestones_abilities', ['milestones:read', 'milestones:create', 'milestones:update', 'milestones:delete', 'milestones:status']);
+                                                            $set('appointments_abilities', ['appointments:read', 'appointments:create', 'appointments:update', 'appointments:delete', 'appointments:status']);
+                                                            $set('costs_abilities', ['costs:read', 'costs:create', 'costs:reports']);
                                                             $set('user_abilities', ['user:profile']);
                                                             $set('notification_abilities', ['notifications:read', 'notifications:create']);
                                                         }),
@@ -212,6 +313,13 @@ class AppTokenResource extends Resource
                                                         ->action(function (callable $set) {
                                                             $set('task_management_abilities', []);
                                                             $set('task_actions_abilities', []);
+                                                            $set('solar_plants_abilities', []);
+                                                            $set('customers_abilities', []);
+                                                            $set('suppliers_abilities', []);
+                                                            $set('projects_abilities', []);
+                                                            $set('milestones_abilities', []);
+                                                            $set('appointments_abilities', []);
+                                                            $set('costs_abilities', []);
                                                             $set('user_abilities', []);
                                                             $set('notification_abilities', []);
                                                         }),
@@ -227,6 +335,13 @@ class AppTokenResource extends Resource
                                 return array_merge(
                                     $get('task_management_abilities') ?? [],
                                     $get('task_actions_abilities') ?? [],
+                                    $get('solar_plants_abilities') ?? [],
+                                    $get('customers_abilities') ?? [],
+                                    $get('suppliers_abilities') ?? [],
+                                    $get('projects_abilities') ?? [],
+                                    $get('milestones_abilities') ?? [],
+                                    $get('appointments_abilities') ?? [],
+                                    $get('costs_abilities') ?? [],
                                     $get('user_abilities') ?? [],
                                     $get('notification_abilities') ?? []
                                 );
