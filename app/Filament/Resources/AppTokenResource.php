@@ -6,6 +6,9 @@ use App\Filament\Resources\AppTokenResource\Pages;
 use App\Filament\Resources\AppTokenResource\RelationManagers;
 use App\Models\AppToken;
 use App\Models\User;
+use App\Models\Customer;
+use App\Models\Supplier;
+use App\Models\SolarPlant;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -76,14 +79,251 @@ class AppTokenResource extends Resource
                     ])->columns(2),
 
                 Section::make('Berechtigungen')
+                    ->description('Granulare Rechteverwaltung für den API-Token')
                     ->schema([
-                        Forms\Components\CheckboxList::make('abilities')
-                            ->label('Token-Berechtigungen')
-                            ->options(AppToken::getAvailableAbilities())
-                            ->required()
-                            ->default(['tasks:read'])
-                            ->columns(3)
-                            ->hint('Wählen Sie die Berechtigungen aus, die dieser Token haben soll'),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Group::make()
+                                    ->schema([
+                                        Forms\Components\Section::make('Aufgaben-Verwaltung')
+                                            ->description('Grundlegende CRUD-Operationen für Aufgaben')
+                                            ->schema([
+                                                Forms\Components\CheckboxList::make('task_management_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'tasks:read' => 'Aufgaben lesen',
+                                                        'tasks:create' => 'Aufgaben erstellen',
+                                                        'tasks:update' => 'Aufgaben bearbeiten',
+                                                        'tasks:delete' => 'Aufgaben löschen',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+                                            ])
+                                            ->collapsible()
+                                            ->persistCollapsed(),
+
+                                        Forms\Components\Section::make('Aufgaben-Aktionen')
+                                            ->description('Spezifische Aktionen und Funktionen')
+                                            ->schema([
+                                                Forms\Components\CheckboxList::make('task_actions_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'tasks:assign' => 'Aufgaben zuweisen',
+                                                        'tasks:status' => 'Status ändern',
+                                                        'tasks:notes' => 'Notizen verwalten',
+                                                        'tasks:documents' => 'Dokumente verwalten',
+                                                        'tasks:time' => 'Zeiten erfassen',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+                                            ])
+                                            ->collapsible()
+                                            ->persistCollapsed(),
+                                    ]),
+
+                                Forms\Components\Group::make()
+                                    ->schema([
+                                        Forms\Components\Section::make('Benutzer & Profil')
+                                            ->description('Zugriff auf Benutzerinformationen')
+                                            ->schema([
+                                                Forms\Components\CheckboxList::make('user_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'user:profile' => 'Profil lesen',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+                                            ])
+                                            ->collapsible()
+                                            ->persistCollapsed(),
+
+                                        Forms\Components\Section::make('Benachrichtigungen')
+                                            ->description('Push-Notifications und Mitteilungen')
+                                            ->schema([
+                                                Forms\Components\CheckboxList::make('notification_abilities')
+                                                    ->label('')
+                                                    ->options([
+                                                        'notifications:read' => 'Benachrichtigungen lesen',
+                                                        'notifications:create' => 'Benachrichtigungen erstellen',
+                                                    ])
+                                                    ->columns(1)
+                                                    ->bulkToggleable(),
+                                            ])
+                                            ->collapsible()
+                                            ->persistCollapsed(),
+
+                                        Forms\Components\Section::make('Schnell-Auswahl')
+                                            ->description('Vordefinierte Berechtigungssets')
+                                            ->schema([
+                                                Forms\Components\Actions::make([
+                                                    Forms\Components\Actions\Action::make('set_read_only')
+                                                        ->label('Nur Lesen')
+                                                        ->icon('heroicon-m-eye')
+                                                        ->color('info')
+                                                        ->size('sm')
+                                                        ->action(function (callable $set) {
+                                                            $set('task_management_abilities', ['tasks:read']);
+                                                            $set('task_actions_abilities', []);
+                                                            $set('user_abilities', ['user:profile']);
+                                                            $set('notification_abilities', ['notifications:read']);
+                                                        }),
+
+                                                    Forms\Components\Actions\Action::make('set_basic_user')
+                                                        ->label('Standard-User')
+                                                        ->icon('heroicon-m-user')
+                                                        ->color('success')
+                                                        ->size('sm')
+                                                        ->action(function (callable $set) {
+                                                            $set('task_management_abilities', ['tasks:read', 'tasks:create']);
+                                                            $set('task_actions_abilities', ['tasks:status', 'tasks:notes']);
+                                                            $set('user_abilities', ['user:profile']);
+                                                            $set('notification_abilities', ['notifications:read']);
+                                                        }),
+
+                                                    Forms\Components\Actions\Action::make('set_power_user')
+                                                        ->label('Power-User')
+                                                        ->icon('heroicon-m-bolt')
+                                                        ->color('warning')
+                                                        ->size('sm')
+                                                        ->action(function (callable $set) {
+                                                            $set('task_management_abilities', ['tasks:read', 'tasks:create', 'tasks:update']);
+                                                            $set('task_actions_abilities', ['tasks:assign', 'tasks:status', 'tasks:notes', 'tasks:documents', 'tasks:time']);
+                                                            $set('user_abilities', ['user:profile']);
+                                                            $set('notification_abilities', ['notifications:read', 'notifications:create']);
+                                                        }),
+
+                                                    Forms\Components\Actions\Action::make('set_admin')
+                                                        ->label('Administrator')
+                                                        ->icon('heroicon-m-shield-check')
+                                                        ->color('danger')
+                                                        ->size('sm')
+                                                        ->action(function (callable $set) {
+                                                            $set('task_management_abilities', ['tasks:read', 'tasks:create', 'tasks:update', 'tasks:delete']);
+                                                            $set('task_actions_abilities', ['tasks:assign', 'tasks:status', 'tasks:notes', 'tasks:documents', 'tasks:time']);
+                                                            $set('user_abilities', ['user:profile']);
+                                                            $set('notification_abilities', ['notifications:read', 'notifications:create']);
+                                                        }),
+
+                                                    Forms\Components\Actions\Action::make('clear_all')
+                                                        ->label('Alle abwählen')
+                                                        ->icon('heroicon-m-x-mark')
+                                                        ->color('gray')
+                                                        ->size('sm')
+                                                        ->action(function (callable $set) {
+                                                            $set('task_management_abilities', []);
+                                                            $set('task_actions_abilities', []);
+                                                            $set('user_abilities', []);
+                                                            $set('notification_abilities', []);
+                                                        }),
+                                                ])
+                                                ->alignCenter(),
+                                            ]),
+                                    ]),
+                            ]),
+
+                        // Hidden field to merge all abilities into the main abilities field
+                        Forms\Components\Hidden::make('abilities')
+                            ->dehydrateStateUsing(function (callable $get) {
+                                return array_merge(
+                                    $get('task_management_abilities') ?? [],
+                                    $get('task_actions_abilities') ?? [],
+                                    $get('user_abilities') ?? [],
+                                    $get('notification_abilities') ?? []
+                                );
+                            }),
+                    ]),
+
+                Section::make('Ressourcen-Beschränkungen')
+                    ->description('Schränken Sie den Zugriff dieses Tokens auf bestimmte Kunden, Lieferanten, Solaranlagen oder Projekte ein.')
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Group::make()
+                                    ->schema([
+                                        Forms\Components\Toggle::make('restrict_customers')
+                                            ->label('Kunden-Zugriff beschränken')
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set) {
+                                                if (!$state) {
+                                                    $set('allowed_customers', null);
+                                                }
+                                            }),
+
+                                        Forms\Components\Select::make('allowed_customers')
+                                            ->label('Erlaubte Kunden')
+                                            ->multiple()
+                                            ->searchable()
+                                            ->preload()
+                                            ->options(Customer::orderBy('name')->pluck('name', 'id'))
+                                            ->visible(fn (callable $get) => $get('restrict_customers'))
+                                            ->hint('Leer lassen = alle Kunden erlaubt'),
+                                    ]),
+
+                                Forms\Components\Group::make()
+                                    ->schema([
+                                        Forms\Components\Toggle::make('restrict_suppliers')
+                                            ->label('Lieferanten-Zugriff beschränken')
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set) {
+                                                if (!$state) {
+                                                    $set('allowed_suppliers', null);
+                                                }
+                                            }),
+
+                                        Forms\Components\Select::make('allowed_suppliers')
+                                            ->label('Erlaubte Lieferanten')
+                                            ->multiple()
+                                            ->searchable()
+                                            ->preload()
+                                            ->options(Supplier::orderBy('name')->pluck('name', 'id'))
+                                            ->visible(fn (callable $get) => $get('restrict_suppliers'))
+                                            ->hint('Leer lassen = alle Lieferanten erlaubt'),
+                                    ]),
+
+                                Forms\Components\Group::make()
+                                    ->schema([
+                                        Forms\Components\Toggle::make('restrict_solar_plants')
+                                            ->label('Solaranlagen-Zugriff beschränken')
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set) {
+                                                if (!$state) {
+                                                    $set('allowed_solar_plants', null);
+                                                }
+                                            }),
+
+                                        Forms\Components\Select::make('allowed_solar_plants')
+                                            ->label('Erlaubte Solaranlagen')
+                                            ->multiple()
+                                            ->searchable()
+                                            ->preload()
+                                            ->options(SolarPlant::orderBy('name')->pluck('name', 'id'))
+                                            ->visible(fn (callable $get) => $get('restrict_solar_plants'))
+                                            ->hint('Leer lassen = alle Solaranlagen erlaubt'),
+                                    ]),
+
+                                Forms\Components\Group::make()
+                                    ->schema([
+                                        Forms\Components\Toggle::make('restrict_projects')
+                                            ->label('Projekt-Zugriff beschränken')
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set) {
+                                                if (!$state) {
+                                                    $set('allowed_projects', null);
+                                                }
+                                            }),
+
+                                        Forms\Components\Select::make('allowed_projects')
+                                            ->label('Erlaubte Projekte')
+                                            ->multiple()
+                                            ->searchable()
+                                            ->preload()
+                                            ->options([]) // TODO: Project model implementieren
+                                            ->visible(fn (callable $get) => $get('restrict_projects'))
+                                            ->hint('Leer lassen = alle Projekte erlaubt'),
+                                    ]),
+                            ]),
                     ]),
 
                 Section::make('Zusätzliche Informationen')
@@ -140,6 +380,55 @@ class AppTokenResource extends Resource
                     ->formatStateUsing(function ($state) {
                         $abilities = AppToken::getAvailableAbilities();
                         return $abilities[$state] ?? $state;
+                    }),
+
+                TextColumn::make('resource_restrictions')
+                    ->label('Ressourcen-Beschränkungen')
+                    ->formatStateUsing(function (AppToken $record): string {
+                        $restrictions = [];
+                        if ($record->restrict_customers) {
+                            $count = count($record->allowed_customers ?? []);
+                            $restrictions[] = "Kunden ({$count})";
+                        }
+                        if ($record->restrict_suppliers) {
+                            $count = count($record->allowed_suppliers ?? []);
+                            $restrictions[] = "Lieferanten ({$count})";
+                        }
+                        if ($record->restrict_solar_plants) {
+                            $count = count($record->allowed_solar_plants ?? []);
+                            $restrictions[] = "Anlagen ({$count})";
+                        }
+                        if ($record->restrict_projects) {
+                            $count = count($record->allowed_projects ?? []);
+                            $restrictions[] = "Projekte ({$count})";
+                        }
+                        
+                        return $restrictions ? implode(', ', $restrictions) : 'Keine Beschränkungen';
+                    })
+                    ->badge()
+                    ->color(function (AppToken $record): string {
+                        $hasRestrictions = $record->restrict_customers || 
+                                         $record->restrict_suppliers || 
+                                         $record->restrict_solar_plants || 
+                                         $record->restrict_projects;
+                        return $hasRestrictions ? 'warning' : 'success';
+                    })
+                    ->tooltip(function (AppToken $record): ?string {
+                        $details = [];
+                        if ($record->restrict_customers && $record->allowed_customers) {
+                            $customers = Customer::whereIn('id', $record->allowed_customers)->pluck('name')->take(5)->toArray();
+                            $details[] = 'Kunden: ' . implode(', ', $customers) . (count($record->allowed_customers) > 5 ? '...' : '');
+                        }
+                        if ($record->restrict_suppliers && $record->allowed_suppliers) {
+                            $suppliers = Supplier::whereIn('id', $record->allowed_suppliers)->pluck('name')->take(5)->toArray();
+                            $details[] = 'Lieferanten: ' . implode(', ', $suppliers) . (count($record->allowed_suppliers) > 5 ? '...' : '');
+                        }
+                        if ($record->restrict_solar_plants && $record->allowed_solar_plants) {
+                            $plants = SolarPlant::whereIn('id', $record->allowed_solar_plants)->pluck('name')->take(5)->toArray();
+                            $details[] = 'Solaranlagen: ' . implode(', ', $plants) . (count($record->allowed_solar_plants) > 5 ? '...' : '');
+                        }
+                        
+                        return $details ? implode("\n", $details) : null;
                     }),
 
                 BadgeColumn::make('status_label')

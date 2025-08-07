@@ -23,6 +23,14 @@ class AppToken extends Model
         'app_version',
         'device_info',
         'notes',
+        'allowed_customers',
+        'allowed_suppliers',
+        'allowed_solar_plants',
+        'allowed_projects',
+        'restrict_customers',
+        'restrict_suppliers',
+        'restrict_solar_plants',
+        'restrict_projects',
     ];
 
     protected $casts = [
@@ -30,6 +38,14 @@ class AppToken extends Model
         'expires_at' => 'datetime',
         'is_active' => 'boolean',
         'last_used_at' => 'datetime',
+        'allowed_customers' => 'array',
+        'allowed_suppliers' => 'array',
+        'allowed_solar_plants' => 'array',
+        'allowed_projects' => 'array',
+        'restrict_customers' => 'boolean',
+        'restrict_suppliers' => 'boolean',
+        'restrict_solar_plants' => 'boolean',
+        'restrict_projects' => 'boolean',
     ];
 
     protected $hidden = [
@@ -265,5 +281,146 @@ class AppToken extends Model
         }
         
         return 'success';
+    }
+
+    // Ressourcen-Beschränkungs-Methoden
+
+    /**
+     * Prüfe ob Token Zugriff auf bestimmten Kunden hat
+     */
+    public function canAccessCustomer(int $customerId): bool
+    {
+        if (!$this->restrict_customers) {
+            return true; // Keine Beschränkung
+        }
+        
+        return in_array($customerId, $this->allowed_customers ?? []);
+    }
+
+    /**
+     * Prüfe ob Token Zugriff auf bestimmten Lieferanten hat
+     */
+    public function canAccessSupplier(int $supplierId): bool
+    {
+        if (!$this->restrict_suppliers) {
+            return true; // Keine Beschränkung
+        }
+        
+        return in_array($supplierId, $this->allowed_suppliers ?? []);
+    }
+
+    /**
+     * Prüfe ob Token Zugriff auf bestimmte Solaranlage hat
+     */
+    public function canAccessSolarPlant(int $solarPlantId): bool
+    {
+        if (!$this->restrict_solar_plants) {
+            return true; // Keine Beschränkung
+        }
+        
+        return in_array($solarPlantId, $this->allowed_solar_plants ?? []);
+    }
+
+    /**
+     * Prüfe ob Token Zugriff auf bestimmtes Projekt hat
+     */
+    public function canAccessProject(int $projectId): bool
+    {
+        if (!$this->restrict_projects) {
+            return true; // Keine Beschränkung
+        }
+        
+        return in_array($projectId, $this->allowed_projects ?? []);
+    }
+
+    /**
+     * Setze erlaubte Kunden
+     */
+    public function setAllowedCustomers(array $customerIds): void
+    {
+        $this->update([
+            'allowed_customers' => $customerIds,
+            'restrict_customers' => !empty($customerIds)
+        ]);
+    }
+
+    /**
+     * Setze erlaubte Lieferanten
+     */
+    public function setAllowedSuppliers(array $supplierIds): void
+    {
+        $this->update([
+            'allowed_suppliers' => $supplierIds,
+            'restrict_suppliers' => !empty($supplierIds)
+        ]);
+    }
+
+    /**
+     * Setze erlaubte Solaranlagen
+     */
+    public function setAllowedSolarPlants(array $solarPlantIds): void
+    {
+        $this->update([
+            'allowed_solar_plants' => $solarPlantIds,
+            'restrict_solar_plants' => !empty($solarPlantIds)
+        ]);
+    }
+
+    /**
+     * Setze erlaubte Projekte
+     */
+    public function setAllowedProjects(array $projectIds): void
+    {
+        $this->update([
+            'allowed_projects' => $projectIds,
+            'restrict_projects' => !empty($projectIds)
+        ]);
+    }
+
+    /**
+     * Prüfe ob Token Zugriff auf eine Aufgabe hat (basierend auf deren Ressourcen)
+     */
+    public function canAccessTask($task): bool
+    {
+        // Kunde prüfen
+        if ($task->customer_id && !$this->canAccessCustomer($task->customer_id)) {
+            return false;
+        }
+
+        // Lieferant prüfen
+        if ($task->supplier_id && !$this->canAccessSupplier($task->supplier_id)) {
+            return false;
+        }
+
+        // Solaranlage prüfen
+        if ($task->solar_plant_id && !$this->canAccessSolarPlant($task->solar_plant_id)) {
+            return false;
+        }
+
+        // Projekt prüfen (falls vorhanden)
+        if (isset($task->project_id) && $task->project_id && !$this->canAccessProject($task->project_id)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Hole erlaubte Ressourcen-IDs für Query-Filtering
+     */
+    public function getAllowedResourceIds(string $resourceType): ?array
+    {
+        switch ($resourceType) {
+            case 'customers':
+                return $this->restrict_customers ? $this->allowed_customers : null;
+            case 'suppliers':
+                return $this->restrict_suppliers ? $this->allowed_suppliers : null;
+            case 'solar_plants':
+                return $this->restrict_solar_plants ? $this->allowed_solar_plants : null;
+            case 'projects':
+                return $this->restrict_projects ? $this->allowed_projects : null;
+            default:
+                return null;
+        }
     }
 }

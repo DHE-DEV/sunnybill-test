@@ -21,7 +21,10 @@ class TaskApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Task::with(['assignedTo', 'owner', 'customer', 'supplier', 'solarPlant', 'parentTask', 'subtasks']);
+        $query = Task::with(['assignedTo', 'owner', 'customer', 'supplier', 'solarPlant', 'parentTask', 'subtasks', 'notes.user']);
+        
+        // Ressourcen-Beschränkungen basierend auf App-Token anwenden
+        $this->applyTokenResourceFilters($query, $request);
         
         // Filter anwenden
         if ($request->filled('status')) {
@@ -94,8 +97,16 @@ class TaskApiController extends Controller
     /**
      * Zeige eine spezifische Aufgabe
      */
-    public function show(Task $task): JsonResponse
+    public function show(Request $request, Task $task): JsonResponse
     {
+        // Prüfe Token-Zugriff auf diese spezifische Aufgabe
+        if ($request->app_token && !$request->app_token->canAccessTask($task)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Zugriff auf diese Aufgabe verweigert'
+            ], 403);
+        }
+        
         $task->load(['assignedTo', 'owner', 'customer', 'supplier', 'solarPlant', 'parentTask', 'subtasks', 'notes.user']);
         
         return response()->json([
@@ -305,7 +316,18 @@ class TaskApiController extends Controller
      */
     public function users(): JsonResponse
     {
-        $users = User::active()->select('id', 'name', 'email')->get();
+        $users = User::active()->select(
+            'id', 
+            'name', 
+            'email', 
+            'phone', 
+            'department', 
+            'notes', 
+            'last_login_at',
+            'is_active',
+            'email_verified_at',
+            'password_change_required'
+        )->get();
         
         return response()->json([
             'success' => true,
@@ -316,9 +338,19 @@ class TaskApiController extends Controller
     /**
      * Hole Kunden für Dropdown
      */
-    public function customers(): JsonResponse
+    public function customers(Request $request): JsonResponse
     {
-        $customers = Customer::select('id', 'name', 'company')->get();
+        $query = Customer::select('id', 'name', 'company');
+        
+        // Token-basierte Einschränkungen anwenden
+        if ($request->app_token) {
+            $allowedIds = $request->app_token->getAllowedResourceIds('customers');
+            if ($allowedIds !== null) {
+                $query->whereIn('id', $allowedIds);
+            }
+        }
+        
+        $customers = $query->get();
         
         return response()->json([
             'success' => true,
@@ -329,9 +361,19 @@ class TaskApiController extends Controller
     /**
      * Hole Lieferanten für Dropdown
      */
-    public function suppliers(): JsonResponse
+    public function suppliers(Request $request): JsonResponse
     {
-        $suppliers = Supplier::select('id', 'name', 'company')->get();
+        $query = Supplier::select('id', 'name', 'company');
+        
+        // Token-basierte Einschränkungen anwenden
+        if ($request->app_token) {
+            $allowedIds = $request->app_token->getAllowedResourceIds('suppliers');
+            if ($allowedIds !== null) {
+                $query->whereIn('id', $allowedIds);
+            }
+        }
+        
+        $suppliers = $query->get();
         
         return response()->json([
             'success' => true,
@@ -342,9 +384,19 @@ class TaskApiController extends Controller
     /**
      * Hole Solaranlagen für Dropdown
      */
-    public function solarPlants(): JsonResponse
+    public function solarPlants(Request $request): JsonResponse
     {
-        $solarPlants = SolarPlant::select('id', 'name', 'location')->get();
+        $query = SolarPlant::select('id', 'name', 'location');
+        
+        // Token-basierte Einschränkungen anwenden
+        if ($request->app_token) {
+            $allowedIds = $request->app_token->getAllowedResourceIds('solar_plants');
+            if ($allowedIds !== null) {
+                $query->whereIn('id', $allowedIds);
+            }
+        }
+        
+        $solarPlants = $query->get();
         
         return response()->json([
             'success' => true,
@@ -421,6 +473,54 @@ class TaskApiController extends Controller
                 'success' => false,
                 'message' => 'Fehler beim Abmelden: ' . $e->getMessage()
             ], 500);
+        }
+    }
+    
+    /**
+     * Wende Token-basierte Ressourcen-Filter auf eine Query an
+     */
+    private function applyTokenResourceFilters($query, Request $request): void
+    {
+        if (!$request->app_token) {
+            return;
+        }
+        
+        $token = $request->app_token;
+        
+        // Kunden-Beschränkungen
+        $allowedCustomers = $token->getAllowedResourceIds('customers');
+        if ($allowedCustomers !== null) {
+            $query->where(function($q) use ($allowedCustomers) {
+                $q->whereIn('customer_id', $allowedCustomers)
+                  ->orWhereNull('customer_id');
+            });
+        }
+        
+        // Lieferanten-Beschränkungen
+        $allowedSuppliers = $token->getAllowedResourceIds('suppliers');
+        if ($allowedSuppliers !== null) {
+            $query->where(function($q) use ($allowedSuppliers) {
+                $q->whereIn('supplier_id', $allowedSuppliers)
+                  ->orWhereNull('supplier_id');
+            });
+        }
+        
+        // Solaranlagen-Beschränkungen
+        $allowedSolarPlants = $token->getAllowedResourceIds('solar_plants');
+        if ($allowedSolarPlants !== null) {
+            $query->where(function($q) use ($allowedSolarPlants) {
+                $q->whereIn('solar_plant_id', $allowedSolarPlants)
+                  ->orWhereNull('solar_plant_id');
+            });
+        }
+        
+        // Projekt-Beschränkungen (falls vorhanden)
+        $allowedProjects = $token->getAllowedResourceIds('projects');
+        if ($allowedProjects !== null) {
+            $query->where(function($q) use ($allowedProjects) {
+                $q->whereIn('project_id', $allowedProjects)
+                  ->orWhereNull('project_id');
+            });
         }
     }
 }
