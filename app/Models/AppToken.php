@@ -80,6 +80,7 @@ class AppToken extends Model
     public static function getAvailableAbilities(): array
     {
         return [
+            // Aufgaben-Verwaltung
             'tasks:read' => 'Aufgaben lesen',
             'tasks:create' => 'Aufgaben erstellen',
             'tasks:update' => 'Aufgaben bearbeiten',
@@ -89,7 +90,57 @@ class AppToken extends Model
             'tasks:notes' => 'Notizen verwalten',
             'tasks:documents' => 'Dokumente verwalten',
             'tasks:time' => 'Zeiten erfassen',
+            
+            // Solaranlagen-Verwaltung
+            'solar-plants:read' => 'Solaranlagen lesen',
+            'solar-plants:create' => 'Solaranlagen erstellen',
+            'solar-plants:update' => 'Solaranlagen bearbeiten',
+            'solar-plants:delete' => 'Solaranlagen löschen',
+            
+            // Kunden-Verwaltung
+            'customers:read' => 'Kunden lesen',
+            'customers:create' => 'Kunden erstellen',
+            'customers:update' => 'Kunden bearbeiten',
+            'customers:delete' => 'Kunden löschen',
+            'customers:status' => 'Kunden-Status ändern',
+            
+            // Lieferanten-Verwaltung
+            'suppliers:read' => 'Lieferanten lesen',
+            'suppliers:create' => 'Lieferanten erstellen',
+            'suppliers:update' => 'Lieferanten bearbeiten',
+            'suppliers:delete' => 'Lieferanten löschen',
+            'suppliers:status' => 'Lieferanten-Status ändern',
+            
+            // Projekt-Verwaltung
+            'projects:read' => 'Projekte lesen',
+            'projects:create' => 'Projekte erstellen',
+            'projects:update' => 'Projekte bearbeiten',
+            'projects:delete' => 'Projekte löschen',
+            'projects:status' => 'Projekt-Status ändern',
+            
+            // Meilensteine
+            'milestones:read' => 'Meilensteine lesen',
+            'milestones:create' => 'Meilensteine erstellen',
+            'milestones:update' => 'Meilensteine bearbeiten',
+            'milestones:delete' => 'Meilensteine löschen',
+            'milestones:status' => 'Meilenstein-Status ändern',
+            
+            // Termine
+            'appointments:read' => 'Termine lesen',
+            'appointments:create' => 'Termine erstellen',
+            'appointments:update' => 'Termine bearbeiten',
+            'appointments:delete' => 'Termine löschen',
+            'appointments:status' => 'Termin-Status ändern',
+            
+            // Kosten-Management
+            'costs:read' => 'Kosten lesen',
+            'costs:create' => 'Kosten erstellen',
+            'costs:reports' => 'Kostenberichte',
+            
+            // Benutzer & Profil
             'user:profile' => 'Profil lesen',
+            
+            // Benachrichtigungen
             'notifications:read' => 'Benachrichtigungen lesen',
             'notifications:create' => 'Benachrichtigungen erstellen',
         ];

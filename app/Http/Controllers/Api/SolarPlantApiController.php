@@ -25,6 +25,14 @@ class SolarPlantApiController extends Controller
             'monthlyResults'
         ]);
         
+        // Token-basierte Ressourcen-Filter anwenden
+        if ($request->app_token) {
+            $allowedIds = $request->app_token->getAllowedResourceIds('solar_plants');
+            if ($allowedIds !== null) {
+                $query->whereIn('id', $allowedIds);
+            }
+        }
+        
         // Filter anwenden
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -89,8 +97,16 @@ class SolarPlantApiController extends Controller
     /**
      * Zeige eine spezifische Solaranlage
      */
-    public function show(SolarPlant $solarPlant): JsonResponse
+    public function show(Request $request, SolarPlant $solarPlant): JsonResponse
     {
+        // Prüfe Token-basierte Zugriffsberechtigung
+        if ($request->app_token && !$request->app_token->canAccessSolarPlant($solarPlant->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Zugriff auf diese Solaranlage nicht erlaubt'
+            ], 403);
+        }
+        
         $solarPlant->load([
             'participations.customer',
             'solarInverters',
