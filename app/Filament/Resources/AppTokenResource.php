@@ -273,6 +273,25 @@ class AppTokenResource extends Resource
                                             ->description('Vordefinierte Berechtigungssets')
                                             ->schema([
                                                 Forms\Components\Actions::make([
+                                                    Forms\Components\Actions\Action::make('select_all')
+                                                        ->label('Alle auswählen')
+                                                        ->icon('heroicon-m-check')
+                                                        ->color('success')
+                                                        ->size('sm')
+                                                        ->action(function (callable $set) {
+                                                            $set('task_management_abilities', ['tasks:read', 'tasks:create', 'tasks:update', 'tasks:delete']);
+                                                            $set('task_actions_abilities', ['tasks:assign', 'tasks:status', 'tasks:notes', 'tasks:documents', 'tasks:time']);
+                                                            $set('solar_plants_abilities', ['solar-plants:read', 'solar-plants:create', 'solar-plants:update', 'solar-plants:delete']);
+                                                            $set('customers_abilities', ['customers:read', 'customers:create', 'customers:update', 'customers:delete', 'customers:status']);
+                                                            $set('suppliers_abilities', ['suppliers:read', 'suppliers:create', 'suppliers:update', 'suppliers:delete', 'suppliers:status']);
+                                                            $set('projects_abilities', ['projects:read', 'projects:create', 'projects:update', 'projects:delete', 'projects:status']);
+                                                            $set('milestones_abilities', ['milestones:read', 'milestones:create', 'milestones:update', 'milestones:delete', 'milestones:status']);
+                                                            $set('appointments_abilities', ['appointments:read', 'appointments:create', 'appointments:update', 'appointments:delete', 'appointments:status']);
+                                                            $set('costs_abilities', ['costs:read', 'costs:create', 'costs:reports']);
+                                                            $set('user_abilities', ['user:profile']);
+                                                            $set('notification_abilities', ['notifications:read', 'notifications:create']);
+                                                        }),
+
                                                     Forms\Components\Actions\Action::make('set_read_only')
                                                         ->label('Nur Lesen')
                                                         ->icon('heroicon-m-eye')
