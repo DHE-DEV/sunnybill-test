@@ -49,53 +49,92 @@ class AppTokenResource extends Resource
     {
         return $form
             ->schema([
-                // Temporäre Felder zum Aufteilen der abilities beim Laden
-                Forms\Components\Hidden::make('abilities_loaded')
+                // Hydriert alle Ability-Listen einzeln
+                Forms\Components\Hidden::make('task_management_abilities')
                     ->afterStateHydrated(function ($component, $state, $record, callable $set) {
                         if ($record && $record->abilities) {
-                            // Task Management Abilities
-                            $taskManagement = array_intersect($record->abilities, ['tasks:read', 'tasks:create', 'tasks:update', 'tasks:delete']);
-                            $set('task_management_abilities', $taskManagement);
-                            
-                            // Task Actions Abilities
-                            $taskActions = array_intersect($record->abilities, ['tasks:assign', 'tasks:status', 'tasks:notes', 'tasks:documents', 'tasks:time']);
-                            $set('task_actions_abilities', $taskActions);
-                            
-                            // Solar Plants Abilities
-                            $solarPlants = array_intersect($record->abilities, ['solar-plants:read', 'solar-plants:create', 'solar-plants:update', 'solar-plants:delete']);
-                            $set('solar_plants_abilities', $solarPlants);
-                            
-                            // Customers Abilities
-                            $customers = array_intersect($record->abilities, ['customers:read', 'customers:create', 'customers:update', 'customers:delete', 'customers:status']);
-                            $set('customers_abilities', $customers);
-                            
-                            // Suppliers Abilities
-                            $suppliers = array_intersect($record->abilities, ['suppliers:read', 'suppliers:create', 'suppliers:update', 'suppliers:delete', 'suppliers:status']);
-                            $set('suppliers_abilities', $suppliers);
-                            
-                            // Projects Abilities
-                            $projects = array_intersect($record->abilities, ['projects:read', 'projects:create', 'projects:update', 'projects:delete', 'projects:status']);
-                            $set('projects_abilities', $projects);
-                            
-                            // Milestones Abilities
-                            $milestones = array_intersect($record->abilities, ['milestones:read', 'milestones:create', 'milestones:update', 'milestones:delete', 'milestones:status']);
-                            $set('milestones_abilities', $milestones);
-                            
-                            // Appointments Abilities
-                            $appointments = array_intersect($record->abilities, ['appointments:read', 'appointments:create', 'appointments:update', 'appointments:delete', 'appointments:status']);
-                            $set('appointments_abilities', $appointments);
-                            
-                            // Costs Abilities
-                            $costs = array_intersect($record->abilities, ['costs:read', 'costs:create', 'costs:reports']);
-                            $set('costs_abilities', $costs);
-                            
-                            // User Abilities
-                            $user = array_intersect($record->abilities, ['user:profile']);
-                            $set('user_abilities', $user);
-                            
-                            // Notification Abilities
-                            $notifications = array_intersect($record->abilities, ['notifications:read', 'notifications:create']);
-                            $set('notification_abilities', $notifications);
+                            $abilities = array_intersect($record->abilities, ['tasks:read', 'tasks:create', 'tasks:update', 'tasks:delete']);
+                            $set('task_management_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('task_actions_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['tasks:assign', 'tasks:status', 'tasks:notes', 'tasks:documents', 'tasks:time']);
+                            $set('task_actions_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('solar_plants_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['solar-plants:read', 'solar-plants:create', 'solar-plants:update', 'solar-plants:delete']);
+                            $set('solar_plants_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('customers_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['customers:read', 'customers:create', 'customers:update', 'customers:delete', 'customers:status']);
+                            $set('customers_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('suppliers_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['suppliers:read', 'suppliers:create', 'suppliers:update', 'suppliers:delete', 'suppliers:status']);
+                            $set('suppliers_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('projects_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['projects:read', 'projects:create', 'projects:update', 'projects:delete', 'projects:status']);
+                            $set('projects_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('milestones_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['milestones:read', 'milestones:create', 'milestones:update', 'milestones:delete', 'milestones:status']);
+                            $set('milestones_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('appointments_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['appointments:read', 'appointments:create', 'appointments:update', 'appointments:delete', 'appointments:status']);
+                            $set('appointments_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('costs_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['costs:read', 'costs:create', 'costs:reports']);
+                            $set('costs_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('user_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['user:profile']);
+                            $set('user_abilities', $abilities);
+                        }
+                    }),
+
+                Forms\Components\Hidden::make('notification_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['notifications:read', 'notifications:create']);
+                            $set('notification_abilities', $abilities);
                         }
                     }),
 
