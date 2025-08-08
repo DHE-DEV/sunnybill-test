@@ -12,28 +12,49 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('app_tokens', function (Blueprint $table) {
-            // Füge fehlende Spalten hinzu (ohne user_id zu ändern)
-            $table->boolean('is_active')->default(true)->after('expires_at');
-            $table->string('created_by_ip')->nullable()->after('is_active');
-            $table->string('app_type')->default('mobile_app')->after('created_by_ip');
-            $table->string('app_version')->nullable()->after('app_type');
-            $table->text('device_info')->nullable()->after('app_version');
-            $table->text('notes')->nullable()->after('device_info');
+            // Prüfe und füge nur fehlende Spalten hinzu
+            if (!Schema::hasColumn('app_tokens', 'created_by_ip')) {
+                $table->string('created_by_ip')->nullable()->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'app_type')) {
+                $table->string('app_type')->default('mobile_app')->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'app_version')) {
+                $table->string('app_version')->nullable()->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'device_info')) {
+                $table->text('device_info')->nullable()->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'notes')) {
+                $table->text('notes')->nullable()->after('expires_at');
+            }
             
             // Ressourcen-Beschränkungen
-            $table->json('allowed_customers')->nullable()->after('notes');
-            $table->json('allowed_suppliers')->nullable()->after('allowed_customers');
-            $table->json('allowed_solar_plants')->nullable()->after('allowed_suppliers');
-            $table->json('allowed_projects')->nullable()->after('allowed_solar_plants');
+            if (!Schema::hasColumn('app_tokens', 'allowed_customers')) {
+                $table->json('allowed_customers')->nullable()->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'allowed_suppliers')) {
+                $table->json('allowed_suppliers')->nullable()->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'allowed_solar_plants')) {
+                $table->json('allowed_solar_plants')->nullable()->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'allowed_projects')) {
+                $table->json('allowed_projects')->nullable()->after('expires_at');
+            }
             
-            $table->boolean('restrict_customers')->default(false)->after('allowed_projects');
-            $table->boolean('restrict_suppliers')->default(false)->after('restrict_customers');
-            $table->boolean('restrict_solar_plants')->default(false)->after('restrict_suppliers');
-            $table->boolean('restrict_projects')->default(false)->after('restrict_solar_plants');
-            
-            // Indices hinzufügen
-            $table->index(['is_active']);
-            $table->index(['app_type']);
+            if (!Schema::hasColumn('app_tokens', 'restrict_customers')) {
+                $table->boolean('restrict_customers')->default(false)->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'restrict_suppliers')) {
+                $table->boolean('restrict_suppliers')->default(false)->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'restrict_solar_plants')) {
+                $table->boolean('restrict_solar_plants')->default(false)->after('expires_at');
+            }
+            if (!Schema::hasColumn('app_tokens', 'restrict_projects')) {
+                $table->boolean('restrict_projects')->default(false)->after('expires_at');
+            }
         });
     }
 
