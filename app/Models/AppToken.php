@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class AppToken extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
+        'id',
         'user_id',
         'name',
         'token',
@@ -286,7 +288,7 @@ class AppToken extends Model
      */
     public function getAppTypeLabelAttribute(): string
     {
-        return self::getAppTypes()[$this->app_type] ?? $this->app_type;
+        return self::getAppTypes()[$this->app_type] ?? ($this->app_type ?? 'Unbekannt');
     }
 
     /**

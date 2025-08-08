@@ -14,7 +14,7 @@ return new class extends Migration
         if (!Schema::hasTable('project_task')) {
             Schema::create('project_task', function (Blueprint $table) {
                 $table->uuid('project_id');
-                $table->uuid('task_id');
+                $table->unsignedBigInteger('task_id');
                 $table->primary(['project_id', 'task_id']);
                 
                 $table->foreign('project_id')

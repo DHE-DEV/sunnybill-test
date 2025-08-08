@@ -18,6 +18,26 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Über Uns Seite
+Route::get('/ueber-uns', function () {
+    return view('ueber-uns');
+})->name('ueber-uns');
+
+// Datenschutz Seite
+Route::get('/datenschutz', function () {
+    return view('datenschutz');
+})->name('datenschutz');
+
+// Impressum Seite
+Route::get('/impressum', function () {
+    return view('impressum');
+})->name('impressum');
+
+// Nutzungsbedingungen Seite
+Route::get('/nutzungsbedingungen', function () {
+    return view('nutzungsbedingungen');
+})->name('nutzungsbedingungen');
+
 // Infolist State Management
 Route::post('/api/infolist-state', [InfolistStateController::class, 'save'])
     ->name('infolist.state.save')

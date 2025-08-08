@@ -20,7 +20,7 @@ echo "=== PHONE NUMBERS API TEST ===\n\n";
 $baseUrl = 'http://localhost/api/app';
 
 // Test-Token (muss mit entsprechenden phone-numbers Berechtigungen erstellt werden)
-$token = 'your-test-token-here'; // Diesen Token durch einen echten ersetzen
+$token = 'sb_vE5c4DNUraKtwj5t2bWSsSpc4mDpZxwCqg2bxFGbegRc50MZZ88EYiHwkyls'; // Echten Token aus create_test_data_for_phone_numbers.php verwenden
 
 // Test-User für die Tests
 $testUser = User::first();
@@ -183,7 +183,8 @@ try {
     
     if ($response->successful()) {
         $data = $response->json();
-        echo "✅ {count($data['data'])} Telefonnummern für User gefunden\n";
+        $count = count($data['data']);
+        echo "✅ {$count} Telefonnummern für User gefunden\n";
         
         foreach ($data['data'] as $phone) {
             echo "   - {$phone['phone_number']} ({$phone['type_label']})";

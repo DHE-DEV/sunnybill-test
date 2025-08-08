@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
             MaloIdFieldConfigSeeder::class,
             EpIdFieldConfigSeeder::class,
             ExternalBillingWorkflowChartSeeder::class,
+            // Umfassende Testdaten für Development/Testing
+            ComprehensiveTestDataSeeder::class,
         ]);
     }
 }
