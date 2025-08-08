@@ -453,4 +453,68 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     {
         return $this->teams()->count();
     }
+
+    /**
+     * Polymorphe Beziehung zu Telefonnummern
+     */
+    public function phoneNumbers()
+    {
+        return $this->morphMany(PhoneNumber::class, 'phoneable')->ordered();
+    }
+
+    /**
+     * Haupttelefonnummer
+     */
+    public function primaryPhoneNumber()
+    {
+        return $this->morphOne(PhoneNumber::class, 'phoneable')->where('is_primary', true);
+    }
+
+    /**
+     * Geschäftliche Telefonnummern
+     */
+    public function businessPhoneNumbers()
+    {
+        return $this->morphMany(PhoneNumber::class, 'phoneable')->ofType('business')->ordered();
+    }
+
+    /**
+     * Private Telefonnummern
+     */
+    public function privatePhoneNumbers()
+    {
+        return $this->morphMany(PhoneNumber::class, 'phoneable')->ofType('private')->ordered();
+    }
+
+    /**
+     * Mobile Telefonnummern
+     */
+    public function mobilePhoneNumbers()
+    {
+        return $this->morphMany(PhoneNumber::class, 'phoneable')->ofType('mobile')->ordered();
+    }
+
+    /**
+     * Favoriten-Telefonnummern
+     */
+    public function favoritePhoneNumbers()
+    {
+        return $this->morphMany(PhoneNumber::class, 'phoneable')->favorite()->ordered();
+    }
+
+    /**
+     * Formatierte Haupttelefonnummer für Anzeige
+     */
+    public function getPrimaryPhoneFormattedAttribute(): ?string
+    {
+        return $this->primaryPhoneNumber?->formatted_number;
+    }
+
+    /**
+     * Alle Telefonnummern als String (für Suche und Export)
+     */
+    public function getAllPhoneNumbersAttribute(): string
+    {
+        return $this->phoneNumbers->pluck('phone_number')->implode(', ');
+    }
 }

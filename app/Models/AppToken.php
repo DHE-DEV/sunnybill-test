@@ -143,6 +143,12 @@ class AppToken extends Model
             // Benachrichtigungen
             'notifications:read' => 'Benachrichtigungen lesen',
             'notifications:create' => 'Benachrichtigungen erstellen',
+            
+            // Telefonnummern-Management
+            'phone-numbers:read' => 'Telefonnummern lesen',
+            'phone-numbers:create' => 'Telefonnummern erstellen',
+            'phone-numbers:update' => 'Telefonnummern bearbeiten',
+            'phone-numbers:delete' => 'Telefonnummern löschen',
         ];
     }
 

@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
+use App\Http\Controllers\Api\HealthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,6 +18,14 @@ use App\Models\User;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// Health Check Endpoints - No authentication required
+Route::prefix('health')->group(function () {
+    Route::get('/', [HealthController::class, 'index']);
+    Route::get('/simple', [HealthController::class, 'simple']);
+    Route::get('/ready', [HealthController::class, 'ready']);
+    Route::get('/live', [HealthController::class, 'live']);
 });
 
 // Benutzer-Suche für @mentions
@@ -169,6 +178,35 @@ Route::prefix('app')->middleware('app_token')->group(function () {
         Route::patch('/{projectAppointment}/status', [App\Http\Controllers\Api\ProjectAppointmentApiController::class, 'updateStatus'])->middleware('app_token:appointments:status');
     });
     
+    // User-spezifische Telefonnummern (benutzerfreundliche API)
+    Route::prefix('users/{userId}/phone-numbers')->name('api.users.phone-numbers.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'getUserPhoneNumbers'])->name('index')->middleware('app_token:phone-numbers:read');
+        Route::post('/', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'storeForUser'])->name('store')->middleware('app_token:phone-numbers:create');
+        Route::get('/{id}', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'getUserPhoneNumber'])->name('show')->middleware('app_token:phone-numbers:read');
+        Route::put('/{id}', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'updateUserPhoneNumber'])->name('update')->middleware('app_token:phone-numbers:update');
+        Route::delete('/{id}', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'destroyUserPhoneNumber'])->name('destroy')->middleware('app_token:phone-numbers:delete');
+        
+        // Spezielle Aktionen für User-Telefonnummern
+        Route::patch('/{id}/make-primary', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'makeUserPhoneNumberPrimary'])->name('make-primary')->middleware('app_token:phone-numbers:update');
+    });
+    
+    // Allgemeine Telefonnummern-Management (für alle Entitäten)
+    Route::prefix('phone-numbers')->name('api.phone-numbers.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'index'])->name('index')->middleware('app_token:phone-numbers:read');
+        Route::post('/', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'store'])->name('store')->middleware('app_token:phone-numbers:create');
+        Route::get('/{id}', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'show'])->name('show')->middleware('app_token:phone-numbers:read');
+        Route::put('/{id}', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'update'])->name('update')->middleware('app_token:phone-numbers:update');
+        Route::delete('/{id}', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'destroy'])->name('destroy')->middleware('app_token:phone-numbers:delete');
+        
+        // Spezielle Aktionen
+        Route::patch('/{id}/make-primary', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'makePrimary'])->name('make-primary')->middleware('app_token:phone-numbers:update');
+    });
+    
+    // Telefonnummern nach Besitzer (allgemeine Lösung)
+    Route::get('/owners/{phoneableType}/{phoneableId}/phone-numbers', [App\Http\Controllers\Api\PhoneNumberApiController::class, 'getByOwner'])
+        ->name('api.phone-numbers.by-owner')
+        ->middleware('app_token:phone-numbers:read');
+    
     // Kosten-Management
     Route::prefix('costs')->group(function () {
         Route::get('/overview', [App\Http\Controllers\Api\CostApiController::class, 'overview'])->middleware('app_token:costs:read');
@@ -188,6 +226,9 @@ Route::prefix('app')->middleware('app_token')->group(function () {
     Route::get('/customers', [App\Http\Controllers\Api\TaskApiController::class, 'customers'])->middleware('app_token:tasks:read');
     Route::get('/suppliers', [App\Http\Controllers\Api\TaskApiController::class, 'suppliers'])->middleware('app_token:tasks:read');
     Route::get('/solar-plants-dropdown', [App\Http\Controllers\Api\TaskApiController::class, 'solarPlants'])->middleware('app_token:tasks:read');
+    
+    // Task Types
+    Route::get('/task-types', [App\Http\Controllers\Api\TaskApiController::class, 'taskTypes'])->middleware('app_token:tasks:read');
     
     // API-Optionen für verschiedene Bereiche
     Route::get('/options/tasks', [App\Http\Controllers\Api\TaskApiController::class, 'options'])->middleware('app_token:tasks:read');

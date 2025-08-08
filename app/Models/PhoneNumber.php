@@ -135,19 +135,20 @@ class PhoneNumber extends Model
     }
 
     /**
-     * Boot-Methode für Model-Events
+     * Setzt diese Telefonnummer als Hauptnummer und deaktiviert alle anderen
      */
-    protected static function booted()
+    public function makePrimary(): bool
     {
-        // Wenn eine Nummer als Hauptnummer markiert wird,
-        // alle anderen des gleichen Besitzers deaktivieren
-        static::saving(function (PhoneNumber $phoneNumber) {
-            if ($phoneNumber->is_primary && $phoneNumber->isDirty('is_primary')) {
-                static::where('phoneable_id', $phoneNumber->phoneable_id)
-                    ->where('phoneable_type', $phoneNumber->phoneable_type)
-                    ->where('id', '!=', $phoneNumber->id)
-                    ->update(['is_primary' => false]);
-            }
+        // Transaktion verwenden für Konsistenz
+        return \DB::transaction(function () {
+            // Zuerst alle anderen Hauptnummern desselben Besitzers deaktivieren
+            static::where('phoneable_id', $this->phoneable_id)
+                ->where('phoneable_type', $this->phoneable_type)
+                ->where('id', '!=', $this->getKey()) // getKey() für UUID-Kompatibilität
+                ->update(['is_primary' => false]);
+
+            // Dann diese als Hauptnummer setzen
+            return $this->update(['is_primary' => true]);
         });
     }
 }
