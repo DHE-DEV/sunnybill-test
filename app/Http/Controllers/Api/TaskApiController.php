@@ -123,7 +123,8 @@ class TaskApiController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'task_type' => 'required|string|max:255',
+            'task_type' => 'nullable|string|max:255', // Optional - wird automatisch gesetzt
+            'task_type_id' => 'required|integer|exists:task_types,id',
             'priority' => 'required|in:low,medium,high,urgent',
             'status' => 'required|in:open,in_progress,waiting_external,waiting_internal,completed,cancelled',
             'assigned_to' => 'nullable|exists:users,id',
@@ -148,6 +149,14 @@ class TaskApiController extends Controller
         
         $data = $validator->validated();
         $data['created_by'] = Auth::id();
+        
+        // Automatisch task_type aus task_type_id ermitteln, falls nicht übermittelt
+        if (empty($data['task_type']) && isset($data['task_type_id'])) {
+            $taskType = \App\Models\TaskType::find($data['task_type_id']);
+            if ($taskType) {
+                $data['task_type'] = $taskType->name;
+            }
+        }
         
         // Setze Standard-Owner wenn nicht angegeben
         if (!isset($data['owner_id'])) {
@@ -428,6 +437,22 @@ class TaskApiController extends Controller
                 ],
                 'task_types' => Task::getAvailableTaskTypes()
             ]
+        ]);
+    }
+    
+    /**
+     * Hole alle verfügbaren Task Types
+     */
+    public function taskTypes(): JsonResponse
+    {
+        $taskTypes = \App\Models\TaskType::select('id', 'name', 'is_active')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $taskTypes
         ]);
     }
     

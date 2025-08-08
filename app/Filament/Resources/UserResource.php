@@ -602,6 +602,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
+            UserResource\RelationManagers\PhoneNumbersRelationManager::class,
             UserResource\RelationManagers\TeamsRelationManager::class,
         ];
     }
