@@ -65,12 +65,13 @@ class CustomerApiController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function (Builder $q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('company_name', 'like', "%{$search}%")
+                  ->orWhere('contact_person', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('customer_number', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('city', 'like', "%{$search}%");
             });
         }
         
@@ -146,20 +147,34 @@ class CustomerApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_type' => 'required|in:private,business',
-            'first_name' => 'required_if:customer_type,private|string|max:255',
-            'last_name' => 'required_if:customer_type,private|string|max:255',
+            'name' => 'required|string|max:255',
             'company_name' => 'required_if:customer_type,business|string|max:255',
+            'contact_person' => 'nullable|string|max:255',
+            'department' => 'nullable|string|max:255',
             'email' => 'required|email|unique:customers,email',
             'phone' => 'nullable|string|max:50',
+            'fax' => 'nullable|string|max:50',
+            'website' => 'nullable|string|max:255',
             'street' => 'nullable|string|max:255',
-            'house_number' => 'nullable|string|max:20',
+            'address_line_2' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:10',
             'city' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
+            'country_code' => 'nullable|string|max:2',
             'tax_number' => 'nullable|string|max:50',
+            'vat_id' => 'nullable|string|max:50',
             'customer_number' => 'nullable|string|max:50|unique:customers,customer_number',
-            'status' => 'required|in:active,inactive,prospect,blocked',
+            'payment_terms' => 'nullable|string|max:255',
+            'payment_days' => 'nullable|integer|min:1|max:365',
+            'bank_name' => 'nullable|string|max:255',
+            'iban' => 'nullable|string|max:34',
+            'bic' => 'nullable|string|max:11',
+            'account_holder' => 'nullable|string|max:255',
+            'payment_method' => 'nullable|string|max:100',
+            'notes' => 'nullable|text',
             'is_active' => 'boolean',
+            'ranking' => 'nullable|integer|min:1|max:5',
         ]);
         
         if ($validator->fails()) {
@@ -196,20 +211,34 @@ class CustomerApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_type' => 'sometimes|required|in:private,business',
-            'first_name' => 'required_if:customer_type,private|string|max:255',
-            'last_name' => 'required_if:customer_type,private|string|max:255',
+            'name' => 'sometimes|required|string|max:255',
             'company_name' => 'required_if:customer_type,business|string|max:255',
+            'contact_person' => 'nullable|string|max:255',
+            'department' => 'nullable|string|max:255',
             'email' => 'sometimes|required|email|unique:customers,email,' . $customer->id,
             'phone' => 'nullable|string|max:50',
+            'fax' => 'nullable|string|max:50',
+            'website' => 'nullable|string|max:255',
             'street' => 'nullable|string|max:255',
-            'house_number' => 'nullable|string|max:20',
+            'address_line_2' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:10',
             'city' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
+            'country_code' => 'nullable|string|max:2',
             'tax_number' => 'nullable|string|max:50',
+            'vat_id' => 'nullable|string|max:50',
             'customer_number' => 'sometimes|required|string|max:50|unique:customers,customer_number,' . $customer->id,
-            'status' => 'sometimes|required|in:active,inactive,prospect,blocked',
+            'payment_terms' => 'nullable|string|max:255',
+            'payment_days' => 'nullable|integer|min:1|max:365',
+            'bank_name' => 'nullable|string|max:255',
+            'iban' => 'nullable|string|max:34',
+            'bic' => 'nullable|string|max:11',
+            'account_holder' => 'nullable|string|max:255',
+            'payment_method' => 'nullable|string|max:100',
+            'notes' => 'nullable|text',
             'is_active' => 'boolean',
+            'ranking' => 'nullable|integer|min:1|max:5',
         ]);
         
         if ($validator->fails()) {
