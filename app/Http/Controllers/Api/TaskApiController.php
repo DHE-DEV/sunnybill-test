@@ -349,7 +349,7 @@ class TaskApiController extends Controller
      */
     public function customers(Request $request): JsonResponse
     {
-        $query = Customer::select('id', 'name', 'company');
+        $query = Customer::select('id', 'name', 'company_name');
         
         // Token-basierte Einschränkungen anwenden
         if ($request->app_token) {
@@ -372,7 +372,7 @@ class TaskApiController extends Controller
      */
     public function suppliers(Request $request): JsonResponse
     {
-        $query = Supplier::select('id', 'name', 'company');
+        $query = Supplier::select('id', 'name', 'company_name');
         
         // Token-basierte Einschränkungen anwenden
         if ($request->app_token) {
