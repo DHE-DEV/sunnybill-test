@@ -119,7 +119,7 @@ class Customer extends Model
     public function solarPlants(): BelongsToMany
     {
         return $this->belongsToMany(SolarPlant::class, 'plant_participations')
-            ->withPivot('percentage', 'is_active', 'start_date', 'end_date')
+            ->withPivot('percentage')
             ->withTimestamps();
     }
 
