@@ -114,6 +114,16 @@ class Customer extends Model
     }
 
     /**
+     * Direkte Beziehung zu Solaranlagen über Beteiligungen
+     */
+    public function solarPlants(): BelongsToMany
+    {
+        return $this->belongsToMany(SolarPlant::class, 'plant_participations')
+            ->withPivot('percentage', 'is_active', 'start_date', 'end_date')
+            ->withTimestamps();
+    }
+
+    /**
      * Beziehung zu monatlichen Gutschriften
      */
     public function monthlyCredits(): HasMany
