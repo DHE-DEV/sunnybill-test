@@ -50,9 +50,37 @@ try {
     echo "✅ Filter funktionieren:\n";
     echo "   Kunden mit Solaranlagen: {$customersWithPlants}\n";
     echo "   Kunden ohne Solaranlagen: {$customersWithoutPlants}\n";
+
+    echo "\n4. Teste zusätzliche API Beziehungen...\n";
     
-    echo "\n🎉 Alle Tests bestanden! Die Customer API sollte jetzt funktionieren.\n";
-    echo "Die solarPlants Beziehung im Customer Model wurde erfolgreich hinzugefügt.\n";
+    // Teste participations Beziehung (sollte Alias für plantParticipations sein)
+    $participations = $customer->participations;
+    echo "✅ participations Beziehung funktioniert\n";
+    echo "   Anzahl Beteiligungen: " . $participations->count() . "\n";
+    
+    // Teste projects Beziehung
+    $projects = $customer->projects;
+    echo "✅ projects Beziehung funktioniert\n";
+    echo "   Anzahl Projekte: " . $projects->count() . "\n";
+    
+    // Teste tasks Beziehung
+    $tasks = $customer->tasks;
+    echo "✅ tasks Beziehung funktioniert\n";
+    echo "   Anzahl Aufgaben: " . $tasks->count() . "\n";
+    
+    echo "\n5. Teste vollständige API-Ladung...\n";
+    $customerWithAllRelations = Customer::with(['solarPlants', 'participations', 'projects', 'tasks'])->first();
+    
+    if ($customerWithAllRelations) {
+        echo "✅ Customer mit allen API-Beziehungen erfolgreich geladen\n";
+        echo "   Solaranlagen: " . $customerWithAllRelations->solarPlants->count() . "\n";
+        echo "   Beteiligungen: " . $customerWithAllRelations->participations->count() . "\n";
+        echo "   Projekte: " . $customerWithAllRelations->projects->count() . "\n";
+        echo "   Aufgaben: " . $customerWithAllRelations->tasks->count() . "\n";
+    }
+    
+    echo "\n🎉 Alle Tests bestanden! Die Customer API sollte jetzt vollständig funktionieren.\n";
+    echo "Alle fehlenden Beziehungen (solarPlants, participations, projects, tasks) wurden hinzugefügt.\n";
     
 } catch (Exception $e) {
     echo "❌ Fehler beim Test: " . $e->getMessage() . "\n";

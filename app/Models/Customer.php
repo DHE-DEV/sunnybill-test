@@ -238,6 +238,30 @@ class Customer extends Model
     }
 
     /**
+     * Alias für plantParticipations (für API Kompatibilität)
+     */
+    public function participations(): HasMany
+    {
+        return $this->plantParticipations();
+    }
+
+    /**
+     * Beziehung zu Projekten
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    /**
+     * Beziehung zu Aufgaben
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    /**
      * Haupttelefonnummer
      */
     public function getPrimaryPhoneAttribute(): ?string
