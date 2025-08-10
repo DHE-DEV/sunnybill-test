@@ -97,6 +97,20 @@ class Customer extends Model
         'is_active' => true,
     ];
 
+    protected $appends = [
+        'display_name',
+        'full_address',
+        'primary_phone',
+        'business_phone',
+        'mobile_phone',
+        'status_text',
+        'formatted_vat_id',
+        'customer_score',
+        'formatted_customer_score',
+        'total_kwp_participation',
+        'formatted_total_kwp_participation',
+    ];
+
     /**
      * Beziehung zu Rechnungen
      */
