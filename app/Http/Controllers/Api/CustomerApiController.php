@@ -84,9 +84,75 @@ class CustomerApiController extends Controller
         $perPage = min($request->get('per_page', 15), 100);
         $customers = $query->paginate($perPage);
         
+        // Erweiterte Felder für API-Antwort
+        $enrichedCustomers = $customers->getCollection()->map(function ($customer) {
+            return [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'company_name' => $customer->company_name,
+                'contact_person' => $customer->contact_person,
+                'department' => $customer->department,
+                'customer_number' => $customer->customer_number,
+                'email' => $customer->email,
+                'phone' => $customer->phone,
+                'fax' => $customer->fax,
+                'website' => $customer->website,
+                'street' => $customer->street,
+                'address_line_2' => $customer->address_line_2,
+                'postal_code' => $customer->postal_code,
+                'city' => $customer->city,
+                'state' => $customer->state,
+                'country' => $customer->country,
+                'country_code' => $customer->country_code,
+                'tax_number' => $customer->tax_number,
+                'vat_id' => $customer->vat_id,
+                'payment_terms' => $customer->payment_terms,
+                'payment_days' => $customer->payment_days,
+                'bank_name' => $customer->bank_name,
+                'iban' => $customer->iban,
+                'bic' => $customer->bic,
+                'account_holder' => $customer->account_holder,
+                'payment_method' => $customer->payment_method,
+                'notes' => $customer->notes,
+                'custom_field_1' => $customer->custom_field_1,
+                'custom_field_2' => $customer->custom_field_2,
+                'custom_field_3' => $customer->custom_field_3,
+                'custom_field_4' => $customer->custom_field_4,
+                'custom_field_5' => $customer->custom_field_5,
+                'is_active' => $customer->is_active,
+                'deactivated_at' => $customer->deactivated_at?->toISOString(),
+                'customer_type' => $customer->customer_type,
+                'ranking' => $customer->ranking,
+                'lexoffice_id' => $customer->lexoffice_id,
+                'lexoffice_synced_at' => $customer->lexoffice_synced_at?->toISOString(),
+                'lexware_version' => $customer->lexware_version,
+                'created_at' => $customer->created_at?->toISOString(),
+                'updated_at' => $customer->updated_at?->toISOString(),
+                
+                // Berechnete Felder
+                'display_name' => $customer->display_name,
+                'full_address' => $customer->full_address,
+                'complete_address' => $customer->full_address,
+                'primary_phone' => $customer->primary_phone,
+                'business_phone' => $customer->business_phone,
+                'mobile_phone' => $customer->mobile_phone,
+                'status_text' => $customer->status_text,
+                'formatted_vat_id' => $customer->formatted_vat_id,
+                'customer_score' => $customer->customer_score,
+                'formatted_customer_score' => $customer->formatted_customer_score,
+                'total_kwp_participation' => $customer->total_kwp_participation,
+                'formatted_total_kwp_participation' => $customer->formatted_total_kwp_participation,
+                
+                // Beziehungsangaben
+                'solar_plants_count' => $customer->solarPlants->count(),
+                'participations_count' => $customer->participations->count(),
+                'total_investment' => (float) $customer->participations->sum('investment_amount'),
+            ];
+        });
+        
         return response()->json([
             'success' => true,
-            'data' => $customers->items(),
+            'data' => $enrichedCustomers,
             'pagination' => [
                 'current_page' => $customers->currentPage(),
                 'last_page' => $customers->lastPage(),

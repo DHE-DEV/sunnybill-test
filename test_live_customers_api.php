@@ -21,7 +21,7 @@ foreach ($urls as $url) {
         CURLOPT_HTTPHEADER => [
             'Accept: application/json',
             'Content-Type: application/json',
-            'Authorization: Bearer sb_ee977b1e9f9c12ada1a69d64760c2b8f20e29d9489c88f111eea4e86cfd59890',
+            'Authorization: Bearer sb_IxnvbXjPpg2Z1sDoj6xDH54kFgT9egB8ndqwP4U7v4mdrsH8TDiBx3OiV3q05pZU',
         ],
     ]);
     
