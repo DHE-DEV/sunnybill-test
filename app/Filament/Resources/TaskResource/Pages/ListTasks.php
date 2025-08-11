@@ -1503,21 +1503,33 @@ class ListTasks extends ListRecords implements HasForms, HasActions
             return 'text-gray-500';
         }
 
-        $now = now()->startOfDay();
-        $due = \Carbon\Carbon::parse($dueDate)->startOfDay();
-        $diffInDays = $now->diffInDays($due, false);
+        try {
+            $now = now()->startOfDay();
+            
+            // Handle both Carbon instances and string dates
+            if ($dueDate instanceof \Carbon\Carbon) {
+                $due = $dueDate->startOfDay();
+            } else {
+                $due = \Carbon\Carbon::parse($dueDate)->startOfDay();
+            }
+            
+            $diffInDays = $now->diffInDays($due, false);
 
-        if ($diffInDays < 0) {
-            // Overdue - red
-            return 'text-red-500';
-        } elseif ($diffInDays == 0) {
-            // Due today - orange
-            return 'text-orange-500';
-        } elseif ($diffInDays <= 7) {
-            // Due within a week - blue
-            return 'text-blue-500';
-        } else {
-            // Due later - gray
+            if ($diffInDays < 0) {
+                // Overdue - red
+                return 'text-red-500';
+            } elseif ($diffInDays == 0) {
+                // Due today - orange
+                return 'text-orange-500';
+            } elseif ($diffInDays <= 7) {
+                // Due within a week - blue
+                return 'text-blue-500';
+            } else {
+                // Due later - gray
+                return 'text-gray-500';
+            }
+        } catch (\Exception $e) {
+            \Log::warning("Error in getDueDateColor: " . $e->getMessage());
             return 'text-gray-500';
         }
     }
@@ -1525,52 +1537,79 @@ class ListTasks extends ListRecords implements HasForms, HasActions
     // Get due date text
     public function getDueDateText($task)
     {
-        $dueDate = $task->due_date;
-        $status = $task->status;
-        
-        // Spezielle Behandlung für abgeschlossene/abgebrochene Aufgaben
-        if (in_array($status, ['completed', 'cancelled'])) {
-            $result = '';
+        try {
+            $dueDate = $task->due_date;
+            $status = $task->status;
             
-            // Fälligkeitsdatum anzeigen
-            if ($dueDate) {
-                $result .= 'Fällig: ' . \Carbon\Carbon::parse($dueDate)->format('d.m.Y');
+            // Spezielle Behandlung für abgeschlossene/abgebrochene Aufgaben
+            if (in_array($status, ['completed', 'cancelled'])) {
+                $result = '';
+                
+                // Fälligkeitsdatum anzeigen
+                if ($dueDate) {
+                    // Handle both Carbon instances and string dates
+                    if ($dueDate instanceof \Carbon\Carbon) {
+                        $result .= 'Fällig: ' . $dueDate->format('d.m.Y');
+                    } else {
+                        $result .= 'Fällig: ' . \Carbon\Carbon::parse($dueDate)->format('d.m.Y');
+                    }
+                }
+                
+                // Erledigungsdatum anzeigen
+                if ($task->completed_at) {
+                    if ($result) $result .= ' | ';
+                    $completedLabel = $status === 'completed' ? 'Erledigt' : 'Abgebrochen';
+                    
+                    if ($task->completed_at instanceof \Carbon\Carbon) {
+                        $result .= $completedLabel . ': ' . $task->completed_at->format('d.m.Y');
+                    } else {
+                        $result .= $completedLabel . ': ' . \Carbon\Carbon::parse($task->completed_at)->format('d.m.Y');
+                    }
+                } elseif ($task->updated_at) {
+                    if ($result) $result .= ' | ';
+                    $completedLabel = $status === 'completed' ? 'Erledigt' : 'Abgebrochen';
+                    
+                    if ($task->updated_at instanceof \Carbon\Carbon) {
+                        $result .= $completedLabel . ': ' . $task->updated_at->format('d.m.Y');
+                    } else {
+                        $result .= $completedLabel . ': ' . \Carbon\Carbon::parse($task->updated_at)->format('d.m.Y');
+                    }
+                }
+                
+                return $result ?: '';
             }
             
-            // Erledigungsdatum anzeigen
-            if ($task->completed_at) {
-                if ($result) $result .= ' | ';
-                $completedLabel = $status === 'completed' ? 'Erledigt' : 'Abgebrochen';
-                $result .= $completedLabel . ': ' . \Carbon\Carbon::parse($task->completed_at)->format('d.m.Y');
-            } elseif ($task->updated_at) {
-                if ($result) $result .= ' | ';
-                $completedLabel = $status === 'completed' ? 'Erledigt' : 'Abgebrochen';
-                $result .= $completedLabel . ': ' . \Carbon\Carbon::parse($task->updated_at)->format('d.m.Y');
+            // Standard-Verhalten für alle anderen Aufgaben
+            if (!$dueDate) {
+                return '';
+            }
+
+            $now = now()->startOfDay();
+            
+            // Handle both Carbon instances and string dates
+            if ($dueDate instanceof \Carbon\Carbon) {
+                $due = $dueDate->startOfDay();
+            } else {
+                $due = \Carbon\Carbon::parse($dueDate)->startOfDay();
             }
             
-            return $result ?: '';
-        }
-        
-        // Standard-Verhalten für alle anderen Aufgaben
-        if (!$dueDate) {
+            $diffInDays = $now->diffInDays($due, false);
+
+            if ($diffInDays < 0) {
+                $days = abs($diffInDays);
+                return $days == 1 ? 'Überfällig seit 1 Tag' : "Überfällig seit {$days} Tagen";
+            } elseif ($diffInDays == 0) {
+                return 'Heute fällig';
+            } elseif ($diffInDays == 1) {
+                return 'Morgen fällig';
+            } elseif ($diffInDays <= 7) {
+                return "Fällig in {$diffInDays} Tagen";
+            } else {
+                return $due->format('d.m.Y');
+            }
+        } catch (\Exception $e) {
+            \Log::warning("Error in getDueDateText: " . $e->getMessage());
             return '';
-        }
-
-        $now = now()->startOfDay();
-        $due = \Carbon\Carbon::parse($dueDate)->startOfDay();
-        $diffInDays = $now->diffInDays($due, false);
-
-        if ($diffInDays < 0) {
-            $days = abs($diffInDays);
-            return $days == 1 ? 'Überfällig seit 1 Tag' : "Überfällig seit {$days} Tagen";
-        } elseif ($diffInDays == 0) {
-            return 'Heute fällig';
-        } elseif ($diffInDays == 1) {
-            return 'Morgen fällig';
-        } elseif ($diffInDays <= 7) {
-            return "Fällig in {$diffInDays} Tagen";
-        } else {
-            return $due->format('d.m.Y');
         }
     }
 
