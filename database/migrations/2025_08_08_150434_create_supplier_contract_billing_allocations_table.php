@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('supplier_contract_billing_allocations', function (Blueprint $table) {
+        if (!Schema::hasTable('supplier_contract_billing_allocations')) {
+            Schema::create('supplier_contract_billing_allocations', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('supplier_contract_billing_id');
             $table->uuid('solar_plant_id');
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->index(['solar_plant_id'], 'scba_solar_plant_idx');
             $table->index(['is_active'], 'scba_active_idx');
         });
+        }
     }
 
     /**
