@@ -54,7 +54,6 @@ class Task extends Model
     ];
 
     protected $casts = [
-        'due_date' => 'date',
         'due_time' => 'datetime:H:i',
         'labels' => 'array',
         'is_recurring' => 'boolean',
@@ -223,20 +222,30 @@ class Task extends Model
 
     public function getIsOverdueAttribute(): bool
     {
-        if (!$this->due_date || in_array($this->status, ['completed', 'cancelled'])) {
+        try {
+            if (!$this->due_date || in_array($this->status, ['completed', 'cancelled'])) {
+                return false;
+            }
+            
+            return $this->due_date->isPast();
+        } catch (\Exception $e) {
+            \Log::warning("Error checking is_overdue for Task ID {$this->id}: " . $e->getMessage());
             return false;
         }
-        
-        return $this->due_date->isPast();
     }
 
     public function getIsDueTodayAttribute(): bool
     {
-        if (!$this->due_date || in_array($this->status, ['completed', 'cancelled'])) {
+        try {
+            if (!$this->due_date || in_array($this->status, ['completed', 'cancelled'])) {
+                return false;
+            }
+            
+            return $this->due_date->isToday();
+        } catch (\Exception $e) {
+            \Log::warning("Error checking is_due_today for Task ID {$this->id}: " . $e->getMessage());
             return false;
         }
-        
-        return $this->due_date->isToday();
     }
 
     public function getPriorityColorAttribute(): string

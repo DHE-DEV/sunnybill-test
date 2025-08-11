@@ -377,10 +377,32 @@ class TaskResource extends Resource
 
                 TextColumn::make('due_date')
                     ->label('Fällig am')
-                    ->date('d.m.Y')
+                    ->formatStateUsing(function ($state, Task $record): string {
+                        try {
+                            if (!$state || !$record->due_date) {
+                                return '-';
+                            }
+                            return $record->due_date->format('d.m.Y');
+                        } catch (\Exception $e) {
+                            \Log::warning("Error formatting due_date for Task ID {$record->id}: " . $e->getMessage());
+                            return 'Invalid Date';
+                        }
+                    })
                     ->sortable()
-                    ->color(fn (Task $record): string => $record->is_overdue ? 'danger' : ($record->is_due_today ? 'warning' : 'primary'))
-                    ->icon(fn (Task $record): string => $record->is_overdue ? 'heroicon-o-exclamation-triangle' : ($record->is_due_today ? 'heroicon-o-clock' : '')),
+                    ->color(function (Task $record): string {
+                        try {
+                            return $record->is_overdue ? 'danger' : ($record->is_due_today ? 'warning' : 'primary');
+                        } catch (\Exception $e) {
+                            return 'gray';
+                        }
+                    })
+                    ->icon(function (Task $record): string {
+                        try {
+                            return $record->is_overdue ? 'heroicon-o-exclamation-triangle' : ($record->is_due_today ? 'heroicon-o-clock' : '');
+                        } catch (\Exception $e) {
+                            return '';
+                        }
+                    }),
 
                 TextColumn::make('owner.name')
                     ->label('Inhaber')
