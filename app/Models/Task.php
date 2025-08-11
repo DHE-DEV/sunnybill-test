@@ -174,13 +174,19 @@ class Task extends Model
     public function scopeOverdue($query)
     {
         return $query->where('due_date', '<', now()->toDateString())
-                    ->whereNotIn('status', ['completed', 'cancelled']);
+                    ->whereNotIn('status', ['completed', 'cancelled'])
+                    ->whereNotNull('due_date')
+                    ->where('due_date', '!=', '')
+                    ->where('due_date', '!=', '0000-00-00');
     }
 
     public function scopeDueToday($query)
     {
         return $query->where('due_date', now()->toDateString())
-                    ->whereNotIn('status', ['completed', 'cancelled']);
+                    ->whereNotIn('status', ['completed', 'cancelled'])
+                    ->whereNotNull('due_date')
+                    ->where('due_date', '!=', '')
+                    ->where('due_date', '!=', '0000-00-00');
     }
 
     public function scopeHighPriority($query)
@@ -207,15 +213,20 @@ class Task extends Model
      */
     public function getDueDateAttribute($value)
     {
-        if ($value === null) {
+        if ($value === null || $value === '' || $value === '0000-00-00') {
             return null;
         }
         
         try {
-            return $this->asDate($value);
+            // Try to create Carbon instance directly instead of using asDate
+            return \Carbon\Carbon::parse($value);
         } catch (\Exception $e) {
             // Log the error and return null for invalid dates
-            \Log::warning("Invalid due_date value for Task ID {$this->id}: {$value}");
+            \Log::warning("Invalid due_date value for Task ID {$this->id}: {$value}", [
+                'task_id' => $this->id,
+                'value' => $value,
+                'error' => $e->getMessage()
+            ]);
             return null;
         }
     }
@@ -601,9 +612,27 @@ class Task extends Model
             'applies_to_all_solar_plants' => $value ? 'Ja' : 'Nein',
             'is_recurring' => $value ? 'Ja' : 'Nein',
             'labels' => is_array($value) ? implode(', ', $value) : (string) $value,
-            'due_date' => $value ? Carbon::parse($value)->format('d.m.Y') : 'Leer',
-            'due_time' => $value ? Carbon::parse($value)->format('H:i') : 'Leer',
-            'completed_at' => $value ? Carbon::parse($value)->format('d.m.Y H:i') : 'Leer',
+            'due_date' => $value ? (function($val) {
+                try {
+                    return Carbon::parse($val)->format('d.m.Y');
+                } catch (\Exception $e) {
+                    return 'Invalid Date';
+                }
+            })($value) : 'Leer',
+            'due_time' => $value ? (function($val) {
+                try {
+                    return Carbon::parse($val)->format('H:i');
+                } catch (\Exception $e) {
+                    return 'Invalid Time';
+                }
+            })($value) : 'Leer',
+            'completed_at' => $value ? (function($val) {
+                try {
+                    return Carbon::parse($val)->format('d.m.Y H:i');
+                } catch (\Exception $e) {
+                    return 'Invalid DateTime';
+                }
+            })($value) : 'Leer',
             'estimated_minutes' => $value ? "$value Minuten" : 'Leer',
             'actual_minutes' => $value ? "$value Minuten" : 'Leer',
             default => (string) $value,
