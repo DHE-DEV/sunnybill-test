@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('supplier_contract_billings', function (Blueprint $table) {
+        if (!Schema::hasTable('supplier_contract_billings')) {
+            Schema::create('supplier_contract_billings', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('supplier_contract_id');
             $table->string('billing_number')->unique();
@@ -45,6 +46,7 @@ return new class extends Migration
             $table->index('status', 'scb_status_idx');
             $table->index('supplier_invoice_number', 'scb_supplier_invoice_idx');
         });
+        }
     }
 
     /**
