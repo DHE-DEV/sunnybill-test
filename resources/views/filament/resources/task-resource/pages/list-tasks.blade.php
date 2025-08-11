@@ -277,22 +277,30 @@
                                                  
                                                  @if($task->due_date)
                                                      @php
-                                                         $now = now()->startOfDay();
-                                                         $due = \Carbon\Carbon::parse($task->due_date)->startOfDay();
-                                                         $diffInDays = $now->diffInDays($due, false);
-                                                         
-                                                         if ($diffInDays < 0) {
-                                                             $color = '#dc2626'; // red-600
-                                                         } elseif ($diffInDays == 0) {
-                                                             $color = '#ea580c'; // orange-600
-                                                         } elseif ($diffInDays <= 7) {
-                                                             $color = '#2563eb'; // blue-600
-                                                         } else {
+                                                         try {
+                                                             $now = now()->startOfDay();
+                                                             $due = $task->due_date instanceof \Carbon\Carbon 
+                                                                 ? $task->due_date->startOfDay() 
+                                                                 : \Carbon\Carbon::parse($task->due_date)->startOfDay();
+                                                             $diffInDays = $now->diffInDays($due, false);
+                                                             
+                                                             if ($diffInDays < 0) {
+                                                                 $color = '#dc2626'; // red-600
+                                                             } elseif ($diffInDays == 0) {
+                                                                 $color = '#ea580c'; // orange-600
+                                                             } elseif ($diffInDays <= 7) {
+                                                                 $color = '#2563eb'; // blue-600
+                                                             } else {
+                                                                 $color = '#6b7280'; // gray-500
+                                                             }
+                                                             $dateText = $this->getDueDateText($task);
+                                                         } catch (\Exception $e) {
                                                              $color = '#6b7280'; // gray-500
+                                                             $dateText = 'Invalid Date';
                                                          }
                                                      @endphp
                                                      <span class="text-xs font-medium" style="color: {{ $color }} !important;">
-                                                         {{ $this->getDueDateText($task) }}
+                                                         {{ $dateText }}
                                                      </span>
                                                  @endif
                                              </div>
