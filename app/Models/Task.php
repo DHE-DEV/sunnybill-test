@@ -202,6 +202,25 @@ class Task extends Model
     /**
      * Accessor & Mutator
      */
+    
+    /**
+     * Safe accessor for due_date to handle invalid dates
+     */
+    public function getDueDateAttribute($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+        
+        try {
+            return $this->asDate($value);
+        } catch (\Exception $e) {
+            // Log the error and return null for invalid dates
+            \Log::warning("Invalid due_date value for Task ID {$this->id}: {$value}");
+            return null;
+        }
+    }
+
     public function getIsOverdueAttribute(): bool
     {
         if (!$this->due_date || in_array($this->status, ['completed', 'cancelled'])) {
