@@ -96,6 +96,11 @@ Route::prefix('app')->middleware('app_token')->group(function () {
     
     // Kunden-Management
     Route::prefix('customers')->group(function () {
+        Route::get('/test', [App\Http\Controllers\Api\CustomerApiController::class, 'test'])->middleware('app_token:customers:read');
+        Route::get('/debug', [App\Http\Controllers\Api\CustomerApiController::class, 'debug'])->middleware('app_token:customers:read');
+        Route::get('/debug-index', [App\Http\Controllers\Api\CustomerApiController::class, 'debugIndex'])->middleware('app_token:customers:read');
+        Route::get('/raw', [App\Http\Controllers\Api\CustomerApiController::class, 'raw'])->middleware('app_token:customers:read');
+        Route::get('/show-sql', [App\Http\Controllers\Api\CustomerApiController::class, 'showSql'])->middleware('app_token:customers:read');
         Route::get('/', [App\Http\Controllers\Api\CustomerApiController::class, 'index'])->middleware('app_token:customers:read');
         Route::post('/', [App\Http\Controllers\Api\CustomerApiController::class, 'store'])->middleware('app_token:customers:create');
         Route::get('/{customer}', [App\Http\Controllers\Api\CustomerApiController::class, 'show'])->middleware('app_token:customers:read');
@@ -223,7 +228,7 @@ Route::prefix('app')->middleware('app_token')->group(function () {
     
     // Dropdown-Daten und Optionen
     Route::get('/users', [App\Http\Controllers\Api\TaskApiController::class, 'users'])->middleware('app_token:tasks:read');
-    Route::get('/customers', [App\Http\Controllers\Api\TaskApiController::class, 'customers'])->middleware('app_token:tasks:read');
+    Route::get('/customers-dropdown', [App\Http\Controllers\Api\TaskApiController::class, 'customers'])->middleware('app_token:tasks:read');
     Route::get('/suppliers', [App\Http\Controllers\Api\TaskApiController::class, 'suppliers'])->middleware('app_token:tasks:read');
     Route::get('/solar-plants-dropdown', [App\Http\Controllers\Api\TaskApiController::class, 'solarPlants'])->middleware('app_token:tasks:read');
     

@@ -304,23 +304,42 @@ class Customer extends Model
      */
     public function getFullAddressAttribute(): string
     {
-        $address = $this->street;
+        $addressParts = [];
         
-        if ($this->address_line_2) {
-            $address .= "\n" . $this->address_line_2;
+        // Straße hinzufügen
+        if (!empty($this->street)) {
+            $addressParts[] = $this->street;
         }
         
-        $address .= "\n" . $this->postal_code . ' ' . $this->city;
-        
-        if ($this->state) {
-            $address .= ', ' . $this->state;
+        // Zusätzliche Adresszeile hinzufügen
+        if (!empty($this->address_line_2)) {
+            $addressParts[] = $this->address_line_2;
         }
         
-        if ($this->country && $this->country !== 'Deutschland') {
-            $address .= "\n" . $this->country;
+        // PLZ und Stadt hinzufügen
+        $cityLine = [];
+        if (!empty($this->postal_code)) {
+            $cityLine[] = $this->postal_code;
+        }
+        if (!empty($this->city)) {
+            $cityLine[] = $this->city;
         }
         
-        return $address;
+        if (!empty($cityLine)) {
+            $addressParts[] = implode(' ', $cityLine);
+        }
+        
+        // Bundesland hinzufügen
+        if (!empty($this->state)) {
+            $addressParts[count($addressParts) - 1] .= ', ' . $this->state;
+        }
+        
+        // Land hinzufügen (nur wenn es nicht Deutschland ist)
+        if (!empty($this->country) && $this->country !== 'Deutschland') {
+            $addressParts[] = $this->country;
+        }
+        
+        return implode("\n", $addressParts);
     }
 
     /**

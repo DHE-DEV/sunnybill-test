@@ -8,241 +8,305 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class CustomerApiController extends Controller
 {
     /**
-     * Liste aller Kunden
+     * TEST ENDPOINT - Um zu prüfen ob Controller-Änderungen wirken
      */
-    public function index(Request $request): JsonResponse
+    public function test(): JsonResponse
     {
-        $query = Customer::with(['solarPlants', 'participations']);
+        return response()->json([
+            'success' => true,
+            'message' => 'TEST: Controller wurde erfolgreich geändert!',
+            'timestamp' => now()->toISOString()
+        ]);
+    }
+    
+    /**
+     * DEBUG ENDPOINT - Zeigt direkte DB-Abfrage
+     */
+    public function debug(): JsonResponse
+    {
+        // Direkte Datenbankabfrage - komplett ohne Model
+        $customer = DB::table('customers')
+            ->where('id', '019889c5-2f74-7046-9674-289de55c684f')
+            ->select(['id', 'name', 'company_name', 'street', 'postal_code', 'city', 'email', 'phone'])
+            ->first();
+            
+        return response()->json([
+            'success' => true,
+            'message' => 'DEBUG: Direkte DB-Abfrage',
+            'data' => $customer,
+            'data_type' => gettype($customer),
+        ]);
+    }
+    
+    /**
+     * DEBUG INDEX - Mit Query Builder statt direkte SQL
+     */
+    public function debugIndex(Request $request): JsonResponse
+    {
+        dump("debugIndex wird ausgeführt");
         
-        // Filter anwenden
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        // Mit Query Builder (DB::table) - nicht Eloquent
+        $customers = DB::table('customers')
+            ->whereNull('deleted_at')
+            ->select([
+                'id', 'name', 'company_name', 'contact_person', 'department', 'customer_number',
+                'email', 'phone', 'fax', 'website', 'street', 'address_line_2', 'postal_code',
+                'city', 'state', 'country', 'country_code', 'tax_number', 'vat_id',
+                'payment_terms', 'payment_days', 'bank_name', 'iban', 'bic', 'account_holder',
+                'payment_method', 'notes', 'custom_field_1', 'custom_field_2', 'custom_field_3',
+                'custom_field_4', 'custom_field_5', 'is_active', 'deactivated_at',
+                'customer_type', 'ranking', 'lexoffice_id', 'lexoffice_synced_at',
+                'lexware_version', 'lexware_json', 'created_at', 'updated_at'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        // Konvertiere zu Array
+        $customersArray = $customers->toArray();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'DEBUG INDEX: Query Builder (DB::table)',
+            'data' => $customersArray,
+            'count' => count($customersArray),
+        ], 200, [], JSON_UNESCAPED_UNICODE);
+    }
+    
+    /**
+     * RAW DATA - Komplett ohne Laravel Eloquent/Model Bezug
+     */
+    public function raw(): JsonResponse
+    {
+        // Komplett rohe Datenbankabfrage mit json_encode
+        $result = DB::select('SELECT id, name, company_name, street, postal_code, city, email, phone FROM customers WHERE deleted_at IS NULL LIMIT 5');
+        
+        // Direkt als Array konvertieren ohne Laravel Collection
+        $rawData = [];
+        foreach ($result as $row) {
+            $rawData[] = (array) $row;
         }
         
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'RAW: Direkte SQL-Abfrage ohne Laravel Collections',
+            'data' => $rawData,
+            'data_type' => gettype($rawData),
+            'count' => count($rawData),
+        ], 200, [], JSON_UNESCAPED_UNICODE);
+    }
+    
+    /**
+     * SHOW SQL - Zeigt den SQL-Befehl, der für api/app/customers ausgeführt wird
+     */
+    public function showSql(Request $request): JsonResponse
+    {
+        // Paginierung Parameter (identisch zur index() Methode)
+        $perPage = min($request->get('per_page', 15), 100);
+        $page = $request->get('page', 1);
+        $offset = ($page - 1) * $perPage;
+        
+        // Base SQL für Kunden (identisch zur index() Methode)
+        $whereClause = 'deleted_at IS NULL';
+        $whereParams = [];
+        
+        // Filter anwenden (identisch zur index() Methode)
         if ($request->filled('customer_type')) {
-            $query->where('customer_type', $request->customer_type);
+            $whereClause .= ' AND customer_type = ?';
+            $whereParams[] = $request->customer_type;
         }
         
         if ($request->filled('city')) {
-            $query->where('city', 'like', '%' . $request->city . '%');
+            $whereClause .= ' AND city LIKE ?';
+            $whereParams[] = '%' . $request->city . '%';
         }
         
         if ($request->filled('is_active')) {
-            $query->where('is_active', $request->boolean('is_active'));
+            $whereClause .= ' AND is_active = ?';
+            $whereParams[] = $request->boolean('is_active') ? 1 : 0;
         }
         
-        // Filter für Beteiligungen
-        if ($request->filled('has_participations')) {
-            if ($request->boolean('has_participations')) {
-                $query->whereHas('participations');
-            } else {
-                $query->whereDoesntHave('participations');
-            }
+        // Suche (identisch zur index() Methode)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $whereClause .= ' AND (name LIKE ? OR company_name LIKE ? OR contact_person LIKE ? OR email LIKE ? OR customer_number LIKE ? OR phone LIKE ? OR city LIKE ?)';
+            $searchParam = "%{$search}%";
+            $whereParams = array_merge($whereParams, [$searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $searchParam]);
         }
         
-        if ($request->filled('has_solar_plants')) {
-            if ($request->boolean('has_solar_plants')) {
-                $query->whereHas('solarPlants');
-            } else {
-                $query->whereDoesntHave('solarPlants');
-            }
+        // Sortierung (identisch zur index() Methode)
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
+        
+        // Validiere Sortierfelder zur Sicherheit (identisch zur index() Methode)
+        $allowedSorts = ['id', 'name', 'company_name', 'created_at', 'updated_at', 'customer_number', 'city'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+        $sortDirection = strtoupper($sortDirection) === 'ASC' ? 'ASC' : 'DESC';
+        
+        // COUNT SQL (identisch zur index() Methode)
+        $countSql = "SELECT COUNT(*) as total FROM customers WHERE {$whereClause}";
+        
+        // MAIN SQL (identisch zur index() Methode)
+        $mainSql = "SELECT 
+            id, name, company_name, contact_person, department, customer_number,
+            email, phone, fax, website, street, address_line_2, postal_code,
+            city, state, country, country_code, tax_number, vat_id,
+            payment_terms, payment_days, bank_name, iban, bic, account_holder,
+            payment_method, notes, custom_field_1, custom_field_2, custom_field_3,
+            custom_field_4, custom_field_5, is_active, deactivated_at,
+            customer_type, ranking, lexoffice_id, lexoffice_synced_at,
+            lexware_version, lexware_json, created_at, updated_at
+        FROM customers 
+        WHERE {$whereClause} 
+        ORDER BY {$sortBy} {$sortDirection} 
+        LIMIT {$perPage} OFFSET {$offset}";
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'SQL-Befehle für api/app/customers',
+            'request_parameters' => [
+                'per_page' => $perPage,
+                'page' => $page,
+                'offset' => $offset,
+                'customer_type' => $request->get('customer_type'),
+                'city' => $request->get('city'),
+                'is_active' => $request->get('is_active'),
+                'search' => $request->get('search'),
+                'sort_by' => $sortBy,
+                'sort_direction' => $sortDirection,
+            ],
+            'count_sql' => $countSql,
+            'count_params' => $whereParams,
+            'main_sql' => $mainSql,
+            'main_params' => $whereParams,
+            'where_clause' => $whereClause,
+        ], 200, [], JSON_UNESCAPED_UNICODE);
+    }
+    
+    /**
+     * Liste aller Kunden - NUR ROHDATEN AUS DATENBANK
+     */
+    public function index(Request $request): JsonResponse
+    {
+        
+        // Paginierung Parameter
+        $perPage = min($request->get('per_page', 15), 100);
+        $page = $request->get('page', 1);
+        $offset = ($page - 1) * $perPage;
+        
+        // Base SQL für Kunden
+        $whereClause = 'deleted_at IS NULL';
+        $whereParams = [];
+        
+        // Filter anwenden
+        if ($request->filled('customer_type')) {
+            $whereClause .= ' AND customer_type = ?';
+            $whereParams[] = $request->customer_type;
         }
         
-        // Datumsfilter
-        if ($request->filled('created_from')) {
-            $query->where('created_at', '>=', $request->created_from);
+        if ($request->filled('city')) {
+            $whereClause .= ' AND city LIKE ?';
+            $whereParams[] = '%' . $request->city . '%';
         }
         
-        if ($request->filled('created_to')) {
-            $query->where('created_at', '<=', $request->created_to);
+        if ($request->filled('is_active')) {
+            $whereClause .= ' AND is_active = ?';
+            $whereParams[] = $request->boolean('is_active') ? 1 : 0;
         }
         
         // Suche
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function (Builder $q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('company_name', 'like', "%{$search}%")
-                  ->orWhere('contact_person', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('customer_number', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('city', 'like', "%{$search}%");
-            });
+            $whereClause .= ' AND (name LIKE ? OR company_name LIKE ? OR contact_person LIKE ? OR email LIKE ? OR customer_number LIKE ? OR phone LIKE ? OR city LIKE ?)';
+            $searchParam = "%{$search}%";
+            $whereParams = array_merge($whereParams, [$searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $searchParam]);
         }
         
         // Sortierung
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
         
-        // Paginierung
-        $perPage = min($request->get('per_page', 15), 100);
-        $customers = $query->paginate($perPage);
+        // Validiere Sortierfelder zur Sicherheit
+        $allowedSorts = ['id', 'name', 'company_name', 'created_at', 'updated_at', 'customer_number', 'city'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+        $sortDirection = strtoupper($sortDirection) === 'ASC' ? 'ASC' : 'DESC';
         
-        // Erweiterte Felder für API-Antwort
-        $enrichedCustomers = $customers->getCollection()->map(function ($customer) {
-            return [
-                'id' => $customer->id,
-                'name' => $customer->name,
-                'company_name' => $customer->company_name,
-                'contact_person' => $customer->contact_person,
-                'department' => $customer->department,
-                'customer_number' => $customer->customer_number,
-                'email' => $customer->email,
-                'phone' => $customer->phone,
-                'fax' => $customer->fax,
-                'website' => $customer->website,
-                'street' => $customer->street,
-                'address_line_2' => $customer->address_line_2,
-                'postal_code' => $customer->postal_code,
-                'city' => $customer->city,
-                'state' => $customer->state,
-                'country' => $customer->country,
-                'country_code' => $customer->country_code,
-                'tax_number' => $customer->tax_number,
-                'vat_id' => $customer->vat_id,
-                'payment_terms' => $customer->payment_terms,
-                'payment_days' => $customer->payment_days,
-                'bank_name' => $customer->bank_name,
-                'iban' => $customer->iban,
-                'bic' => $customer->bic,
-                'account_holder' => $customer->account_holder,
-                'payment_method' => $customer->payment_method,
-                'notes' => $customer->notes,
-                'custom_field_1' => $customer->custom_field_1,
-                'custom_field_2' => $customer->custom_field_2,
-                'custom_field_3' => $customer->custom_field_3,
-                'custom_field_4' => $customer->custom_field_4,
-                'custom_field_5' => $customer->custom_field_5,
-                'is_active' => $customer->is_active,
-                'deactivated_at' => $customer->deactivated_at?->toISOString(),
-                'customer_type' => $customer->customer_type,
-                'ranking' => $customer->ranking,
-                'lexoffice_id' => $customer->lexoffice_id,
-                'lexoffice_synced_at' => $customer->lexoffice_synced_at?->toISOString(),
-                'lexware_version' => $customer->lexware_version,
-                'created_at' => $customer->created_at?->toISOString(),
-                'updated_at' => $customer->updated_at?->toISOString(),
-                
-                // Berechnete Felder
-                'display_name' => $customer->display_name,
-                'full_address' => $customer->full_address,
-                'complete_address' => $customer->full_address,
-                'primary_phone' => $customer->primary_phone,
-                'business_phone' => $customer->business_phone,
-                'mobile_phone' => $customer->mobile_phone,
-                'status_text' => $customer->status_text,
-                'formatted_vat_id' => $customer->formatted_vat_id,
-                'customer_score' => $customer->customer_score,
-                'formatted_customer_score' => $customer->formatted_customer_score,
-                'total_kwp_participation' => $customer->total_kwp_participation,
-                'formatted_total_kwp_participation' => $customer->formatted_total_kwp_participation,
-                
-                // Beziehungsangaben
-                'solar_plants_count' => $customer->solarPlants->count(),
-                'participations_count' => $customer->participations->count(),
-                'total_investment' => (float) $customer->participations->sum('investment_amount'),
-            ];
-        });
+        // Gesamtanzahl für Paginierung
+        $countSql = "SELECT COUNT(*) as total FROM customers WHERE {$whereClause}";
+        $totalResult = DB::select($countSql, $whereParams);
+        $total = $totalResult[0]->total;
+        $lastPage = ceil($total / $perPage);
+        
+        // Hauptabfrage
+        $sql = "SELECT 
+            id, name, company_name, contact_person, department, customer_number,
+            email, phone, fax, website, street, address_line_2, postal_code,
+            city, state, country, country_code, tax_number, vat_id,
+            payment_terms, payment_days, bank_name, iban, bic, account_holder,
+            payment_method, notes, custom_field_1, custom_field_2, custom_field_3,
+            custom_field_4, custom_field_5, is_active, deactivated_at,
+            customer_type, ranking, lexoffice_id, lexoffice_synced_at,
+            lexware_version, lexware_json, created_at, updated_at
+        FROM customers 
+        WHERE {$whereClause} 
+        ORDER BY {$sortBy} {$sortDirection} 
+        LIMIT {$perPage} OFFSET {$offset}";
+        
+        $result = DB::select($sql, $whereParams);
+        
+        // Konvertiere zu Array um sicherzustellen, dass keine Laravel Collections verwendet werden
+        $customers = [];
+        foreach ($result as $row) {
+            $customers[] = (array) $row;
+        }
         
         return response()->json([
             'success' => true,
-            'data' => $enrichedCustomers,
+            'data' => $customers,
             'pagination' => [
-                'current_page' => $customers->currentPage(),
-                'last_page' => $customers->lastPage(),
-                'per_page' => $customers->perPage(),
-                'total' => $customers->total(),
+                'current_page' => (int) $page,
+                'last_page' => (int) $lastPage,
+                'per_page' => (int) $perPage,
+                'total' => (int) $total,
             ]
-        ]);
+        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
-    
+
     /**
-     * Zeige einen spezifischen Kunden
+     * Einzelnen Kunden anzeigen
      */
     public function show(Customer $customer): JsonResponse
     {
-        $customer->load([
-            'solarPlants' => function($query) {
-                $query->with(['billings' => function($billingQuery) {
-                    $billingQuery->latest('billing_month')->limit(12);
-                }]);
-            },
-            'participations.solarPlant',
-            'projects.milestones',
-            'tasks' => function($query) {
-                $query->latest()->limit(10);
-            }
-        ]);
-        
-        // Zusätzliche Berechnungen
-        $totalInvestment = $customer->participations->sum('investment_amount');
-        $totalParticipations = $customer->participations->count();
-        $activePlants = $customer->solarPlants->where('is_active', true)->count();
-        $totalProjects = $customer->projects->count();
-        $openTasks = $customer->tasks->whereIn('status', ['pending', 'in_progress'])->count();
-        
         return response()->json([
             'success' => true,
-            'data' => array_merge($customer->toArray(), [
-                'computed_fields' => [
-                    'full_name' => $customer->full_name,
-                    'display_name' => $customer->display_name,
-                    'complete_address' => $customer->complete_address,
-                ],
-                'statistics' => [
-                    'total_investment' => (float) $totalInvestment,
-                    'total_participations' => $totalParticipations,
-                    'active_plants' => $activePlants,
-                    'total_projects' => $totalProjects,
-                    'open_tasks' => $openTasks,
-                ]
-            ])
+            'data' => $customer
         ]);
     }
-    
+
     /**
-     * Erstelle einen neuen Kunden
+     * Neuen Kunden erstellen
      */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'customer_type' => 'required|in:private,business',
             'name' => 'required|string|max:255',
-            'company_name' => 'required_if:customer_type,business|string|max:255',
-            'contact_person' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:customers,email',
+            'company_name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
-            'fax' => 'nullable|string|max:50',
-            'website' => 'nullable|string|max:255',
             'street' => 'nullable|string|max:255',
-            'address_line_2' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:10',
-            'city' => 'nullable|string|max:255',
-            'state' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-            'country_code' => 'nullable|string|max:2',
-            'tax_number' => 'nullable|string|max:50',
-            'vat_id' => 'nullable|string|max:50',
-            'customer_number' => 'nullable|string|max:50|unique:customers,customer_number',
-            'payment_terms' => 'nullable|string|max:255',
-            'payment_days' => 'nullable|integer|min:1|max:365',
-            'bank_name' => 'nullable|string|max:255',
-            'iban' => 'nullable|string|max:34',
-            'bic' => 'nullable|string|max:11',
-            'account_holder' => 'nullable|string|max:255',
-            'payment_method' => 'nullable|string|max:100',
-            'notes' => 'nullable|text',
-            'is_active' => 'boolean',
-            'ranking' => 'nullable|integer|min:1|max:5',
+            'city' => 'nullable|string|max:100'
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -251,17 +315,7 @@ class CustomerApiController extends Controller
             ], 422);
         }
         
-        $data = $validator->validated();
-        
-        // Automatische Kundennummer generieren wenn nicht angegeben
-        if (!isset($data['customer_number'])) {
-            $lastCustomer = Customer::orderBy('id', 'desc')->first();
-            $nextNumber = $lastCustomer ? ($lastCustomer->id + 1) : 1;
-            $data['customer_number'] = 'KD-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
-        }
-        
-        $customer = Customer::create($data);
-        $customer->load(['solarPlants', 'participations']);
+        $customer = Customer::create($validator->validated());
         
         return response()->json([
             'success' => true,
@@ -269,44 +323,22 @@ class CustomerApiController extends Controller
             'data' => $customer
         ], 201);
     }
-    
+
     /**
-     * Aktualisiere einen Kunden
+     * Kunden aktualisieren
      */
     public function update(Request $request, Customer $customer): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'customer_type' => 'sometimes|required|in:private,business',
-            'name' => 'sometimes|required|string|max:255',
-            'company_name' => 'required_if:customer_type,business|string|max:255',
-            'contact_person' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'email' => 'sometimes|required|email|unique:customers,email,' . $customer->id,
+            'name' => 'string|max:255',
+            'company_name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
-            'fax' => 'nullable|string|max:50',
-            'website' => 'nullable|string|max:255',
             'street' => 'nullable|string|max:255',
-            'address_line_2' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:10',
-            'city' => 'nullable|string|max:255',
-            'state' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-            'country_code' => 'nullable|string|max:2',
-            'tax_number' => 'nullable|string|max:50',
-            'vat_id' => 'nullable|string|max:50',
-            'customer_number' => 'sometimes|required|string|max:50|unique:customers,customer_number,' . $customer->id,
-            'payment_terms' => 'nullable|string|max:255',
-            'payment_days' => 'nullable|integer|min:1|max:365',
-            'bank_name' => 'nullable|string|max:255',
-            'iban' => 'nullable|string|max:34',
-            'bic' => 'nullable|string|max:11',
-            'account_holder' => 'nullable|string|max:255',
-            'payment_method' => 'nullable|string|max:100',
-            'notes' => 'nullable|text',
-            'is_active' => 'boolean',
-            'ranking' => 'nullable|integer|min:1|max:5',
+            'city' => 'nullable|string|max:100'
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -316,7 +348,6 @@ class CustomerApiController extends Controller
         }
         
         $customer->update($validator->validated());
-        $customer->load(['solarPlants', 'participations']);
         
         return response()->json([
             'success' => true,
@@ -324,212 +355,17 @@ class CustomerApiController extends Controller
             'data' => $customer
         ]);
     }
-    
+
     /**
-     * Lösche einen Kunden
+     * Kunden löschen
      */
     public function destroy(Customer $customer): JsonResponse
     {
-        // Prüfe ob Kunde verknüpfte Daten hat
-        if ($customer->solarPlants()->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Kunde kann nicht gelöscht werden, da noch Solaranlagen verknüpft sind'
-            ], 400);
-        }
-        
-        if ($customer->participations()->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Kunde kann nicht gelöscht werden, da noch Beteiligungen vorhanden sind'
-            ], 400);
-        }
-        
-        if ($customer->projects()->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Kunde kann nicht gelöscht werden, da noch Projekte verknüpft sind'
-            ], 400);
-        }
-        
         $customer->delete();
         
         return response()->json([
             'success' => true,
             'message' => 'Kunde erfolgreich gelöscht'
-        ]);
-    }
-    
-    /**
-     * Ändere den Status eines Kunden
-     */
-    public function updateStatus(Request $request, Customer $customer): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:active,inactive,prospect,blocked',
-        ]);
-        
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validierungsfehler',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-        
-        $customer->update(['status' => $request->status]);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Kundenstatus erfolgreich geändert',
-            'data' => $customer
-        ]);
-    }
-    
-    /**
-     * Hole Beteiligungen eines Kunden
-     */
-    public function participations(Customer $customer): JsonResponse
-    {
-        $participations = $customer->participations()
-            ->with(['solarPlant', 'solarPlant.billings' => function($query) {
-                $query->latest('billing_month')->limit(12);
-            }])
-            ->get();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $participations,
-            'summary' => [
-                'total_participations' => $participations->count(),
-                'total_investment' => (float) $participations->sum('investment_amount'),
-                'total_percentage' => (float) $participations->sum('percentage'),
-            ]
-        ]);
-    }
-    
-    /**
-     * Hole Projekte eines Kunden
-     */
-    public function projects(Customer $customer): JsonResponse
-    {
-        $projects = $customer->projects()
-            ->with(['milestones', 'appointments', 'tasks'])
-            ->get();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $projects,
-            'summary' => [
-                'total_projects' => $projects->count(),
-                'active_projects' => $projects->where('status', 'active')->count(),
-                'completed_projects' => $projects->where('status', 'completed')->count(),
-                'total_budget' => (float) $projects->sum('budget'),
-            ]
-        ]);
-    }
-    
-    /**
-     * Hole Aufgaben eines Kunden
-     */
-    public function tasks(Customer $customer): JsonResponse
-    {
-        $tasks = $customer->tasks()
-            ->with(['assignedUser', 'project'])
-            ->latest()
-            ->get();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $tasks,
-            'summary' => [
-                'total_tasks' => $tasks->count(),
-                'open_tasks' => $tasks->whereIn('status', ['pending', 'in_progress'])->count(),
-                'completed_tasks' => $tasks->where('status', 'completed')->count(),
-                'high_priority_tasks' => $tasks->where('priority', 'high')->count(),
-            ]
-        ]);
-    }
-    
-    /**
-     * Finanzielle Übersicht eines Kunden
-     */
-    public function financials(Customer $customer): JsonResponse
-    {
-        $participations = $customer->participations()->with('solarPlant.billings')->get();
-        
-        // Berechne Gesamterträge der letzten 12 Monate
-        $totalIncome = 0;
-        $totalCosts = 0;
-        $totalNetResult = 0;
-        
-        foreach ($participations as $participation) {
-            $recentBillings = $participation->solarPlant->billings()
-                ->where('billing_month', '>=', now()->subMonths(12)->startOfMonth())
-                ->get();
-            
-            $participationPercentage = $participation->percentage / 100;
-            
-            $totalIncome += $recentBillings->sum('total_income') * $participationPercentage;
-            $totalCosts += $recentBillings->sum('total_costs') * $participationPercentage;
-            $totalNetResult += $recentBillings->sum('net_result') * $participationPercentage;
-        }
-        
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'customer' => $customer->only(['id', 'customer_number', 'display_name']),
-                'investment_summary' => [
-                    'total_investment' => (float) $participations->sum('investment_amount'),
-                    'total_participations' => $participations->count(),
-                    'active_plants' => $participations->whereIn('solar_plant_id', 
-                        $customer->solarPlants()->where('is_active', true)->pluck('id')
-                    )->count(),
-                ],
-                'performance_12m' => [
-                    'period' => [
-                        'start' => now()->subMonths(12)->startOfMonth()->format('Y-m-d'),
-                        'end' => now()->format('Y-m-d'),
-                    ],
-                    'total_income' => (float) $totalIncome,
-                    'total_costs' => (float) $totalCosts,
-                    'net_result' => (float) $totalNetResult,
-                ],
-                'roi_analysis' => [
-                    'annual_return' => (float) $totalNetResult,
-                    'total_investment' => (float) $participations->sum('investment_amount'),
-                    'roi_percentage' => $participations->sum('investment_amount') > 0 
-                        ? round(($totalNetResult / $participations->sum('investment_amount')) * 100, 2)
-                        : 0,
-                ]
-            ]
-        ]);
-    }
-    
-    /**
-     * Hole verfügbare Optionen für Kunden
-     */
-    public function options(): JsonResponse
-    {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'customer_types' => [
-                    'private' => 'Privatkunde',
-                    'business' => 'Geschäftskunde'
-                ],
-                'statuses' => [
-                    'active' => 'Aktiv',
-                    'inactive' => 'Inaktiv',
-                    'prospect' => 'Interessent',
-                    'blocked' => 'Gesperrt'
-                ],
-                'countries' => [
-                    'Deutschland' => 'Deutschland',
-                    'Österreich' => 'Österreich',
-                    'Schweiz' => 'Schweiz'
-                ]
-            ]
         ]);
     }
 }
