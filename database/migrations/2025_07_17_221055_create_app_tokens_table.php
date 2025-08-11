@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('app_tokens', function (Blueprint $table) {
+        if (!Schema::hasTable('app_tokens')) {
+            Schema::create('app_tokens', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name'); // Name des Tokens (z.B. "iPhone App", "Desktop Client")
@@ -31,7 +32,8 @@ return new class extends Migration
             $table->index(['user_id', 'is_active']);
             $table->index(['expires_at']);
             $table->index(['last_used_at']);
-        });
+            });
+        }
     }
 
     /**
