@@ -83,12 +83,20 @@ class HistoryRelationManager extends RelationManager
                     ->label('Alter Wert')
                     ->limit(50)
                     ->placeholder('-')
+                    ->formatStateUsing(fn (?string $state): string => 
+                        $state ? html_entity_decode($state, ENT_QUOTES | ENT_HTML5, 'UTF-8') : '-'
+                    )
+                    ->html()
                     ->visible(fn (TaskHistory $record): bool => $record->action === 'field_changed'),
 
                 Tables\Columns\TextColumn::make('new_value')
                     ->label('Neuer Wert')
                     ->limit(50)
                     ->placeholder('-')
+                    ->formatStateUsing(fn (?string $state): string => 
+                        $state ? html_entity_decode($state, ENT_QUOTES | ENT_HTML5, 'UTF-8') : '-'
+                    )
+                    ->html()
                     ->visible(fn (TaskHistory $record): bool => $record->action === 'field_changed'),
 
                 Tables\Columns\TextColumn::make('description')
@@ -96,7 +104,11 @@ class HistoryRelationManager extends RelationManager
                     ->searchable()
                     ->limit(100)
                     ->wrap()
-                    ->tooltip(fn (TaskHistory $record): string => $record->description ?? ''),
+                    ->formatStateUsing(fn (?string $state): string => 
+                        $state ? html_entity_decode($state, ENT_QUOTES | ENT_HTML5, 'UTF-8') : ''
+                    )
+                    ->html()
+                    ->tooltip(fn (TaskHistory $record): string => strip_tags(html_entity_decode($record->description ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'))),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('action')
