@@ -130,6 +130,11 @@ class ArticlesRelationManager extends RelationManager
                         }
                     }),
 
+                Forms\Components\TextInput::make('description')
+                    ->label('Beschreibung')
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+
                 Forms\Components\Textarea::make('detailed_description')
                     ->label('Ausführliche Artikelbeschreibung')
                     ->rows(5)
@@ -176,11 +181,6 @@ class ArticlesRelationManager extends RelationManager
                     ->prefix('€')
                     ->disabled()
                     ->dehydrated(true),
-
-                Forms\Components\TextInput::make('description')
-                    ->label('Beschreibung')
-                    ->maxLength(255)
-                    ->columnSpanFull(),
 
                 Forms\Components\Textarea::make('notes')
                     ->label('Notizen')
