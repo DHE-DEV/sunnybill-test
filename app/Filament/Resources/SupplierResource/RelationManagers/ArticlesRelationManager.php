@@ -228,10 +228,18 @@ class ArticlesRelationManager extends RelationManager
                                 
                                 Forms\Components\Textarea::make('description')
                                     ->label('Beschreibung')
-                                    ->rows(3)
+                                    ->rows(2)
                                     ->maxLength(1000)
-                                    ->placeholder('Detaillierte Beschreibung des Artikels...')
+                                    ->placeholder('Kurze Beschreibung des Artikels...')
                                     ->columnSpanFull(),
+                                
+                                Forms\Components\Textarea::make('notes')
+                                    ->label('Ausführliche Erklärung')
+                                    ->rows(4)
+                                    ->maxLength(5000)
+                                    ->placeholder('Ausführliche Erklärung zum Artikel, technische Details, Verwendungszweck, etc...')
+                                    ->columnSpanFull()
+                                    ->helperText('Hier können Sie ausführliche Informationen zum Artikel hinterlegen.'),
                                 
                                     Forms\Components\Select::make('type')
                                         ->label('Artikeltyp')
@@ -344,6 +352,7 @@ class ArticlesRelationManager extends RelationManager
                         $articleData = [
                             'name' => $data['name'],
                             'description' => $data['description'],
+                            'notes' => $data['notes'] ?? null,
                             'type' => $data['type'],
                             'price' => $data['price'],
                             'tax_rate_id' => $data['tax_rate_id'],
@@ -458,7 +467,8 @@ class ArticlesRelationManager extends RelationManager
                                 // Artikel-Daten
                                 'name' => $record->name,
                                 'description' => $record->description,
-                                'type' => $record->type,
+                                'notes' => $record->notes,
+                                'type' => strtolower($record->type), // Convert to lowercase to match option keys
                                 'unit' => $record->unit,
                                 'price' => $record->price,
                                 'tax_rate_id' => $record->tax_rate_id,
@@ -485,10 +495,18 @@ class ArticlesRelationManager extends RelationManager
                                     
                                     Forms\Components\Textarea::make('description')
                                         ->label('Beschreibung')
-                                        ->rows(3)
+                                        ->rows(2)
                                         ->maxLength(1000)
-                                        ->placeholder('Detaillierte Beschreibung des Artikels...')
+                                        ->placeholder('Kurze Beschreibung des Artikels...')
                                         ->columnSpanFull(),
+                                    
+                                    Forms\Components\Textarea::make('notes')
+                                        ->label('Ausführliche Erklärung')
+                                        ->rows(4)
+                                        ->maxLength(5000)
+                                        ->placeholder('Ausführliche Erklärung zum Artikel, technische Details, Verwendungszweck, etc...')
+                                        ->columnSpanFull()
+                                        ->helperText('Hier können Sie ausführliche Informationen zum Artikel hinterlegen.'),
                                     
                                     Forms\Components\Select::make('type')
                                         ->label('Artikeltyp')
@@ -499,7 +517,9 @@ class ArticlesRelationManager extends RelationManager
                                             'maintenance' => 'Wartung',
                                             'other' => 'Sonstiges',
                                         ])
-                                        ->required(),
+                                        ->required()
+                                        ->native(false)
+                                        ->preload(),
                                     
                                     Forms\Components\TextInput::make('unit')
                                         ->label('Einheit')
@@ -594,6 +614,7 @@ class ArticlesRelationManager extends RelationManager
                             $record->update([
                                 'name' => $data['name'],
                                 'description' => $data['description'],
+                                'notes' => $data['notes'] ?? null,
                                 'type' => $data['type'],
                                 'price' => $data['price'],
                                 'tax_rate_id' => $data['tax_rate_id'],

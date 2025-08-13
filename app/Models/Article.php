@@ -17,6 +17,7 @@ class Article extends Model
     protected $fillable = [
         'name',
         'description',
+        'notes',
         'type',
         'price',
         'tax_rate', // Wird schrittweise durch tax_rate_id ersetzt
