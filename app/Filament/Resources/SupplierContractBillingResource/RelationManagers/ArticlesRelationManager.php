@@ -104,20 +104,26 @@ class ArticlesRelationManager extends RelationManager
                         };
                     })
                     ->afterStateUpdated(function (callable $get, callable $set, $state, $record) {
-                        // Nur bei neuen Artikeln (nicht beim Bearbeiten) die Werte überschreiben
-                        if ($state && !$record) {
+                        if ($state) {
                             $article = Article::find($state);
                             if ($article) {
-                                // Nur setzen wenn noch keine Werte vorhanden sind
-                                if (!$get('unit_price')) {
-                                    $set('unit_price', $article->price);
+                                // Setze die ausführliche Beschreibung immer
+                                $set('article_notes', $article->notes ?? '');
+                                
+                                // Nur bei neuen Artikeln (nicht beim Bearbeiten) die Werte überschreiben
+                                if (!$record) {
+                                    // Nur setzen wenn noch keine Werte vorhanden sind
+                                    if (!$get('unit_price')) {
+                                        $set('unit_price', $article->price);
+                                    }
+                                    if (!$get('description')) {
+                                        $set('description', $article->description ?? $article->name);
+                                    }
                                 }
-                                if (!$get('description')) {
-                                    $set('description', $article->description ?? $article->name);
-                                }
-                                // Setze die ausführliche Beschreibung für Anzeige
-                                $set('article_notes', $article->notes);
                             }
+                        } else {
+                            // Wenn kein Artikel ausgewählt, leere die ausführliche Beschreibung
+                            $set('article_notes', '');
                         }
                     }),
 
@@ -126,16 +132,8 @@ class ArticlesRelationManager extends RelationManager
                     ->disabled()
                     ->rows(3)
                     ->columnSpanFull()
-                    ->visible(fn (callable $get) => $get('article_id'))
-                    ->placeholder('Keine ausführliche Beschreibung vorhanden')
-                    ->formatStateUsing(function ($state, callable $get) {
-                        if ($articleId = $get('article_id')) {
-                            $article = Article::find($articleId);
-                            return $article?->notes;
-                        }
-                        return $state;
-                    })
-                    ->dehydrated(false),
+                    ->visible(fn (callable $get, $state) => $get('article_id') || !empty($state))
+                    ->placeholder('Keine ausführliche Beschreibung vorhanden'),
 
                 Forms\Components\TextInput::make('quantity')
                     ->label('Menge')
@@ -261,6 +259,8 @@ class ArticlesRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data): array {
                         // Berechne den Gesamtpreis beim Erstellen
                         $data['total_price'] = $data['quantity'] * $data['unit_price'];
+                        // Entferne article_notes, da es nur zur Anzeige dient
+                        unset($data['article_notes']);
                         return $data;
                     }),
             ])
@@ -309,6 +309,8 @@ class ArticlesRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data): array {
                         // Berechne den Gesamtpreis beim Bearbeiten
                         $data['total_price'] = $data['quantity'] * $data['unit_price'];
+                        // Entferne article_notes, da es nur zur Anzeige dient
+                        unset($data['article_notes']);
                         return $data;
                     }),
                 
