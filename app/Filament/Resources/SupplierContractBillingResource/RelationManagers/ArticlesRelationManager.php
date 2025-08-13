@@ -115,9 +115,19 @@ class ArticlesRelationManager extends RelationManager
                                 if (!$get('description')) {
                                     $set('description', $article->description ?? $article->name);
                                 }
+                                // Setze die ausführliche Beschreibung für Anzeige
+                                $set('article_notes', $article->notes);
                             }
                         }
                     }),
+
+                Forms\Components\Textarea::make('article_notes')
+                    ->label('Ausführliche Artikelbeschreibung')
+                    ->disabled()
+                    ->rows(3)
+                    ->columnSpanFull()
+                    ->visible(fn (callable $get) => $get('article_id') && Article::find($get('article_id'))?->notes)
+                    ->dehydrated(false),
 
                 Forms\Components\TextInput::make('quantity')
                     ->label('Menge')
@@ -279,6 +289,7 @@ class ArticlesRelationManager extends RelationManager
                         return [
                             'article_group' => $articleGroup,
                             'article_id' => $record->article_id,
+                            'article_notes' => $record->article?->notes, // Lade die ausführliche Beschreibung des Artikels
                             'quantity' => $record->quantity,
                             'unit_price' => $record->unit_price,
                             'total_price' => $record->total_price,
