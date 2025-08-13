@@ -22,6 +22,13 @@ class ArticlesRelationManager extends RelationManager
 
     protected static ?string $pluralModelLabel = 'Artikel';
 
+    protected static bool $isLazy = false;
+    
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
         $count = $ownerRecord->articles()->count();
