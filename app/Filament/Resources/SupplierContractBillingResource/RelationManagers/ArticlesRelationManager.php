@@ -276,57 +276,62 @@ class ArticlesRelationManager extends RelationManager
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()
-                    ->label('Bearbeiten')
-                    ->fillForm(function ($record): array {
-                        // Bestimme die Artikelgruppe basierend auf der Herkunft
-                        $articleGroup = null;
-                        $ownerRecord = $this->getOwnerRecord();
-                        
-                        if ($ownerRecord && $record->article) {
-                            $supplierId = $ownerRecord->supplierContract->supplier_id;
-                            $contractId = $ownerRecord->supplier_contract_id;
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make()
+                        ->label('Bearbeiten')
+                        ->fillForm(function ($record): array {
+                            // Bestimme die Artikelgruppe basierend auf der Herkunft
+                            $articleGroup = null;
+                            $ownerRecord = $this->getOwnerRecord();
                             
-                            // Prüfe ob der Artikel vom Lieferanten kommt
-                            if ($record->article->suppliers()->where('supplier_article.supplier_id', $supplierId)->exists()) {
-                                $articleGroup = 'supplier';
+                            if ($ownerRecord && $record->article) {
+                                $supplierId = $ownerRecord->supplierContract->supplier_id;
+                                $contractId = $ownerRecord->supplier_contract_id;
+                                
+                                // Prüfe ob der Artikel vom Lieferanten kommt
+                                if ($record->article->suppliers()->where('supplier_article.supplier_id', $supplierId)->exists()) {
+                                    $articleGroup = 'supplier';
+                                }
+                                // Prüfe ob der Artikel vom Vertrag kommt
+                                elseif ($record->article->supplierContracts()->where('supplier_contract_articles.supplier_contract_id', $contractId)->exists()) {
+                                    $articleGroup = 'contract';
+                                }
+                                // Prüfe ob der Artikel von einem Kunden kommt
+                                elseif ($record->article->customers()->exists()) {
+                                    $articleGroup = 'customer';
+                                }
+                                // Prüfe ob der Artikel von einer Solaranlage kommt
+                                elseif ($record->article->solarPlants()->exists()) {
+                                    $articleGroup = 'solar_plant';
+                                }
                             }
-                            // Prüfe ob der Artikel vom Vertrag kommt
-                            elseif ($record->article->supplierContracts()->where('supplier_contract_articles.supplier_contract_id', $contractId)->exists()) {
-                                $articleGroup = 'contract';
-                            }
-                            // Prüfe ob der Artikel von einem Kunden kommt
-                            elseif ($record->article->customers()->exists()) {
-                                $articleGroup = 'customer';
-                            }
-                            // Prüfe ob der Artikel von einer Solaranlage kommt
-                            elseif ($record->article->solarPlants()->exists()) {
-                                $articleGroup = 'solar_plant';
-                            }
-                        }
-                        
-                        return [
-                            'article_group' => $articleGroup,
-                            'article_id' => $record->article_id,
-                            'detailed_description' => $record->detailed_description ?? $record->article?->notes, // Lade die gespeicherte oder Artikel-Beschreibung
-                            'quantity' => $record->quantity,
-                            'unit_price' => $record->unit_price,
-                            'total_price' => $record->total_price,
-                            'description' => $record->description,
-                            'notes' => $record->notes,
-                            'is_active' => $record->is_active,
-                        ];
-                    })
-                    ->mutateFormDataUsing(function (array $data): array {
-                        // Berechne den Gesamtpreis beim Bearbeiten
-                        $data['total_price'] = $data['quantity'] * $data['unit_price'];
-                        // Entferne article_group, da es nur zur Filterung dient
-                        unset($data['article_group']);
-                        return $data;
-                    }),
-                
-                Tables\Actions\DeleteAction::make()
-                    ->label('Löschen'),
+                            
+                            return [
+                                'article_group' => $articleGroup,
+                                'article_id' => $record->article_id,
+                                'detailed_description' => $record->detailed_description ?? $record->article?->notes, // Lade die gespeicherte oder Artikel-Beschreibung
+                                'quantity' => $record->quantity,
+                                'unit_price' => $record->unit_price,
+                                'total_price' => $record->total_price,
+                                'description' => $record->description,
+                                'notes' => $record->notes,
+                                'is_active' => $record->is_active,
+                            ];
+                        })
+                        ->mutateFormDataUsing(function (array $data): array {
+                            // Berechne den Gesamtpreis beim Bearbeiten
+                            $data['total_price'] = $data['quantity'] * $data['unit_price'];
+                            // Entferne article_group, da es nur zur Filterung dient
+                            unset($data['article_group']);
+                            return $data;
+                        }),
+                    
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Löschen'),
+                ])
+                ->label('Aktionen')
+                ->button()
+                ->outlined(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
