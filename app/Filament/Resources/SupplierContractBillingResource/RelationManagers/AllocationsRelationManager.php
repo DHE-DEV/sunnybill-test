@@ -421,10 +421,17 @@ class AllocationsRelationManager extends RelationManager
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()
-                    ->label('Bearbeiten'),
-                Tables\Actions\DeleteAction::make()
-                    ->label('Löschen'),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make()
+                        ->label('Bearbeiten'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Löschen'),
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
