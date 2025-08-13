@@ -243,12 +243,16 @@
             background: #f8f9fa;
             padding: 8px;
             text-align: left;
-            border: 1px solid #ddd;
+            #border: 1px solid #ddd;
+        }
+        
+        .breakdown-table .article-header th {
+            background: #f8f9fa !important;
         }
         
         .breakdown-table td {
             padding: 6px 8px;
-            border: 1px solid #ddd;
+            #border: 1px solid #ddd;
         }
         
         .breakdown-table .number {
@@ -522,25 +526,27 @@
             </thead>
             <tbody>
                 @foreach($billing->credit_breakdown as $credit)
-                <tr>
+                <tr><td colspan="5"></td></tr>
+                <tr style="border-top: 1px solid #8a8a8aff;">
                     <td><b>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}</td>
                     <td class="number">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
                     <td class="number">{{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
                     <td class="number">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
-                <tr><!-- Beschreibung -->
+                <!--
+                <tr>
                     <td colspan="5" style="background: #e6f3ff; color: #666; padding: 8px; font-size: 9pt;">
                         {{ $credit['contract_title'] ?? 'Einnahmen/Gutschriften' }} - {{ $credit['supplier_name'] ?? 'Unbekannt' }}
                     </td>
-                </tr>
+                </tr>-->
                 @if(isset($credit['articles']) && !empty($credit['articles']))
                 <tr>
-                    <td colspan="5" style="padding-left: 20px; background: #f0f8ff; border-top: none;">
+                    <td colspan="5" style="padding-left: 10px; background: #f8f9fa; border-top: none;">
                         <strong>Artikel-Aufschlüsselung:</strong>
                         <table style="width: 100%; margin-top: 5px; font-size: 8pt;">
                             <thead>
-                                <tr style="background: #e6f3ff;">
+                                <tr class="article-header" style="background: #f8f9fa;">
                                     <th style="text-align: left; padding: 3px;">Artikel</th>
                                     <th style="text-align: center; padding: 3px;">Menge</th>
                                     <th style="text-align: center; padding: 3px;">Einheit</th>
@@ -571,6 +577,46 @@
                 @endforeach
             </tbody>
         </table>
+        
+        <!-- Artikel-Erklärungen für Einnahmen/Gutschriften -->
+        @php
+            $hasDetailedDescriptions = false;
+            $detailedArticles = [];
+            
+            foreach($billing->credit_breakdown as $credit) {
+                if(isset($credit['articles']) && is_array($credit['articles'])) {
+                    foreach($credit['articles'] as $article) {
+                        if(isset($article['detailed_description']) && !empty($article['detailed_description'])) {
+                            $hasDetailedDescriptions = true;
+                            $detailedArticles[] = [
+                                'name' => $article['article_name'] ?? 'Unbekannter Artikel',
+                                'detailed_description' => $article['detailed_description'],
+                                'supplier' => $credit['supplier_name'] ?? 'Unbekannt'
+                            ];
+                        }
+                    }
+                }
+            }
+        @endphp
+        
+        @if($hasDetailedDescriptions)
+        <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
+            <h4 style="margin: 0 0 10px 0; color: #2563eb; font-size: 8pt;">Erklärung der Artikel</h4>
+            @foreach($detailedArticles as $article)
+            <div style="margin-bottom: 12px; padding-bottom: 12px; {{ !$loop->last ? 'border-bottom: 1px solid #e6f3ff;' : '' }}">
+                <strong style="color: #374151; font-size: 8pt;">{{ $article['name'] }}</strong>
+                <div style="margin-top: 5px; color: #4b5563; font-size: 8pt; line-height: 1.5;">
+                    {!! nl2br(e($article['detailed_description'])) !!}
+                </div>
+                @if($article['supplier'])
+                <div style="margin-top: 3px; font-size: 7pt; color: #6b7280; font-style: italic;">
+                    Lieferant: {{ $article['supplier'] }}
+                </div>
+                @endif
+            </div>
+            @endforeach
+        </div>
+        @endif
     </div>
     @endif
 
@@ -614,11 +660,11 @@
                 </tr>
                 @if(isset($cost['articles']) && !empty($cost['articles']))
                 <tr>
-                    <td colspan="4" style="padding-left: 20px; background: #fff0f0; border-top: none;">
+                    <td colspan="5" style="padding-left: 20px; background: #fff0f0; border-top: none;">
                         <strong>Artikel-Aufschlüsselung:</strong>
                         <table style="width: 100%; margin-top: 5px; font-size: 8pt;">
                             <thead>
-                                <tr style="background: #ffe6e6;">
+                                <tr class="article-header" style="background: #e6f3ff;">
                                     <th style="text-align: left; padding: 3px;">Artikel</th>
                                     <th style="text-align: center; padding: 3px;">Menge</th>
                                     <th style="text-align: center; padding: 3px;">Einheit</th>
@@ -649,6 +695,46 @@
                 @endforeach
             </tbody>
         </table>
+        
+        <!-- Artikel-Erklärungen für Kosten -->
+        @php
+            $hasCostDetailedDescriptions = false;
+            $costDetailedArticles = [];
+            
+            foreach($billing->cost_breakdown as $cost) {
+                if(isset($cost['articles']) && is_array($cost['articles'])) {
+                    foreach($cost['articles'] as $article) {
+                        if(isset($article['detailed_description']) && !empty($article['detailed_description'])) {
+                            $hasCostDetailedDescriptions = true;
+                            $costDetailedArticles[] = [
+                                'name' => $article['article_name'] ?? 'Unbekannter Artikel',
+                                'detailed_description' => $article['detailed_description'],
+                                'supplier' => $cost['supplier_name'] ?? 'Unbekannt'
+                            ];
+                        }
+                    }
+                }
+            }
+        @endphp
+        
+        @if($hasCostDetailedDescriptions)
+        <div style="margin-top: 20px; padding: 15px; background-color: #fff0f0; border-left: 4px solid #dc2626; border-radius: 0 5px 5px 0;">
+            <h4 style="margin: 0 0 10px 0; color: #dc2626; font-size: 11pt;">Erklärung der Kosten-Artikel</h4>
+            @foreach($costDetailedArticles as $article)
+            <div style="margin-bottom: 12px; padding-bottom: 12px; {{ !$loop->last ? 'border-bottom: 1px solid #ffe6e6;' : '' }}">
+                <strong style="color: #374151; font-size: 10pt;">{{ $article['name'] }}</strong>
+                <div style="margin-top: 5px; color: #4b5563; font-size: 9pt; line-height: 1.5;">
+                    {!! nl2br(e($article['detailed_description'])) !!}
+                </div>
+                @if($article['supplier'])
+                <div style="margin-top: 3px; font-size: 8pt; color: #6b7280; font-style: italic;">
+                    Lieferant: {{ $article['supplier'] }}
+                </div>
+                @endif
+            </div>
+            @endforeach
+        </div>
+        @endif
     </div>
     @endif
 

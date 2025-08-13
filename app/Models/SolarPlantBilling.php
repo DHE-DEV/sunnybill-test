@@ -400,6 +400,7 @@ class SolarPlantBilling extends Model
                         'tax_amount' => $taxAmount,
                         'total_price_gross' => $grossTotal,
                         'description' => $article->description,
+                        'detailed_description' => $article->detailed_description,
                     ];
                 }
                 
@@ -468,6 +469,7 @@ class SolarPlantBilling extends Model
                         'tax_amount' => $taxAmount,
                         'total_price_gross' => $grossTotal,
                         'description' => $article->description,
+                        'detailed_description' => $article->detailed_description,
                     ];
                 }
 
