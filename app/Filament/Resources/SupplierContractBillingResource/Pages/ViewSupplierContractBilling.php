@@ -114,13 +114,4 @@ class ViewSupplierContractBilling extends ViewRecord
                 ->label('Löschen'),
         ];
     }
-
-    public function getRelationManagers(): array
-    {
-        return [
-            SupplierContractBillingResource\RelationManagers\ArticlesRelationManager::class,
-            SupplierContractBillingResource\RelationManagers\AllocationsRelationManager::class,
-            SupplierContractBillingResource\RelationManagers\DocumentsRelationManager::class,
-        ];
-    }
 }
