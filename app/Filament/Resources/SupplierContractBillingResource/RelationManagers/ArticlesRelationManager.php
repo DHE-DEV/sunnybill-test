@@ -328,7 +328,12 @@ class ArticlesRelationManager extends RelationManager
                     
                     Tables\Actions\DeleteAction::make()
                         ->label('Löschen'),
-                ]),
+                ])
+                ->label('Aktionen')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size('sm')
+                ->color('gray')
+                ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
