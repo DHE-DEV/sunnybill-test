@@ -107,11 +107,12 @@ class ArticlesRelationManager extends RelationManager
                         if ($state) {
                             $article = Article::find($state);
                             if ($article) {
-                                // Setze die ausführliche Beschreibung immer
-                                $set('article_notes', $article->notes ?? '');
-                                
                                 // Nur bei neuen Artikeln (nicht beim Bearbeiten) die Werte überschreiben
                                 if (!$record) {
+                                    // Setze die ausführliche Beschreibung aus dem Artikelstamm
+                                    if (!$get('detailed_description')) {
+                                        $set('detailed_description', $article->notes ?? '');
+                                    }
                                     // Nur setzen wenn noch keine Werte vorhanden sind
                                     if (!$get('unit_price')) {
                                         $set('unit_price', $article->price);
@@ -122,17 +123,19 @@ class ArticlesRelationManager extends RelationManager
                                 }
                             }
                         } else {
-                            // Wenn kein Artikel ausgewählt, leere die ausführliche Beschreibung
-                            $set('article_notes', '');
+                            // Wenn kein Artikel ausgewählt, leere die ausführliche Beschreibung bei neuen Einträgen
+                            if (!$record) {
+                                $set('detailed_description', '');
+                            }
                         }
                     }),
 
-                Forms\Components\Textarea::make('article_notes')
+                Forms\Components\Textarea::make('detailed_description')
                     ->label('Ausführliche Artikelbeschreibung')
-                    ->disabled()
-                    ->rows(3)
+                    ->rows(5)
+                    ->maxLength(5000)
                     ->columnSpanFull()
-                    ->helperText('Diese Information stammt aus dem Artikelstamm und kann nur dort bearbeitet werden.')
+                    ->helperText('Diese Beschreibung wird aus dem Artikelstamm vorausgefüllt, kann aber für diese Abrechnung individuell angepasst werden.')
                     ->visible(fn (callable $get, $state) => $get('article_id') || !empty($state))
                     ->placeholder('Keine ausführliche Beschreibung vorhanden'),
 
@@ -260,8 +263,8 @@ class ArticlesRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data): array {
                         // Berechne den Gesamtpreis beim Erstellen
                         $data['total_price'] = $data['quantity'] * $data['unit_price'];
-                        // Entferne article_notes, da es nur zur Anzeige dient
-                        unset($data['article_notes']);
+                        // Entferne article_group, da es nur zur Filterung dient
+                        unset($data['article_group']);
                         return $data;
                     }),
             ])
@@ -298,7 +301,7 @@ class ArticlesRelationManager extends RelationManager
                         return [
                             'article_group' => $articleGroup,
                             'article_id' => $record->article_id,
-                            'article_notes' => $record->article?->notes, // Lade die ausführliche Beschreibung des Artikels
+                            'detailed_description' => $record->detailed_description ?? $record->article?->notes, // Lade die gespeicherte oder Artikel-Beschreibung
                             'quantity' => $record->quantity,
                             'unit_price' => $record->unit_price,
                             'total_price' => $record->total_price,
@@ -310,8 +313,8 @@ class ArticlesRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data): array {
                         // Berechne den Gesamtpreis beim Bearbeiten
                         $data['total_price'] = $data['quantity'] * $data['unit_price'];
-                        // Entferne article_notes, da es nur zur Anzeige dient
-                        unset($data['article_notes']);
+                        // Entferne article_group, da es nur zur Filterung dient
+                        unset($data['article_group']);
                         return $data;
                     }),
                 

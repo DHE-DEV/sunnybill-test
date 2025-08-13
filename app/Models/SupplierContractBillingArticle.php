@@ -18,6 +18,7 @@ class SupplierContractBillingArticle extends Model
         'unit_price',
         'total_price',
         'description',
+        'detailed_description',
         'notes',
         'is_active',
     ];
