@@ -132,6 +132,7 @@ class ArticlesRelationManager extends RelationManager
                     ->disabled()
                     ->rows(3)
                     ->columnSpanFull()
+                    ->helperText('Diese Information stammt aus dem Artikelstamm und kann nur dort bearbeitet werden.')
                     ->visible(fn (callable $get, $state) => $get('article_id') || !empty($state))
                     ->placeholder('Keine ausführliche Beschreibung vorhanden'),
 
