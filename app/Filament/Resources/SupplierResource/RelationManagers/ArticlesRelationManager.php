@@ -233,18 +233,18 @@ class ArticlesRelationManager extends RelationManager
                                     ->placeholder('Detaillierte Beschreibung des Artikels...')
                                     ->columnSpanFull(),
                                 
-                                Forms\Components\Select::make('type')
-                                    ->label('Artikeltyp')
-                                    ->options([
-                                        'service' => 'Dienstleistung',
-                                        'product' => 'Produkt',
-                                        'subscription' => 'Abonnement',
-                                        'maintenance' => 'Wartung',
-                                        'other' => 'Sonstiges',
-                                    ])
-                                    ->default('product')
-                                    ->live()
-                                    ->required(),
+                                    Forms\Components\Select::make('type')
+                                        ->label('Artikeltyp')
+                                        ->options([
+                                            'service' => 'Dienstleistung',
+                                            'product' => 'Produkt',
+                                            'subscription' => 'Abonnement',
+                                            'maintenance' => 'Wartung',
+                                            'other' => 'Sonstiges',
+                                        ])
+                                        ->live()
+                                        ->required()
+                                        ->placeholder('Wählen Sie einen Artikeltyp'),
                                 
                                 Forms\Components\TextInput::make('unit')
                                     ->label('Einheit')
@@ -462,11 +462,11 @@ class ArticlesRelationManager extends RelationManager
                                 'unit' => $record->unit,
                                 'price' => $record->price,
                                 'tax_rate_id' => $record->tax_rate_id,
-                                'decimal_places' => $record->decimal_places,
-                                'total_decimal_places' => $record->total_decimal_places,
+                                'decimal_places' => $record->decimal_places ?? 2,
+                                'total_decimal_places' => $record->total_decimal_places ?? 2,
                                 // Pivot-Daten
                                 'quantity' => $record->pivot->quantity,
-                                'unit_price_override' => $record->pivot->unit_price,
+                                'unit_price_override' => $record->pivot->unit_price !== $record->price ? $record->pivot->unit_price : null,
                                 'supplier_notes' => $record->pivot->notes,
                                 'is_active' => $record->pivot->is_active,
                                 'billing_requirement' => $record->pivot->billing_requirement,
@@ -499,8 +499,6 @@ class ArticlesRelationManager extends RelationManager
                                             'maintenance' => 'Wartung',
                                             'other' => 'Sonstiges',
                                         ])
-                                        ->default('product')
-                                        ->live()
                                         ->required(),
                                     
                                     Forms\Components\TextInput::make('unit')
@@ -620,6 +618,172 @@ class ArticlesRelationManager extends RelationManager
                                 ->body('Die Artikel-Zuordnung wurde erfolgreich aktualisiert.')
                                 ->success()
                                 ->send();
+                        }),
+                    Tables\Actions\Action::make('duplicate')
+                        ->label('Duplizieren')
+                        ->icon('heroicon-m-document-duplicate')
+                        ->color('info')
+                        ->modalWidth('4xl')
+                        ->fillForm(function ($record): array {
+                            return [
+                                // Artikel-Daten mit angepasstem Namen
+                                'name' => $record->name . ' (Kopie)',
+                                'description' => $record->description,
+                                'type' => $record->type,
+                                'unit' => $record->unit,
+                                'price' => $record->price,
+                                'tax_rate_id' => $record->tax_rate_id,
+                                'decimal_places' => $record->decimal_places ?? 2,
+                                'total_decimal_places' => $record->total_decimal_places ?? 2,
+                                // Pivot-Daten übernehmen
+                                'quantity' => $record->pivot->quantity,
+                                'unit_price_override' => $record->pivot->unit_price !== $record->price ? $record->pivot->unit_price : null,
+                                'supplier_notes' => $record->pivot->notes,
+                                'is_active' => $record->pivot->is_active,
+                                'billing_requirement' => $record->pivot->billing_requirement,
+                            ];
+                        })
+                        ->form([
+                            Forms\Components\Section::make('Artikel duplizieren')
+                                ->description('Erstellen Sie einen neuen Artikel basierend auf dem ausgewählten Artikel.')
+                                ->schema([
+                                    Forms\Components\TextInput::make('name')
+                                        ->label('Artikelname')
+                                        ->required()
+                                        ->maxLength(255)
+                                        ->columnSpanFull(),
+                                    
+                                    Forms\Components\Textarea::make('description')
+                                        ->label('Beschreibung')
+                                        ->rows(3)
+                                        ->maxLength(1000)
+                                        ->columnSpanFull(),
+                                    
+                                    Forms\Components\Select::make('type')
+                                        ->label('Artikeltyp')
+                                        ->options([
+                                            'service' => 'Dienstleistung',
+                                            'product' => 'Produkt',
+                                            'subscription' => 'Abonnement',
+                                            'maintenance' => 'Wartung',
+                                            'other' => 'Sonstiges',
+                                        ])
+                                        ->required(),
+                                    
+                                    Forms\Components\TextInput::make('unit')
+                                        ->label('Einheit')
+                                        ->maxLength(50)
+                                        ->default('Stk.'),
+                                    
+                                    Forms\Components\TextInput::make('price')
+                                        ->label('Preis (Netto)')
+                                        ->numeric()
+                                        ->step(0.000001)
+                                        ->minValue(0)
+                                        ->required()
+                                        ->prefix('€')
+                                        ->helperText('Bis zu 6 Nachkommastellen möglich'),
+                                    
+                                    Forms\Components\Select::make('tax_rate_id')
+                                        ->label('Steuersatz')
+                                        ->options(\App\Models\TaxRate::active()->get()->mapWithKeys(function ($taxRate) {
+                                            return [$taxRate->id => $taxRate->name];
+                                        }))
+                                        ->required()
+                                        ->searchable()
+                                        ->preload(),
+                                    
+                                    Forms\Components\TextInput::make('decimal_places')
+                                        ->label('Nachkommastellen (Preis)')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->maxValue(6)
+                                        ->default(2),
+                                    
+                                    Forms\Components\TextInput::make('total_decimal_places')
+                                        ->label('Nachkommastellen (Gesamtpreis)')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->maxValue(6)
+                                        ->default(2),
+                                ])->columns(2),
+                            
+                            Forms\Components\Section::make('Lieferantenverknüpfung')
+                                ->schema([
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->label('Menge')
+                                        ->numeric()
+                                        ->step(0.01)
+                                        ->minValue(0.01)
+                                        ->required()
+                                        ->default(1.00)
+                                        ->suffix('Stk.'),
+                                    
+                                    Forms\Components\TextInput::make('unit_price_override')
+                                        ->label('Abweichender Stückpreis (optional)')
+                                        ->numeric()
+                                        ->step(0.000001)
+                                        ->minValue(0)
+                                        ->prefix('€'),
+                                    
+                                    Forms\Components\Textarea::make('supplier_notes')
+                                        ->label('Lieferantennotizen')
+                                        ->rows(3)
+                                        ->maxLength(1000)
+                                        ->columnSpanFull(),
+                                    
+                                    Forms\Components\Toggle::make('is_active')
+                                        ->label('Aktiv')
+                                        ->default(true),
+                                    
+                                    Forms\Components\Radio::make('billing_requirement')
+                                        ->label('Anforderung bei Abrechnung')
+                                        ->options([
+                                            'optional' => 'Optional',
+                                            'mandatory' => 'Pflichtartikel',
+                                        ])
+                                        ->default('optional')
+                                        ->required(),
+                                ])->columns(2),
+                        ])
+                        ->action(function (array $data) {
+                            // Hole den Steuersatz
+                            $taxRate = \App\Models\TaxRate::find($data['tax_rate_id']);
+                            
+                            // Erstelle den duplizierten Artikel
+                            $articleData = [
+                                'name' => $data['name'],
+                                'description' => $data['description'],
+                                'type' => $data['type'],
+                                'price' => $data['price'],
+                                'tax_rate_id' => $data['tax_rate_id'],
+                                'tax_rate' => $taxRate ? $taxRate->rate : 0.19,
+                                'unit' => $data['unit'],
+                                'decimal_places' => $data['decimal_places'],
+                                'total_decimal_places' => $data['total_decimal_places'],
+                            ];
+                            
+                            $newArticle = Article::create($articleData);
+                            
+                            // Verknüpfe den duplizierten Artikel mit dem Lieferanten
+                            $pivotData = [
+                                'quantity' => $data['quantity'],
+                                'unit_price' => $data['unit_price_override'] ?? $newArticle->price,
+                                'notes' => $data['supplier_notes'],
+                                'is_active' => $data['is_active'],
+                                'billing_requirement' => $data['billing_requirement'],
+                            ];
+                            
+                            $this->getOwnerRecord()->articles()->attach($newArticle->id, $pivotData);
+                            
+                            Notification::make()
+                                ->title('Artikel dupliziert')
+                                ->body("Der Artikel '{$newArticle->name}' wurde erfolgreich erstellt und zum Lieferanten hinzugefügt.")
+                                ->success()
+                                ->send();
+                        })
+                        ->after(function ($livewire) {
+                            $livewire->dispatch('refresh');
                         }),
                     Tables\Actions\DetachAction::make()
                         ->label('Entfernen')

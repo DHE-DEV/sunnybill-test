@@ -103,12 +103,18 @@ class ArticlesRelationManager extends RelationManager
                             default => [],
                         };
                     })
-                    ->afterStateUpdated(function (callable $get, callable $set, $state) {
-                        if ($state) {
+                    ->afterStateUpdated(function (callable $get, callable $set, $state, $record) {
+                        // Nur bei neuen Artikeln (nicht beim Bearbeiten) die Werte überschreiben
+                        if ($state && !$record) {
                             $article = Article::find($state);
                             if ($article) {
-                                $set('unit_price', $article->price);
-                                $set('description', $article->name);
+                                // Nur setzen wenn noch keine Werte vorhanden sind
+                                if (!$get('unit_price')) {
+                                    $set('unit_price', $article->price);
+                                }
+                                if (!$get('description')) {
+                                    $set('description', $article->description ?? $article->name);
+                                }
                             }
                         }
                     }),
@@ -171,7 +177,7 @@ class ArticlesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('description')
+            ->recordTitleAttribute('article.name')
             ->columns([
                 Tables\Columns\TextColumn::make('article.name')
                     ->label('Artikel')

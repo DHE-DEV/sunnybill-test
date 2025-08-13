@@ -374,7 +374,7 @@
         <h3>Solaranlage: {{ $solarPlant->name }}</h3>
         @if($solarPlant->total_capacity_kw)
             <div style="color: #2563eb; margin: -10px 0 10px 0;">
-                Gesamtleistung: {{ number_format($solarPlant->total_capacity_kw, 2, ',', '.') }} kWp
+                Technische Gesamtleistung der Anlage: {{ number_format($solarPlant->total_capacity_kw, 2, ',', '.') }} kWp
             </div>
         @endif
         <div class="plant-details">
