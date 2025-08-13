@@ -126,7 +126,15 @@ class ArticlesRelationManager extends RelationManager
                     ->disabled()
                     ->rows(3)
                     ->columnSpanFull()
-                    ->visible(fn (callable $get) => $get('article_id') && Article::find($get('article_id'))?->notes)
+                    ->visible(fn (callable $get) => $get('article_id'))
+                    ->placeholder('Keine ausführliche Beschreibung vorhanden')
+                    ->formatStateUsing(function ($state, callable $get) {
+                        if ($articleId = $get('article_id')) {
+                            $article = Article::find($articleId);
+                            return $article?->notes;
+                        }
+                        return $state;
+                    })
                     ->dehydrated(false),
 
                 Forms\Components\TextInput::make('quantity')
