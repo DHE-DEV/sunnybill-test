@@ -519,7 +519,7 @@
             <tbody>
                 @foreach($billing->credit_breakdown as $credit)
                 <tr><td colspan="5"></td></tr>
-                <tr style="border-top: 1px solid #8a8a8aff; background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid; margin-top: 20px;">
+                <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid; margin-top: 20px;">
                     <td colspan="5" style="padding: 8px; padding-top: 28px; page-break-inside: avoid;">
                         <!-- Lieferant - Zeile 1 -->
                         <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
@@ -687,7 +687,7 @@
             <tbody>
                 @foreach($billing->cost_breakdown as $cost)
                 <tr><td colspan="5"></td></tr>
-                <tr style="border-top: 1px solid #8a8a8aff; background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid; margin-top: 20px;">
+                <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid; margin-top: 20px;">
                     <td colspan="5" style="padding: 8px; padding-top: 28px; page-break-inside: avoid;">
                         <!-- Lieferant - Zeile 1 -->
                         <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
