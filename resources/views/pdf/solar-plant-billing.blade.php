@@ -544,47 +544,71 @@
                 <tr>
                     <td colspan="5" style="padding-left: 10px; background: #f8f9fa; border-top: none;">
                         <strong>Artikel-Aufschlüsselung:</strong>
-                        <table style="width: 100%; margin-top: 5px; font-size: 8pt;">
-                            <thead>
-                                <tr class="article-header" style="background: #f8f9fa;">
-                                    <th style="text-align: left; padding: 3px;">Artikel</th>
-                                    <th style="text-align: center; padding: 3px;">Menge</th>
-                                    <th style="text-align: center; padding: 3px;">Einheit</th>
-                                    <th style="text-align: right; padding: 3px;">Einzelpreis</th>
-                                    <th style="text-align: right; padding: 3px;">Gesamtpreis</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($credit['articles'] as $article)
-                                @php
-                                    // Lade Artikel-Model um Nachkommastellen-Einstellungen zu erhalten
-                                    $articleModel = null;
-                                    $decimalPlaces = 2;
-                                    $totalDecimalPlaces = 2;
-                                    
-                                    if (isset($article['article_id']) && $article['article_id']) {
-                                        $articleModel = \App\Models\Article::find($article['article_id']);
-                                        if ($articleModel) {
-                                            $decimalPlaces = $articleModel->getDecimalPlaces();
-                                            $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
-                                        }
+                        <div style="margin-top: 8px;">
+                            @foreach($credit['articles'] as $article)
+                            @php
+                                // Lade Artikel-Model um Nachkommastellen-Einstellungen zu erhalten
+                                $articleModel = null;
+                                $decimalPlaces = 2;
+                                $totalDecimalPlaces = 2;
+                                
+                                if (isset($article['article_id']) && $article['article_id']) {
+                                    $articleModel = \App\Models\Article::find($article['article_id']);
+                                    if ($articleModel) {
+                                        $decimalPlaces = $articleModel->getDecimalPlaces();
+                                        $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
                                     }
-                                @endphp
-                                <tr>
-                                    <td style="padding: 2px;">
-                                        {{ $article['article_name'] ?? 'Unbekannt' }}
-                                        @if(isset($article['description']) && $article['description'] !== $article['article_name'])
-                                            <br><em style="color: #666;">{{ $article['description'] }}</em>
-                                        @endif
-                                    </td>
-                                    <td style="text-align: center; padding: 2px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }}</td>
-                                    <td style="text-align: center; padding: 2px;">{{ $article['unit'] ?? 'Stk.' }}</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, $decimalPlaces, ',', '.') }} €</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, $totalDecimalPlaces, ',', '.') }} €</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                }
+                                
+                                // Berechne Steuer und Brutto-Betrag
+                                $netPrice = $article['total_price_net'] ?? 0;
+                                $taxRate = $article['tax_rate'] ?? 0.19;
+                                $taxAmount = $article['tax_amount'] ?? ($netPrice * $taxRate);
+                                $grossPrice = $article['total_price_gross'] ?? ($netPrice + $taxAmount);
+                            @endphp
+                            <div style="margin-bottom: 12px; padding: 8px; border: 1px solid #e6e6e6; border-radius: 3px; background: #fff;">
+                                <!-- Artikel Name -->
+                                <div style="font-weight: bold; font-size: 8pt; color: #333; margin-bottom: 3px;">
+                                    {{ $article['article_name'] ?? 'Unbekannt' }}
+                                </div>
+                                
+                                <!-- Artikel Beschreibung (falls vorhanden und unterschiedlich) -->
+                                @if(isset($article['description']) && $article['description'] !== $article['article_name'] && !empty($article['description']))
+                                <div style="font-size: 7pt; color: #666; margin-bottom: 12px; font-style: italic;">
+                                    {{ $article['description'] }}
+                                </div>
+                                @endif
+                                
+                                <!-- Details als Tabelle -->
+                                <table style="width: 100%; border-collapse: collapse; font-size: 7pt; color: #555;">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: left; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Menge</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Einzelpreis</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtpreis (netto)</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Steuer ({{ number_format(($taxRate <= 1 ? $taxRate * 100 : $taxRate), 1, ',', '.') }}%)</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtbetrag (brutto)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="text-align: left; padding: 3px 6px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }} {{ $article['unit'] ?? 'Stk.' }}</td>
+                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($article['unit_price'] ?? 0, $decimalPlaces, ',', '.') }} €</td>
+                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($netPrice, $totalDecimalPlaces, ',', '.') }} €</td>
+                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($taxAmount, 2, ',', '.') }} €</td>
+                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($grossPrice, 2, ',', '.') }} €</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <div style="margin-top: 5px; color: #4b5563; font-size: 8pt; line-height: 1.5;">
+                                    <b>Hinweis:</b><br>
+                                    {!! nl2br(e($article['detailed_description'])) !!}
+                                </div>
+
+                            </div>
+                            @endforeach
+                        </div>
                     </td>
                 </tr>
                 @endif
@@ -611,6 +635,8 @@
                     }
                 }
             }
+
+            $hasDetailedDescriptions = false; # nur zum Ausblenden wegen Beschreibung in der aufschlüsselung
         @endphp
         
         @if($hasDetailedDescriptions)
@@ -662,47 +688,65 @@
                 <tr>
                     <td colspan="5" style="padding-left: 15px; background: #f8f9fa; border-top: none;">
                         <strong>Artikel-Aufschlüsselung:</strong>
-                        <table style="width: 100%; margin-top: 5px; font-size: 8pt;">
-                            <thead>
-                                <tr class="article-header" style="background: #f8f9fa;">
-                                    <th style="text-align: left; padding: 3px;">Artikel</th>
-                                    <th style="text-align: center; padding: 3px;">Menge</th>
-                                    <th style="text-align: center; padding: 3px;">Einheit</th>
-                                    <th style="text-align: right; padding: 3px;">Einzelpreis</th>
-                                    <th style="text-align: right; padding: 3px;">Gesamtpreis</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($cost['articles'] as $article)
-                                @php
-                                    // Lade Artikel-Model um Nachkommastellen-Einstellungen zu erhalten
-                                    $articleModel = null;
-                                    $decimalPlaces = 2;
-                                    $totalDecimalPlaces = 2;
-                                    
-                                    if (isset($article['article_id']) && $article['article_id']) {
-                                        $articleModel = \App\Models\Article::find($article['article_id']);
-                                        if ($articleModel) {
-                                            $decimalPlaces = $articleModel->getDecimalPlaces();
-                                            $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
-                                        }
+                        <div style="margin-top: 8px;">
+                            @foreach($cost['articles'] as $article)
+                            @php
+                                // Lade Artikel-Model um Nachkommastellen-Einstellungen zu erhalten
+                                $articleModel = null;
+                                $decimalPlaces = 2;
+                                $totalDecimalPlaces = 2;
+                                
+                                if (isset($article['article_id']) && $article['article_id']) {
+                                    $articleModel = \App\Models\Article::find($article['article_id']);
+                                    if ($articleModel) {
+                                        $decimalPlaces = $articleModel->getDecimalPlaces();
+                                        $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
                                     }
-                                @endphp
-                                <tr>
-                                    <td style="padding: 2px;">
-                                        {{ $article['article_name'] ?? 'Unbekannt' }}
-                                        @if(isset($article['description']) && $article['description'] !== $article['article_name'])
-                                            <br><em style="color: #666;">{{ $article['description'] }}</em>
-                                        @endif
-                                    </td>
-                                    <td style="text-align: center; padding: 2px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }}</td>
-                                    <td style="text-align: center; padding: 2px;">{{ $article['unit'] ?? 'Stk.' }}</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, $decimalPlaces, ',', '.') }} €</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, $totalDecimalPlaces, ',', '.') }} €</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                }
+                                
+                                // Berechne Steuer und Brutto-Betrag
+                                $netPrice = $article['total_price_net'] ?? 0;
+                                $taxRate = $article['tax_rate'] ?? 0.19;
+                                $taxAmount = $article['tax_amount'] ?? ($netPrice * $taxRate);
+                                $grossPrice = $article['total_price_gross'] ?? ($netPrice + $taxAmount);
+                            @endphp
+                            <div style="margin-bottom: 12px; padding: 8px; border: 1px solid #e6e6e6; border-radius: 3px; background: #fff;">
+                                <!-- Artikel Name -->
+                                <div style="font-weight: bold; font-size: 8pt; color: #333; margin-bottom: 3px;">
+                                    {{ $article['article_name'] ?? 'Unbekannt' }}
+                                </div>
+                                
+                                <!-- Artikel Beschreibung (falls vorhanden und unterschiedlich) -->
+                                @if(isset($article['description']) && $article['description'] !== $article['article_name'] && !empty($article['description']))
+                                <div style="font-size: 7pt; color: #666; margin-bottom: 6px; font-style: italic;">
+                                    {{ $article['description'] }}
+                                </div>
+                                @endif
+                                
+                                <!-- Details als Tabelle -->
+                                <table style="width: 100%; border-collapse: collapse; font-size: 7pt; color: #555;">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: left; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Menge</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Einzelpreis</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtpreis (netto)</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Steuer ({{ number_format(($taxRate <= 1 ? $taxRate * 100 : $taxRate), 1, ',', '.') }}%)</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtbetrag (brutto)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="text-align: left; padding: 3px 6px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }} {{ $article['unit'] ?? 'Stk.' }}</td>
+                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($article['unit_price'] ?? 0, $decimalPlaces, ',', '.') }} €</td>
+                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($netPrice, $totalDecimalPlaces, ',', '.') }} €</td>
+                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($taxAmount, 2, ',', '.') }} €</td>
+                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($grossPrice, 2, ',', '.') }} €</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            @endforeach
+                        </div>
                     </td>
                 </tr>
                 @endif
