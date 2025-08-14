@@ -515,19 +515,11 @@
     <div class="breakdown" style="page-break-before: always;">
         <h3>Aufschlüsselung der Einnahmen/Gutschriften</h3>
         <table class="breakdown-table">
-            <thead>
-                <tr>
-                    <th>Lieferant</th>
-                    <th class="number">Anteil</th>
-                    <th class="number">Netto (€)</th>
-                    <th class="number">MwSt. %</th>
-                    <th class="number">Betrag (€)</th>
-                </tr>
-            </thead>
+
             <tbody>
                 @foreach($billing->credit_breakdown as $credit)
                 <tr><td colspan="5"></td></tr>
-                <tr style="border-top: 1px solid #8a8a8aff;">
+                <tr style="border-top: 1px solid #8a8a8aff; background: #f0f8ff;">
                     <td colspan="5" style="padding: 8px;">
                         <!-- Lieferant - Zeile 1 -->
                         <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
