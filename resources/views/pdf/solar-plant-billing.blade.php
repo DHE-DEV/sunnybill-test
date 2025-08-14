@@ -10,6 +10,18 @@
             size: A4;
         }
         
+        @page :first {
+            margin: {{ $companySetting->pdf_margins ?? '1.5cm 1.5cm 1.5cm 1.5cm' }};
+        }
+        
+        @page :left, @page :right {
+            margin-top: {{ $companySetting->pdf_margins ? explode(' ', $companySetting->pdf_margins)[0] : '1.5cm' }};
+            margin-top: calc({{ $companySetting->pdf_margins ? explode(' ', $companySetting->pdf_margins)[0] : '1.5cm' }} + 20px);
+            margin-right: {{ $companySetting->pdf_margins ? (explode(' ', $companySetting->pdf_margins)[1] ?? '1.5cm') : '1.5cm' }};
+            margin-bottom: {{ $companySetting->pdf_margins ? (explode(' ', $companySetting->pdf_margins)[2] ?? '1.5cm') : '1.5cm' }};
+            margin-left: {{ $companySetting->pdf_margins ? (explode(' ', $companySetting->pdf_margins)[3] ?? '1.5cm') : '1.5cm' }};
+        }
+        
         body {
             font-family: 'DejaVu Sans', Arial, sans-serif;
             font-size: 10pt;
@@ -518,7 +530,7 @@
 
             <tbody>
                 @foreach($billing->credit_breakdown as $credit)
-                <tr><td colspan="5" style="height: 20px;"></td></tr>
+                <tr><td colspan="5"></td></tr>
                 <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid;">
                     <td colspan="5" style="padding: 8px; page-break-inside: avoid;">
                         <!-- Lieferant - Zeile 1 -->
@@ -686,7 +698,7 @@
 
             <tbody>
                 @foreach($billing->cost_breakdown as $cost)
-                <tr><td colspan="5" style="height: 20px;"></td></tr>
+                <tr><td colspan="5"></td></tr>
                 <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid;">
                     <td colspan="5" style="padding: 8px; page-break-inside: avoid;">
                         <!-- Lieferant - Zeile 1 -->
