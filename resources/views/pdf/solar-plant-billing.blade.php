@@ -780,6 +780,11 @@
                                         </tr>
                                     </tbody>
                                 </table>
+
+                                <div style="margin-top: 5px; color: #4b5563; font-size: 8pt; line-height: 1.5;">
+                                    <b>Hinweis:</b><br>
+                                    {!! nl2br(e($article['detailed_description'])) !!}
+                                </div>
                             </div>
                             @endforeach
                         </div>
@@ -809,6 +814,8 @@
                     }
                 }
             }
+
+            $hasCostDetailedDescriptions = false; # nur zum Ausblenden wegen Beschreibung in der aufschlüsselung
         @endphp
         
         @if($hasCostDetailedDescriptions)
