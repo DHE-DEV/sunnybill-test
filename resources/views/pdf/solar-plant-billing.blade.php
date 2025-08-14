@@ -852,6 +852,7 @@
     @endif
 
     <!-- MwSt.-Aufschlüsselung -->
+    <h3>Gesamtsumme</h3>
     <div style="margin-top: 30px; background: #e6f3ff; color: black; padding: 15px; border-radius: 5px;">
         <div style="display: table; width: 100%; font-size: 9pt;">
             <div style="display: table-row;">
@@ -894,7 +895,7 @@
 
     <!-- Hinweise -->
     @if($billing->show_hints ?? true)
-    <div style="margin-top: 20px; font-size: 9pt; color: #666;">
+    <div style="margin-top: 20px; font-size: 9pt; color: #666; page-break-inside: avoid;">
         <p><strong>Hinweise:</strong></p>
         <ul>
             <li>Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {{ $solarPlant->name }}.</li>
