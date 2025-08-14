@@ -636,35 +636,21 @@
             </thead>
             <tbody>
                 @foreach($billing->cost_breakdown as $cost)
-                <tr>
+                <tr><td colspan="5"></td></tr>
+                <tr style="border-top: 1px solid #8a8a8aff;">
                     <td><b>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}</td>
                     <td class="number">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                     <td class="number">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
                     <td class="number">{{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
                     <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
-                <tr><!-- Beschreibung -->
-                    <td colspan="5" style="background: #e6f3ff; color: #666; padding: 8px; font-size: 9pt;">
-                        @php
-                            $contractBilling = null;
-                            if(isset($cost['contract_billing_id'])) {
-                                $contractBilling = App\Models\SupplierContractBilling::find($cost['contract_billing_id']);
-                            }
-                        @endphp
-                        @if($contractBilling && $contractBilling->description)
-                            {{ $contractBilling->description }}
-                        @else
-                            {{ $cost['contract_title'] ?? 'Betriebskosten' }} - {{ $cost['supplier_name'] ?? 'Unbekannt' }}
-                        @endif
-                    </td>
-                </tr>
                 @if(isset($cost['articles']) && !empty($cost['articles']))
                 <tr>
-                    <td colspan="5" style="padding-left: 20px; background: #fff0f0; border-top: none;">
+                    <td colspan="5" style="padding-left: 15px; background: #f8f9fa; border-top: none;">
                         <strong>Artikel-Aufschlüsselung:</strong>
                         <table style="width: 100%; margin-top: 5px; font-size: 8pt;">
                             <thead>
-                                <tr class="article-header" style="background: #e6f3ff;">
+                                <tr class="article-header" style="background: #f8f9fa;">
                                     <th style="text-align: left; padding: 3px;">Artikel</th>
                                     <th style="text-align: center; padding: 3px;">Menge</th>
                                     <th style="text-align: center; padding: 3px;">Einheit</th>
@@ -718,16 +704,16 @@
         @endphp
         
         @if($hasCostDetailedDescriptions)
-        <div style="margin-top: 20px; padding: 15px; background-color: #fff0f0; border-left: 4px solid #dc2626; border-radius: 0 5px 5px 0;">
-            <h4 style="margin: 0 0 10px 0; color: #dc2626; font-size: 11pt;">Erklärung der Kosten-Artikel</h4>
+        <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
+            <h4 style="margin: 0 0 10px 0; color: #2563eb; font-size: 8pt;">Erklärung der Kosten-Artikel</h4>
             @foreach($costDetailedArticles as $article)
             <div style="margin-bottom: 12px; padding-bottom: 12px; {{ !$loop->last ? 'border-bottom: 1px solid #ffe6e6;' : '' }}">
-                <strong style="color: #374151; font-size: 10pt;">{{ $article['name'] }}</strong>
-                <div style="margin-top: 5px; color: #4b5563; font-size: 9pt; line-height: 1.5;">
+                <strong style="color: #374151; font-size: 8pt;">{{ $article['name'] }}</strong>
+                <div style="margin-top: 5px; color: #4b5563; font-size: 8pt; line-height: 1.5;">
                     {!! nl2br(e($article['detailed_description'])) !!}
                 </div>
                 @if($article['supplier'])
-                <div style="margin-top: 3px; font-size: 8pt; color: #6b7280; font-style: italic;">
+                <div style="margin-top: 3px; font-size: 7pt; color: #6b7280; font-style: italic;">
                     Lieferant: {{ $article['supplier'] }}
                 </div>
                 @endif
