@@ -164,8 +164,7 @@ class ArticlesRelationManager extends RelationManager
                     ->label('MwSt.')
                     ->alignCenter()
                     ->badge()
-                    ->color('warning')
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->color('warning'),
                 Tables\Columns\TextColumn::make('formatted_total_price_gross')
                     ->label('Gesamtpreis brutto')
                     ->alignRight()
@@ -179,8 +178,7 @@ class ArticlesRelationManager extends RelationManager
                         $grossTotal = $netTotal * (1 + $taxRate);
                         $decimalPlaces = $record->total_decimal_places ?? 2;
                         return number_format($grossTotal, $decimalPlaces, ',', '.') . ' €';
-                    })
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    }),
                 Tables\Columns\IconColumn::make('pivot.is_active')
                     ->label('Aktiv')
                     ->boolean()
