@@ -158,10 +158,14 @@ class ArticlesRelationManager extends RelationManager
                         $total = $unitPrice * $quantity;
                         $decimalPlaces = $record->total_decimal_places ?? 2;
                         return number_format($total, $decimalPlaces, ',', '.') . ' €';
-                    }),
+                    })
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('tax_rate_percent')
                     ->label('MwSt.')
-                    ->toggleable(),
+                    ->alignCenter()
+                    ->badge()
+                    ->color('warning')
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('formatted_total_price_gross')
                     ->label('Gesamtpreis brutto')
                     ->alignRight()
@@ -176,7 +180,7 @@ class ArticlesRelationManager extends RelationManager
                         $decimalPlaces = $record->total_decimal_places ?? 2;
                         return number_format($grossTotal, $decimalPlaces, ',', '.') . ' €';
                     })
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\IconColumn::make('pivot.is_active')
                     ->label('Aktiv')
                     ->boolean()
