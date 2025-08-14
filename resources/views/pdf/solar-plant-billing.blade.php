@@ -518,9 +518,9 @@
 
             <tbody>
                 @foreach($billing->credit_breakdown as $credit)
-                <tr><td colspan="5"></td></tr>
-                <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid; margin-top: 20px;">
-                    <td colspan="5" style="padding: 8px; padding-top: 28px; page-break-inside: avoid;">
+                <tr><td colspan="5" style="height: 20px;"></td></tr>
+                <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid;">
+                    <td colspan="5" style="padding: 8px; page-break-inside: avoid;">
                         <!-- Lieferant - Zeile 1 -->
                         <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
                             {{ $credit['supplier_name'] ?? 'Unbekannt' }}
@@ -686,9 +686,9 @@
 
             <tbody>
                 @foreach($billing->cost_breakdown as $cost)
-                <tr><td colspan="5"></td></tr>
-                <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid; margin-top: 20px;">
-                    <td colspan="5" style="padding: 8px; padding-top: 28px; page-break-inside: avoid;">
+                <tr><td colspan="5" style="height: 20px;"></td></tr>
+                <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid;">
+                    <td colspan="5" style="padding: 8px; page-break-inside: avoid;">
                         <!-- Lieferant - Zeile 1 -->
                         <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
                             {{ $cost['supplier_name'] ?? 'Unbekannt' }}
