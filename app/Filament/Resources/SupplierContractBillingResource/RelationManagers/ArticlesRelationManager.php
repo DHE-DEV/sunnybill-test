@@ -182,12 +182,32 @@ class ArticlesRelationManager extends RelationManager
                     }),
 
                 Forms\Components\TextInput::make('total_price')
-                    ->label('Gesamtpreis')
+                    ->label('Gesamtpreis netto')
                     ->numeric()
                     ->step(0.01)
                     ->prefix('€')
                     ->disabled()
                     ->dehydrated(true),
+
+                Forms\Components\Placeholder::make('article_tax_info')
+                    ->label('Steuersatz des Artikels')
+                    ->content(function (callable $get) {
+                        $articleId = $get('article_id');
+                        if (!$articleId) return 'Kein Artikel ausgewählt';
+                        
+                        $article = Article::with('taxRate')->find($articleId);
+                        if (!$article) return 'Artikel nicht gefunden';
+                        
+                        $taxRate = $article->getCurrentTaxRate();
+                        $totalPrice = $get('total_price') ?? 0;
+                        $grossPrice = $totalPrice * (1 + $taxRate);
+                        $decimalPlaces = $article->total_decimal_places ?? 2;
+                        
+                        return "MwSt.: " . number_format($taxRate * 100, 2) . "%\n" .
+                               "Gesamtpreis brutto: " . number_format($grossPrice, $decimalPlaces, ',', '.') . " €";
+                    })
+                    ->visible(fn (callable $get) => $get('article_id'))
+                    ->columnSpanFull(),
 
                 Forms\Components\Textarea::make('notes')
                     ->label('Notizen')
@@ -205,6 +225,7 @@ class ArticlesRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('article.name')
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('article.taxRate'))
             ->columns([
                 Tables\Columns\TextColumn::make('article.name')
                     ->label('Artikel')
@@ -235,11 +256,35 @@ class ArticlesRelationManager extends RelationManager
                     ->alignEnd(),
 
                 Tables\Columns\TextColumn::make('total_price')
-                    ->label('Gesamtpreis')
+                    ->label('Gesamtpreis netto')
                     ->money('EUR')
                     ->sortable()
                     ->weight('medium')
-                    ->alignEnd(),
+                    ->alignEnd()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('article.tax_rate_percent')
+                    ->label('MwSt.')
+                    ->alignCenter()
+                    ->badge()
+                    ->color('warning')
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('total_price_gross')
+                    ->label('Gesamtpreis brutto')
+                    ->alignRight()
+                    ->badge()
+                    ->color('info')
+                    ->getStateUsing(function ($record) {
+                        if (!$record->article) return '0,00 €';
+                        
+                        $netTotal = $record->total_price;
+                        $taxRate = $record->article->getCurrentTaxRate();
+                        $grossTotal = $netTotal * (1 + $taxRate);
+                        $decimalPlaces = $record->article->total_decimal_places ?? 2;
+                        return number_format($grossTotal, $decimalPlaces, ',', '.') . ' €';
+                    })
+                    ->toggleable(),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
