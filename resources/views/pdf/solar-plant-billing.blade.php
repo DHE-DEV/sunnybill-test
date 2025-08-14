@@ -528,11 +528,37 @@
                 @foreach($billing->credit_breakdown as $credit)
                 <tr><td colspan="5"></td></tr>
                 <tr style="border-top: 1px solid #8a8a8aff;">
-                    <td><b>{{ $credit['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}</td>
-                    <td class="number">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
-                    <td class="number">{{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                    <td colspan="5" style="padding: 8px;">
+                        <!-- Lieferant - Zeile 1 -->
+                        <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
+                            {{ $credit['supplier_name'] ?? 'Unbekannt' }}
+                        </div>
+                        
+                        <!-- Contract Title - Zeile 2 -->
+                        <div style="font-size: 9pt; color: #666; margin-bottom: 8px;">
+                            {{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}
+                        </div>
+                        
+                        <!-- Werte-Tabelle -->
+                        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Anteil</th>
+                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Netto (€)</th>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">MwSt.</th>
+                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Gesamtbetrag Brutto (€)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
+                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
+                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
+                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
                 </tr>
                 <!--
                 <tr>
@@ -678,11 +704,37 @@
                 @foreach($billing->cost_breakdown as $cost)
                 <tr><td colspan="5"></td></tr>
                 <tr style="border-top: 1px solid #8a8a8aff;">
-                    <td><b>{{ $cost['supplier_name'] ?? 'Unbekannt' }}</b><br>{{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}</td>
-                    <td class="number">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
-                    <td class="number">{{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
-                    <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                    <td colspan="5" style="padding: 8px;">
+                        <!-- Lieferant - Zeile 1 -->
+                        <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
+                            {{ $cost['supplier_name'] ?? 'Unbekannt' }}
+                        </div>
+                        
+                        <!-- Contract Title - Zeile 2 -->
+                        <div style="font-size: 9pt; color: #666; margin-bottom: 8px;">
+                            {{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}
+                        </div>
+                        
+                        <!-- Werte-Tabelle -->
+                        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Anteil</th>
+                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Netto (€)</th>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">MwSt.</th>
+                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Gesamtbetrag Brutto (€)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
+                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
+                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
+                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
                 </tr>
                 @if(isset($cost['articles']) && !empty($cost['articles']))
                 <tr>
