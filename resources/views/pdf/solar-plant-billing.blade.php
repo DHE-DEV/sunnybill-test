@@ -519,7 +519,7 @@
             <tbody>
                 @foreach($billing->credit_breakdown as $credit)
                 <tr><td colspan="5"></td></tr>
-                <tr style="border-top: 1px solid #8a8a8aff; background: #f0f8ff; page-break-inside: avoid;">
+                <tr style="border-top: 1px solid #8a8a8aff; background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid;">
                     <td colspan="5" style="padding: 8px; page-break-inside: avoid;">
                         <!-- Lieferant - Zeile 1 -->
                         <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
@@ -559,8 +559,8 @@
                     </td>
                 </tr>-->
                 @if(isset($credit['articles']) && !empty($credit['articles']))
-                <tr>
-                    <td colspan="5" style="padding-left: 10px; background: #f8f9fa; border-top: none;">
+                <tr style="page-break-inside: avoid; page-break-before: avoid;">
+                    <td colspan="5" style="padding-left: 10px; background: #f8f9fa; border-top: none; page-break-inside: avoid;">
                         <strong>Artikel-Aufschlüsselung:</strong>
                         <div style="margin-top: 8px;">
                             @foreach($credit['articles'] as $article)
@@ -687,7 +687,7 @@
             <tbody>
                 @foreach($billing->cost_breakdown as $cost)
                 <tr><td colspan="5"></td></tr>
-                <tr style="border-top: 1px solid #8a8a8aff; background: #f0f8ff; page-break-inside: avoid;">
+                <tr style="border-top: 1px solid #8a8a8aff; background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid;">
                     <td colspan="5" style="padding: 8px; page-break-inside: avoid;">
                         <!-- Lieferant - Zeile 1 -->
                         <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
@@ -721,8 +721,8 @@
                     </td>
                 </tr>
                 @if(isset($cost['articles']) && !empty($cost['articles']))
-                <tr>
-                    <td colspan="5" style="padding-left: 15px; background: #f8f9fa; border-top: none;">
+                <tr style="page-break-inside: avoid; page-break-before: avoid;">
+                    <td colspan="5" style="padding-left: 15px; background: #f8f9fa; border-top: none; page-break-inside: avoid;">
                         <strong>Artikel-Aufschlüsselung:</strong>
                         <div style="margin-top: 8px;">
                             @foreach($cost['articles'] as $article)
