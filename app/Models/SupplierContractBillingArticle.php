@@ -55,19 +55,39 @@ class SupplierContractBillingArticle extends Model
     }
 
     /**
-     * Formatierter Einzelpreis
+     * Formatierter Einzelpreis mit artikelspezifischen Nachkommastellen
      */
     public function getFormattedUnitPriceAttribute(): string
     {
-        return number_format($this->unit_price, 2, ',', '.') . ' €';
+        $decimalPlaces = $this->article?->getDecimalPlaces() ?? 2;
+        return number_format($this->unit_price, $decimalPlaces, ',', '.') . ' €';
     }
 
     /**
-     * Formatierter Gesamtpreis
+     * Formatierter Gesamtpreis mit artikelspezifischen Nachkommastellen
      */
     public function getFormattedTotalPriceAttribute(): string
     {
-        return number_format($this->total_price, 2, ',', '.') . ' €';
+        $decimalPlaces = $this->article?->getTotalDecimalPlaces() ?? 2;
+        return number_format($this->total_price, $decimalPlaces, ',', '.') . ' €';
+    }
+
+    /**
+     * Formatierter Einzelpreis für PDF (mit artikelspezifischen Nachkommastellen)
+     */
+    public function getFormattedUnitPriceForPdfAttribute(): string
+    {
+        $decimalPlaces = $this->article?->getDecimalPlaces() ?? 2;
+        return number_format($this->unit_price, $decimalPlaces, ',', '.');
+    }
+
+    /**
+     * Formatierter Gesamtpreis für PDF (mit artikelspezifischen Nachkommastellen)
+     */
+    public function getFormattedTotalPriceForPdfAttribute(): string
+    {
+        $decimalPlaces = $this->article?->getTotalDecimalPlaces() ?? 2;
+        return number_format($this->total_price, $decimalPlaces, ',', '.');
     }
 
     /**

@@ -556,6 +556,20 @@
                             </thead>
                             <tbody>
                                 @foreach($credit['articles'] as $article)
+                                @php
+                                    // Lade Artikel-Model um Nachkommastellen-Einstellungen zu erhalten
+                                    $articleModel = null;
+                                    $decimalPlaces = 2;
+                                    $totalDecimalPlaces = 2;
+                                    
+                                    if (isset($article['article_id']) && $article['article_id']) {
+                                        $articleModel = \App\Models\Article::find($article['article_id']);
+                                        if ($articleModel) {
+                                            $decimalPlaces = $articleModel->getDecimalPlaces();
+                                            $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
+                                        }
+                                    }
+                                @endphp
                                 <tr>
                                     <td style="padding: 2px;">
                                         {{ $article['article_name'] ?? 'Unbekannt' }}
@@ -565,8 +579,8 @@
                                     </td>
                                     <td style="text-align: center; padding: 2px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }}</td>
                                     <td style="text-align: center; padding: 2px;">{{ $article['unit'] ?? 'Stk.' }}</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, 6, ',', '.') }} €</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, 6, ',', '.') }} €</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, $decimalPlaces, ',', '.') }} €</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, $totalDecimalPlaces, ',', '.') }} €</td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -660,6 +674,20 @@
                             </thead>
                             <tbody>
                                 @foreach($cost['articles'] as $article)
+                                @php
+                                    // Lade Artikel-Model um Nachkommastellen-Einstellungen zu erhalten
+                                    $articleModel = null;
+                                    $decimalPlaces = 2;
+                                    $totalDecimalPlaces = 2;
+                                    
+                                    if (isset($article['article_id']) && $article['article_id']) {
+                                        $articleModel = \App\Models\Article::find($article['article_id']);
+                                        if ($articleModel) {
+                                            $decimalPlaces = $articleModel->getDecimalPlaces();
+                                            $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
+                                        }
+                                    }
+                                @endphp
                                 <tr>
                                     <td style="padding: 2px;">
                                         {{ $article['article_name'] ?? 'Unbekannt' }}
@@ -669,8 +697,8 @@
                                     </td>
                                     <td style="text-align: center; padding: 2px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }}</td>
                                     <td style="text-align: center; padding: 2px;">{{ $article['unit'] ?? 'Stk.' }}</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, 6, ',', '.') }} €</td>
-                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, 6, ',', '.') }} €</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['unit_price'] ?? 0, $decimalPlaces, ',', '.') }} €</td>
+                                    <td style="text-align: right; padding: 2px;">{{ number_format($article['total_price_net'] ?? 0, $totalDecimalPlaces, ',', '.') }} €</td>
                                 </tr>
                                 @endforeach
                             </tbody>

@@ -391,6 +391,7 @@ class SolarPlantBilling extends Model
                     $grossTotal = $netTotal + $taxAmount;
                     
                     $articleDetails[] = [
+                        'article_id' => $article->article_id,
                         'article_name' => $articleRecord ? $articleRecord->name : ($article->description ?? 'Unbekannt'),
                         'quantity' => $article->quantity,
                         'unit' => $articleRecord ? ($articleRecord->unit ?? 'Stk.') : 'Stk.',
@@ -460,6 +461,7 @@ class SolarPlantBilling extends Model
                     $grossTotal = $netTotal + $taxAmount;
                     
                     $articleDetails[] = [
+                        'article_id' => $article->article_id,
                         'article_name' => $articleRecord ? $articleRecord->name : ($article->description ?? 'Unbekannt'),
                         'quantity' => $article->quantity,
                         'unit' => $articleRecord ? ($articleRecord->unit ?? 'Stk.') : 'Stk.',
