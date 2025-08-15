@@ -23,16 +23,16 @@ class ViewSolarPlant extends ViewRecord
     public function getRelationManagers(): array
     {
         return [
-            RelationManagers\ArticlesRelationManager::class,
-            RelationManagers\ParticipationsRelationManager::class,
-            RelationManagers\BillingsRelationManager::class,
-            RelationManagers\MonthlyResultsRelationManager::class,
-            RelationManagers\DocumentsRelationManager::class,
-            RelationManagers\ContractsRelationManager::class,
-            RelationManagers\SuppliersRelationManager::class,
-            RelationManagers\MilestonesRelationManager::class,
-            RelationManagers\FavoriteNotesRelationManager::class,
-            RelationManagers\StandardNotesRelationManager::class,
+            //RelationManagers\ArticlesRelationManager::class,
+            //RelationManagers\ParticipationsRelationManager::class,
+            //RelationManagers\BillingsRelationManager::class,
+            //RelationManagers\MonthlyResultsRelationManager::class,
+            //RelationManagers\DocumentsRelationManager::class,
+            //RelationManagers\ContractsRelationManager::class,
+            //RelationManagers\SuppliersRelationManager::class,
+            //RelationManagers\MilestonesRelationManager::class,
+            //RelationManagers\FavoriteNotesRelationManager::class,
+            //RelationManagers\StandardNotesRelationManager::class,
         ];
     }
 
