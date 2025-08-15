@@ -75,10 +75,10 @@ class TasksTable extends Component implements HasForms, HasTable
                                     ->options([
                                         'open' => 'Offen',
                                         'in_progress' => 'In Bearbeitung',
-                                        'waiting' => 'Wartend',
+                                        'waiting_external' => 'Warten auf extern',
+                                        'waiting_internal' => 'Warten auf intern',
                                         'completed' => 'Abgeschlossen',
                                         'cancelled' => 'Abgebrochen',
-                                        'recurring' => 'Wiederkehrend',
                                     ])
                                     ->default('open')
                                     ->required(),

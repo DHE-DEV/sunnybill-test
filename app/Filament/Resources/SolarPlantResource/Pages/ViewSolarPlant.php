@@ -859,7 +859,13 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Aufgaben')
                     ->id('tasks')
                     ->icon('heroicon-o-clipboard-document-list')
-                    ->heading(fn ($record) => 'Aufgaben' . ($record->tasks()->count() > 0 ? ' (' . $record->tasks()->count() . ')' : ''))
+                    ->heading(fn ($record) => 'Aufgaben' . ((\App\Models\Task::where(function ($query) use ($record) {
+                        $query->where('solar_plant_id', $record->id)
+                              ->orWhere('applies_to_all_solar_plants', true);
+                    })->count() > 0) ? ' (' . \App\Models\Task::where(function ($query) use ($record) {
+                        $query->where('solar_plant_id', $record->id)
+                              ->orWhere('applies_to_all_solar_plants', true);
+                    })->count() . ')' : ''))
                     ->description('Übersicht der Aufgaben und To-Dos zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'tasks-section-gray',
@@ -870,19 +876,28 @@ class ViewSolarPlant extends ViewRecord
                             ->schema([
                                 Infolists\Components\TextEntry::make('total_tasks_count')
                                     ->label('Gesamte Aufgaben')
-                                    ->state(fn ($record) => $record->tasks()->count())
+                                    ->state(fn ($record) => \App\Models\Task::where(function ($query) use ($record) {
+                                        $query->where('solar_plant_id', $record->id)
+                                              ->orWhere('applies_to_all_solar_plants', true);
+                                    })->count())
                                     ->badge()
                                     ->color('primary')
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('open_tasks_count')
                                     ->label('Offene Aufgaben')
-                                    ->state(fn ($record) => $record->tasks()->whereIn('status', ['open', 'in_progress'])->count())
+                                    ->state(fn ($record) => \App\Models\Task::where(function ($query) use ($record) {
+                                        $query->where('solar_plant_id', $record->id)
+                                              ->orWhere('applies_to_all_solar_plants', true);
+                                    })->whereIn('status', ['open', 'in_progress', 'waiting_external', 'waiting_internal'])->count())
                                     ->badge()
                                     ->color('warning')
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('completed_tasks_count')
                                     ->label('Abgeschlossene Aufgaben')
-                                    ->state(fn ($record) => $record->tasks()->where('status', 'completed')->count())
+                                    ->state(fn ($record) => \App\Models\Task::where(function ($query) use ($record) {
+                                        $query->where('solar_plant_id', $record->id)
+                                              ->orWhere('applies_to_all_solar_plants', true);
+                                    })->where('status', 'completed')->count())
                                     ->badge()
                                     ->color('success')
                                     ->size('xl'),
