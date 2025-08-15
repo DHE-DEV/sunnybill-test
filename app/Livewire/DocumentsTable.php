@@ -14,6 +14,9 @@ use Filament\Tables\Table;
 use Livewire\Component;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Notifications\Notification;
+use App\Services\DocumentStorageService;
+use App\Services\DocumentUploadConfig;
 
 class DocumentsTable extends Component implements HasForms, HasTable
 {
@@ -36,6 +39,196 @@ class DocumentsTable extends Component implements HasForms, HasTable
                     ->where('documentable_id', $this->solarPlant->id)
                     ->with(['uploadedBy', 'documentType'])
             )
+            ->headerActions([
+                Tables\Actions\Action::make('upload_document')
+                    ->label('Dokument hochladen')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Dokumentname')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('z.B. Bauplan, Vertrag, Rechnung'),
+                        Forms\Components\Select::make('document_type_id')
+                            ->label('Dokumenttyp')
+                            ->options(
+                                \App\Models\DocumentType::query()
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Dokumenttyp auswählen')
+                            ->live(), // Macht das Feld reaktiv für Pfad-Vorschau
+                        Forms\Components\Select::make('category')
+                            ->label('Kategorie')
+                            ->options([
+                                'planning' => 'Planung',
+                                'permits' => 'Genehmigungen',
+                                'installation' => 'Installation',
+                                'maintenance' => 'Wartung',
+                                'invoices' => 'Rechnungen',
+                                'certificates' => 'Zertifikate',
+                                'contracts' => 'Verträge',
+                                'correspondence' => 'Korrespondenz',
+                                'technical' => 'Technische Unterlagen',
+                                'photos' => 'Fotos',
+                            ])
+                            ->placeholder('Kategorie auswählen')
+                            ->live(), // Macht das Feld reaktiv für Pfad-Vorschau
+                        Forms\Components\Placeholder::make('path_preview')
+                            ->label('Speicherort')
+                            ->content(function (Forms\Get $get): string {
+                                // Hole Kategorie und Dokumenttyp
+                                $category = $get('category');
+                                $documentTypeId = $get('document_type_id');
+                                
+                                // Basis-Pfad mit Solaranlage
+                                $solarPlant = $this->solarPlant;
+                                $basePath = 'solaranlagen/' . $solarPlant->plant_number;
+                                
+                                // Füge Dokumenttyp-Pfad hinzu wenn vorhanden
+                                if ($documentTypeId) {
+                                    try {
+                                        $documentType = \App\Models\DocumentType::find($documentTypeId);
+                                        if ($documentType && $documentType->key) {
+                                            $basePath .= '/' . $documentType->key;
+                                        }
+                                    } catch (\Exception $e) {
+                                        // Ignore error
+                                    }
+                                }
+                                
+                                // Füge Kategorie-Pfad hinzu wenn vorhanden
+                                if ($category) {
+                                    $basePath .= '/' . $category;
+                                }
+                                
+                                // Konvertiere zu Windows-Pfad-Format für bessere Lesbarkeit
+                                $windowsPath = str_replace('/', '\\', $basePath);
+                                
+                                return "📁 {$windowsPath}\\";
+                            })
+                            ->helperText(function (Forms\Get $get): string {
+                                $category = $get('category');
+                                $documentTypeId = $get('document_type_id');
+                                $documentTypeName = null;
+                                $documentTypeKey = null;
+                                
+                                // Hole Dokumenttyp-Informationen wenn vorhanden
+                                if ($documentTypeId) {
+                                    try {
+                                        $documentType = \App\Models\DocumentType::find($documentTypeId);
+                                        $documentTypeName = $documentType?->name;
+                                        $documentTypeKey = $documentType?->key;
+                                    } catch (\Exception $e) {
+                                        // Ignore error
+                                    }
+                                }
+                                
+                                $baseHelperText = 'Hier wird das Dokument gespeichert.';
+                                $details = [];
+                                
+                                // Zeige Dokumenttyp-Info wenn vorhanden
+                                if ($documentTypeName) {
+                                    $details[] = "Dokumenttyp: {$documentTypeName} (Pfad: {$documentTypeKey})";
+                                }
+                                
+                                // Zeige Kategorie
+                                if ($category) {
+                                    $details[] = "Kategorie: {$category}";
+                                }
+                                
+                                if (!empty($details)) {
+                                    return $baseHelperText . ' | ' . implode(' | ', $details);
+                                }
+                                
+                                return $baseHelperText . ' Der Pfad wird aus Solaranlage, Dokumenttyp und Kategorie zusammengesetzt.';
+                            })
+                            ->live() // Aktiviert Live-Updates
+                            ->columnSpanFull(),
+                        Forms\Components\FileUpload::make('file')
+                            ->label('Datei')
+                            ->required()
+                            ->maxSize(10240) // 10MB
+                            ->acceptedFileTypes([
+                                'application/pdf',
+                                'image/*',
+                                'application/msword',
+                                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                'application/vnd.ms-excel',
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                'application/zip',
+                                'text/plain',
+                                'text/csv',
+                            ])
+                            ->helperText('Maximale Dateigröße: 10 MB. Erlaubte Formate: PDF, Bilder, Word, Excel, ZIP, Text, CSV')
+                            ->downloadable()
+                            ->openable()
+                            ->preserveFilenames()
+                            ->storeFileNamesIn('original_name'),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Beschreibung')
+                            ->rows(3)
+                            ->placeholder('Optionale Beschreibung des Dokuments'),
+                        Forms\Components\Toggle::make('is_favorite')
+                            ->label('Als Favorit markieren')
+                            ->default(false)
+                            ->helperText('Favorisierte Dokumente werden hervorgehoben angezeigt'),
+                    ])
+                    ->action(function (array $data) {
+                        // Upload-Funktion
+                        $file = $data['file'];
+                        
+                        // Baue den Pfad aus Solaranlage, Dokumenttyp und Kategorie
+                        $pathParts = ['solaranlagen', $this->solarPlant->plant_number];
+                        
+                        // Füge Dokumenttyp-Pfad hinzu
+                        if (isset($data['document_type_id'])) {
+                            $documentType = \App\Models\DocumentType::find($data['document_type_id']);
+                            if ($documentType && $documentType->key) {
+                                $pathParts[] = $documentType->key;
+                            }
+                        }
+                        
+                        // Füge Kategorie-Pfad hinzu
+                        if (isset($data['category'])) {
+                            $pathParts[] = $data['category'];
+                        }
+                        
+                        $directory = implode('/', $pathParts);
+                        
+                        // Speichere die Datei im zusammengesetzten Verzeichnis
+                        $path = $file->store($directory, 'documents');
+                        
+                        // Erstelle den Dokument-Eintrag
+                        $document = new Document();
+                        $document->name = $data['name'];
+                        $document->original_name = $file->getClientOriginalName();
+                        $document->path = $path;
+                        $document->disk = 'documents';
+                        $document->mime_type = $file->getMimeType();
+                        $document->size = $file->getSize();
+                        $document->category = $data['category'] ?? null;
+                        $document->document_type_id = $data['document_type_id'] ?? null;
+                        $document->description = $data['description'] ?? null;
+                        $document->documentable_type = 'App\Models\SolarPlant';
+                        $document->documentable_id = $this->solarPlant->id;
+                        $document->uploaded_by = auth()->id();
+                        $document->is_favorite = $data['is_favorite'] ?? false;
+                        $document->save();
+                        
+                        Notification::make()
+                            ->title('Dokument hochgeladen')
+                            ->body('Das Dokument wurde erfolgreich hochgeladen.')
+                            ->success()
+                            ->send();
+                    })
+                    ->modalHeading('Neues Dokument hochladen')
+                    ->modalSubmitActionLabel('Dokument hochladen')
+                    ->modalWidth('lg'),
+            ])
             ->columns([
                 Tables\Columns\IconColumn::make('icon')
                     ->label('')
