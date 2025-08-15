@@ -139,6 +139,23 @@ class SupplierContractResource extends Resource
                             ->placeholder('z.B. Erkennungsmerkmal 3'),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Standard Texte')
+                    ->description('Standardtexte werden bei der Belegerfassung automatisch in die betreffenden Felder übernommen. Sie können dort 1:1 übernommen oder für die betreffende Belegerfassung abgeändert werden.')
+                    ->schema([
+                        Forms\Components\TextInput::make('default_title')
+                            ->label('Titel')
+                            ->maxLength(500)
+                            ->placeholder('z.B. Standard-Titel für Belege')
+                            ->helperText('Dieser Titel wird automatisch bei neuen Belegen vorausgefüllt'),
+                        Forms\Components\Textarea::make('default_description')
+                            ->label('Beschreibung')
+                            ->rows(4)
+                            ->maxLength(2000)
+                            ->placeholder('z.B. Standard-Beschreibung für Belege...')
+                            ->helperText('Diese Beschreibung wird automatisch bei neuen Belegen vorausgefüllt')
+                            ->columnSpanFull(),
+                    ])->columns(1),
+
 
                 Forms\Components\Section::make('Zusätzliche Informationen')
                     ->schema([

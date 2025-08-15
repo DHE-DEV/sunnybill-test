@@ -98,6 +98,28 @@ class SupplierContractBillingResource extends Resource
                             ->reactive()
                             ->placeholder('Wählen Sie eine Solaranlage für gefilterte Verträge')
                             ->helperText('Verfügbare Verträge (gefiltert nach ausgewählter Solaranlage)')
+                            ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                if (!$state) return;
+                                
+                                // Lade den ausgewählten Vertrag mit Standard-Texten
+                                $contract = \App\Models\SupplierContract::find($state);
+                                if (!$contract) return;
+                                
+                                // Setze Standard-Titel wenn vorhanden und Titel-Feld leer ist
+                                if (!empty($contract->default_title) && empty($get('title'))) {
+                                    $set('title', $contract->default_title);
+                                }
+                                
+                                // Setze Standard-Beschreibung wenn vorhanden und Beschreibung-Feld leer ist
+                                if (!empty($contract->default_description) && empty($get('description'))) {
+                                    $set('description', $contract->default_description);
+                                }
+                                
+                                // Setze Standard MwSt.-Satz wenn vorhanden
+                                if (!is_null($contract->default_vat_rate) && empty($get('vat_rate'))) {
+                                    $set('vat_rate', $contract->default_vat_rate);
+                                }
+                            })
                             ->columnSpanFull(),
 
                         // Zeile 3

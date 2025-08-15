@@ -35,6 +35,8 @@ class SupplierContract extends Model
         'contract_recognition_1',
         'contract_recognition_2',
         'contract_recognition_3',
+        'default_title',
+        'default_description',
         'custom_field_1',
         'custom_field_2',
         'custom_field_3',
