@@ -611,6 +611,7 @@ class SolarPlantResource extends Resource
                 Tables\Columns\TextColumn::make('location')
                     ->label('Standort')
                     ->searchable()
+                    ->sortable()
                     ->limit(30),
                 Tables\Columns\TextColumn::make('plot_number')
                     ->label('Flurstück')
