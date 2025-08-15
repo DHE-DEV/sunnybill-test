@@ -17,7 +17,7 @@ class ListSupplierContractBillings extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('Neue Abrechnung'),
+                ->label('Neuen Beleg erfassen'),
         ];
     }
 }

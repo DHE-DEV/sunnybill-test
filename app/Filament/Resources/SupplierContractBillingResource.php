@@ -20,11 +20,11 @@ class SupplierContractBillingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
 
-    protected static ?string $navigationLabel = 'Abrechnungen';
+    protected static ?string $navigationLabel = 'Belege';
 
-    protected static ?string $modelLabel = 'Abrechnung';
+    protected static ?string $modelLabel = 'Belege';
 
-    protected static ?string $pluralModelLabel = 'Lieferanten - Abrechnungen';
+    protected static ?string $pluralModelLabel = 'Lieferanten - Belege';
 
     protected static ?string $navigationGroup = 'Lieferanten';
 
@@ -34,7 +34,7 @@ class SupplierContractBillingResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Abrechnungsdetails')
+                Forms\Components\Section::make('Belegdetails')
                     ->schema([
                         // Zeile 1
                         Forms\Components\Select::make('temp_solar_plant_id')
@@ -62,7 +62,7 @@ class SupplierContractBillingResource extends Resource
                             }),
 
                         Forms\Components\TextInput::make('billing_number')
-                            ->label('Abrechnungsnummer')
+                            ->label('Belegnummer')
                             ->disabled()
                             ->dehydrated(false)
                             ->placeholder('Wird automatisch generiert'),
@@ -115,7 +115,7 @@ class SupplierContractBillingResource extends Resource
 
                         // Zeile 5
                         Forms\Components\Select::make('billing_type')
-                            ->label('Abrechnungstyp')
+                            ->label('Belegtyp')
                             ->options(SupplierContractBilling::getBillingTypeOptions())
                             ->default('invoice')
                             ->required(),
@@ -638,7 +638,7 @@ class SupplierContractBillingResource extends Resource
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('billing_date')
-                    ->label('Abrechnungsdatum')
+                    ->label('Belegdatum')
                     ->date('d.m.Y')
                     ->sortable()
                     ->toggleable(),

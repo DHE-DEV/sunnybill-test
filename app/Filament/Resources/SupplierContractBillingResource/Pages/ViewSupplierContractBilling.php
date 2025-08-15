@@ -18,22 +18,22 @@ class ViewSupplierContractBilling extends ViewRecord
         $contract = $record->supplierContract;
         
         if ($contract) {
-            return "Abrechnung ansehen - {$contract->contract_number} - {$contract->title}";
+            return "Beleg ansehen - {$contract->contract_number} - {$contract->title}";
         }
         
-        return 'Abrechnung ansehen';
+        return 'Beleg ansehen';
     }
 
     public function infolist(Infolist $infolist): Infolist
     {
         return $infolist
             ->schema([
-                Infolists\Components\Section::make('Abrechnungsdetails')
+                Infolists\Components\Section::make('Belegdetails')
                     ->schema([
                         Infolists\Components\Grid::make(2)
                             ->schema([
                                 Infolists\Components\TextEntry::make('billing_number')
-                                    ->label('Abrechnungsnummer'),
+                                    ->label('Belegnummer'),
                                 Infolists\Components\TextEntry::make('supplier_invoice_number')
                                     ->label('Anbieter-Rechnungsnummer')
                                     ->placeholder('—'),

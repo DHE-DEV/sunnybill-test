@@ -16,10 +16,10 @@ class EditSupplierContractBilling extends EditRecord
         $contract = $record->supplierContract;
         
         if ($contract) {
-            return "Abrechnung bearbeiten - {$contract->contract_number} - {$contract->title}";
+            return "Beleg bearbeiten - {$contract->contract_number} - {$contract->title}";
         }
         
-        return 'Abrechnung bearbeiten';
+        return 'Beleg bearbeiten';
     }
 
     protected function getHeaderActions(): array
