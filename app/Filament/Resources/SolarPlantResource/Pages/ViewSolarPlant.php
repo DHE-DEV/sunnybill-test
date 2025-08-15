@@ -551,6 +551,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Kundenbeteiligungen')
                     ->id('customers')
                     ->icon('heroicon-o-users')
+                    ->badge(fn ($record) => $record->participations()->count())
+                    ->badgeColor('primary')
                     ->description('Übersicht der beteiligten Kunden zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'customers-section-gray',
@@ -600,6 +602,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Kundenabrechnungen')
                     ->id('customer-billings')
                     ->icon('heroicon-o-document-currency-euro')
+                    ->badge(fn ($record) => $record->billings()->count())
+                    ->badgeColor('primary')
                     ->description('Übersicht der Kundenabrechnungen aller Kunden zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'customer-billings-section-gray',
@@ -638,6 +642,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Vertragspartner')
                     ->id('suppliers')
                     ->icon('heroicon-o-building-office-2')
+                    ->badge(fn ($record) => $record->supplierAssignments()->count())
+                    ->badgeColor('gray')
                     ->description('Übersicht der Lieferanten, Dienstleister und weiterer Vertragspartner zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'suppliers-section-gray',
@@ -676,6 +682,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Verträge')
                     ->id('contracts')
                     ->icon('heroicon-o-document-text')
+                    ->badge(fn ($record) => $record->supplierContracts()->count())
+                    ->badgeColor('gray')
                     ->description('Übersicht der Lieferantenverträge zur Solaranlage ' . $this->record->name . '. Diese Verträge sind die Grundlage für Kundenabrechnungen.')
                     ->extraAttributes([
                         'class' => 'contracts-section-gray',
@@ -714,6 +722,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Dokumente')
                     ->id('documents')
                     ->icon('heroicon-o-folder')
+                    ->badge(fn ($record) => $record->documents()->count())
+                    ->badgeColor('gray')
                     ->description('Übersicht der Dokumente zur Solaranlage ' . $this->record->name . '. Diese Dokumente können Verträge, Pläne und weitere wichtige Dateien enthalten.')
                     ->extraAttributes([
                         'class' => 'documents-section-gray',
@@ -813,6 +823,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Artikel')
                     ->id('articles')
                     ->icon('heroicon-o-squares-plus')
+                    ->badge(fn ($record) => $record->articles()->count())
+                    ->badgeColor('gray')
                     ->description('Übersicht der Artikel und zur Solaranlage ' . $this->record->name . '. Artikel können Komponenten, Ersatzteile und weitere Materialien sein, die zur Rechnungserstellung herangezogen werden können.')
                     ->extraAttributes([
                         'class' => 'articles-section-gray',
@@ -853,6 +865,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Aufgaben')
                     ->id('tasks')
                     ->icon('heroicon-o-clipboard-document-list')
+                    ->badge(fn ($record) => $record->tasks()->count())
+                    ->badgeColor('gray')
                     ->description('Übersicht der Aufgaben und To-Dos zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'tasks-section-gray',
@@ -891,6 +905,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Projekte')
                     ->id('projects')
                     ->icon('heroicon-o-briefcase')
+                    ->badge(fn ($record) => $record->projects()->count())
+                    ->badgeColor('gray')
                     ->description('Übersicht der Projekte zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'projects-section-gray',
@@ -929,6 +945,12 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Termine')
                     ->id('milestones')
                     ->icon('heroicon-o-calendar-days')
+                    ->badge(fn ($record) => \App\Models\ProjectMilestone::whereHas('project', function ($query) use ($record) {
+                        $query->where('solar_plant_id', $record->id);
+                    })->count() + \App\Models\ProjectAppointment::whereHas('project', function ($query) use ($record) {
+                        $query->where('solar_plant_id', $record->id);
+                    })->count())
+                    ->badgeColor('gray')
                     ->description('Übersicht der Termine und Meilensteine zur Solaranlage ' . $this->record->name . '.')
                     ->extraAttributes([
                         'class' => 'milestones-section-gray',
@@ -1001,6 +1023,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Favoriten Notizen')
                     ->id('favorite-notes')
                     ->icon('heroicon-o-star')
+                    ->badge(fn ($record) => $record->notes()->where('is_favorite', true)->count())
+                    ->badgeColor('gray')
                     ->description('Favorisierte Notizen und wichtige Hinweise zur Solaranlage ' . $this->record->name . '. Diese Notizen sind für alle Beteiligten von Bedeutung und sollten hervorgehoben werden.')
                     ->extraAttributes([
                         'class' => 'favorite-notes-section-gray',
@@ -1039,6 +1063,8 @@ class ViewSolarPlant extends ViewRecord
                 Infolists\Components\Section::make('Standard Notizen')
                     ->id('standard-notes')
                     ->icon('heroicon-o-document-text')
+                    ->badge(fn ($record) => $record->notes()->where('is_favorite', false)->count())
+                    ->badgeColor('gray')
                     ->description('Allgemeine Notizen und Bemerkungen zur Solaranlage ' . $this->record->name . '. Diese Notizen sind nicht favorisiert, aber dennoch wichtig für die Dokumentation und Kommunikation.')
                     ->extraAttributes([
                         'class' => 'standard-notes-section-gray',
