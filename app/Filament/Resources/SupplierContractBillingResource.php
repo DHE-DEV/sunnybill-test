@@ -676,6 +676,7 @@ class SupplierContractBillingResource extends Resource
                     ->formatStateUsing(fn (string $state): string => SupplierContractBilling::getStatusOptions()[$state] ?? $state)
                     ->colors([
                         'secondary' => 'draft',
+                        'info' => 'captured',
                         'warning' => 'pending',
                         'primary' => 'approved',
                         'success' => 'paid',

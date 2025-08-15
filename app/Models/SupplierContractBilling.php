@@ -105,6 +105,7 @@ class SupplierContractBilling extends Model
     {
         return match ($this->status) {
             'draft' => 'Entwurf',
+            'captured' => 'Erfasst',
             'pending' => 'Ausstehend',
             'approved' => 'Genehmigt',
             'paid' => 'Bezahlt',
@@ -120,6 +121,7 @@ class SupplierContractBilling extends Model
     {
         return [
             'draft' => 'Entwurf',
+            'captured' => 'Erfasst',
             'pending' => 'Ausstehend',
             'approved' => 'Genehmigt',
             'paid' => 'Bezahlt',
