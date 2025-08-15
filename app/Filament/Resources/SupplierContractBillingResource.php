@@ -176,8 +176,7 @@ class SupplierContractBillingResource extends Resource
                         // Zeile 7
                         Forms\Components\DatePicker::make('billing_date')
                             ->label('Abrechnungsdatum')
-                            ->required()
-                            ->default(now()),
+                            ->required(),
 
                         Forms\Components\DatePicker::make('due_date')
                             ->label('Fälligkeitsdatum')
