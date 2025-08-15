@@ -144,6 +144,7 @@ class SupplierContractBillingResource extends Resource
 
                         Forms\Components\TextInput::make('supplier_invoice_number')
                             ->label('Anbieter-Rechnungsnummer')
+                            ->required()
                             ->maxLength(255)
                             ->placeholder('Rechnungsnummer des Anbieters'),
 

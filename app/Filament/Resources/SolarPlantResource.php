@@ -740,10 +740,27 @@ class SolarPlantResource extends Resource
                 ->button()
             ])
             ->headerActions([
-                // FusionSolar Synchronisation entfernt
+                Tables\Actions\ExportAction::make()
+                    ->label('Alle exportieren')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->exporter(\App\Filament\Exports\SolarPlantExporter::class)
+                    ->formats([
+                        \Filament\Actions\Exports\Enums\ExportFormat::Xlsx,
+                    ])
+                    ->fileName('solaranlagen-alle-' . now()->format('Y-m-d-H-i-s')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\ExportBulkAction::make()
+                        ->label('Ausgewählte exportieren')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('info')
+                        ->exporter(\App\Filament\Exports\SolarPlantExporter::class)
+                        ->formats([
+                            \Filament\Actions\Exports\Enums\ExportFormat::Xlsx,
+                        ])
+                        ->fileName('solaranlagen-ausgewählte-' . now()->format('Y-m-d-H-i-s')),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
