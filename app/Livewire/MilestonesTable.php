@@ -16,6 +16,9 @@ use Livewire\Component;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Filament\Notifications\Notification;
+use App\Models\User;
+use App\Models\Project;
 
 class MilestonesTable extends Component implements HasForms, HasTable
 {
@@ -32,6 +35,196 @@ class MilestonesTable extends Component implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->headerActions([
+                Tables\Actions\Action::make('add_appointment')
+                    ->label('Termin/Meilenstein hinzufügen')
+                    ->icon('heroicon-o-plus')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\Select::make('type')
+                            ->label('Art')
+                            ->options([
+                                'appointment' => 'Termin',
+                                'milestone' => 'Meilenstein',
+                            ])
+                            ->default('appointment')
+                            ->required()
+                            ->reactive()
+                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                // Reset type-specific fields when switching
+                                if ($state === 'appointment') {
+                                    $set('milestone_type', null);
+                                    $set('completion_percentage', null);
+                                    $set('is_critical_path', false);
+                                } else {
+                                    $set('appointment_type', null);
+                                }
+                            }),
+                        Forms\Components\Select::make('project_id')
+                            ->label('Projekt')
+                            ->options(function () {
+                                return Project::where('solar_plant_id', $this->solarPlant->id)
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id');
+                            })
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Projekt auswählen')
+                            ->helperText('Wählen Sie das zugehörige Projekt'),
+                        Forms\Components\TextInput::make('title')
+                            ->label('Titel')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('z.B. Projekt-Kickoff Meeting'),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Beschreibung')
+                            ->rows(3)
+                            ->placeholder('Detaillierte Beschreibung')
+                            ->columnSpanFull(),
+                        Forms\Components\Select::make('appointment_type')
+                            ->label('Termin-Typ')
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'appointment')
+                            ->options([
+                                'meeting' => 'Meeting',
+                                'deadline' => 'Deadline',
+                                'review' => 'Review',
+                                'milestone_check' => 'Meilenstein-Check',
+                                'inspection' => 'Inspektion',
+                                'training' => 'Schulung',
+                            ])
+                            ->required(fn (Forms\Get $get) => $get('type') === 'appointment'),
+                        Forms\Components\Select::make('milestone_type')
+                            ->label('Meilenstein-Typ')
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'milestone')
+                            ->options([
+                                'planning' => 'Planung',
+                                'approval' => 'Genehmigung',
+                                'implementation' => 'Umsetzung',
+                                'testing' => 'Testing',
+                                'delivery' => 'Lieferung',
+                                'payment' => 'Zahlung',
+                                'review' => 'Review',
+                            ])
+                            ->required(fn (Forms\Get $get) => $get('type') === 'milestone'),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\DateTimePicker::make('start_datetime')
+                                    ->label(fn (Forms\Get $get) => $get('type') === 'appointment' ? 'Startzeit' : 'Geplantes Datum')
+                                    ->required()
+                                    ->native(false)
+                                    ->displayFormat('d.m.Y H:i')
+                                    ->seconds(false),
+                                Forms\Components\DateTimePicker::make('end_datetime')
+                                    ->label('Endzeit')
+                                    ->visible(fn (Forms\Get $get) => $get('type') === 'appointment')
+                                    ->after('start_datetime')
+                                    ->native(false)
+                                    ->displayFormat('d.m.Y H:i')
+                                    ->seconds(false),
+                            ]),
+                        Forms\Components\Select::make('status')
+                            ->label('Status')
+                            ->options(function (Forms\Get $get) {
+                                if ($get('type') === 'appointment') {
+                                    return [
+                                        'scheduled' => 'Geplant',
+                                        'confirmed' => 'Bestätigt',
+                                        'cancelled' => 'Abgesagt',
+                                        'completed' => 'Erledigt',
+                                    ];
+                                } else {
+                                    return [
+                                        'pending' => 'Ausstehend',
+                                        'in_progress' => 'In Bearbeitung',
+                                        'completed' => 'Abgeschlossen',
+                                        'delayed' => 'Verzögert',
+                                        'cancelled' => 'Abgebrochen',
+                                    ];
+                                }
+                            })
+                            ->default(fn (Forms\Get $get) => $get('type') === 'appointment' ? 'scheduled' : 'pending')
+                            ->required(),
+                        Forms\Components\Select::make('responsible_user_id')
+                            ->label('Verantwortlich')
+                            ->options(User::orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Person auswählen'),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('completion_percentage')
+                                    ->label('Fortschritt (%)')
+                                    ->visible(fn (Forms\Get $get) => $get('type') === 'milestone')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->default(0)
+                                    ->suffix('%'),
+                                Forms\Components\Toggle::make('is_critical_path')
+                                    ->label('Kritischer Pfad')
+                                    ->visible(fn (Forms\Get $get) => $get('type') === 'milestone')
+                                    ->default(false)
+                                    ->helperText('Ist dieser Meilenstein Teil des kritischen Pfads?'),
+                            ]),
+                        Forms\Components\TextInput::make('location')
+                            ->label('Ort')
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'appointment')
+                            ->placeholder('z.B. Konferenzraum 1 oder Online')
+                            ->maxLength(255),
+                        Forms\Components\Textarea::make('participants')
+                            ->label('Teilnehmer')
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'appointment')
+                            ->placeholder('Liste der Teilnehmer')
+                            ->rows(2),
+                    ])
+                    ->action(function (array $data) {
+                        if ($data['type'] === 'appointment') {
+                            // Erstelle einen neuen Termin
+                            $appointment = new ProjectAppointment();
+                            $appointment->project_id = $data['project_id'];
+                            $appointment->title = $data['title'];
+                            $appointment->description = $data['description'] ?? null;
+                            $appointment->type = $data['appointment_type'];
+                            $appointment->start_datetime = $data['start_datetime'];
+                            $appointment->end_datetime = $data['end_datetime'] ?? null;
+                            $appointment->status = $data['status'];
+                            $appointment->location = $data['location'] ?? null;
+                            $appointment->participants = $data['participants'] ?? null;
+                            $appointment->created_by = $data['responsible_user_id'] ?? auth()->id();
+                            $appointment->save();
+                            
+                            Notification::make()
+                                ->title('Termin erstellt')
+                                ->body("Der Termin '{$appointment->title}' wurde erfolgreich erstellt.")
+                                ->success()
+                                ->send();
+                        } else {
+                            // Erstelle einen neuen Meilenstein
+                            $milestone = new ProjectMilestone();
+                            $milestone->project_id = $data['project_id'];
+                            $milestone->title = $data['title'];
+                            $milestone->description = $data['description'] ?? null;
+                            $milestone->type = $data['milestone_type'];
+                            $milestone->planned_date = $data['start_datetime'];
+                            $milestone->status = $data['status'];
+                            $milestone->responsible_user_id = $data['responsible_user_id'] ?? null;
+                            $milestone->completion_percentage = $data['completion_percentage'] ?? 0;
+                            $milestone->is_critical_path = $data['is_critical_path'] ?? false;
+                            $milestone->save();
+                            
+                            Notification::make()
+                                ->title('Meilenstein erstellt')
+                                ->body("Der Meilenstein '{$milestone->title}' wurde erfolgreich erstellt.")
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->modalHeading('Neuen Termin oder Meilenstein erstellen')
+                    ->modalDescription('Erstellen Sie einen neuen Termin oder Meilenstein für die Projekte dieser Solaranlage.')
+                    ->modalSubmitActionLabel('Erstellen')
+                    ->modalWidth('lg'),
+            ])
             ->query(
                 // Kombiniere ProjectMilestone und ProjectAppointment über Union
                 ProjectMilestone::query()

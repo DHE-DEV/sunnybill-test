@@ -14,6 +14,9 @@ use Filament\Tables\Table;
 use Livewire\Component;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Notifications\Notification;
+use App\Models\User;
+use App\Models\TaskType;
 
 class TasksTable extends Component implements HasForms, HasTable
 {
@@ -38,6 +41,139 @@ class TasksTable extends Component implements HasForms, HasTable
                     })
                     ->with(['taskType', 'assignedTo', 'customer', 'supplier', 'creator'])
             )
+            ->headerActions([
+                Tables\Actions\Action::make('add_task')
+                    ->label('Aufgabe hinzufügen')
+                    ->icon('heroicon-o-plus')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\TextInput::make('title')
+                            ->label('Titel')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('z.B. Wartung durchführen'),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Beschreibung')
+                            ->rows(3)
+                            ->placeholder('Detaillierte Beschreibung der Aufgabe')
+                            ->columnSpanFull(),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('priority')
+                                    ->label('Priorität')
+                                    ->options([
+                                        'low' => 'Niedrig',
+                                        'medium' => 'Mittel',
+                                        'high' => 'Hoch',
+                                        'urgent' => 'Dringend',
+                                        'blocker' => 'Blockierend',
+                                    ])
+                                    ->default('medium')
+                                    ->required(),
+                                Forms\Components\Select::make('status')
+                                    ->label('Status')
+                                    ->options([
+                                        'open' => 'Offen',
+                                        'in_progress' => 'In Bearbeitung',
+                                        'waiting_external' => 'Warten auf extern',
+                                        'waiting_internal' => 'Warten auf intern',
+                                        'completed' => 'Abgeschlossen',
+                                        'cancelled' => 'Abgebrochen',
+                                    ])
+                                    ->default('open')
+                                    ->required(),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\DatePicker::make('due_date')
+                                    ->label('Fälligkeitsdatum')
+                                    ->placeholder('Datum auswählen')
+                                    ->native(false)
+                                    ->displayFormat('d.m.Y'),
+                                Forms\Components\TextInput::make('estimated_minutes')
+                                    ->label('Geschätzte Zeit (Minuten)')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->placeholder('z.B. 60')
+                                    ->helperText('Geschätzte Bearbeitungszeit in Minuten'),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('task_type_id')
+                                    ->label('Aufgabentyp')
+                                    ->options(TaskType::orderBy('name')->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Typ auswählen'),
+                                Forms\Components\Select::make('assigned_to')
+                                    ->label('Zugewiesen an')
+                                    ->options(User::orderBy('name')->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Benutzer auswählen')
+                                    ->default(auth()->id()),
+                            ]),
+                        Forms\Components\Toggle::make('applies_to_all_solar_plants')
+                            ->label('Gilt für alle Solaranlagen')
+                            ->default(false)
+                            ->helperText('Wenn aktiviert, gilt diese Aufgabe für alle Solaranlagen, nicht nur für diese')
+                            ->reactive()
+                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                if ($state) {
+                                    $set('solar_plant_specific', false);
+                                }
+                            }),
+                        Forms\Components\TagsInput::make('labels')
+                            ->label('Labels')
+                            ->placeholder('Labels hinzufügen...')
+                            ->suggestions([
+                                'wartung',
+                                'dringend',
+                                'dokumentation',
+                                'installation',
+                                'reparatur',
+                                'prüfung',
+                                'abrechnung',
+                            ])
+                            ->helperText('Fügen Sie Labels zur besseren Organisation hinzu')
+                            ->columnSpanFull(),
+                    ])
+                    ->action(function (array $data) {
+                        // Erstelle die neue Aufgabe
+                        $task = new Task();
+                        $task->title = $data['title'];
+                        $task->description = $data['description'] ?? null;
+                        $task->priority = $data['priority'];
+                        $task->status = $data['status'];
+                        $task->due_date = $data['due_date'] ?? null;
+                        $task->estimated_minutes = $data['estimated_minutes'] ?? null;
+                        $task->task_type_id = $data['task_type_id'] ?? null;
+                        $task->assigned_to = $data['assigned_to'] ?? null;
+                        $task->labels = $data['labels'] ?? [];
+                        $task->created_by = auth()->id();
+                        
+                        // Setze die Solaranlage nur wenn es nicht für alle gilt
+                        if ($data['applies_to_all_solar_plants'] ?? false) {
+                            $task->applies_to_all_solar_plants = true;
+                            $task->solar_plant_id = null;
+                        } else {
+                            $task->applies_to_all_solar_plants = false;
+                            $task->solar_plant_id = $this->solarPlant->id;
+                        }
+                        
+                        $task->save();
+                        
+                        Notification::make()
+                            ->title('Aufgabe erstellt')
+                            ->body("Die Aufgabe '{$task->title}' wurde erfolgreich erstellt.")
+                            ->success()
+                            ->send();
+                    })
+                    ->modalHeading('Neue Aufgabe erstellen')
+                    ->modalDescription('Erstellen Sie eine neue Aufgabe für diese Solaranlage.')
+                    ->modalSubmitActionLabel('Aufgabe erstellen')
+                    ->modalWidth('lg'),
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('task_number')
                     ->label('Aufgaben-Nr.')

@@ -14,6 +14,8 @@ use Filament\Tables\Table;
 use Livewire\Component;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Notifications\Notification;
+use App\Models\User;
 
 class ProjectsTable extends Component implements HasForms, HasTable
 {
@@ -35,6 +37,148 @@ class ProjectsTable extends Component implements HasForms, HasTable
                     ->where('solar_plant_id', $this->solarPlant->id)
                     ->with(['projectManager', 'customer', 'supplier', 'creator', 'milestones', 'appointments'])
             )
+            ->headerActions([
+                Tables\Actions\Action::make('add_project')
+                    ->label('Projekt hinzufügen')
+                    ->icon('heroicon-o-plus')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Projektname')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('z.B. Installation Monitoring-System'),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Beschreibung')
+                            ->rows(3)
+                            ->placeholder('Detaillierte Projektbeschreibung')
+                            ->columnSpanFull(),
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Select::make('type')
+                                    ->label('Projekttyp')
+                                    ->options([
+                                        'installation' => 'Installation',
+                                        'maintenance' => 'Wartung',
+                                        'upgrade' => 'Upgrade',
+                                        'repair' => 'Reparatur',
+                                        'inspection' => 'Inspektion',
+                                        'documentation' => 'Dokumentation',
+                                        'planning' => 'Planung',
+                                        'consulting' => 'Beratung',
+                                    ])
+                                    ->default('installation')
+                                    ->required(),
+                                Forms\Components\Select::make('status')
+                                    ->label('Status')
+                                    ->options([
+                                        'planning' => 'Planung',
+                                        'active' => 'Aktiv',
+                                        'on_hold' => 'Pausiert',
+                                        'completed' => 'Abgeschlossen',
+                                        'cancelled' => 'Abgebrochen',
+                                    ])
+                                    ->default('planning')
+                                    ->required(),
+                                Forms\Components\Select::make('priority')
+                                    ->label('Priorität')
+                                    ->options([
+                                        'low' => 'Niedrig',
+                                        'medium' => 'Mittel',
+                                        'high' => 'Hoch',
+                                        'urgent' => 'Dringend',
+                                    ])
+                                    ->default('medium')
+                                    ->required(),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\DatePicker::make('start_date')
+                                    ->label('Startdatum')
+                                    ->default(now())
+                                    ->required()
+                                    ->native(false)
+                                    ->displayFormat('d.m.Y'),
+                                Forms\Components\DatePicker::make('planned_end_date')
+                                    ->label('Geplantes Ende')
+                                    ->after('start_date')
+                                    ->native(false)
+                                    ->displayFormat('d.m.Y'),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('budget')
+                                    ->label('Budget')
+                                    ->numeric()
+                                    ->prefix('€')
+                                    ->minValue(0)
+                                    ->placeholder('z.B. 10000.00')
+                                    ->helperText('Geplantes Budget für das Projekt'),
+                                Forms\Components\TextInput::make('progress_percentage')
+                                    ->label('Fortschritt (%)')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->default(0)
+                                    ->suffix('%')
+                                    ->helperText('Aktueller Projektfortschritt'),
+                            ]),
+                        Forms\Components\Select::make('project_manager_id')
+                            ->label('Projektleiter')
+                            ->options(User::orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Projektleiter auswählen')
+                            ->default(auth()->id()),
+                        Forms\Components\TagsInput::make('tags')
+                            ->label('Tags')
+                            ->placeholder('Tags hinzufügen...')
+                            ->suggestions([
+                                'wartung',
+                                'installation',
+                                'upgrade',
+                                'dringend',
+                                'monitoring',
+                                'solar',
+                                'batterie',
+                            ])
+                            ->helperText('Fügen Sie Tags zur besseren Organisation hinzu'),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Projekt aktiv')
+                            ->default(true)
+                            ->helperText('Aktive Projekte werden in Übersichten angezeigt'),
+                    ])
+                    ->action(function (array $data) {
+                        // Erstelle das neue Projekt
+                        $project = new Project();
+                        $project->name = $data['name'];
+                        $project->description = $data['description'] ?? null;
+                        $project->type = $data['type'];
+                        $project->status = $data['status'];
+                        $project->priority = $data['priority'];
+                        $project->start_date = $data['start_date'];
+                        $project->planned_end_date = $data['planned_end_date'] ?? null;
+                        $project->budget = $data['budget'] ?? null;
+                        $project->progress_percentage = $data['progress_percentage'] ?? 0;
+                        $project->project_manager_id = $data['project_manager_id'] ?? null;
+                        $project->tags = $data['tags'] ?? [];
+                        $project->is_active = $data['is_active'] ?? true;
+                        $project->solar_plant_id = $this->solarPlant->id;
+                        $project->created_by = auth()->id();
+                        
+                        $project->save();
+                        
+                        Notification::make()
+                            ->title('Projekt erstellt')
+                            ->body("Das Projekt '{$project->name}' wurde erfolgreich erstellt.")
+                            ->success()
+                            ->send();
+                    })
+                    ->modalHeading('Neues Projekt erstellen')
+                    ->modalDescription('Erstellen Sie ein neues Projekt für diese Solaranlage.')
+                    ->modalSubmitActionLabel('Projekt erstellen')
+                    ->modalWidth('lg'),
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('project_number')
                     ->label('Projekt-Nr.')
