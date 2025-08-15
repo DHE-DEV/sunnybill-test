@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Livewire\Component;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Notifications\Notification;
 
 class ArticlesTable extends Component implements HasForms, HasTable
 {
@@ -37,6 +38,146 @@ class ArticlesTable extends Component implements HasForms, HasTable
                     })
                     ->with(['taxRate'])
             )
+            ->headerActions([
+                Tables\Actions\Action::make('add_article')
+                    ->label('Artikel hinzufügen')
+                    ->icon('heroicon-o-plus')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\Select::make('article_id')
+                            ->label('Artikel')
+                            ->options(function () {
+                                // Hole alle Artikel, die noch nicht zugeordnet sind
+                                $assignedArticleIds = $this->solarPlant->articles()->pluck('articles.id')->toArray();
+                                
+                                return Article::query()
+                                    ->whereNotIn('id', $assignedArticleIds)
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->mapWithKeys(function ($article) {
+                                        $label = $article->name;
+                                        if ($article->type) {
+                                            $typeLabel = match($article->type) {
+                                                'service' => 'Dienstleistung',
+                                                'product' => 'Produkt',
+                                                'material' => 'Material',
+                                                'equipment' => 'Ausrüstung',
+                                                'spare_part' => 'Ersatzteil',
+                                                'maintenance' => 'Wartung',
+                                                'other' => 'Sonstige',
+                                                default => $article->type,
+                                            };
+                                            $label .= " ({$typeLabel})";
+                                        }
+                                        if ($article->price) {
+                                            $label .= ' - €' . number_format($article->price, 2, ',', '.');
+                                        }
+                                        return [$article->id => $label];
+                                    });
+                            })
+                            ->searchable()
+                            ->required()
+                            ->preload()
+                            ->placeholder('Artikel auswählen...')
+                            ->helperText('Wählen Sie einen Artikel aus der Liste')
+                            ->reactive()
+                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                if ($state) {
+                                    $article = Article::find($state);
+                                    if ($article) {
+                                        // Setze Standardwerte vom Artikel
+                                        $set('unit_price', $article->price);
+                                        $set('unit', $article->unit);
+                                    }
+                                }
+                            }),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('quantity')
+                                    ->label('Menge')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->required()
+                                    ->minValue(0.01)
+                                    ->step(0.01)
+                                    ->suffix(fn (Forms\Get $get) => $get('unit') ?: 'Stück')
+                                    ->placeholder('z.B. 1,00'),
+                                Forms\Components\TextInput::make('unit_price')
+                                    ->label('Einheitspreis')
+                                    ->numeric()
+                                    ->prefix('€')
+                                    ->minValue(0)
+                                    ->step(0.01)
+                                    ->placeholder('z.B. 100,00')
+                                    ->helperText('Überschreibt den Standardpreis des Artikels'),
+                            ]),
+                        Forms\Components\Select::make('billing_requirement')
+                            ->label('Abrechnungsart')
+                            ->options([
+                                'monthly' => 'Monatlich',
+                                'quarterly' => 'Quartalsweise',
+                                'annually' => 'Jährlich',
+                                'one_time' => 'Einmalig',
+                                'on_demand' => 'Bei Bedarf',
+                            ])
+                            ->default('one_time')
+                            ->required()
+                            ->helperText('Wann soll dieser Artikel abgerechnet werden?'),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Artikel aktiv')
+                            ->default(true)
+                            ->helperText('Aktive Artikel werden bei Abrechnungen berücksichtigt'),
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Notizen')
+                            ->rows(3)
+                            ->placeholder('Optionale Notizen zu diesem Artikel')
+                            ->columnSpanFull(),
+                        Forms\Components\Hidden::make('unit')
+                            ->default('Stück'),
+                    ])
+                    ->action(function (array $data) {
+                        // Zuordnung des Artikels zur Solaranlage
+                        $article = Article::find($data['article_id']);
+                        
+                        if (!$article) {
+                            Notification::make()
+                                ->title('Fehler')
+                                ->body('Der ausgewählte Artikel konnte nicht gefunden werden.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+                        
+                        // Prüfe ob Artikel bereits zugeordnet ist
+                        if ($this->solarPlant->articles()->where('articles.id', $article->id)->exists()) {
+                            Notification::make()
+                                ->title('Artikel bereits zugeordnet')
+                                ->body('Dieser Artikel ist bereits der Solaranlage zugeordnet.')
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+                        
+                        // Füge Artikel zur Solaranlage hinzu
+                        $this->solarPlant->articles()->attach($article->id, [
+                            'quantity' => $data['quantity'] ?? 1,
+                            'unit_price' => $data['unit_price'] ?? $article->price,
+                            'notes' => $data['notes'] ?? null,
+                            'is_active' => $data['is_active'] ?? true,
+                            'billing_requirement' => $data['billing_requirement'] ?? 'one_time',
+                        ]);
+                        
+                        Notification::make()
+                            ->title('Artikel hinzugefügt')
+                            ->body("Der Artikel '{$article->name}' wurde erfolgreich zur Solaranlage hinzugefügt.")
+                            ->success()
+                            ->send();
+                    })
+                    ->modalHeading('Artikel zur Solaranlage hinzufügen')
+                    ->modalDescription('Wählen Sie einen Artikel aus und konfigurieren Sie die Zuordnung.')
+                    ->modalSubmitActionLabel('Artikel hinzufügen')
+                    ->modalWidth('lg'),
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Artikelname')
