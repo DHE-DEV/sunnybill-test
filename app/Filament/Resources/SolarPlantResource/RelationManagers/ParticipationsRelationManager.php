@@ -49,6 +49,7 @@ class ParticipationsRelationManager extends RelationManager
                         Forms\Components\TextInput::make('phone')
                             ->label('Telefon'),
                     ]),
+                    
                 Forms\Components\Section::make('Beteiligungsdetails')
                     ->schema([
                         Forms\Components\TextInput::make('participation_kwp')
@@ -57,7 +58,7 @@ class ParticipationsRelationManager extends RelationManager
                             ->step(0.0001)
                             ->minValue(0)
                             ->suffix('kWp')
-                            ->placeholder('z.B. 25.0000')
+                            ->placeholder('z.B. 25,0000')
                             ->live(onBlur: true)
                             ->afterStateUpdated(function ($state, Forms\Set $set, $livewire) {
                                 if ($state && $state > 0) {
@@ -81,7 +82,7 @@ class ParticipationsRelationManager extends RelationManager
                             ->suffix('%')
                             ->minValue(0.0001)
                             ->maxValue(100)
-                            ->placeholder('z.B. 25.5000')
+                            ->placeholder('z.B. 25,5000')
                             ->live(onBlur: true)
                             ->afterStateUpdated(function ($state, Forms\Set $set, $livewire) {
                                 if ($state && $state > 0) {
@@ -159,7 +160,31 @@ class ParticipationsRelationManager extends RelationManager
                     ->suffix('€/kWh')
                     ->placeholder('0,000000')
                     ->helperText('Vergütung pro kWh in EUR mit bis zu 6 Nachkommastellen'),
-            ]);
+                
+                Forms\Components\Section::make('Zeitraum und Details')
+                    ->schema([
+                        Forms\Components\DatePicker::make('start_date')
+                            ->label('Startdatum')
+                            ->default(now())
+                            ->required(),
+                        
+                        Forms\Components\DatePicker::make('end_date')
+                            ->label('Enddatum')
+                            ->nullable(),
+                        
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Aktiv')
+                            ->default(true),
+                    ])
+                    ->columns(3),
+                
+                Forms\Components\Textarea::make('notes')
+                    ->label('Notizen')
+                    ->nullable()
+                    ->rows(3)
+                    ->placeholder('Zusätzliche Informationen zur Beteiligung...'),
+            ])
+            ->columns(2);
     }
 
     public function table(Table $table): Table
@@ -203,6 +228,9 @@ class ParticipationsRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('Beteiligung hinzufügen')
+                    ->modalHeading('Neue Beteiligung hinzufügen')
+                    ->modalSubmitActionLabel('Beteiligung erstellen')
+                    ->modalWidth('6xl')
                     ->after(function () {
                         Notification::make()
                             ->title('Beteiligung hinzugefügt')
@@ -219,6 +247,9 @@ class ParticipationsRelationManager extends RelationManager
                     ->url(fn ($record) => route('filament.admin.resources.customers.view', ['record' => $record->customer_id]))
                     ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make()
+                    ->modalHeading('Beteiligung bearbeiten')
+                    ->modalSubmitActionLabel('Änderungen speichern')
+                    ->modalWidth('4xl')
                     ->after(function () {
                         Notification::make()
                             ->title('Beteiligung aktualisiert')

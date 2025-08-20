@@ -32,16 +32,137 @@ class SolarPlantsRelationManager extends RelationManager
                     ->options(SolarPlant::all()->pluck('name', 'id'))
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->live()
+                    ->columnSpanFull(),
                 
-                Forms\Components\TextInput::make('percentage')
-                    ->label('Beteiligung (%)')
-                    ->numeric()
-                    ->minValue(0)
-                    ->maxValue(100)
-                    ->step(0.01)
-                    ->required()
-                    ->suffix('%'),
+                Forms\Components\Section::make('Beteiligungsdetails')
+                    ->schema([
+                        Forms\Components\TextInput::make('participation_kwp')
+                            ->label('Beteiligung kWp')
+                            ->numeric()
+                            ->step(0.0001)
+                            ->minValue(0)
+                            ->suffix('kWp')
+                            ->placeholder('z.B. 25,0000')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                if ($state && $state > 0) {
+                                    $solarPlantId = $get('solar_plant_id');
+                                    if ($solarPlantId) {
+                                        $solarPlant = SolarPlant::find($solarPlantId);
+                                        if ($solarPlant && $solarPlant->total_capacity_kw > 0) {
+                                            $percentage = ($state / $solarPlant->total_capacity_kw) * 100;
+                                            $set('percentage', round($percentage, 4));
+                                        }
+                                    }
+                                }
+                            })
+                            ->helperText(function (Forms\Get $get) {
+                                $solarPlantId = $get('solar_plant_id');
+                                if ($solarPlantId) {
+                                    $solarPlant = SolarPlant::find($solarPlantId);
+                                    return $solarPlant ? "Anlagenkapazität: " . number_format($solarPlant->total_capacity_kw ?? 0, 4, ',', '.') . " kWp" : '';
+                                }
+                                return 'Bitte zuerst Solaranlage auswählen';
+                            }),
+                        
+                        Forms\Components\TextInput::make('percentage')
+                            ->label('Beteiligung (%)')
+                            ->required()
+                            ->numeric()
+                            ->step(0.0001)
+                            ->suffix('%')
+                            ->minValue(0.0001)
+                            ->maxValue(100)
+                            ->placeholder('z.B. 25,5000')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                if ($state && $state > 0) {
+                                    $solarPlantId = $get('solar_plant_id');
+                                    if ($solarPlantId) {
+                                        $solarPlant = SolarPlant::find($solarPlantId);
+                                        if ($solarPlant && $solarPlant->total_capacity_kw > 0) {
+                                            $kwp = ($state / 100) * $solarPlant->total_capacity_kw;
+                                            $set('participation_kwp', round($kwp, 4));
+                                        }
+                                    }
+                                }
+                            })
+                            ->helperText(function (Forms\Get $get, $livewire) {
+                                $solarPlantId = $get('solar_plant_id');
+                                if ($solarPlantId) {
+                                    $solarPlant = SolarPlant::find($solarPlantId);
+                                    if ($solarPlant) {
+                                        $currentRecord = $livewire->mountedTableActionRecord ?? null;
+                                        $existingParticipation = $solarPlant->participations()
+                                            ->where('id', '!=', $currentRecord?->id ?? 0)
+                                            ->sum('percentage');
+                                        $available = 100 - $existingParticipation;
+                                        return "Verfügbar: " . number_format($available, 4, ',', '.') . "% (Gesamt: " . number_format($solarPlant->total_participation ?? 0, 4, ',', '.') . "% von 100%)";
+                                    }
+                                }
+                                return 'Bitte zuerst Solaranlage auswählen';
+                            })
+                            ->rules([
+                                function (Forms\Get $get, $livewire) {
+                                    return function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
+                                        $solarPlantId = $get('solar_plant_id');
+                                        if ($solarPlantId) {
+                                            $solarPlant = SolarPlant::find($solarPlantId);
+                                            if ($solarPlant) {
+                                                $currentRecord = $livewire->mountedTableActionRecord ?? null;
+                                                $existingParticipation = $solarPlant->participations()
+                                                    ->where('id', '!=', $currentRecord?->id ?? 0)
+                                                    ->sum('percentage');
+                                                
+                                                $totalParticipation = $existingParticipation + $value;
+                                                
+                                                if ($totalParticipation > 100) {
+                                                    $available = 100 - $existingParticipation;
+                                                    $fail("Die Gesamtbeteiligung würde " . number_format($totalParticipation, 4, ',', '.') . "% betragen. Maximal verfügbar: " . number_format($available, 4, ',', '.') . "%");
+                                                }
+                                            }
+                                        }
+                                    };
+                                },
+                            ]),
+                        
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('calculate_from_kwp')
+                                ->label('Aus kWp berechnen')
+                                ->icon('heroicon-m-calculator')
+                                ->color('info')
+                                ->action(function (Forms\Set $set, Forms\Get $get, array $data) {
+                                    $kwp = $data['participation_kwp'] ?? 0;
+                                    $solarPlantId = $get('solar_plant_id');
+                                    if ($kwp && $kwp > 0 && $solarPlantId) {
+                                        $solarPlant = SolarPlant::find($solarPlantId);
+                                        if ($solarPlant && $solarPlant->total_capacity_kw > 0) {
+                                            $percentage = ($kwp / $solarPlant->total_capacity_kw) * 100;
+                                            $set('percentage', round($percentage, 4));
+                                        }
+                                    }
+                                }),
+                            Forms\Components\Actions\Action::make('calculate_from_percentage')
+                                ->label('Aus % berechnen')
+                                ->icon('heroicon-m-calculator')
+                                ->color('success')
+                                ->action(function (Forms\Set $set, Forms\Get $get, array $data) {
+                                    $percentage = $data['percentage'] ?? 0;
+                                    $solarPlantId = $get('solar_plant_id');
+                                    if ($percentage && $percentage > 0 && $solarPlantId) {
+                                        $solarPlant = SolarPlant::find($solarPlantId);
+                                        if ($solarPlant && $solarPlant->total_capacity_kw > 0) {
+                                            $kwp = ($percentage / 100) * $solarPlant->total_capacity_kw;
+                                            $set('participation_kwp', round($kwp, 4));
+                                        }
+                                    }
+                                }),
+                        ])
+                        ->columnSpanFull(),
+                    ])
+                    ->columns(2),
                 
                 Forms\Components\TextInput::make('eeg_compensation_per_kwh')
                     ->label('Vertraglich zugesicherte EEG-Vergütung')
@@ -52,22 +173,26 @@ class SolarPlantsRelationManager extends RelationManager
                     ->placeholder('0,000000')
                     ->helperText('Vergütung pro kWh in EUR mit bis zu 6 Nachkommastellen'),
                 
-                Forms\Components\DatePicker::make('start_date')
-                    ->label('Startdatum')
-                    ->required(),
-                
-                Forms\Components\DatePicker::make('end_date')
-                    ->label('Enddatum')
-                    ->nullable(),
+                Forms\Components\Section::make('Zeitraum und Details')
+                    ->schema([
+                        Forms\Components\DatePicker::make('start_date')
+                            ->label('Startdatum')
+                            ->required(),
+                        
+                        Forms\Components\DatePicker::make('end_date')
+                            ->label('Enddatum')
+                            ->nullable(),
+                        
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Aktiv')
+                            ->default(true),
+                    ])
+                    ->columns(3),
                 
                 Forms\Components\Textarea::make('notes')
                     ->label('Notizen')
                     ->nullable()
                     ->rows(3),
-                
-                Forms\Components\Toggle::make('is_active')
-                    ->label('Aktiv')
-                    ->default(true),
             ]);
     }
 

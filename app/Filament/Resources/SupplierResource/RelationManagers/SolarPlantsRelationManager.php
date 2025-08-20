@@ -75,7 +75,10 @@ class SolarPlantsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('name')
                     ->label('Solaranlage')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(function ($record) {
+                        return $record->location ? "Standort: {$record->location}" : null;
+                    }),
                 Tables\Columns\TextColumn::make('location')
                     ->label('Standort')
                     ->searchable()
@@ -83,37 +86,42 @@ class SolarPlantsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('pivot.role')
                     ->label('Rolle')
                     ->searchable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('supplierEmployee.full_name')
+                    ->toggleable()
+                    ->placeholder('-'),
+                Tables\Columns\TextColumn::make('ansprechpartner')
                     ->label('Ansprechpartner')
                     ->getStateUsing(function ($record) {
-                        $pivotData = $record->pivot;
-                        if ($pivotData && $pivotData->supplier_employee_id) {
-                            $employee = SupplierEmployee::find($pivotData->supplier_employee_id);
-                            return $employee?->full_name;
+                        if ($record->pivot && $record->pivot->supplier_employee_id) {
+                            $employee = SupplierEmployee::find($record->pivot->supplier_employee_id);
+                            return $employee ? $employee->full_name : '-';
                         }
                         return '-';
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('pivot.start_date')
                     ->label('Beginn')
-                    ->date()
+                    ->date('d.m.Y')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->placeholder('-'),
                 Tables\Columns\TextColumn::make('pivot.end_date')
                     ->label('Ende')
-                    ->date()
+                    ->date('d.m.Y')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->placeholder('-'),
                 Tables\Columns\IconColumn::make('pivot.is_active')
                     ->label('Aktiv')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->default(true),
                 Tables\Columns\TextColumn::make('total_capacity_kw')
                     ->label('Leistung (kWp)')
                     ->numeric(2)
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->suffix(' kWp')
+                    ->placeholder('-'),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')

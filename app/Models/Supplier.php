@@ -179,9 +179,11 @@ class Supplier extends Model
         return $this->morphMany(PhoneNumber::class, 'phoneable');
     }
 
-    public function solarPlants(): HasMany
+    public function solarPlants(): BelongsToMany
     {
-        return $this->hasMany(SolarPlantSupplier::class);
+        return $this->belongsToMany(SolarPlant::class, 'solar_plant_suppliers')
+            ->withPivot(['supplier_employee_id', 'role', 'notes', 'start_date', 'end_date', 'is_active'])
+            ->withTimestamps();
     }
 
     public function contracts(): HasMany
