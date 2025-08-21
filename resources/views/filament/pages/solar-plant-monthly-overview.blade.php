@@ -48,54 +48,48 @@
         </div>
 
         <!-- Summary Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
-                            <x-heroicon-o-minus-circle class="w-5 h-5 text-white" />
-                        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+            <div style="background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 8px; padding: 1rem;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 32px; height: 32px; background-color: #6b7280; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
+                        <x-heroicon-o-minus-circle style="width: 20px; height: 20px; color: white;" />
                     </div>
-                    <div class="ml-4">
-                        <div class="text-lg font-semibold text-gray-900 dark:text-gray-300">
+                    <div>
+                        <div style="font-size: 1.125rem; font-weight: 600; color: #111827;">
                             {{ $allPlantsStats['no_contracts'] }}
                         </div>
-                        <div class="text-sm text-gray-700 dark:text-gray-400">
+                        <div style="font-size: 0.875rem; color: #6b7280;">
                             Anlagen ohne Lieferantenverträge
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                            <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-white" />
-                        </div>
+            <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 32px; height: 32px; background-color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
+                        <x-heroicon-o-exclamation-triangle style="width: 20px; height: 20px; color: white;" />
                     </div>
-                    <div class="ml-4">
-                        <div class="text-lg font-semibold text-red-900 dark:text-red-300">
+                    <div>
+                        <div style="font-size: 1.125rem; font-weight: 600; color: #7f1d1d;">
                             {{ $allPlantsStats['incomplete'] }}
                         </div>
-                        <div class="text-sm text-red-700 dark:text-red-400">
+                        <div style="font-size: 0.875rem; color: #b91c1c;">
                             Anlagen mit fehlende Lieferantenbelegen
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                            <x-heroicon-o-check-circle class="w-5 h-5 text-white" />
-                        </div>
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 32px; height: 32px; background-color: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
+                        <x-heroicon-o-check-circle style="width: 20px; height: 20px; color: white;" />
                     </div>
-                    <div class="ml-4">
-                        <div class="text-lg font-semibold text-green-900 dark:text-green-300">
+                    <div>
+                        <div style="font-size: 1.125rem; font-weight: 600; color: #14532d;">
                             {{ $allPlantsStats['complete'] }}
                         </div>
-                        <div class="text-sm text-green-700 dark:text-green-400">
+                        <div style="font-size: 0.875rem; color: #16a34a;">
                             Anlagen mit komplett erfassten Lieferantenbelegen
                         </div>
                     </div>
@@ -142,57 +136,76 @@
                     };
                 @endphp
 
-                <div class="rounded-lg shadow {{ $statusConfig['bg'] }} {{ $statusConfig['border'] }} border">
+                @php
+                    $cardStyle = match($status) {
+                        'Vollständig' => 'background-color: #f0fdf4; border: 1px solid #bbf7d0;',
+                        'Unvollständig' => 'background-color: #fef2f2; border: 1px solid #fecaca;',
+                        'Keine Verträge' => 'background-color: #f9fafb; border: 1px solid #d1d5db;',
+                        default => 'background-color: #f9fafb; border: 1px solid #d1d5db;',
+                    };
+                    $borderStyle = match($status) {
+                        'Vollständig' => 'border-color: #bbf7d0;',
+                        'Unvollständig' => 'border-color: #fecaca;',
+                        'Keine Verträge' => 'border-color: #d1d5db;',
+                        default => 'border-color: #d1d5db;',
+                    };
+                @endphp
+
+                <div style="border-radius: 8px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); {{ $cardStyle }}">
                     <!-- Plant Header -->
-                    <div class="p-6 border-b {{ $statusConfig['border'] }}">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <div class="flex-shrink-0">
+                    <div style="padding: 1.5rem; border-bottom: 1px solid; {{ $borderStyle }}">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div>
                                     @if ($status === 'Vollständig')
-                                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                                            <x-heroicon-o-check-circle class="w-6 h-6 text-white" />
+                                        <div style="width: 40px; height: 40px; background-color: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <x-heroicon-o-check-circle style="width: 24px; height: 24px; color: white;" />
                                         </div>
                                     @elseif ($status === 'Unvollständig')
-                                        <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
-                                            <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-white" />
+                                        <div style="width: 40px; height: 40px; background-color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <x-heroicon-o-exclamation-triangle style="width: 24px; height: 24px; color: white;" />
                                         </div>
                                     @elseif ($status === 'Keine Verträge')
-                                        <div class="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
-                                            <x-heroicon-o-minus-circle class="w-6 h-6 text-white" />
+                                        <div style="width: 40px; height: 40px; background-color: #6b7280; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <x-heroicon-o-minus-circle style="width: 24px; height: 24px; color: white;" />
                                         </div>
                                     @else
-                                        <div class="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
-                                            <x-heroicon-o-question-mark-circle class="w-6 h-6 text-white" />
+                                        <div style="width: 40px; height: 40px; background-color: #6b7280; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <x-heroicon-o-question-mark-circle style="width: 24px; height: 24px; color: white;" />
                                         </div>
                                     @endif
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                    <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">
                                         {{ $plant->plant_number }} - {{ $plant->name }}
                                     </h3>
-                                    <div class="flex items-center space-x-4 mt-1">
+                                    <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;">
                                         @if ($plant->location)
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                <x-heroicon-o-map-pin class="w-4 h-4 inline" />
+                                            <p style="font-size: 0.875rem; color: #6b7280;">
+                                                <x-heroicon-o-map-pin style="width: 16px; height: 16px; display: inline; margin-right: 0.25rem;" />
                                                 {{ $plant->location }}
                                             </p>
                                         @endif
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            <x-heroicon-o-document-text class="w-4 h-4 inline" />
+                                        <p style="font-size: 0.875rem; color: #6b7280;">
+                                            <x-heroicon-o-document-text style="width: 16px; height: 16px; display: inline; margin-right: 0.25rem;" />
                                             {{ $totalContracts }} Verträge
                                         </p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
-                                    @if($status === 'Vollständig') bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400
-                                    @elseif($status === 'Unvollständig') bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400
-                                    @else bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-400 @endif">
+                            <div style="text-align: right;">
+                                @php
+                                    $badgeStyle = match($status) {
+                                        'Vollständig' => 'background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0;',
+                                        'Unvollständig' => 'background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca;',
+                                        default => 'background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db;',
+                                    };
+                                @endphp
+                                <div style="display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; {{ $badgeStyle }}">
                                     {{ $status }}
                                 </div>
                                 @if ($missingCount > 0)
-                                    <div class="text-sm text-red-600 dark:text-red-400 mt-1">
+                                    <div style="font-size: 0.875rem; color: #dc2626; margin-top: 0.25rem;">
                                         {{ $missingCount }} fehlende Abrechnung{{ $missingCount !== 1 ? 'en' : '' }}
                                     </div>
                                 @endif
@@ -202,11 +215,11 @@
 
                     <!-- Contract Details -->
                     @if ($totalContracts > 0)
-                        <div class="p-6">
-                            <h4 class="text-md font-medium text-gray-900 dark:text-white mb-4">
+                        <div style="padding: 1.5rem;">
+                            <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 1rem;">
                                 Vertragsdetails für {{ $monthLabel }}
                             </h4>
-                            <div class="space-y-3">
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                                 @foreach ($activeContracts as $contract)
                                     @php
                                         $hasBilling = $contract->billings()
@@ -215,42 +228,46 @@
                                             ->exists();
                                         $contractUrl = '/admin/supplier-contracts/' . $contract->id . '?activeRelationManager=1';
                                         $supplierName = $contract->supplier ? $contract->supplier->display_name : 'Unbekannt';
+                                        
+                                        $contractStyle = $hasBilling 
+                                            ? 'background-color: #f0fdf4; border: 1px solid #bbf7d0;'
+                                            : 'background-color: #fef2f2; border: 1px solid #fecaca;';
                                     @endphp
                                     
-                                    <div class="flex items-center justify-between p-3 rounded-md 
-                                        @if($hasBilling) bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800
-                                        @else bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 @endif">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="flex-shrink-0">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-radius: 6px; {{ $contractStyle }}">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div>
                                                 @if ($hasBilling)
-                                                    <x-heroicon-o-check-circle class="w-5 h-5 text-green-500" />
+                                                    <x-heroicon-o-check-circle style="width: 20px; height: 20px; color: #22c55e;" />
                                                 @else
-                                                    <x-heroicon-o-x-circle class="w-5 h-5 text-red-500" />
+                                                    <x-heroicon-o-x-circle style="width: 20px; height: 20px; color: #ef4444;" />
                                                 @endif
                                             </div>
                                             <div>
-                                                <p class="font-medium text-gray-900 dark:text-white">
+                                                <p style="font-weight: 500; color: #111827;">
                                                     {{ $contract->title }}
                                                 </p>
-                                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                <p style="font-size: 0.875rem; color: #6b7280;">
                                                     {{ $supplierName }} • Nr: {{ $contract->contract_number }}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div class="flex items-center space-x-3">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
                                             @if ($hasBilling)
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400">
+                                                <span style="display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #dcfce7; color: #166534;">
                                                     Abrechnung vorhanden
                                                 </span>
                                             @else
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400">
+                                                <span style="display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fee2e2; color: #991b1b;">
                                                     Abrechnung fehlt
                                                 </span>
                                             @endif
                                             <a href="{{ $contractUrl }}" target="_blank"
-                                               class="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
-                                                <x-heroicon-o-arrow-top-right-on-square class="w-3 h-3 mr-2" />
-                                                &nbsp; Lieferantenvertrag
+                                               style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #374151; background-color: #ffffff; text-decoration: none; transition: all 0.2s;"
+                                               onmouseover="this.style.backgroundColor='#f9fafb';" 
+                                               onmouseout="this.style.backgroundColor='#ffffff';">
+                                                <x-heroicon-o-arrow-top-right-on-square style="width: 12px; height: 12px; margin-right: 0.5rem;" />
+                                                Lieferantenvertrag
                                             </a>
                                         </div>
                                     </div>
@@ -258,10 +275,10 @@
                             </div>
                         </div>
                     @else
-                        <div class="p-6">
-                            <div class="text-center py-8">
-                                <x-heroicon-o-document-minus class="w-8 h-8 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
-                                <p class="text-gray-600 dark:text-gray-400">
+                        <div style="padding: 1.5rem;">
+                            <div style="text-align: center; padding: 2rem 0;">
+                                <x-heroicon-o-document-minus style="width: 32px; height: 32px; color: #9ca3af; margin: 0 auto 0.75rem auto; display: block;" />
+                                <p style="color: #6b7280;">
                                     Keine aktiven Lieferantenverträge vorhanden
                                 </p>
                             </div>
