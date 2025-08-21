@@ -282,7 +282,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                             $billingNumber = htmlspecialchars($item['billing_number'] ?? 'N/A');
 
                                             $html .= '<tr class="border-b border-green-100">';
-                                            $html .= '<td class="px-3 py-3 border-r border-gray-300" style="vertical-align: top;">';
+                                            $html .= '<td class="px-3 py-6 border-r border-gray-300" style="vertical-align: top;">';
                                             $html .= '<div class="font-medium text-gray-900">' . htmlspecialchars($item['contract_title']) . '</div>';
                                             $html .= '<div class="text-sm text-gray-600 mt-1">';
                                             $html .= 'Lieferant: <span class="text-blue-600 font-medium">' . $supplierName . '</span> | Abrechnungsnr.: <span class="text-orange-600 font-medium">' . $billingNumber . '</span>';
@@ -309,8 +309,8 @@ class ViewSolarPlantBilling extends ViewRecord
                                             }
                                             
                                             $html .= '</td>';
-                                            $html .= '<td class="px-3 py-3 text-right text-green-800 font-medium border-r border-gray-300" style="vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                            $html .= '<td class="px-3 py-3 text-right text-green-800 font-semibold text-lg" style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                            $html .= '<td class="px-3 py-6 text-right text-green-800 font-medium border-r border-gray-300" style="vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
+                                            $html .= '<td class="px-3 py-6 text-right text-green-800 font-semibold text-lg" style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
                                             $html .= '</tr>';
                                         }
                                         
@@ -365,7 +365,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                             $billingNumber = htmlspecialchars($item['billing_number'] ?? 'N/A');
 
                                             $html .= '<tr class="border-b border-gray-200">';
-                                            $html .= '<td class="px-3 py-3 border-r border-gray-300" style="vertical-align: top;">';
+                                            $html .= '<td class="px-3 py-6 border-r border-gray-300" style="vertical-align: top;">';
                                             $html .= '<div class="font-medium text-gray-900">' . htmlspecialchars($item['contract_title']) . '</div>';
                                             $html .= '<div class="text-sm text-gray-600 mt-1">';
                                             $html .= 'Lieferant: <span class="text-blue-600 font-medium">' . $supplierName . '</span> | Abrechnungsnr.: <span class="text-orange-600 font-medium">' . $billingNumber . '</span>';
@@ -392,8 +392,8 @@ class ViewSolarPlantBilling extends ViewRecord
                                             }
                                             
                                             $html .= '</td>';
-                                            $html .= '<td class="px-3 py-3 text-right text-gray-800 font-medium border-r border-gray-300" style="vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                            $html .= '<td class="px-3 py-3 text-right text-gray-800 font-semibold text-lg" style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                            $html .= '<td class="px-3 py-6 text-right text-gray-800 font-medium border-r border-gray-300" style="vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
+                                            $html .= '<td class="px-3 py-6 text-right text-gray-800 font-semibold text-lg" style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
                                             $html .= '</tr>';
                                         }
                                         
