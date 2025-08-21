@@ -48,6 +48,8 @@ class ListSolarPlantMonthlyOverview extends Page
                 ])
                 ->action(function (array $data) {
                     $this->selectedMonth = $data['month'];
+                    // Speichere in der Session
+                    session(['solar_plant_monthly_overview.selected_month' => $this->selectedMonth]);
                     $this->dispatch('monthSelected', month: $this->selectedMonth);
                 }),
             
@@ -72,6 +74,8 @@ class ListSolarPlantMonthlyOverview extends Page
                 ])
                 ->action(function (array $data) {
                     $this->statusFilter = $data['status'];
+                    // Speichere in der Session
+                    session(['solar_plant_monthly_overview.status_filter' => $this->statusFilter]);
                     $this->dispatch('statusFilterChanged', status: $this->statusFilter);
                 }),
             
@@ -87,10 +91,9 @@ class ListSolarPlantMonthlyOverview extends Page
 
     public function mount(): void
     {
-        // Setze den aktuellen Monat als Standard
-        if (!$this->selectedMonth) {
-            $this->selectedMonth = now()->format('Y-m');
-        }
+        // Lade Werte aus der Session oder setze Defaults
+        $this->selectedMonth = session('solar_plant_monthly_overview.selected_month', now()->format('Y-m'));
+        $this->statusFilter = session('solar_plant_monthly_overview.status_filter', 'all');
     }
 
     protected function getViewData(): array
