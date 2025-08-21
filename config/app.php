@@ -156,4 +156,18 @@ return [
     'company_email' => env('COMPANY_EMAIL', 'info@voltmaster.cloud'),
     'company_fax' => env('COMPANY_FAX', ''),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Negative Billing Amount Handling
+    |--------------------------------------------------------------------------
+    |
+    | This setting determines how negative billing amounts are treated:
+    | - CREDIT_NOTE: Negative amounts are treated as credits (default behavior)
+    | - INVOICE: Negative amounts with billing_type 'invoice' are treated as 
+    |   negative costs (displayed in costs section with negative sign)
+    |
+    */
+
+    'minus_into_invoice' => env('MINUS_INTO_INVOICE', 'CREDIT_NOTE'),
+
 ];

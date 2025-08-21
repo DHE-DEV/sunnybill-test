@@ -355,11 +355,17 @@ class SolarPlantBilling extends Model
             
             // Verarbeite ALLE Belege für diesen Vertrag
             foreach ($billings as $billing) {
-                // Prüfe ob es sich um Kosten oder Gutschriften handelt
-                // Gutschriften werden erkannt durch:
-                // 1. billing_type ist 'credit_note' ODER
-                // 2. Der Betrag ist negativ
-                $isCredit = $billing->billing_type === 'credit_note' || $billing->total_amount < 0;
+                // Prüfe ob es sich um Kosten oder Gutschriften handelt basierend auf .env Konfiguration
+                $minusIntoInvoiceSetting = config('app.minus_into_invoice', 'CREDIT_NOTE');
+                
+                if ($minusIntoInvoiceSetting === 'INVOICE') {
+                    // Bei INVOICE: nur billing_type 'credit_note' ist Gutschrift
+                    // Negative Beträge mit billing_type 'invoice' sind Kosten mit negativem Vorzeichen
+                    $isCredit = $billing->billing_type === 'credit_note';
+                } else {
+                    // Bei CREDIT_NOTE (Standard): billing_type 'credit_note' ODER negativer Betrag ist Gutschrift
+                    $isCredit = $billing->billing_type === 'credit_note' || $billing->total_amount < 0;
+                }
             
             if ($isCredit) {
                 // Gutschriften - verwende den absoluten Betrag für die Berechnung
@@ -431,8 +437,14 @@ class SolarPlantBilling extends Model
                     'articles' => $articleDetails,
                 ];
             } else {
-                // Kosten - alle positiven Beträge und Rechnungen
-                $customerCost = abs($billing->total_amount) * $finalShare;
+                // Kosten - behandle je nach Konfiguration
+                if ($minusIntoInvoiceSetting === 'INVOICE' && $billing->total_amount < 0 && $billing->billing_type === 'invoice') {
+                    // Bei INVOICE Modus: negative Beträge mit billing_type 'invoice' als negative Kosten
+                    $customerCost = $billing->total_amount * $finalShare; // Behalte das negative Vorzeichen
+                } else {
+                    // Standard: alle Kosten als positive Beträge
+                    $customerCost = abs($billing->total_amount) * $finalShare;
+                }
                 $totalCosts += $customerCost;
                 
                 // Berechne Netto-Kosten und MwSt.
