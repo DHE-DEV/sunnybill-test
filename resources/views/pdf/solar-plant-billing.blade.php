@@ -522,7 +522,7 @@
             @endif
 
             <!-- Kosten -->
-            @if($billing->total_costs > 0)
+            @if($billing->total_costs != 0)
             <tr>
                 <td>{{ $billing->total_credits > 0 ? 2 : 1 }}</td>
                 <td>
@@ -531,8 +531,8 @@
                 </td>
                 <td class="number">1</td>
                 <td>Monat</td>
-                <td class="number">{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
-                <td class="number">{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
+                <td class="number">{{ number_format(abs($billing->total_costs), 2, ',', '.') }} €</td>
+                <td class="number">{{ number_format(abs($billing->total_costs), 2, ',', '.') }} €</td>
             </tr>
             @endif
         </tbody>
