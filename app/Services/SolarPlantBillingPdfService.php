@@ -59,19 +59,22 @@ class SolarPlantBillingPdfService
     private function extractPageCount(string $pdfContent): int
     {
         try {
-            // Methode 1: Zähle /Type /Page Objekte (am zuverlässigsten)
-            $pageCount = substr_count($pdfContent, '/Type /Page');
-            if ($pageCount > 0) {
-                return $pageCount;
-            }
-            
-            // Methode 2: Suche nach /Count in Pages-Objekten (nicht Outlines)
-            if (preg_match('/\/Type \/Pages[^}]*\/Count (\d+)/', $pdfContent, $matches)) {
+            // Methode 1: Suche nach /Count in Pages-Objekten (am präzisesten)
+            if (preg_match('/\/Type\s*\/Pages[^}]*\/Count\s*(\d+)/', $pdfContent, $matches)) {
                 return (int) $matches[1];
             }
             
-            // Methode 3: Zähle Page-Referenzen
-            $pageRefs = preg_match_all('/(\d+)\s+0\s+obj\s*<<[^>]*\/Type\s*\/Page/', $pdfContent, $matches);
+            // Methode 2: Zähle Kids array references (sehr zuverlässig)
+            if (preg_match('/\/Kids\s*\[([^\]]*)\]/', $pdfContent, $kidsMatch)) {
+                $kidsContent = $kidsMatch[1];
+                $pageRefs = preg_match_all('/(\d+)\s+0\s+R/', $kidsContent, $refMatches);
+                if ($pageRefs > 0) {
+                    return $pageRefs;
+                }
+            }
+            
+            // Methode 3: Zähle tatsächliche Page-Objekte (nicht /Type /Pages)
+            $pageRefs = preg_match_all('/(\d+)\s+0\s+obj\s*<<[^>]*\/Type\s*\/Page[^s]/', $pdfContent, $matches);
             if ($pageRefs > 0) {
                 return $pageRefs;
             }
