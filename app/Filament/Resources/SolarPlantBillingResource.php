@@ -146,174 +146,195 @@ class SolarPlantBillingResource extends Resource
 
                 Forms\Components\Section::make('Kostenaufschlüsselung')
                     ->schema([
-                        Forms\Components\Placeholder::make('cost_breakdown_table')
-                            ->label('Kostenpositionen')
-                            ->content(function ($get, $record) {
-                                if (!$record || !$record->cost_breakdown || empty($record->cost_breakdown)) {
-                                    return 'Keine Kostenpositionen verfügbar';
-                                }
-                                
-                                $breakdown = $record->cost_breakdown;
-                                
-                                // HTML-Tabelle für Kostenpositionen
-                                $html = '<div style="overflow-x: auto;">';
-                                $html .= '<table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">';
-                                $html .= '<thead>';
-                                $html .= '<tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">';
-                                $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #374151;">Bezeichnung</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151; vertical-align: top;">Anteil</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #374151; vertical-align: top;">Gesamtbetrag</th>';
-                                $html .= '</tr>';
-                                $html .= '</thead>';
-                                $html .= '<tbody>';
-                                
-                                foreach ($breakdown as $item) {
-                                    $contractId = $item['contract_id'] ?? null;
-                                    $docs = $contractId ? $record->documents()->where('description', 'like', '%' . $contractId . '%')->get() : collect();
+                Forms\Components\Placeholder::make('cost_breakdown_table')
+                    ->label('📊 Kostenpositionen')
+                    ->content(function ($get, $record) {
+                        if (!$record || !$record->cost_breakdown || empty($record->cost_breakdown)) {
+                            return '<div style="text-align: center; padding: 2rem; color: #6b7280; font-style: italic;">Keine Kostenpositionen verfügbar</div>';
+                        }
+                        
+                        $breakdown = $record->cost_breakdown;
+                        $totalCosts = array_sum(array_column($breakdown, 'customer_share'));
+                        
+                        $html = '<div style="margin: 1rem 0;">';
+                        
+                        // Zusammenfassung am Anfang
+                        $html .= '<div style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">';
+                        $html .= '<div style="display: flex; justify-content: between; align-items: center;">';
+                        $html .= '<div><h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">📊 Gesamtkosten</h3></div>';
+                        $html .= '<div style="text-align: right;"><span style="font-size: 1.5rem; font-weight: 700;">' . number_format($totalCosts, 2, ',', '.') . ' €</span></div>';
+                        $html .= '</div>';
+                        $html .= '<div style="margin-top: 0.5rem; opacity: 0.9; font-size: 0.875rem;">' . count($breakdown) . ' Position' . (count($breakdown) > 1 ? 'en' : '') . '</div>';
+                        $html .= '</div>';
+                        
+                        // Kostenpositionen als Karten
+                        foreach ($breakdown as $index => $item) {
+                            $supplierName = htmlspecialchars($item['supplier_name'] ?? 'Unbekannt');
+                            if (isset($item['supplier_id'])) {
+                                $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
+                                $supplierName = '<a href="' . $supplierUrl . '" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' . $supplierName . '</a>';
+                            }
 
-                                    $supplierName = htmlspecialchars($item['supplier_name'] ?? 'Unbekannt');
-                                    if (isset($item['supplier_id'])) {
-                                        $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
-                                        $supplierName = '<a href="' . $supplierUrl . '" target="_blank" class="text-primary-600 hover:underline">' . $supplierName . '</a>';
-                                    }
+                            $billingNumberText = htmlspecialchars($item['billing_number'] ?? 'N/A');
+                            if (isset($item['contract_billing_id'])) {
+                                $billingUrl = \App\Filament\Resources\SupplierContractBillingResource::getUrl('view', ['record' => $item['contract_billing_id']]);
+                                $billingNumber = '<a href="' . $billingUrl . '" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' . $billingNumberText . '</a>';
+                            } else {
+                                $billingNumber = $billingNumberText;
+                            }
 
-                                    $billingNumberText = htmlspecialchars($item['billing_number'] ?? 'N/A');
-                                    if (isset($item['contract_billing_id'])) {
-                                        $billingUrl = \App\Filament\Resources\SupplierContractBillingResource::getUrl('view', ['record' => $item['contract_billing_id']]);
-                                        $billingNumber = '<a href="' . $billingUrl . '" target="_blank" class="text-primary-600 hover:underline">' . $billingNumberText . '</a>';
-                                    } else {
-                                        $billingNumber = $billingNumberText;
-                                    }
-
-                                    $html .= '<tr style="border-bottom: 1px solid #e2e8f0;">';
-                                    $html .= '<td style="padding: 0.75rem; color: #374151; vertical-align: top;">';
-                                    $html .= '<div style="font-weight: 500;">' . htmlspecialchars($item['contract_title']) . '</div>';
-                                    $html .= '<div style="font-size: 0.875rem; color: #6b7280;">';
-                                    $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
+                            $html .= '<div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);">';
+                            
+                            // Header mit Vertragstitel und Betrag
+                            $html .= '<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">';
+                            $html .= '<div style="flex: 1;">';
+                            $html .= '<h4 style="margin: 0 0 0.5rem 0; font-size: 1.125rem; font-weight: 600; color: #111827;">' . htmlspecialchars($item['contract_title']) . '</h4>';
+                            $html .= '<div style="color: #6b7280; font-size: 0.875rem;">';
+                            $html .= '<span style="margin-right: 1rem;">🏢 ' . $supplierName . '</span>';
+                            $html .= '<span>📄 ' . $billingNumber . '</span>';
+                            $html .= '</div>';
+                            $html .= '</div>';
+                            $html .= '<div style="text-align: right; padding-left: 1rem;">';
+                            $html .= '<div style="font-size: 1.25rem; font-weight: 700; color: #dc2626;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</div>';
+                            $html .= '<div style="font-size: 0.875rem; color: #6b7280;">' . number_format($item['customer_percentage'], 2, ',', '.') . '% Anteil</div>';
+                            $html .= '</div>';
+                            $html .= '</div>';
+                            
+                            // Artikel-Details (kollabierbar)
+                            if (isset($item['articles']) && !empty($item['articles'])) {
+                                $detailsId = 'cost-details-' . $index;
+                                $html .= '<div style="margin-top: 1rem; border-top: 1px solid #f3f4f6; padding-top: 1rem;">';
+                                $html .= '<button type="button" onclick="toggleDetails(\'' . $detailsId . '\')" style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #374151; cursor: pointer; width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.backgroundColor=\'#f1f5f9\'" onmouseout="this.style.backgroundColor=\'#f8fafc\'">';
+                                $html .= '<span>📋 ' . count($item['articles']) . ' Artikel-Detail' . (count($item['articles']) > 1 ? 's' : '') . ' anzeigen</span>';
+                                $html .= '<span id="' . $detailsId . '-icon">▼</span>';
+                                $html .= '</button>';
+                                
+                                $html .= '<div id="' . $detailsId . '" style="display: none; margin-top: 0.75rem; background: #f9fafb; border-radius: 0.5rem; padding: 1rem;">';
+                                
+                                foreach ($item['articles'] as $article) {
+                                    $html .= '<div style="background: white; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #e5e7eb;">';
+                                    $html .= '<div style="font-weight: 600; color: #111827; margin-bottom: 0.5rem;">' . htmlspecialchars($article['article_name']) . '</div>';
+                                    $html .= '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.875rem; color: #6b7280;">';
+                                    $html .= '<div><span style="font-weight: 500;">Menge:</span> ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</div>';
+                                    $html .= '<div><span style="font-weight: 500;">Einzelpreis:</span> ' . number_format($article['unit_price'], 6, ',', '.') . ' €</div>';
+                                    $html .= '<div><span style="font-weight: 500;">Netto:</span> ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</div>';
+                                    $html .= '<div><span style="font-weight: 500;">MwSt (' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '%):</span> ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</div>';
+                                    $html .= '<div style="grid-column: 1 / -1;"><span style="font-weight: 600;">Brutto gesamt:</span> <span style="color: #dc2626; font-weight: 600;">' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span></div>';
                                     $html .= '</div>';
-                                    
-                                    // Artikel-Details anzeigen
-                                    if (isset($item['articles']) && !empty($item['articles'])) {
-                                        $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
-                                        $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Details:</div>';
-                                        
-                                        foreach ($item['articles'] as $article) {
-                                            $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
-                                            $html .= '<div style="font-weight: 500;">' . htmlspecialchars($article['article_name']) . '</div>';
-                                            $html .= '<div style="display: flex; gap: 1rem; flex-wrap: wrap;">';
-                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
-                                            $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt netto: ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</span>';
-                                            $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
-                                            $html .= '</div>';
-                                            $html .= '</div>';
-                                        }
-                                        $html .= '</div>';
-                                    }
-                                    
-                                    $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #374151; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #374151; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
-                                    $html .= '</tr>';
+                                    $html .= '</div>';
                                 }
-                                
-                                $html .= '</tbody>';
-                                $html .= '</table>';
-                                
-                                // Gesamtbetrag für Kostenpositionen
-                                $totalCosts = array_sum(array_column($breakdown, 'customer_share'));
-                                $html .= '<div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; display: flex; justify-content: space-between; align-items: center;">';
-                                $html .= '<div style="font-weight: 600; color: #374151;">Gesamtkosten:</div>';
-                                $html .= '<div style="font-weight: 600; color: #374151;">' . number_format($totalCosts, 2, ',', '.') . ' €</div>';
                                 $html .= '</div>';
                                 $html .= '</div>';
-                                
-                                return new \Illuminate\Support\HtmlString($html);
-                            })
-                            ->visible(fn ($record) => $record && $record->cost_breakdown && !empty($record->cost_breakdown)),
+                            }
+                            
+                            $html .= '</div>';
+                        }
+                        
+                        $html .= '</div>';
+                        
+                        // JavaScript für Toggle-Funktionalität
+                        $html .= '<script>
+                        function toggleDetails(id) {
+                            var element = document.getElementById(id);
+                            var icon = document.getElementById(id + "-icon");
+                            if (element.style.display === "none") {
+                                element.style.display = "block";
+                                icon.innerHTML = "▲";
+                            } else {
+                                element.style.display = "none";
+                                icon.innerHTML = "▼";
+                            }
+                        }
+                        </script>';
+                        
+                        return new \Illuminate\Support\HtmlString($html);
+                    })
+                    ->visible(fn ($record) => $record && $record->cost_breakdown && !empty($record->cost_breakdown)),
 
                         Forms\Components\Placeholder::make('credit_breakdown_table')
-                            ->label('Gutschriftenpositionen')
+                            ->label('💰 Gutschriftenpositionen')
                             ->content(function ($get, $record) {
                                 if (!$record || !$record->credit_breakdown || empty($record->credit_breakdown)) {
-                                    return 'Keine Gutschriftenpositionen verfügbar';
+                                    return '<div style="text-align: center; padding: 2rem; color: #6b7280; font-style: italic;">Keine Gutschriftenpositionen verfügbar</div>';
                                 }
                                 
                                 $breakdown = $record->credit_breakdown;
+                                $totalCredits = array_sum(array_column($breakdown, 'customer_share'));
                                 
-                                // HTML-Tabelle für Gutschriftenpositionen
-                                $html = '<div style="overflow-x: auto;">';
-                                $html .= '<table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">';
-                                $html .= '<thead>';
-                                $html .= '<tr style="background-color: #f0fdf4; border-bottom: 2px solid #bbf7d0;">';
-                                $html .= '<th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #166534;">Bezeichnung</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534; vertical-align: top;">Anteil</th>';
-                                $html .= '<th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #166534; vertical-align: top;">Gesamtbetrag</th>';
-                                $html .= '</tr>';
-                                $html .= '</thead>';
-                                $html .= '<tbody>';
+                                $html = '<div style="margin: 1rem 0;">';
                                 
-                                foreach ($breakdown as $item) {
-                                    $contractId = $item['contract_id'] ?? null;
-                                    $docs = $contractId ? $record->documents()->where('description', 'like', '%' . $contractId . '%')->get() : collect();
-
+                                // Zusammenfassung am Anfang
+                                $html .= '<div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">';
+                                $html .= '<div style="display: flex; justify-content: space-between; align-items: center;">';
+                                $html .= '<div><h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">💰 Gesamtgutschriften</h3></div>';
+                                $html .= '<div style="text-align: right;"><span style="font-size: 1.5rem; font-weight: 700;">' . number_format($totalCredits, 2, ',', '.') . ' €</span></div>';
+                                $html .= '</div>';
+                                $html .= '<div style="margin-top: 0.5rem; opacity: 0.9; font-size: 0.875rem;">' . count($breakdown) . ' Position' . (count($breakdown) > 1 ? 'en' : '') . '</div>';
+                                $html .= '</div>';
+                                
+                                // Gutschriftenpositionen als Karten
+                                foreach ($breakdown as $index => $item) {
                                     $supplierName = htmlspecialchars($item['supplier_name'] ?? 'Unbekannt');
                                     if (isset($item['supplier_id'])) {
                                         $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
-                                        $supplierName = '<a href="' . $supplierUrl . '" target="_blank" class="text-primary-600 hover:underline">' . $supplierName . '</a>';
+                                        $supplierName = '<a href="' . $supplierUrl . '" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' . $supplierName . '</a>';
                                     }
 
                                     $billingNumberText = htmlspecialchars($item['billing_number'] ?? 'N/A');
                                     if (isset($item['contract_billing_id'])) {
                                         $billingUrl = \App\Filament\Resources\SupplierContractBillingResource::getUrl('view', ['record' => $item['contract_billing_id']]);
-                                        $billingNumber = '<a href="' . $billingUrl . '" target="_blank" class="text-primary-600 hover:underline">' . $billingNumberText . '</a>';
+                                        $billingNumber = '<a href="' . $billingUrl . '" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' . $billingNumberText . '</a>';
                                     } else {
                                         $billingNumber = $billingNumberText;
                                     }
 
-                                    $html .= '<tr style="border-bottom: 1px solid #bbf7d0;">';
-                                    $html .= '<td style="padding: 0.75rem; color: #166534;">';
-                                    $html .= '<div style="font-weight: 500;">' . htmlspecialchars($item['contract_title']) . '</div>';
-                                    $html .= '<div style="font-size: 0.875rem; color: #6b7280;">';
-                                    $html .= 'Lieferant: ' . $supplierName . ' | Abrechnungsnr.: ' . $billingNumber;
+                                    $html .= '<div style="background: white; border: 1px solid #d1fae5; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);">';
+                                    
+                                    // Header mit Vertragstitel und Betrag
+                                    $html .= '<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">';
+                                    $html .= '<div style="flex: 1;">';
+                                    $html .= '<h4 style="margin: 0 0 0.5rem 0; font-size: 1.125rem; font-weight: 600; color: #111827;">' . htmlspecialchars($item['contract_title']) . '</h4>';
+                                    $html .= '<div style="color: #6b7280; font-size: 0.875rem;">';
+                                    $html .= '<span style="margin-right: 1rem;">🏢 ' . $supplierName . '</span>';
+                                    $html .= '<span>📄 ' . $billingNumber . '</span>';
+                                    $html .= '</div>';
+                                    $html .= '</div>';
+                                    $html .= '<div style="text-align: right; padding-left: 1rem;">';
+                                    $html .= '<div style="font-size: 1.25rem; font-weight: 700; color: #059669;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</div>';
+                                    $html .= '<div style="font-size: 0.875rem; color: #6b7280;">' . number_format($item['customer_percentage'], 2, ',', '.') . '% Anteil</div>';
+                                    $html .= '</div>';
                                     $html .= '</div>';
                                     
-                                    // Artikel-Details anzeigen
+                                    // Artikel-Details (kollabierbar)
                                     if (isset($item['articles']) && !empty($item['articles'])) {
-                                        $html .= '<div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem; border: 1px solid #e5e7eb;">';
-                                        $html .= '<div style="font-weight: 500; font-size: 0.875rem; color: #374151; margin-bottom: 0.25rem;">Details:</div>';
+                                        $detailsId = 'credit-details-' . $index;
+                                        $html .= '<div style="margin-top: 1rem; border-top: 1px solid #f3f4f6; padding-top: 1rem;">';
+                                        $html .= '<button type="button" onclick="toggleDetails(\'' . $detailsId . '\')" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.375rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #166534; cursor: pointer; width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.backgroundColor=\'#ecfdf5\'" onmouseout="this.style.backgroundColor=\'#f0fdf4\'">';
+                                        $html .= '<span>📋 ' . count($item['articles']) . ' Artikel-Detail' . (count($item['articles']) > 1 ? 's' : '') . ' anzeigen</span>';
+                                        $html .= '<span id="' . $detailsId . '-icon">▼</span>';
+                                        $html .= '</button>';
+                                        
+                                        $html .= '<div id="' . $detailsId . '" style="display: none; margin-top: 0.75rem; background: #f0fdf4; border-radius: 0.5rem; padding: 1rem;">';
                                         
                                         foreach ($item['articles'] as $article) {
-                                            $html .= '<div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">';
-                                            $html .= '<div style="font-weight: 500;">' . htmlspecialchars($article['article_name']) . '</div>';
-                                            $html .= '<div style="display: flex; gap: 1rem; flex-wrap: wrap;">';
-                                            $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
-                                            $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt netto: ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</span>';
-                                            $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
-                                            $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
+                                            $html .= '<div style="background: white; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #bbf7d0;">';
+                                            $html .= '<div style="font-weight: 600; color: #111827; margin-bottom: 0.5rem;">' . htmlspecialchars($article['article_name']) . '</div>';
+                                            $html .= '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.875rem; color: #6b7280;">';
+                                            $html .= '<div><span style="font-weight: 500;">Menge:</span> ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</div>';
+                                            $html .= '<div><span style="font-weight: 500;">Einzelpreis:</span> ' . number_format($article['unit_price'], 6, ',', '.') . ' €</div>';
+                                            $html .= '<div><span style="font-weight: 500;">Netto:</span> ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</div>';
+                                            $html .= '<div><span style="font-weight: 500;">MwSt (' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '%):</span> ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</div>';
+                                            $html .= '<div style="grid-column: 1 / -1;"><span style="font-weight: 600;">Brutto gesamt:</span> <span style="color: #059669; font-weight: 600;">' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span></div>';
                                             $html .= '</div>';
                                             $html .= '</div>';
                                         }
                                         $html .= '</div>';
+                                        $html .= '</div>';
                                     }
                                     
-                                    $html .= '</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; color: #166534; vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                    $html .= '<td style="padding: 0.75rem; text-align: right; font-weight: 500; color: #166534; vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
-                                    $html .= '</tr>';
+                                    $html .= '</div>';
                                 }
                                 
-                                $html .= '</tbody>';
-                                $html .= '</table>';
-                                
-                                // Gesamtbetrag für Gutschriftenpositionen
-                                $totalCredits = array_sum(array_column($breakdown, 'customer_share'));
-                                $html .= '<div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.375rem; display: flex; justify-content: space-between; align-items: center;">';
-                                $html .= '<div style="font-weight: 600; color: #166534;">Gesamtgutschriften:</div>';
-                                $html .= '<div style="font-weight: 600; color: #166534;">' . number_format($totalCredits, 2, ',', '.') . ' €</div>';
-                                $html .= '</div>';
                                 $html .= '</div>';
                                 
                                 return new \Illuminate\Support\HtmlString($html);
