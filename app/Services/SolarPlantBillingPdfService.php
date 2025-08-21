@@ -13,9 +13,9 @@ class SolarPlantBillingPdfService
     /**
      * Generiert eine PDF-Abrechnung für eine Solaranlagen-Beteiligung
      */
-    public function generateBillingPdf(SolarPlantBilling $billing): string
+    public function generateBillingPdf(SolarPlantBilling $billing, CompanySetting $companySetting = null): string
     {
-        $companySetting = CompanySetting::current();
+        $companySetting = $companySetting ?? CompanySetting::current();
         
         // Two-Pass Rendering für korrekte Seitenzahlen:
         
@@ -42,7 +42,7 @@ class SolarPlantBillingPdfService
     /**
      * Konfiguriert die PDF-Einstellungen
      */
-    private function configurePdf($pdf): void
+    protected function configurePdf($pdf): void
     {
         $pdf->setPaper('A4', 'portrait');
         $pdf->setOptions([
@@ -59,18 +59,24 @@ class SolarPlantBillingPdfService
     private function extractPageCount(string $pdfContent): int
     {
         try {
-            // Versuche die Seitenzahl aus dem PDF-Header zu extrahieren
-            if (preg_match('/\/Count (\d+)/', $pdfContent, $matches)) {
-                return (int) $matches[1];
-            }
-            
-            // Alternative: Zähle /Page Objekte
+            // Methode 1: Zähle /Type /Page Objekte (am zuverlässigsten)
             $pageCount = substr_count($pdfContent, '/Type /Page');
             if ($pageCount > 0) {
                 return $pageCount;
             }
             
-            // Fallback: Standardseitenzahl
+            // Methode 2: Suche nach /Count in Pages-Objekten (nicht Outlines)
+            if (preg_match('/\/Type \/Pages[^}]*\/Count (\d+)/', $pdfContent, $matches)) {
+                return (int) $matches[1];
+            }
+            
+            // Methode 3: Zähle Page-Referenzen
+            $pageRefs = preg_match_all('/(\d+)\s+0\s+obj\s*<<[^>]*\/Type\s*\/Page/', $pdfContent, $matches);
+            if ($pageRefs > 0) {
+                return $pageRefs;
+            }
+            
+            // Fallback: Mindestens 1 Seite
             return 1;
         } catch (\Exception $e) {
             // Bei Fehlern Fallback auf 1 Seite
@@ -98,7 +104,7 @@ class SolarPlantBillingPdfService
     /**
      * Bereitet die Daten für die PDF-Generierung vor
      */
-    private function preparePdfData(SolarPlantBilling $billing, CompanySetting $companySetting): array
+    protected function preparePdfData(SolarPlantBilling $billing, CompanySetting $companySetting): array
     {
         $customer = $billing->customer;
         $solarPlant = $billing->solarPlant;
