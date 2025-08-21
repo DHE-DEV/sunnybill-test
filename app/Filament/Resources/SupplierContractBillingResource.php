@@ -202,7 +202,6 @@ class SupplierContractBillingResource extends Resource
                             ->numeric()
                             ->step(0.01)
                             ->prefix('€')
-                            ->minValue(0)
                             ->reactive()
                             ->afterStateUpdated(function (callable $get, callable $set, $state) {
                                 // Berechne Gesamtbetrag wenn Nettobetrag und MwSt. vorhanden sind
@@ -237,7 +236,6 @@ class SupplierContractBillingResource extends Resource
                             ->numeric()
                             ->step(0.01)
                             ->prefix('€')
-                            ->minValue(0)
                             ->reactive()
                             ->afterStateUpdated(function (callable $get, callable $set, $state) {
                                 // Aktualisiere alle Aufteilungsbeträge basierend auf dem neuen Gesamtbetrag
@@ -274,9 +272,9 @@ class SupplierContractBillingResource extends Resource
                                     $totalAmount = floatval($get('total_amount') ?? 0);
                                     
                                     $filledFields = 0;
-                                    if ($netAmount > 0) $filledFields++;
+                                    if ($netAmount != 0) $filledFields++;
                                     if ($vatRate >= 0) $filledFields++;
-                                    if ($totalAmount > 0) $filledFields++;
+                                    if ($totalAmount != 0) $filledFields++;
                                     
                                     if ($filledFields < 2) {
                                         \Filament\Notifications\Notification::make()
@@ -288,7 +286,7 @@ class SupplierContractBillingResource extends Resource
                                     }
                                     
                                     // Berechne fehlenden Wert
-                                    if ($netAmount > 0 && $vatRate >= 0 && $totalAmount == 0) {
+                                    if ($netAmount != 0 && $vatRate >= 0 && $totalAmount == 0) {
                                         // Berechne Gesamtbetrag aus Netto + MwSt%
                                         $calculatedTotal = $netAmount * (1 + ($vatRate / 100));
                                         $set('total_amount', round($calculatedTotal, 2));
@@ -299,7 +297,7 @@ class SupplierContractBillingResource extends Resource
                                             ->success()
                                             ->send();
                                             
-                                    } elseif ($totalAmount > 0 && $vatRate >= 0 && $netAmount == 0) {
+                                    } elseif ($totalAmount != 0 && $vatRate >= 0 && $netAmount == 0) {
                                         // Berechne Nettobetrag aus Gesamt - MwSt%
                                         $calculatedNet = $totalAmount / (1 + ($vatRate / 100));
                                         $set('net_amount', round($calculatedNet, 2));
@@ -310,9 +308,9 @@ class SupplierContractBillingResource extends Resource
                                             ->success()
                                             ->send();
                                             
-                                    } elseif ($netAmount > 0 && $totalAmount > 0 && $vatRate == 0) {
+                                    } elseif ($netAmount != 0 && $totalAmount != 0 && $vatRate == 0) {
                                         // Berechne MwSt% aus Netto und Gesamt
-                                        if ($netAmount > 0) {
+                                        if ($netAmount != 0) {
                                             $calculatedVat = (($totalAmount / $netAmount) - 1) * 100;
                                             $set('vat_rate', round($calculatedVat, 2));
                                             
