@@ -35,6 +35,7 @@
             color: #333;
             margin: 0;
             padding: 0;
+            counter-reset: page;
         }
         
         .header {
@@ -544,9 +545,9 @@
 
     <!-- Footer für erste Seite -->
     <div class="footer-first-page" style="margin-top: 50px;">
-        <!-- Erste Zeile: Rechnungsnummer mittig -->
+        <!-- Erste Zeile: Rechnungsnummer mittig mit Seitenangabe -->
         <div style="text-align: center; margin-bottom: 5px;">
-            Rechnungs-Nr.: {{ $billing->invoice_number }}
+            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span> von <span class="total-pages"></span>
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
@@ -978,9 +979,9 @@
 
     <!-- Footer -->
     <div class="footer">
-        <!-- Erste Zeile: Rechnungsnummer mittig -->
+        <!-- Erste Zeile: Rechnungsnummer mittig mit Seitenangabe -->
         <div style="text-align: center; margin-bottom: 5px;">
-            Rechnungs-Nr.: {{ $billing->invoice_number }}
+            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span> von <span class="total-pages"></span>
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
