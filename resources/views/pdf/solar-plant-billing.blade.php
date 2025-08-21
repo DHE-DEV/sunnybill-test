@@ -601,135 +601,71 @@
     <!-- Aufschlüsselung der Gutschriften/Einnahmen -->
     @if(!empty($billing->credit_breakdown))
     <div class="breakdown" style="page-break-before: always;">
-        <h3>Aufschlüsselung der Einnahmen/Gutschriften</h3>
-        <table class="breakdown-table">
+        <h3 style="color: #16a34a; border-bottom: 2px solid #16a34a; margin-bottom: 20px;">💰 Aufschlüsselung der Einnahmen/Gutschriften</h3>
+        
+        <!-- Zusammenfassung -->
+        <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 8px; padding: 15px; margin-bottom: 25px; text-align: center;">
+            <div style="font-size: 12pt; font-weight: bold; color: #16a34a; margin-bottom: 5px;">
+                Gesamte Einnahmen/Gutschriften
+            </div>
+            <div style="font-size: 18pt; font-weight: bold; color: #15803d;">
+                {{ number_format($billing->total_credits, 2, ',', '.') }} €
+            </div>
+            <div style="font-size: 8pt; color: #16a34a; margin-top: 5px;">
+                ({{ number_format($currentPercentage, 2, ',', '.') }}% Anteil)
+            </div>
+        </div>
 
-            <tbody>
-                @foreach($billing->credit_breakdown as $credit)
-                <tr><td colspan="5"></td></tr>
-                <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid;">
-                    <td colspan="5" style="padding: 8px; page-break-inside: avoid;">
-                        <!-- Lieferant - Zeile 1 -->
-                        <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
+        @foreach($billing->credit_breakdown as $index => $credit)
+        <!-- Einzelner Einnahmen-Block -->
+        <div style="border: 2px solid #d1fae5; border-radius: 8px; margin-bottom: 20px; overflow: hidden; page-break-inside: avoid;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #16a34a, #059669); color: white; padding: 12px 15px;">
+                <div style="display: table; width: 100%;">
+                    <div style="display: table-cell; width: 70%; vertical-align: middle;">
+                        <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px;">
                             {{ $credit['supplier_name'] ?? 'Unbekannt' }}
                         </div>
-                        
-                        <!-- Contract Title - Zeile 2 -->
-                        <div style="font-size: 9pt; color: #666; margin-bottom: 3px;">
+                        <div style="font-size: 9pt; opacity: 0.9;">
                             {{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}
                         </div>
-                        
-                        <!-- Billing Description - Zeile 3 -->
                         @if(isset($credit['billing_description']) && !empty($credit['billing_description']))
-                        <div style="font-size: 8pt; color: #888; margin-bottom: 8px; font-style: italic;">
+                        <div style="font-size: 8pt; opacity: 0.8; font-style: italic; margin-top: 3px;">
                             {{ $credit['billing_description'] }}
                         </div>
-                        @else
-                        <div style="margin-bottom: 5px;"></div>
                         @endif
-                        
-                        <!-- Werte-Tabelle -->
-                        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-                            <thead>
-                                <tr>
-                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Ihr Anteil</th>
-                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Netto (€)</th>
-                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">MwSt.</th>
-                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Gesamtbetrag Brutto (€)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
-                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
-                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
-                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-                <!--
-                <tr>
-                    <td colspan="5" style="background: #e6f3ff; color: #666; padding: 8px; font-size: 9pt;">
-                        {{ $credit['contract_title'] ?? 'Einnahmen/Gutschriften' }} - {{ $credit['supplier_name'] ?? 'Unbekannt' }}
-                    </td>
-                </tr>-->
-                @if(isset($credit['articles']) && !empty($credit['articles']))
-                <tr style="page-break-inside: avoid; page-break-before: avoid;">
-                    <td colspan="5" style="padding-left: 10px; background: #f8f9fa; border-top: none; page-break-inside: avoid;">
-                        <strong>Artikel-Aufschlüsselung:</strong>
-                        <div style="margin-top: 8px;">
-                            @foreach($credit['articles'] as $article)
-                            @php
-                                // Lade Artikel-Model um Nachkommastellen-Einstellungen zu erhalten
-                                $articleModel = null;
-                                $decimalPlaces = 2;
-                                $totalDecimalPlaces = 2;
-                                
-                                if (isset($article['article_id']) && $article['article_id']) {
-                                    $articleModel = \App\Models\Article::find($article['article_id']);
-                                    if ($articleModel) {
-                                        $decimalPlaces = $articleModel->getDecimalPlaces();
-                                        $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
-                                    }
-                                }
-                                
-                                // Berechne Steuer und Brutto-Betrag
-                                $netPrice = $article['total_price_net'] ?? 0;
-                                $taxRate = $article['tax_rate'] ?? 0.19;
-                                $taxAmount = $article['tax_amount'] ?? ($netPrice * $taxRate);
-                                $grossPrice = $article['total_price_gross'] ?? ($netPrice + $taxAmount);
-                            @endphp
-                            <div style="margin-bottom: 12px; padding: 8px; border: 1px solid #e6e6e6; border-radius: 3px; background: #fff;">
-                                <!-- Artikel Name -->
-                                <div style="font-weight: bold; font-size: 8pt; color: #333; margin-bottom: 3px;">
-                                    {{ $article['article_name'] ?? 'Unbekannt' }}
-                                </div>
-                                
-                                <!-- Artikel Beschreibung (falls vorhanden und unterschiedlich) -->
-                                @if(isset($article['description']) && $article['description'] !== $article['article_name'] && !empty($article['description']))
-                                <div style="font-size: 7pt; color: #666; margin-bottom: 12px; font-style: italic;">
-                                    {{ $article['description'] }}
-                                </div>
-                                @endif
-                                
-                                <!-- Details als Tabelle -->
-                                <table style="width: 100%; border-collapse: collapse; font-size: 7pt; color: #555;">
-                                    <thead>
-                                        <tr>
-                                            <th style="text-align: left; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Menge</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Einzelpreis</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtpreis (netto)</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Steuer ({{ number_format(($taxRate <= 1 ? $taxRate * 100 : $taxRate), 1, ',', '.') }}%)</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtbetrag (brutto)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td style="text-align: left; padding: 3px 6px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }} {{ $article['unit'] ?? 'Stk.' }}</td>
-                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($article['unit_price'] ?? 0, $decimalPlaces, ',', '.') }} €</td>
-                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($netPrice, $totalDecimalPlaces, ',', '.') }} €</td>
-                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($taxAmount, 2, ',', '.') }} €</td>
-                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($grossPrice, 2, ',', '.') }} €</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                                <div style="margin-top: 5px; color: #4b5563; font-size: 8pt; line-height: 1.5;">
-                                    <b>Hinweis:</b><br>
-                                    {!! nl2br(e($article['detailed_description'])) !!}
-                                </div>
-
-                            </div>
-                            @endforeach
+                    </div>
+                    <div style="display: table-cell; width: 30%; text-align: right; vertical-align: middle;">
+                        <div style="font-size: 16pt; font-weight: bold;">
+                            {{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }} €
                         </div>
-                    </td>
-                </tr>
-                @endif
-                @endforeach
-            </tbody>
-        </table>
+                        <div style="font-size: 8pt; opacity: 0.8;">
+                            ({{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}% Anteil)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Details -->
+            <div style="background: #f0fdf4; padding: 12px 15px;">
+                <div style="display: table; width: 100%; font-size: 9pt;">
+                    <div style="display: table-cell; width: 33.33%; text-align: center;">
+                        <div style="color: #16a34a; font-weight: bold; margin-bottom: 3px;">Netto-Betrag</div>
+                        <div style="font-size: 10pt; font-weight: bold;">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }} €</div>
+                    </div>
+                    <div style="display: table-cell; width: 33.33%; text-align: center;">
+                        <div style="color: #16a34a; font-weight: bold; margin-bottom: 3px;">MwSt. ({{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%)</div>
+                        <div style="font-size: 10pt; font-weight: bold;">{{ number_format(($credit['customer_share'] ?? 0) - ($credit['customer_share_net'] ?? 0), 2, ',', '.') }} €</div>
+                    </div>
+                    <div style="display: table-cell; width: 33.33%; text-align: center;">
+                        <div style="color: #16a34a; font-weight: bold; margin-bottom: 3px;">Brutto-Betrag</div>
+                        <div style="font-size: 11pt; font-weight: bold; color: #15803d;">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }} €</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
         
         <!-- Artikel-Erklärungen für Einnahmen/Gutschriften -->
         @php
@@ -778,170 +714,70 @@
     <!-- Aufschlüsselung der Kosten -->
     @if(!empty($billing->cost_breakdown))
     <div class="breakdown" style="page-break-before: always;">
-        <h3>Aufschlüsselung der Kosten</h3>
-        <table class="breakdown-table">
+        <h3 style="color: #dc2626; border-bottom: 2px solid #dc2626; margin-bottom: 20px;">📊 Aufschlüsselung der Kosten</h3>
+        
+        <!-- Zusammenfassung -->
+        <div style="background: #fef2f2; border: 2px solid #dc2626; border-radius: 8px; padding: 15px; margin-bottom: 25px; text-align: center;">
+            <div style="font-size: 12pt; font-weight: bold; color: #dc2626; margin-bottom: 5px;">
+                Gesamte Kosten
+            </div>
+            <div style="font-size: 18pt; font-weight: bold; color: #b91c1c;">
+                {{ number_format($billing->total_costs, 2, ',', '.') }} €
+            </div>
+            <div style="font-size: 8pt; color: #dc2626; margin-top: 5px;">
+                ({{ number_format($currentPercentage, 2, ',', '.') }}% Anteil)
+            </div>
+        </div>
 
-            <tbody>
-                @foreach($billing->cost_breakdown as $cost)
-                <tr><td colspan="5"></td></tr>
-                <tr style="background: #f0f8ff; page-break-inside: avoid; page-break-after: avoid;">
-                    <td colspan="5" style="padding: 8px; page-break-inside: avoid;">
-                        <!-- Lieferant - Zeile 1 -->
-                        <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
+        @foreach($billing->cost_breakdown as $index => $cost)
+        <!-- Einzelner Kosten-Block -->
+        <div style="border: 2px solid #fecaca; border-radius: 8px; margin-bottom: 20px; overflow: hidden; page-break-inside: avoid;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 12px 15px;">
+                <div style="display: table; width: 100%;">
+                    <div style="display: table-cell; width: 70%; vertical-align: middle;">
+                        <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px;">
                             {{ $cost['supplier_name'] ?? 'Unbekannt' }}
                         </div>
-                        
-                        <!-- Contract Title - Zeile 2 -->
-                        <div style="font-size: 9pt; color: #666; margin-bottom: 3px;">
+                        <div style="font-size: 9pt; opacity: 0.9;">
                             {{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}
                         </div>
-                        
-                        <!-- Billing Description - Zeile 3 -->
                         @if(isset($cost['billing_description']) && !empty($cost['billing_description']))
-                        <div style="font-size: 8pt; color: #888; margin-bottom: 8px; font-style: italic;">
+                        <div style="font-size: 8pt; opacity: 0.8; font-style: italic; margin-top: 3px;">
                             {{ $cost['billing_description'] }}
                         </div>
-                        @else
-                        <div style="margin-bottom: 5px;"></div>
                         @endif
-                        
-                        <!-- Werte-Tabelle -->
-                        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-                            <thead>
-                                <tr>
-                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Ihr Anteil</th>
-                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Netto (€)</th>
-                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">MwSt.</th>
-                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Gesamtbetrag Brutto (€)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
-                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
-                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
-                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-                @if(isset($cost['articles']) && !empty($cost['articles']))
-                <tr style="page-break-inside: avoid; page-break-before: avoid;">
-                    <td colspan="5" style="padding-left: 15px; background: #f8f9fa; border-top: none; page-break-inside: avoid;">
-                        <strong>Artikel-Aufschlüsselung:</strong>
-                        <div style="margin-top: 8px;">
-                            @foreach($cost['articles'] as $article)
-                            @php
-                                // Lade Artikel-Model um Nachkommastellen-Einstellungen zu erhalten
-                                $articleModel = null;
-                                $decimalPlaces = 2;
-                                $totalDecimalPlaces = 2;
-                                
-                                if (isset($article['article_id']) && $article['article_id']) {
-                                    $articleModel = \App\Models\Article::find($article['article_id']);
-                                    if ($articleModel) {
-                                        $decimalPlaces = $articleModel->getDecimalPlaces();
-                                        $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
-                                    }
-                                }
-                                
-                                // Berechne Steuer und Brutto-Betrag
-                                $netPrice = $article['total_price_net'] ?? 0;
-                                $taxRate = $article['tax_rate'] ?? 0.19;
-                                $taxAmount = $article['tax_amount'] ?? ($netPrice * $taxRate);
-                                $grossPrice = $article['total_price_gross'] ?? ($netPrice + $taxAmount);
-                            @endphp
-                            <div style="margin-bottom: 12px; padding: 8px; border: 1px solid #e6e6e6; border-radius: 3px; background: #fff;">
-                                <!-- Artikel Name -->
-                                <div style="font-weight: bold; font-size: 8pt; color: #333; margin-bottom: 3px;">
-                                    {{ $article['article_name'] ?? 'Unbekannt' }}
-                                </div>
-                                
-                                <!-- Artikel Beschreibung (falls vorhanden und unterschiedlich) -->
-                                @if(isset($article['description']) && $article['description'] !== $article['article_name'] && !empty($article['description']))
-                                <div style="font-size: 7pt; color: #666; margin-bottom: 6px; font-style: italic;">
-                                    {{ $article['description'] }}
-                                </div>
-                                @endif
-                                
-                                <!-- Details als Tabelle -->
-                                <table style="width: 100%; border-collapse: collapse; font-size: 7pt; color: #555;">
-                                    <thead>
-                                        <tr>
-                                            <th style="text-align: left; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Menge</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Einzelpreis</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtpreis (netto)</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Steuer ({{ number_format(($taxRate <= 1 ? $taxRate * 100 : $taxRate), 1, ',', '.') }}%)</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtbetrag (brutto)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td style="text-align: left; padding: 3px 6px;">{{ number_format($article['quantity'] ?? 0, 3, ',', '.') }} {{ $article['unit'] ?? 'Stk.' }}</td>
-                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($article['unit_price'] ?? 0, $decimalPlaces, ',', '.') }} €</td>
-                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($netPrice, $totalDecimalPlaces, ',', '.') }} €</td>
-                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($taxAmount, 2, ',', '.') }} €</td>
-                                            <td style="text-align: right; padding: 3px 6px;">{{ number_format($grossPrice, 2, ',', '.') }} €</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                                <div style="margin-top: 5px; color: #4b5563; font-size: 8pt; line-height: 1.5;">
-                                    <b>Hinweis:</b><br>
-                                    {!! nl2br(e($article['detailed_description'])) !!}
-                                </div>
-                            </div>
-                            @endforeach
+                    </div>
+                    <div style="display: table-cell; width: 30%; text-align: right; vertical-align: middle;">
+                        <div style="font-size: 16pt; font-weight: bold;">
+                            {{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }} €
                         </div>
-                    </td>
-                </tr>
-                @endif
-                @endforeach
-            </tbody>
-        </table>
-        
-        <!-- Artikel-Erklärungen für Kosten -->
-        @php
-            $hasCostDetailedDescriptions = false;
-            $costDetailedArticles = [];
-            
-            foreach($billing->cost_breakdown as $cost) {
-                if(isset($cost['articles']) && is_array($cost['articles'])) {
-                    foreach($cost['articles'] as $article) {
-                        if(isset($article['detailed_description']) && !empty($article['detailed_description'])) {
-                            $hasCostDetailedDescriptions = true;
-                            $costDetailedArticles[] = [
-                                'name' => $article['article_name'] ?? 'Unbekannter Artikel',
-                                'detailed_description' => $article['detailed_description'],
-                                'supplier' => $cost['supplier_name'] ?? 'Unbekannt'
-                            ];
-                        }
-                    }
-                }
-            }
-
-            $hasCostDetailedDescriptions = false; # nur zum Ausblenden wegen Beschreibung in der aufschlüsselung
-        @endphp
-        
-        @if($hasCostDetailedDescriptions)
-        <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
-            <h4 style="margin: 0 0 10px 0; color: #2563eb; font-size: 8pt;">Erklärung der Kosten-Artikel</h4>
-            @foreach($costDetailedArticles as $article)
-            <div style="margin-bottom: 12px; padding-bottom: 12px; {{ !$loop->last ? 'border-bottom: 1px solid #ffe6e6;' : '' }}">
-                <strong style="color: #374151; font-size: 8pt;">{{ $article['name'] }}</strong>
-                <div style="margin-top: 5px; color: #4b5563; font-size: 8pt; line-height: 1.5;">
-                    {!! nl2br(e($article['detailed_description'])) !!}
+                        <div style="font-size: 8pt; opacity: 0.8;">
+                            ({{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}% Anteil)
+                        </div>
+                    </div>
                 </div>
-                @if($article['supplier'])
-                <div style="margin-top: 3px; font-size: 7pt; color: #6b7280; font-style: italic;">
-                    Lieferant: {{ $article['supplier'] }}
-                </div>
-                @endif
             </div>
-            @endforeach
+            
+            <!-- Details -->
+            <div style="background: #fef2f2; padding: 12px 15px;">
+                <div style="display: table; width: 100%; font-size: 9pt;">
+                    <div style="display: table-cell; width: 33.33%; text-align: center;">
+                        <div style="color: #dc2626; font-weight: bold; margin-bottom: 3px;">Netto-Betrag</div>
+                        <div style="font-size: 10pt; font-weight: bold;">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }} €</div>
+                    </div>
+                    <div style="display: table-cell; width: 33.33%; text-align: center;">
+                        <div style="color: #dc2626; font-weight: bold; margin-bottom: 3px;">MwSt. ({{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%)</div>
+                        <div style="font-size: 10pt; font-weight: bold;">{{ number_format(($cost['customer_share'] ?? 0) - ($cost['customer_share_net'] ?? 0), 2, ',', '.') }} €</div>
+                    </div>
+                    <div style="display: table-cell; width: 33.33%; text-align: center;">
+                        <div style="color: #dc2626; font-weight: bold; margin-bottom: 3px;">Brutto-Betrag</div>
+                        <div style="font-size: 11pt; font-weight: bold; color: #b91c1c;">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }} €</div>
+                    </div>
+                </div>
+            </div>
         </div>
-        @endif
+        @endforeach
     </div>
     @endif
 
