@@ -90,7 +90,7 @@
                             {{ $allPlantsStats['complete'] }}
                         </div>
                         <div style="font-size: 0.875rem; color: #16a34a;">
-                            Anlagen mit komplett erfassten Lieferantenbelegen
+                            Anlagen mit allen erfassten Lieferantenbelegen
                         </div>
                     </div>
                 </div>
@@ -224,7 +224,7 @@
                                    style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #374151; background-color: #ffffff; text-decoration: none; transition: all 0.2s;"
                                    onmouseover="this.style.backgroundColor='#f9fafb';" 
                                    onmouseout="this.style.backgroundColor='#ffffff';">
-                                    <x-heroicon-o-solar-panel style="width: 12px; height: 12px; margin-right: 0.5rem;" />
+                                    <x-heroicon-o-sun style="width: 12px; height: 12px; margin-right: 0.5rem;" />
                                     Solaranlage
                                 </a>
                             </div>
