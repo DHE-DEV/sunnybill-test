@@ -216,9 +216,18 @@
                     <!-- Contract Details -->
                     @if ($totalContracts > 0)
                         <div style="padding: 1.5rem; background-color: #ffffff;">
-                            <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 1rem;">
-                                Vertragsdetails für {{ $monthLabel }}
-                            </h4>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                                <h4 style="font-size: 1rem; font-weight: 500; color: #111827;">
+                                    Vertragsdetails für {{ $monthLabel }}
+                                </h4>
+                                <a href="/admin/solar-plants/{{ $plant->id }}" target="_blank"
+                                   style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #374151; background-color: #ffffff; text-decoration: none; transition: all 0.2s;"
+                                   onmouseover="this.style.backgroundColor='#f9fafb';" 
+                                   onmouseout="this.style.backgroundColor='#ffffff';">
+                                    <x-heroicon-o-solar-panel style="width: 12px; height: 12px; margin-right: 0.5rem;" />
+                                    Solaranlage
+                                </a>
+                            </div>
                             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                                 @foreach ($activeContracts as $contract)
                                     @php
@@ -261,7 +270,7 @@
                                                 </span>
                                             @else
                                                 <span style="display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fee2e2; color: #991b1b;">
-                                                    Liefernt - Beleg fehlt
+                                                    Lieferant - Beleg fehlt
                                                 </span>
                                             @endif
                                             <a href="{{ $contractUrl }}" target="_blank"
