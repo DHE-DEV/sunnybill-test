@@ -252,104 +252,170 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->color('warning'),
                             ]),
 
-                        // Einnahmen/Gutschriften Details
-                        Infolists\Components\Section::make('Einnahmen/Gutschriften Aufschlüsselung')
+                        // Gutschriftenpositionen Details
+                        Infolists\Components\Section::make('Gutschriftenpositionen')
                             ->icon('heroicon-o-plus-circle')
                             ->schema([
-                                Infolists\Components\TextEntry::make('credit_breakdown_details')
+                                Infolists\Components\TextEntry::make('credit_breakdown_table')
                                     ->label('')
                                     ->state(function ($record) {
                                         if (empty($record->credit_breakdown)) {
-                                            return 'Keine Einnahmen/Gutschriften in dieser Periode';
+                                            return '<div class="text-center py-4 text-gray-500">Keine Gutschriftenpositionen verfügbar</div>';
                                         }
 
-                                        $details = [];
-                                        foreach ($record->credit_breakdown as $credit) {
-                                            $supplierName = $credit['supplier_name'] ?? 'Unbekannt';
-                                            $contractTitle = $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt');
-                                            $percentage = number_format($credit['customer_percentage'] ?? 0, 2, ',', '.');
-                                            $netAmount = number_format($credit['customer_share_net'] ?? 0, 2, ',', '.');
-                                            $vatRate = number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.');
-                                            $totalAmount = number_format($credit['customer_share'] ?? 0, 2, ',', '.');
+                                        $breakdown = $record->credit_breakdown;
+                                        
+                                        // HTML-Tabelle für Gutschriftenpositionen
+                                        $html = '<div class="overflow-x-auto">';
+                                        $html .= '<table class="w-full border-collapse border border-gray-300 text-sm">';
+                                        $html .= '<thead>';
+                                        $html .= '<tr class="bg-green-50 border-b-2 border-green-200">';
+                                        $html .= '<th class="px-3 py-2 text-left font-semibold text-green-800 border-r border-gray-300">Bezeichnung</th>';
+                                        $html .= '<th class="px-3 py-2 text-right font-semibold text-green-800 border-r border-gray-300" style="width: 100px;">Anteil</th>';
+                                        $html .= '<th class="px-3 py-2 text-right font-semibold text-green-800" style="width: 120px;">Gesamtbetrag</th>';
+                                        $html .= '</tr>';
+                                        $html .= '</thead>';
+                                        $html .= '<tbody>';
+                                        
+                                        foreach ($breakdown as $item) {
+                                            $supplierName = htmlspecialchars($item['supplier_name'] ?? 'Unbekannt');
+                                            $billingNumber = htmlspecialchars($item['billing_number'] ?? 'N/A');
 
-                                            $details[] = "**{$supplierName}**";
-                                            $details[] = "Vertrag: {$contractTitle}";
-                                            $details[] = "Anteil: {$percentage}% | Netto: €{$netAmount} | MwSt: {$vatRate}% | Gesamt: €{$totalAmount}";
+                                            $html .= '<tr class="border-b border-green-100">';
+                                            $html .= '<td class="px-3 py-3 border-r border-gray-300" style="vertical-align: top;">';
+                                            $html .= '<div class="font-medium text-gray-900">' . htmlspecialchars($item['contract_title']) . '</div>';
+                                            $html .= '<div class="text-sm text-gray-600 mt-1">';
+                                            $html .= 'Lieferant: <span class="text-blue-600 font-medium">' . $supplierName . '</span> | Abrechnungsnr.: <span class="text-orange-600 font-medium">' . $billingNumber . '</span>';
+                                            $html .= '</div>';
                                             
-                                            if (isset($credit['articles']) && !empty($credit['articles'])) {
-                                                $details[] = "*Artikel:*";
-                                                foreach ($credit['articles'] as $article) {
-                                                    $articleName = $article['article_name'] ?? 'Unbekannt';
-                                                    $quantity = number_format($article['quantity'] ?? 0, 3, ',', '.');
-                                                    $unit = $article['unit'] ?? 'Stk.';
-                                                    $unitPrice = number_format($article['unit_price'] ?? 0, 6, ',', '.');
-                                                    $totalPrice = number_format($article['total_price_net'] ?? 0, 6, ',', '.');
-                                                    $details[] = "• {$articleName}: {$quantity} {$unit} × €{$unitPrice} = €{$totalPrice}";
+                                            // Artikel-Details anzeigen
+                                            if (isset($item['articles']) && !empty($item['articles'])) {
+                                                $html .= '<div class="mt-2 p-2 bg-gray-50 rounded border">';
+                                                $html .= '<div class="font-medium text-xs text-gray-700 mb-1">Details:</div>';
+                                                
+                                                foreach ($item['articles'] as $article) {
+                                                    $html .= '<div class="text-xs text-gray-600 mb-1">';
+                                                    $html .= '<div class="font-medium">' . htmlspecialchars($article['article_name']) . '</div>';
+                                                    $html .= '<div class="flex flex-wrap gap-4 mt-1">';
+                                                    $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
+                                                    $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
+                                                    $html .= '<span>Gesamt netto: ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</span>';
+                                                    $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
+                                                    $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
+                                                    $html .= '</div>';
+                                                    $html .= '</div>';
                                                 }
+                                                $html .= '</div>';
                                             }
-                                            $details[] = "";
+                                            
+                                            $html .= '</td>';
+                                            $html .= '<td class="px-3 py-3 text-right text-green-800 font-medium border-r border-gray-300" style="vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
+                                            $html .= '<td class="px-3 py-3 text-right text-green-800 font-semibold text-lg" style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                            $html .= '</tr>';
                                         }
-
-                                        return implode("\n", $details);
+                                        
+                                        $html .= '</tbody>';
+                                        $html .= '</table>';
+                                        
+                                        // Gesamtbetrag für Gutschriftenpositionen
+                                        $totalCredits = array_sum(array_column($breakdown, 'customer_share'));
+                                        $html .= '<div class="mt-3 p-3 bg-green-50 border border-green-200 rounded flex justify-between items-center">';
+                                        $html .= '<div class="font-semibold text-green-800">Gesamtgutschriften:</div>';
+                                        $html .= '<div class="font-bold text-green-800 text-xl">' . number_format($totalCredits, 2, ',', '.') . ' €</div>';
+                                        $html .= '</div>';
+                                        $html .= '</div>';
+                                        
+                                        return $html;
                                     })
-                                    ->prose()
-                                    ->markdown()
-                                    ->color('success')
+                                    ->html()
                                     ->visible(fn ($record) => !empty($record->credit_breakdown)),
                             ])
                             ->compact()
                             ->collapsible()
-                            ->collapsed(true)
+                            ->collapsed(false)
                             ->visible(fn ($record) => !empty($record->credit_breakdown)),
 
-                        // Kosten Details
-                        Infolists\Components\Section::make('Betriebskosten Aufschlüsselung')
+                        // Kostenpositionen Details
+                        Infolists\Components\Section::make('Kostenpositionen')
                             ->icon('heroicon-o-minus-circle')
                             ->schema([
-                                Infolists\Components\TextEntry::make('cost_breakdown_details')
+                                Infolists\Components\TextEntry::make('cost_breakdown_table')
                                     ->label('')
                                     ->state(function ($record) {
                                         if (empty($record->cost_breakdown)) {
-                                            return 'Keine Betriebskosten in dieser Periode';
+                                            return '<div class="text-center py-4 text-gray-500">Keine Kostenpositionen verfügbar</div>';
                                         }
 
-                                        $details = [];
-                                        foreach ($record->cost_breakdown as $cost) {
-                                            $supplierName = $cost['supplier_name'] ?? 'Unbekannt';
-                                            $contractTitle = $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt');
-                                            $percentage = number_format($cost['customer_percentage'] ?? 0, 2, ',', '.');
-                                            $netAmount = number_format($cost['customer_share_net'] ?? 0, 2, ',', '.');
-                                            $vatRate = number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.');
-                                            $totalAmount = number_format($cost['customer_share'] ?? 0, 2, ',', '.');
+                                        $breakdown = $record->cost_breakdown;
+                                        
+                                        // HTML-Tabelle für Kostenpositionen
+                                        $html = '<div class="overflow-x-auto">';
+                                        $html .= '<table class="w-full border-collapse border border-gray-300 text-sm">';
+                                        $html .= '<thead>';
+                                        $html .= '<tr class="bg-gray-50 border-b-2 border-gray-300">';
+                                        $html .= '<th class="px-3 py-2 text-left font-semibold text-gray-800 border-r border-gray-300">Bezeichnung</th>';
+                                        $html .= '<th class="px-3 py-2 text-right font-semibold text-gray-800 border-r border-gray-300" style="width: 100px;">Anteil</th>';
+                                        $html .= '<th class="px-3 py-2 text-right font-semibold text-gray-800" style="width: 120px;">Gesamtbetrag</th>';
+                                        $html .= '</tr>';
+                                        $html .= '</thead>';
+                                        $html .= '<tbody>';
+                                        
+                                        foreach ($breakdown as $item) {
+                                            $supplierName = htmlspecialchars($item['supplier_name'] ?? 'Unbekannt');
+                                            $billingNumber = htmlspecialchars($item['billing_number'] ?? 'N/A');
 
-                                            $details[] = "**{$supplierName}**";
-                                            $details[] = "Vertrag: {$contractTitle}";
-                                            $details[] = "Anteil: {$percentage}% | Netto: €{$netAmount} | MwSt: {$vatRate}% | Gesamt: €{$totalAmount}";
+                                            $html .= '<tr class="border-b border-gray-200">';
+                                            $html .= '<td class="px-3 py-3 border-r border-gray-300" style="vertical-align: top;">';
+                                            $html .= '<div class="font-medium text-gray-900">' . htmlspecialchars($item['contract_title']) . '</div>';
+                                            $html .= '<div class="text-sm text-gray-600 mt-1">';
+                                            $html .= 'Lieferant: <span class="text-blue-600 font-medium">' . $supplierName . '</span> | Abrechnungsnr.: <span class="text-orange-600 font-medium">' . $billingNumber . '</span>';
+                                            $html .= '</div>';
                                             
-                                            if (isset($cost['articles']) && !empty($cost['articles'])) {
-                                                $details[] = "*Artikel:*";
-                                                foreach ($cost['articles'] as $article) {
-                                                    $articleName = $article['article_name'] ?? 'Unbekannt';
-                                                    $quantity = number_format($article['quantity'] ?? 0, 3, ',', '.');
-                                                    $unit = $article['unit'] ?? 'Stk.';
-                                                    $unitPrice = number_format($article['unit_price'] ?? 0, 6, ',', '.');
-                                                    $totalPrice = number_format($article['total_price_net'] ?? 0, 6, ',', '.');
-                                                    $details[] = "• {$articleName}: {$quantity} {$unit} × €{$unitPrice} = €{$totalPrice}";
+                                            // Artikel-Details anzeigen
+                                            if (isset($item['articles']) && !empty($item['articles'])) {
+                                                $html .= '<div class="mt-2 p-2 bg-gray-50 rounded border">';
+                                                $html .= '<div class="font-medium text-xs text-gray-700 mb-1">Details:</div>';
+                                                
+                                                foreach ($item['articles'] as $article) {
+                                                    $html .= '<div class="text-xs text-gray-600 mb-1">';
+                                                    $html .= '<div class="font-medium">' . htmlspecialchars($article['article_name']) . '</div>';
+                                                    $html .= '<div class="flex flex-wrap gap-4 mt-1">';
+                                                    $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
+                                                    $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
+                                                    $html .= '<span>Gesamt netto: ' . number_format($article['total_price_net'], 2, ',', '.') . ' €</span>';
+                                                    $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
+                                                    $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
+                                                    $html .= '</div>';
+                                                    $html .= '</div>';
                                                 }
+                                                $html .= '</div>';
                                             }
-                                            $details[] = "";
+                                            
+                                            $html .= '</td>';
+                                            $html .= '<td class="px-3 py-3 text-right text-gray-800 font-medium border-r border-gray-300" style="vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
+                                            $html .= '<td class="px-3 py-3 text-right text-gray-800 font-semibold text-lg" style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                            $html .= '</tr>';
                                         }
-
-                                        return implode("\n", $details);
+                                        
+                                        $html .= '</tbody>';
+                                        $html .= '</table>';
+                                        
+                                        // Gesamtbetrag für Kostenpositionen
+                                        $totalCosts = array_sum(array_column($breakdown, 'customer_share'));
+                                        $html .= '<div class="mt-3 p-3 bg-gray-50 border border-gray-300 rounded flex justify-between items-center">';
+                                        $html .= '<div class="font-semibold text-gray-800">Gesamtkosten:</div>';
+                                        $html .= '<div class="font-bold text-gray-800 text-xl">' . number_format($totalCosts, 2, ',', '.') . ' €</div>';
+                                        $html .= '</div>';
+                                        $html .= '</div>';
+                                        
+                                        return $html;
                                     })
-                                    ->prose()
-                                    ->markdown()
-                                    ->color('danger')
+                                    ->html()
                                     ->visible(fn ($record) => !empty($record->cost_breakdown)),
                             ])
                             ->compact()
                             ->collapsible()
-                            ->collapsed(true)
+                            ->collapsed(false)
                             ->visible(fn ($record) => !empty($record->cost_breakdown)),
 
                         // MwSt. Aufschlüsselung
