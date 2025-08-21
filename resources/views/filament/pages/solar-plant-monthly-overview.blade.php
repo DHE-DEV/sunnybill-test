@@ -222,11 +222,13 @@
                             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                                 @foreach ($activeContracts as $contract)
                                     @php
-                                        $hasBilling = $contract->billings()
+                                        $billing = $contract->billings()
                                             ->where('billing_year', $year)
                                             ->where('billing_month', $monthNumber)
-                                            ->exists();
+                                            ->first();
+                                        $hasBilling = $billing !== null;
                                         $contractUrl = '/admin/supplier-contracts/' . $contract->id . '?activeRelationManager=1';
+                                        $billingUrl = $hasBilling ? '/admin/supplier-contract-billings/' . $billing->id : null;
                                         $supplierName = $contract->supplier ? $contract->supplier->display_name : 'Unbekannt';
                                         
                                         $contractStyle = $hasBilling 
@@ -269,6 +271,15 @@
                                                 <x-heroicon-o-arrow-top-right-on-square style="width: 12px; height: 12px; margin-right: 0.5rem;" />
                                                 Lieferantenvertrag
                                             </a>
+                                            @if ($hasBilling && $billingUrl)
+                                                <a href="{{ $billingUrl }}" target="_blank"
+                                                   style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #22c55e; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #166534; background-color: #f0fdf4; text-decoration: none; transition: all 0.2s;"
+                                                   onmouseover="this.style.backgroundColor='#dcfce7';" 
+                                                   onmouseout="this.style.backgroundColor='#f0fdf4';">
+                                                    <x-heroicon-o-document-text style="width: 12px; height: 12px; margin-right: 0.5rem;" />
+                                                    Beleg
+                                                </a>
+                                            @endif
                                         </div>
                                     </div>
                                 @endforeach
