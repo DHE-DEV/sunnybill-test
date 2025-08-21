@@ -65,6 +65,21 @@
                     </div>
                 </div>
             </div>
+            <div style="background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 8px; padding: 1rem;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 32px; height: 32px; background-color: #6b7280; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
+                        <x-heroicon-o-document-text style="width: 20px; height: 20px; color: white;" />
+                    </div>
+                    <div>
+                        <div style="font-size: 1.125rem; font-weight: 600; color: #111827;">
+                            {{ $allPlantsStats['few_contracts'] }}
+                        </div>
+                        <div style="font-size: 0.875rem; color: #6b7280;">
+                            Anlagen Lieferantenverträge < 5
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem;">
                 <div style="display: flex; align-items: center;">
                     <div style="width: 32px; height: 32px; background-color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
@@ -92,21 +107,6 @@
                         </div>
                         <div style="font-size: 0.875rem; color: #16a34a;">
                             Anlagen mit allen erfassten Lieferantenbelegen
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div style="background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 8px; padding: 1rem;">
-                <div style="display: flex; align-items: center;">
-                    <div style="width: 32px; height: 32px; background-color: #6b7280; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                        <x-heroicon-o-document-text style="width: 20px; height: 20px; color: white;" />
-                    </div>
-                    <div>
-                        <div style="font-size: 1.125rem; font-weight: 600; color: #111827;">
-                            {{ $allPlantsStats['few_contracts'] }}
-                        </div>
-                        <div style="font-size: 0.875rem; color: #6b7280;">
-                            Anlagen Lieferantenverträge < 5
                         </div>
                     </div>
                 </div>
