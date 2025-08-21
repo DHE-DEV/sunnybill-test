@@ -69,6 +69,26 @@ class CustomerBillingsTable extends Component implements HasForms, HasTable
                     ->badge()
                     ->color('info'),
                 
+                Tables\Columns\TextColumn::make('participation_kwp')
+                    ->label('Beteiligung in kWp')
+                    ->state(function ($record) {
+                        $solarPlant = $this->solarPlant;
+                        $totalCapacity = $solarPlant->capacity_kwp ?? $solarPlant->total_capacity_kw ?? 0;
+                        
+                        if ($totalCapacity && $record->participation_percentage) {
+                            $participationKwp = ($totalCapacity * $record->participation_percentage) / 100;
+                            return number_format($participationKwp, 3, ',', '.');
+                        }
+                        
+                        return null;
+                    })
+                    ->suffix(' kWp')
+                    ->alignCenter()
+                    ->sortable(false)
+                    ->badge()
+                    ->color('success')
+                    ->toggleable(isToggledHiddenByDefault: false),
+                
                 Tables\Columns\TextColumn::make('participation_percentage')
                     ->label('Beteiligung')
                     ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
