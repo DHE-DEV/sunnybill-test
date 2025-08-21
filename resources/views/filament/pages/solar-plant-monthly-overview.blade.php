@@ -147,18 +147,24 @@
                     <div class="p-6 border-b {{ $statusConfig['border'] }}">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
-                                <div class="flex-shrink-0">a
-                                    <div class="w-10 h-10 bg-{{ $statusConfig['color'] }}-500 rounded-full flex items-center justify-center">
-                                        @if ($statusConfig['icon'] === 'check-circle')
+                                <div class="flex-shrink-0">
+                                    @if ($status === 'Vollständig')
+                                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
                                             <x-heroicon-o-check-circle class="w-6 h-6 text-white" />
-                                        @elseif ($statusConfig['icon'] === 'exclamation-triangle')
+                                        </div>
+                                    @elseif ($status === 'Unvollständig')
+                                        <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
                                             <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-white" />
-                                        @elseif ($statusConfig['icon'] === 'minus-circle')
+                                        </div>
+                                    @elseif ($status === 'Keine Verträge')
+                                        <div class="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
                                             <x-heroicon-o-minus-circle class="w-6 h-6 text-white" />
-                                        @else
+                                        </div>
+                                    @else
+                                        <div class="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
                                             <x-heroicon-o-question-mark-circle class="w-6 h-6 text-white" />
-                                        @endif
-                                    </div>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div>
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
