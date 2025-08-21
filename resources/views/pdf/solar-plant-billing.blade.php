@@ -532,7 +532,7 @@
                 <td class="number">1</td>
                 <td>Monat</td>
                 <td class="number">{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
-                <td class="number">-{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
+                <td class="number">{{ number_format($billing->total_costs, 2, ',', '.') }} €</td>
             </tr>
             @endif
         </tbody>
