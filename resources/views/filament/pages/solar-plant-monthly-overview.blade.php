@@ -273,9 +273,9 @@
                                             </a>
                                             @if ($hasBilling && $billingUrl)
                                                 <a href="{{ $billingUrl }}" target="_blank"
-                                                   style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #22c55e; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #166534; background-color: #f0fdf4; text-decoration: none; transition: all 0.2s;"
-                                                   onmouseover="this.style.backgroundColor='#dcfce7';" 
-                                                   onmouseout="this.style.backgroundColor='#f0fdf4';">
+                                                   style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #374151; background-color: #ffffff; text-decoration: none; transition: all 0.2s;"
+                                                   onmouseover="this.style.backgroundColor='#f9fafb';" 
+                                                   onmouseout="this.style.backgroundColor='#ffffff';">
                                                     <x-heroicon-o-document-text style="width: 12px; height: 12px; margin-right: 0.5rem;" />
                                                     Beleg
                                                 </a>
