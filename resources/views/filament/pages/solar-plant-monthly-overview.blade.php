@@ -215,7 +215,7 @@
 
                     <!-- Contract Details -->
                     @if ($totalContracts > 0)
-                        <div style="padding: 1.5rem;">
+                        <div style="padding: 1.5rem; background-color: #ffffff;">
                             <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 1rem;">
                                 Vertragsdetails für {{ $monthLabel }}
                             </h4>
@@ -257,11 +257,11 @@
                                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                                             @if ($hasBilling)
                                                 <span style="display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #dcfce7; color: #166534;">
-                                                    Abrechnung vorhanden
+                                                    Lieferant - Beleg vorhanden
                                                 </span>
                                             @else
                                                 <span style="display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fee2e2; color: #991b1b;">
-                                                    Abrechnung fehlt
+                                                    Liefernt - Beleg fehlt
                                                 </span>
                                             @endif
                                             <a href="{{ $contractUrl }}" target="_blank"
@@ -276,7 +276,7 @@
                                                    style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #374151; background-color: #ffffff; text-decoration: none; transition: all 0.2s;"
                                                    onmouseover="this.style.backgroundColor='#f9fafb';" 
                                                    onmouseout="this.style.backgroundColor='#ffffff';">
-                                                    <x-heroicon-o-document-text style="width: 12px; height: 12px; margin-right: 0.5rem;" />
+                                                    <x-heroicon-o-arrow-top-right-on-square style="width: 12px; height: 12px; margin-right: 0.5rem;" />
                                                     Beleg
                                                 </a>
                                             @endif
