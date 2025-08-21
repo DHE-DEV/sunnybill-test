@@ -213,25 +213,37 @@ class SolarPlantBillingOverviewResource extends Resource
     }
 
     /**
-     * Ermittelt alle Monate mit unvollständigen Abrechnungen
+     * Ermittelt alle Monate mit unvollständigen Abrechnungen ab Januar 2025
      */
-    public static function getIncompleteMonths(SolarPlant $solarPlant, int $lookbackMonths = 12): array
+    public static function getIncompleteMonths(SolarPlant $solarPlant, int $lookbackMonths = null): array
     {
         $incompleteMonths = [];
         
-        for ($i = 0; $i < $lookbackMonths; $i++) {
-            $month = now()->subMonths($i)->format('Y-m');
+        // Start from January 2025 and check up to current month
+        $startDate = Carbon::create(2025, 1, 1);
+        $currentDate = now();
+        $monthsToCheck = $startDate->diffInMonths($currentDate) + 1; // +1 to include current month
+        
+        for ($i = 0; $i < $monthsToCheck; $i++) {
+            $date = $startDate->copy()->addMonths($i);
+            // Stop if we've reached future months
+            if ($date->isAfter($currentDate)) {
+                break;
+            }
+            
+            $month = $date->format('Y-m');
             $status = static::getBillingStatusForMonth($solarPlant, $month);
             
             if ($status === 'Unvollständig') {
                 $incompleteMonths[] = [
                     'month' => $month,
-                    'formatted' => Carbon::createFromFormat('Y-m', $month)->locale('de')->translatedFormat('F Y'),
+                    'formatted' => $date->locale('de')->translatedFormat('F Y'),
                     'missing_contracts' => static::getMissingBillingsForMonth($solarPlant, $month),
                 ];
             }
         }
         
-        return $incompleteMonths;
+        // Reverse array so newest incomplete months appear first
+        return array_reverse($incompleteMonths);
     }
 }

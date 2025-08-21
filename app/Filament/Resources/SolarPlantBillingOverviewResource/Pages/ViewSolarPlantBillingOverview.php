@@ -48,7 +48,7 @@ class ViewSolarPlantBillingOverview extends ViewRecord
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Abrechnungsübersicht der letzten 24 Monate')
+                Infolists\Components\Section::make('Abrechnungsübersicht ab Januar 2025')
                     ->headerActions([
                         \Filament\Infolists\Components\Actions\Action::make('refresh')
                             ->label('Aktualisieren')
@@ -75,8 +75,27 @@ class ViewSolarPlantBillingOverview extends ViewRecord
                                 $html .= '</thead>';
                                 $html .= '<tbody>';
                                 
-                                for ($i = 1; $i <= 24; $i++) {
-                                    $date = now()->subMonths($i);
+                                // Start from January 2025 and show months up to current month
+                                $startDate = Carbon::create(2025, 1, 1); // Januar 2025
+                                $currentDate = now();
+                                $monthsToShow = $startDate->diffInMonths($currentDate) + 1; // +1 to include current month
+                                
+                                // Create array of all months from January 2025 to current month
+                                $months = [];
+                                for ($i = 0; $i < $monthsToShow; $i++) {
+                                    $date = $startDate->copy()->addMonths($i);
+                                    // Stop if we've reached future months
+                                    if ($date->isAfter($currentDate)) {
+                                        break;
+                                    }
+                                    $months[] = $date;
+                                }
+                                
+                                // Reverse the array so newest month appears first (top)
+                                $months = array_reverse($months);
+                                
+                                // Iterate through months in reversed order (newest first)
+                                foreach ($months as $date) {
                                     $month = $date->format('Y-m');
                                     $status = SolarPlantBillingOverviewResource::getBillingStatusForMonth($record, $month);
                                     $missing = SolarPlantBillingOverviewResource::getMissingBillingsForMonth($record, $month);

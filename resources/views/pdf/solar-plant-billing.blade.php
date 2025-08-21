@@ -6,12 +6,18 @@
     <title>Solaranlagen-Abrechnung</title>
     <style>
         @page {
-            margin: {{ $companySetting->pdf_margins ?? '1.5cm 1.5cm 1.5cm 1.5cm' }};
+            margin: {{ $companySetting->pdf_margins ?? '1.5cm 1.5cm 4cm 1.5cm' }};
             size: A4;
+            @bottom-center {
+                content: "";
+            }
         }
         
         @page :first {
-            margin: {{ $companySetting->pdf_margins ?? '1.5cm 1.5cm 1.5cm 1.5cm' }};
+            margin: {{ $companySetting->pdf_margins ?? '1.5cm 1.5cm 4cm 1.5cm' }};
+            @bottom-center {
+                content: "";
+            }
         }
         
         @page :left, @page :right {
@@ -282,6 +288,20 @@
             padding-top: 5px;
             font-size: 8pt;
             color: #666;
+            z-index: 9999;
+        }
+        
+        .footer-first-page {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            border-top: 1px solid #ddd;
+            padding-top: 5px;
+            font-size: 8pt;
+            color: #666;
+            z-index: 9999;
         }
         
         .footer-content {
@@ -513,12 +533,60 @@
 
     <!-- Gesamtergebnis prominent -->
     <div style="clear: both; margin: 44px 0; text-align: center;">
-        <div style="display: inline-block; background: #2563eb; color: white; padding: 5px 30px; border-radius: 5px; font-size: 14pt; font-weight: bold;">
+        <div style="display: inline-block; background: #f0f8ff; color: black; padding: 5px 30px; border-radius: 5px; font-size: 14pt; font-weight: bold;">
             @if($billing->net_amount < 0)
                 Ihre Gutschrift beträgt: {{ number_format(abs($billing->net_amount), 2, ',', '.') }} €
             @else
                 Ihre Rechnungssumme beträgt: {{ number_format($billing->net_amount, 2, ',', '.') }} €
             @endif
+        </div>
+    </div>
+
+    <!-- Footer für erste Seite -->
+    <div class="footer-first-page" style="margin-top: 50px;">
+        <!-- Erste Zeile: Rechnungsnummer mittig -->
+        <div style="text-align: center; margin-bottom: 5px;">
+            Rechnungs-Nr.: {{ $billing->invoice_number }}
+        </div>
+        
+        <!-- Zeile 2: Firmeninfo -->
+        <div style="text-align: center; margin-bottom: 2px; font-size: 6pt; color: #2563eb;">
+            {{ $companySetting->company_name }}
+            @if($companySetting->full_address) | {{ $companySetting->full_address }}@endif
+            @if($companySetting->phone) | {{ $companySetting->phone }}@endif
+            @if($companySetting->email) | {{ $companySetting->email }}@endif
+        </div>
+        
+        <!-- Zeile 4: Amtsgericht und Geschäftsführer -->
+        <div style="text-align: center; margin-bottom: 2px; font-size: 6pt; color: #2563eb;">
+            @if($companySetting->formatted_commercial_register){{ $companySetting->formatted_commercial_register }}@endif
+            @if($companySetting->formatted_commercial_register && $companySetting->management) | @endif
+            @if($companySetting->vat_id)USt-IdNr.: {{ $companySetting->vat_id }}@endif
+            @if($companySetting->management) | Geschäftsführung: {{ $companySetting->management }}@endif
+        </div>
+        
+        <!-- Bisherige Footer-Inhalte -->
+        <div class="footer-content">
+            <div class="footer-section">
+                @if($companySetting->bank_name)
+                <strong>Bankverbindung:</strong><br>
+                {{ $companySetting->bank_name }}<br>
+                @if($companySetting->iban)
+                IBAN: {{ $companySetting->formatted_iban }}<br>
+                @endif
+                @if($companySetting->bic)
+                BIC: {{ $companySetting->bic }}
+                @endif
+                @endif
+            </div>
+            <div class="footer-section text-center">
+                @if($companySetting->tax_number)
+                Steuernr.: {{ $companySetting->tax_number }}
+                @endif
+            </div>
+            <div class="footer-section text-right">
+                &nbsp;
+            </div>
         </div>
     </div>
 
