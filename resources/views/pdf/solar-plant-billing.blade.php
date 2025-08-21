@@ -316,12 +316,19 @@
             vertical-align: top;
         }
         
-        .page-number:after {
+        .page-number::after {
             content: counter(page);
         }
         
-        .total-pages:after {
+        .total-pages::after {
             content: counter(pages);
+        }
+        
+        /* Alternative approach for PDF engines that don't support counter(pages) */
+        @page {
+            @bottom-center {
+                content: counter(page) " / " counter(pages);
+            }
         }
         
         .text-right {
@@ -547,7 +554,7 @@
     <div class="footer-first-page" style="margin-top: 50px;">
         <!-- Erste Zeile: Rechnungsnummer mittig mit Seitenangabe -->
         <div style="text-align: center; margin-bottom: 5px;">
-            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span> von <span class="total-pages"></span>
+            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
@@ -981,7 +988,7 @@
     <div class="footer">
         <!-- Erste Zeile: Rechnungsnummer mittig mit Seitenangabe -->
         <div style="text-align: center; margin-bottom: 5px;">
-            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span> von <span class="total-pages"></span>
+            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
