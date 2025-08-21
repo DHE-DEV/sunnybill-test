@@ -521,8 +521,7 @@
             </tr>
             @endif
 
-            <!-- Kosten -->
-            @if($billing->total_costs != 0)
+            <!-- Kosten - wird IMMER angezeigt, auch wenn total_costs = 0 -->
             <tr>
                 <td>{{ $billing->total_credits > 0 ? 2 : 1 }}</td>
                 <td>
@@ -531,10 +530,9 @@
                 </td>
                 <td class="number">1</td>
                 <td>Monat</td>
-                <td class="number">{{ number_format(abs($billing->total_costs), 2, ',', '.') }} €</td>
-                <td class="number">{{ number_format(abs($billing->total_costs), 2, ',', '.') }} €</td>
+                <td class="number">{{ number_format(abs($billing->total_costs ?? 0), 2, ',', '.') }} €</td>
+                <td class="number">{{ number_format(abs($billing->total_costs ?? 0), 2, ',', '.') }} €</td>
             </tr>
-            @endif
         </tbody>
     </table>
 
