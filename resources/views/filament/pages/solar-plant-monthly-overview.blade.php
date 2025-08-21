@@ -176,9 +176,18 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">
-                                        {{ $plant->plant_number }} - {{ $plant->name }}
-                                    </h3>
+                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">
+                                            {{ $plant->plant_number }} - {{ $plant->name }}
+                                        </h3>
+                                        <a href="/admin/solar-plants/{{ $plant->id }}" target="_blank"
+                                           style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #374151; background-color: #ffffff; text-decoration: none; transition: all 0.2s;"
+                                           onmouseover="this.style.backgroundColor='#f9fafb';" 
+                                           onmouseout="this.style.backgroundColor='#ffffff';">
+                                            <x-heroicon-o-sun style="width: 12px; height: 12px; margin-right: 0.5rem;" />
+                                            Solaranlage
+                                        </a>
+                                    </div>
                                     <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;">
                                         @if ($plant->location)
                                             <p style="font-size: 0.875rem; color: #6b7280;">
@@ -216,18 +225,9 @@
                     <!-- Contract Details -->
                     @if ($totalContracts > 0)
                         <div style="padding: 1.5rem; background-color: #ffffff;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-                                <h4 style="font-size: 1rem; font-weight: 500; color: #111827;">
-                                    Vertragsdetails für {{ $monthLabel }}
-                                </h4>
-                                <a href="/admin/solar-plants/{{ $plant->id }}" target="_blank"
-                                   style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #374151; background-color: #ffffff; text-decoration: none; transition: all 0.2s;"
-                                   onmouseover="this.style.backgroundColor='#f9fafb';" 
-                                   onmouseout="this.style.backgroundColor='#ffffff';">
-                                    <x-heroicon-o-sun style="width: 12px; height: 12px; margin-right: 0.5rem;" />
-                                    Solaranlage
-                                </a>
-                            </div>
+                            <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 1rem;">
+                                Vertragsdetails für {{ $monthLabel }}
+                            </h4>
                             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                                 @foreach ($activeContracts as $contract)
                                     @php
