@@ -65,6 +65,7 @@ class ListSolarPlantMonthlyOverview extends Page
                         ->options([
                             'all' => 'Alle anzeigen',
                             'no_contracts' => 'Anlagen ohne Lieferantenverträge',
+                            'few_contracts' => 'Anlagen mit weniger als 5 Verträgen',
                             'incomplete' => 'Anlagen mit fehlende Lieferantenbelegen',
                             'complete' => 'Anlagen mit komplett erfassten Lieferantenbelegen',
                         ])
@@ -128,6 +129,7 @@ class ListSolarPlantMonthlyOverview extends Page
             'incomplete' => count(array_filter($plantsData, fn($p) => $p['status'] === 'Unvollständig')),
             'complete' => count(array_filter($plantsData, fn($p) => $p['status'] === 'Vollständig')),
             'no_contracts' => count(array_filter($plantsData, fn($p) => $p['status'] === 'Keine Verträge')),
+            'few_contracts' => count(array_filter($plantsData, fn($p) => $p['totalContracts'] > 0 && $p['totalContracts'] < 5)),
         ];
 
         // Filtere nach Status wenn gewünscht
@@ -139,6 +141,7 @@ class ListSolarPlantMonthlyOverview extends Page
                     'incomplete' => $status === 'Unvollständig',
                     'complete' => $status === 'Vollständig',
                     'no_contracts' => $status === 'Keine Verträge',
+                    'few_contracts' => $plantData['totalContracts'] > 0 && $plantData['totalContracts'] < 5,
                     default => true,
                 };
             });
