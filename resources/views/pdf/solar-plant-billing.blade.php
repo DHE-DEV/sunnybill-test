@@ -615,9 +615,18 @@
                         </div>
                         
                         <!-- Contract Title - Zeile 2 -->
-                        <div style="font-size: 9pt; color: #666; margin-bottom: 8px;">
+                        <div style="font-size: 9pt; color: #666; margin-bottom: 3px;">
                             {{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}
                         </div>
+                        
+                        <!-- Billing Description - Zeile 3 -->
+                        @if(isset($credit['billing_description']) && !empty($credit['billing_description']))
+                        <div style="font-size: 8pt; color: #888; margin-bottom: 8px; font-style: italic;">
+                            {{ $credit['billing_description'] }}
+                        </div>
+                        @else
+                        <div style="margin-bottom: 5px;"></div>
+                        @endif
                         
                         <!-- Werte-Tabelle -->
                         <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
@@ -783,9 +792,18 @@
                         </div>
                         
                         <!-- Contract Title - Zeile 2 -->
-                        <div style="font-size: 9pt; color: #666; margin-bottom: 8px;">
+                        <div style="font-size: 9pt; color: #666; margin-bottom: 3px;">
                             {{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}
                         </div>
+                        
+                        <!-- Billing Description - Zeile 3 -->
+                        @if(isset($cost['billing_description']) && !empty($cost['billing_description']))
+                        <div style="font-size: 8pt; color: #888; margin-bottom: 8px; font-style: italic;">
+                            {{ $cost['billing_description'] }}
+                        </div>
+                        @else
+                        <div style="margin-bottom: 5px;"></div>
+                        @endif
                         
                         <!-- Werte-Tabelle -->
                         <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
