@@ -554,7 +554,7 @@
     <div class="footer-first-page" style="margin-top: 50px;">
         <!-- Erste Zeile: Rechnungsnummer mittig mit Seitenangabe -->
         <div style="text-align: center; margin-bottom: 5px;">
-            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>
+            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>@if(isset($totalPages) && $totalPages > 0) von {{ $totalPages }}@endif
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
@@ -988,7 +988,7 @@
     <div class="footer">
         <!-- Erste Zeile: Rechnungsnummer mittig mit Seitenangabe -->
         <div style="text-align: center; margin-bottom: 5px;">
-            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>
+            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>@if(isset($totalPages) && $totalPages > 0) von {{ $totalPages }}@endif
         </div>
         
         <!-- Zeile 2: Firmeninfo -->

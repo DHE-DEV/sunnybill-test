@@ -17,13 +17,33 @@ class SolarPlantBillingPdfService
     {
         $companySetting = CompanySetting::current();
         
-        // Daten für die PDF vorbereiten
+        // Two-Pass Rendering für korrekte Seitenzahlen:
+        
+        // 1. Pass: PDF ohne Gesamtseitenzahl generieren um Seitenzahl zu ermitteln
         $data = $this->preparePdfData($billing, $companySetting);
+        $data['totalPages'] = 0; // Erstmal 0 setzen
         
-        // PDF generieren
         $pdf = Pdf::loadView('pdf.solar-plant-billing', $data);
+        $this->configurePdf($pdf);
         
-        // PDF-Konfiguration
+        // Seitenzahl aus erster PDF extrahieren
+        $tempPdfContent = $pdf->output();
+        $totalPages = $this->extractPageCount($tempPdfContent);
+        
+        // 2. Pass: PDF mit korrekter Gesamtseitenzahl generieren
+        $data['totalPages'] = $totalPages;
+        
+        $finalPdf = Pdf::loadView('pdf.solar-plant-billing', $data);
+        $this->configurePdf($finalPdf);
+        
+        return $finalPdf->output();
+    }
+
+    /**
+     * Konfiguriert die PDF-Einstellungen
+     */
+    private function configurePdf($pdf): void
+    {
         $pdf->setPaper('A4', 'portrait');
         $pdf->setOptions([
             'defaultFont' => 'Arial',
@@ -31,9 +51,31 @@ class SolarPlantBillingPdfService
             'isPhpEnabled' => true,
             'debugKeepTemp' => false,
         ]);
-        
-        // PDF als String zurückgeben
-        return $pdf->output();
+    }
+
+    /**
+     * Extrahiert die Seitenzahl aus dem PDF-Inhalt
+     */
+    private function extractPageCount(string $pdfContent): int
+    {
+        try {
+            // Versuche die Seitenzahl aus dem PDF-Header zu extrahieren
+            if (preg_match('/\/Count (\d+)/', $pdfContent, $matches)) {
+                return (int) $matches[1];
+            }
+            
+            // Alternative: Zähle /Page Objekte
+            $pageCount = substr_count($pdfContent, '/Type /Page');
+            if ($pageCount > 0) {
+                return $pageCount;
+            }
+            
+            // Fallback: Standardseitenzahl
+            return 1;
+        } catch (\Exception $e) {
+            // Bei Fehlern Fallback auf 1 Seite
+            return 1;
+        }
     }
 
     /**
