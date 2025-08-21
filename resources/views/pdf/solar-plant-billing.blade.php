@@ -777,7 +777,7 @@
 
     <!-- Aufschlüsselung der Kosten -->
     @if(!empty($billing->cost_breakdown))
-    <div class="breakdown">
+    <div class="breakdown" style="page-break-before: always;">
         <h3>Aufschlüsselung der Kosten</h3>
         <table class="breakdown-table">
 
