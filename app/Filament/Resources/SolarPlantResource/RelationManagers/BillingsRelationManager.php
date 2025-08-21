@@ -145,6 +145,24 @@ class BillingsRelationManager extends RelationManager
                     ->alignRight()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                Tables\Columns\TextColumn::make('participation_kwp')
+                    ->label('Beteiligung in kWp')
+                    ->getStateUsing(function (SolarPlantBilling $record): ?string {
+                        $solarPlant = $record->solarPlant;
+                        $totalCapacity = $solarPlant ? $solarPlant->capacity_kwp : 0;
+                        
+                        if ($totalCapacity && $record->participation_percentage) {
+                            $participationKwp = ($totalCapacity * $record->participation_percentage) / 100;
+                            return number_format($participationKwp, 3, ',', '.');
+                        }
+                        
+                        return null;
+                    })
+                    ->suffix(' kWp')
+                    ->alignRight()
+                    ->sortable(false)
+                    ->toggleable(isToggledHiddenByDefault: false),
+
                 Tables\Columns\TextColumn::make('participation_percentage')
                     ->label('Beteiligung')
                     ->suffix('%')
