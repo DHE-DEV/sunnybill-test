@@ -360,7 +360,7 @@
                              alt="Firmenlogo" 
                              style="max-width: 150px; max-height: 60px; object-fit: contain;">
                     @endif
-            <h3>{{ $companySetting->company_name }}</h3>
+            <!--<h3>{{ $companySetting->company_name }}</h3>-->
         </div>
     </div>
 
