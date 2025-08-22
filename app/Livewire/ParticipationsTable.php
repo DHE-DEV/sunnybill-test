@@ -83,6 +83,25 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                     ->color('info')
                     ->alignCenter(),
                 
+                Tables\Columns\TextColumn::make('start_date')
+                    ->label('Startdatum')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->toggleable(),
+                    
+                Tables\Columns\TextColumn::make('end_date')
+                    ->label('Enddatum')
+                    ->date('d.m.Y')
+                    ->placeholder('-')
+                    ->sortable()
+                    ->toggleable(),
+                    
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Aktiv')
+                    ->boolean()
+                    ->sortable()
+                    ->toggleable(),
+                
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Beitritt')
                     ->date('d.m.Y')
@@ -115,71 +134,10 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                         );
                     }),
                 
-                Tables\Filters\Filter::make('percentage_range')
-                    ->label('Beteiligungsbereich')
-                    ->form([
-                        Forms\Components\Grid::make(2)
-                            ->schema([
-                                Forms\Components\TextInput::make('percentage_from')
-                                    ->label('Von (%)')
-                                    ->numeric()
-                                    ->placeholder('0')
-                                    ->step(0.01),
-                                Forms\Components\TextInput::make('percentage_to')
-                                    ->label('Bis (%)')
-                                    ->numeric()
-                                    ->placeholder('100')
-                                    ->step(0.01),
-                            ]),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['percentage_from'],
-                                fn (Builder $query, $value): Builder => $query->where('percentage', '>=', $value),
-                            )
-                            ->when(
-                                $data['percentage_to'],
-                                fn (Builder $query, $value): Builder => $query->where('percentage', '<=', $value),
-                            );
-                    }),
-                
-                Tables\Filters\Filter::make('has_contact')
-                    ->label('Kontaktdaten')
+                Tables\Filters\Filter::make('is_active')
+                    ->label('Nur aktive Beteiligungen')
                     ->toggle()
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query->when(
-                            $data['isActive'],
-                            fn (Builder $query): Builder => $query->whereHas('customer', 
-                                fn (Builder $query) => $query->where(function ($q) {
-                                    $q->whereNotNull('email')
-                                      ->orWhereNotNull('phone');
-                                })
-                            ),
-                        );
-                    }),
-                
-                Tables\Filters\Filter::make('created_at')
-                    ->label('Beitrittsdatum')
-                    ->form([
-                        Forms\Components\DatePicker::make('created_from')
-                            ->label('Von')
-                            ->placeholder('Startdatum'),
-                        Forms\Components\DatePicker::make('created_until')
-                            ->label('Bis')
-                            ->placeholder('Enddatum'),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['created_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
-                            )
-                            ->when(
-                                $data['created_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
-                            );
-                    }),
+                    ->query(fn (Builder $query): Builder => $query->where('is_active', true)),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
@@ -228,6 +186,7 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                             ->createOptionUsing(function (array $data) {
                                 return Customer::create($data)->id;
                             }),
+                            
                         Forms\Components\Section::make('Beteiligungsdetails')
                             ->schema([
                                 Forms\Components\TextInput::make('participation_kwp')
@@ -246,9 +205,21 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                                             }
                                         }
                                     })
-                                    ->helperText(function () {
-                                        return $this->solarPlant ? "Anlagenkapazität: " . number_format($this->solarPlant->total_capacity_kw ?? 0, 4, ',', '.') . " kWp" : '';
-                                    }),
+                                    ->suffixAction(
+                                        Forms\Components\Actions\Action::make('calculate_from_kwp')
+                                            ->label('Aus kWp berechnen')
+                                            ->button()
+                                            ->color('primary')
+                                            ->action(function (Forms\Get $get, Forms\Set $set) {
+                                                $kwp = $get('participation_kwp');
+                                                if ($kwp && $kwp > 0) {
+                                                    if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
+                                                        $percentage = ($kwp / $this->solarPlant->total_capacity_kw) * 100;
+                                                        $set('percentage', round($percentage, 4));
+                                                    }
+                                                }
+                                            })
+                                    ),
                                 
                                 Forms\Components\TextInput::make('percentage')
                                     ->label('Beteiligung (%)')
@@ -268,56 +239,21 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                                             }
                                         }
                                     })
-                                    ->helperText(function () {
-                                        $available = $this->solarPlant->available_participation ?? 0;
-                                        return "Verfügbar: " . number_format($available, 4, ',', '.') . "% (Gesamt: " . number_format($this->solarPlant->total_participation ?? 0, 4, ',', '.') . "% von 100%)";
-                                    })
-                                    ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
-                                    ->rules([
-                                        function () {
-                                            return function (string $attribute, $value, \Closure $fail) {
-                                                // Komma durch Punkt ersetzen für Berechnung
-                                                $numericValue = (float) str_replace(',', '.', $value);
-                                                $existingParticipation = $this->solarPlant->participations()->sum('percentage');
-                                                $totalParticipation = $existingParticipation + $numericValue;
-                                                
-                                                if ($totalParticipation > 100) {
-                                                    $available = 100 - $existingParticipation;
-                                                    $fail("Die Gesamtbeteiligung würde {$totalParticipation}% betragen. Maximal verfügbar: {$available}%");
+                                    ->suffixAction(
+                                        Forms\Components\Actions\Action::make('calculate_from_percentage')
+                                            ->label('Aus % berechnen')
+                                            ->button()
+                                            ->color('success')
+                                            ->action(function (Forms\Get $get, Forms\Set $set) {
+                                                $percentage = $get('percentage');
+                                                if ($percentage && $percentage > 0) {
+                                                    if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
+                                                        $kwp = ($percentage / 100) * $this->solarPlant->total_capacity_kw;
+                                                        $set('participation_kwp', round($kwp, 4));
+                                                    }
                                                 }
-                                            };
-                                        },
-                                    ]),
-                                
-                                Forms\Components\Actions::make([
-                                    Forms\Components\Actions\Action::make('calculate_from_kwp')
-                                        ->label('Aus kWp berechnen')
-                                        ->icon('heroicon-m-calculator')
-                                        ->color('info')
-                                        ->action(function (Forms\Set $set, array $data) {
-                                            $kwp = $data['participation_kwp'] ?? 0;
-                                            if ($kwp && $kwp > 0) {
-                                                if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
-                                                    $percentage = ($kwp / $this->solarPlant->total_capacity_kw) * 100;
-                                                    $set('percentage', round($percentage, 4));
-                                                }
-                                            }
-                                        }),
-                                    Forms\Components\Actions\Action::make('calculate_from_percentage')
-                                        ->label('Aus % berechnen')
-                                        ->icon('heroicon-m-calculator')
-                                        ->color('success')
-                                        ->action(function (Forms\Set $set, array $data) {
-                                            $percentage = $data['percentage'] ?? 0;
-                                            if ($percentage && $percentage > 0) {
-                                                if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
-                                                    $kwp = ($percentage / 100) * $this->solarPlant->total_capacity_kw;
-                                                    $set('participation_kwp', round($kwp, 4));
-                                                }
-                                            }
-                                        }),
-                                ])
-                                ->columnSpanFull(),
+                                            })
+                                    ),
                             ])
                             ->columns(2),
                         
@@ -327,8 +263,30 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                             ->step(0.000001)
                             ->minValue(0)
                             ->suffix('€/kWh')
-                            ->placeholder('0,000000')
-                            ->helperText('Vergütung pro kWh in EUR mit bis zu 6 Nachkommastellen'),
+                            ->placeholder('0,000000'),
+                            
+                        Forms\Components\Section::make('Zeitraum und Details')
+                            ->schema([
+                                Forms\Components\DatePicker::make('start_date')
+                                    ->label('Startdatum')
+                                    ->default(now())
+                                    ->required(),
+                                
+                                Forms\Components\DatePicker::make('end_date')
+                                    ->label('Enddatum')
+                                    ->nullable(),
+                                
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Aktiv')
+                                    ->default(true),
+                            ])
+                            ->columns(3),
+                        
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Notizen')
+                            ->nullable()
+                            ->rows(3)
+                            ->placeholder('Zusätzliche Informationen zur Beteiligung...'),
                     ])
                     ->using(function (array $data) {
                         return PlantParticipation::create([
@@ -337,12 +295,16 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                             'percentage' => $data['percentage'],
                             'participation_kwp' => $data['participation_kwp'] ?? null,
                             'eeg_compensation_per_kwh' => $data['eeg_compensation_per_kwh'] ?? null,
+                            'start_date' => $data['start_date'] ?? null,
+                            'end_date' => $data['end_date'] ?? null,
+                            'is_active' => $data['is_active'] ?? true,
+                            'notes' => $data['notes'] ?? null,
                         ]);
                     })
                     ->successNotificationTitle('Beteiligung hinzugefügt')
                     ->modalHeading('Neue Beteiligung hinzufügen')
                     ->modalSubmitActionLabel('Beteiligung erstellen')
-                    ->modalWidth('lg'),
+                    ->modalWidth('6xl'),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -388,9 +350,21 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                                                 }
                                             }
                                         })
-                                        ->helperText(function () {
-                                            return $this->solarPlant ? "Anlagenkapazität: " . number_format($this->solarPlant->total_capacity_kw ?? 0, 4, ',', '.') . " kWp" : '';
-                                        }),
+                                        ->suffixAction(
+                                            Forms\Components\Actions\Action::make('calculate_from_kwp_edit')
+                                                ->label('Aus kWp berechnen')
+                                                ->button()
+                                                ->color('primary')
+                                                ->action(function (Forms\Get $get, Forms\Set $set) {
+                                                    $kwp = $get('participation_kwp');
+                                                    if ($kwp && $kwp > 0) {
+                                                        if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
+                                                            $percentage = ($kwp / $this->solarPlant->total_capacity_kw) * 100;
+                                                            $set('percentage', round($percentage, 4));
+                                                        }
+                                                    }
+                                                })
+                                        ),
                                     
                                     Forms\Components\TextInput::make('percentage')
                                         ->label('Beteiligung (%)')
@@ -410,62 +384,21 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                                                 }
                                             }
                                         })
-                                        ->helperText(function ($record) {
-                                            $currentPercentage = $record->percentage;
-                                            $otherParticipation = $this->solarPlant->participations()
-                                                ->where('id', '!=', $record->id)
-                                                ->sum('percentage');
-                                            $available = 100 - $otherParticipation;
-                                            return "Verfügbar (inkl. aktueller Beteiligung): " . number_format($available, 4, ',', '.') . "% | Aktuelle Beteiligung: " . number_format($currentPercentage, 4, ',', '.') . "%";
-                                        })
-                                        ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
-                                        ->rules([
-                                            function ($record) {
-                                                return function (string $attribute, $value, \Closure $fail) use ($record) {
-                                                    // Komma durch Punkt ersetzen für Berechnung
-                                                    $numericValue = (float) str_replace(',', '.', $value);
-                                                    $otherParticipation = $this->solarPlant->participations()
-                                                        ->where('id', '!=', $record->id)
-                                                        ->sum('percentage');
-                                                    $totalParticipation = $otherParticipation + $numericValue;
-                                                    
-                                                    if ($totalParticipation > 100) {
-                                                        $available = 100 - $otherParticipation;
-                                                        $fail("Die Gesamtbeteiligung würde {$totalParticipation}% betragen. Maximal verfügbar: {$available}%");
+                                        ->suffixAction(
+                                            Forms\Components\Actions\Action::make('calculate_from_percentage_edit')
+                                                ->label('Aus % berechnen')
+                                                ->button()
+                                                ->color('success')
+                                                ->action(function (Forms\Get $get, Forms\Set $set) {
+                                                    $percentage = $get('percentage');
+                                                    if ($percentage && $percentage > 0) {
+                                                        if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
+                                                            $kwp = ($percentage / 100) * $this->solarPlant->total_capacity_kw;
+                                                            $set('participation_kwp', round($kwp, 4));
+                                                        }
                                                     }
-                                                };
-                                            },
-                                        ]),
-                                    
-                                    Forms\Components\Actions::make([
-                                        Forms\Components\Actions\Action::make('calculate_from_kwp')
-                                            ->label('Aus kWp berechnen')
-                                            ->icon('heroicon-m-calculator')
-                                            ->color('info')
-                                            ->action(function (Forms\Set $set, array $data) {
-                                                $kwp = $data['participation_kwp'] ?? 0;
-                                                if ($kwp && $kwp > 0) {
-                                                    if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
-                                                        $percentage = ($kwp / $this->solarPlant->total_capacity_kw) * 100;
-                                                        $set('percentage', round($percentage, 4));
-                                                    }
-                                                }
-                                            }),
-                                        Forms\Components\Actions\Action::make('calculate_from_percentage')
-                                            ->label('Aus % berechnen')
-                                            ->icon('heroicon-m-calculator')
-                                            ->color('success')
-                                            ->action(function (Forms\Set $set, array $data) {
-                                                $percentage = $data['percentage'] ?? 0;
-                                                if ($percentage && $percentage > 0) {
-                                                    if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
-                                                        $kwp = ($percentage / 100) * $this->solarPlant->total_capacity_kw;
-                                                        $set('participation_kwp', round($kwp, 4));
-                                                    }
-                                                }
-                                            }),
-                                    ])
-                                    ->columnSpanFull(),
+                                                })
+                                        ),
                                 ])
                                 ->columns(2),
                             
@@ -475,9 +408,31 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                                 ->step(0.000001)
                                 ->minValue(0)
                                 ->suffix('€/kWh')
-                                ->placeholder('0,000000')
-                                ->helperText('Vergütung pro kWh in EUR mit bis zu 6 Nachkommastellen'),
+                                ->placeholder('0,000000'),
+                            
+                            Forms\Components\Section::make('Zeitraum und Details')
+                                ->schema([
+                                    Forms\Components\DatePicker::make('start_date')
+                                        ->label('Startdatum')
+                                        ->required(),
+                                    
+                                    Forms\Components\DatePicker::make('end_date')
+                                        ->label('Enddatum')
+                                        ->nullable(),
+                                    
+                                    Forms\Components\Toggle::make('is_active')
+                                        ->label('Aktiv')
+                                        ->default(true),
+                                ])
+                                ->columns(3),
+                            
+                            Forms\Components\Textarea::make('notes')
+                                ->label('Notizen')
+                                ->nullable()
+                                ->rows(3)
+                                ->placeholder('Zusätzliche Informationen zur Beteiligung...'),
                         ])
+                        ->modalWidth('6xl')
                         ->successNotificationTitle('Beteiligung aktualisiert'),
                     
                     Tables\Actions\DeleteAction::make()
