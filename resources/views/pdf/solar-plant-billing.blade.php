@@ -687,7 +687,7 @@
                                 
                                 <!-- Artikel Beschreibung (falls vorhanden und unterschiedlich) -->
                                 @if(isset($article['description']) && $article['description'] !== $article['article_name'] && !empty($article['description']))
-                                <div style="font-size: 8pt; color: #666; margin-bottom: 12px; font-style: italic;">
+                                <div style="font-size: 8pt; color: #666; margin-bottom: 12px;">
                                     {{ $article['description'] }}
                                 </div>
                                 @endif
