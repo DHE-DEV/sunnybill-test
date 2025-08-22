@@ -687,13 +687,13 @@
                                 
                                 <!-- Artikel Beschreibung (falls vorhanden und unterschiedlich) -->
                                 @if(isset($article['description']) && $article['description'] !== $article['article_name'] && !empty($article['description']))
-                                <div style="font-size: 7pt; color: #666; margin-bottom: 12px; font-style: italic;">
+                                <div style="font-size: 8pt; color: #666; margin-bottom: 12px; font-style: italic;">
                                     {{ $article['description'] }}
                                 </div>
                                 @endif
                                 
                                 <!-- Details als Tabelle -->
-                                <table style="width: 100%; border-collapse: collapse; font-size: 7pt; color: #555;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 8pt; color: #555;">
                                     <thead>
                                         <tr>
                                             <th style="text-align: left; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Menge</th>

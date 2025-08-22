@@ -294,7 +294,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                                 $html .= '<div class="font-medium text-xs text-gray-700 mb-1">Details:</div>';
                                                 
                                                 foreach ($item['articles'] as $article) {
-                                                    $html .= '<div class="text-xs text-gray-600 mb-1">';
+                                                    $html .= '<div class="text-xs text-gray-600 mb-0 mt-3">';
                                                     $html .= '<div class="font-medium">' . htmlspecialchars($article['article_name']) . '</div>';
                                                     $html .= '<div class="flex flex-wrap gap-4 mt-1">';
                                                     $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
@@ -310,7 +310,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                             
                                             $html .= '</td>';
                                             $html .= '<td class="px-3 py-6 text-right text-green-800 font-medium border-r border-gray-300" style="vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                            $html .= '<td class="px-3 py-6 text-right text-green-800 font-semibold text-lg" style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                            $html .= '<td class="px-3 py-6 text-right text-green-800 font-semibold " style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
                                             $html .= '</tr>';
                                         }
                                         
@@ -321,7 +321,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                         $totalCredits = array_sum(array_column($breakdown, 'customer_share'));
                                         $html .= '<div class="mt-3 p-3 bg-green-50 border border-green-200 rounded flex justify-between items-center">';
                                         $html .= '<div class="font-semibold text-green-800">Gesamtgutschriften:</div>';
-                                        $html .= '<div class="font-bold text-green-800 text-xl">' . number_format($totalCredits, 2, ',', '.') . ' €</div>';
+                                        $html .= '<div class="font-bold text-green-800 ">' . number_format($totalCredits, 2, ',', '.') . ' €</div>';
                                         $html .= '</div>';
                                         $html .= '</div>';
                                         
@@ -393,7 +393,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                             
                                             $html .= '</td>';
                                             $html .= '<td class="px-3 py-6 text-right text-gray-800 font-medium border-r border-gray-300" style="vertical-align: top;">' . number_format($item['customer_percentage'], 2, ',', '.') . '%</td>';
-                                            $html .= '<td class="px-3 py-6 text-right text-gray-800 font-semibold text-lg" style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
+                                            $html .= '<td class="px-3 py-6 text-right text-gray-800 font-semibold " style="vertical-align: top;">' . number_format($item['customer_share'], 2, ',', '.') . ' €</td>';
                                             $html .= '</tr>';
                                         }
                                         
@@ -404,7 +404,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                         $totalCosts = array_sum(array_column($breakdown, 'customer_share'));
                                         $html .= '<div class="mt-3 p-3 bg-gray-50 border border-gray-300 rounded flex justify-between items-center">';
                                         $html .= '<div class="font-semibold text-gray-800">Gesamtkosten:</div>';
-                                        $html .= '<div class="font-bold text-gray-800 text-xl">' . number_format($totalCosts, 2, ',', '.') . ' €</div>';
+                                        $html .= '<div class="font-bold text-gray-800 ">' . number_format($totalCosts, 2, ',', '.') . ' €</div>';
                                         $html .= '</div>';
                                         $html .= '</div>';
                                         
