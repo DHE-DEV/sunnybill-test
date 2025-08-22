@@ -16,12 +16,19 @@ class PlantParticipation extends Model
         'percentage',
         'participation_kwp',
         'eeg_compensation_per_kwh',
+        'start_date',
+        'end_date',
+        'is_active',
+        'notes',
     ];
 
     protected $casts = [
         'percentage' => 'decimal:4',
         'participation_kwp' => 'decimal:4',
         'eeg_compensation_per_kwh' => 'decimal:6',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'is_active' => 'boolean',
     ];
 
     /**

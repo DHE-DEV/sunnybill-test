@@ -214,11 +214,36 @@ class ParticipationsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('eeg_compensation_per_kwh')
                     ->label('EEG-Vergütung')
                     ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') . ' €/kWh' : '-')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('start_date')
+                    ->label('Startdatum')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('end_date')
+                    ->label('Enddatum')
+                    ->date('d.m.Y')
+                    ->placeholder('-')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Aktiv')
+                    ->boolean()
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('notes')
+                    ->label('Notizen')
+                    ->limit(50)
+                    ->placeholder('-')
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Beteiligung seit')
                     ->dateTime('d.m.Y H:i')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable()
+                    ->toggledHiddenByDefault(),
             ])
             ->filters([
                 Tables\Filters\Filter::make('high_participation')
@@ -249,7 +274,7 @@ class ParticipationsRelationManager extends RelationManager
                 Tables\Actions\EditAction::make()
                     ->modalHeading('Beteiligung bearbeiten')
                     ->modalSubmitActionLabel('Änderungen speichern')
-                    ->modalWidth('4xl')
+                    ->modalWidth('6xl')
                     ->after(function () {
                         Notification::make()
                             ->title('Beteiligung aktualisiert')
