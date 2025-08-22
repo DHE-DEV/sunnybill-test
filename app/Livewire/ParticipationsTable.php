@@ -204,22 +204,7 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                                                 $set('percentage', round($percentage, 4));
                                             }
                                         }
-                                    })
-                                    ->suffixAction(
-                                        Forms\Components\Actions\Action::make('calculate_from_kwp')
-                                            ->label('Aus kWp berechnen')
-                                            ->button()
-                                            ->color('primary')
-                                            ->action(function (Forms\Get $get, Forms\Set $set) {
-                                                $kwp = $get('participation_kwp');
-                                                if ($kwp && $kwp > 0) {
-                                                    if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
-                                                        $percentage = ($kwp / $this->solarPlant->total_capacity_kw) * 100;
-                                                        $set('percentage', round($percentage, 4));
-                                                    }
-                                                }
-                                            })
-                                    ),
+                                    }),
                                 
                                 Forms\Components\TextInput::make('percentage')
                                     ->label('Beteiligung (%)')
@@ -238,22 +223,7 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                                                 $set('participation_kwp', round($kwp, 4));
                                             }
                                         }
-                                    })
-                                    ->suffixAction(
-                                        Forms\Components\Actions\Action::make('calculate_from_percentage')
-                                            ->label('Aus % berechnen')
-                                            ->button()
-                                            ->color('success')
-                                            ->action(function (Forms\Get $get, Forms\Set $set) {
-                                                $percentage = $get('percentage');
-                                                if ($percentage && $percentage > 0) {
-                                                    if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
-                                                        $kwp = ($percentage / 100) * $this->solarPlant->total_capacity_kw;
-                                                        $set('participation_kwp', round($kwp, 4));
-                                                    }
-                                                }
-                                            })
-                                    ),
+                                    }),
                             ])
                             ->columns(2),
                         
@@ -349,22 +319,7 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                                                     $set('percentage', round($percentage, 4));
                                                 }
                                             }
-                                        })
-                                        ->suffixAction(
-                                            Forms\Components\Actions\Action::make('calculate_from_kwp_edit')
-                                                ->label('Aus kWp berechnen')
-                                                ->button()
-                                                ->color('primary')
-                                                ->action(function (Forms\Get $get, Forms\Set $set) {
-                                                    $kwp = $get('participation_kwp');
-                                                    if ($kwp && $kwp > 0) {
-                                                        if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
-                                                            $percentage = ($kwp / $this->solarPlant->total_capacity_kw) * 100;
-                                                            $set('percentage', round($percentage, 4));
-                                                        }
-                                                    }
-                                                })
-                                        ),
+                                        }),
                                     
                                     Forms\Components\TextInput::make('percentage')
                                         ->label('Beteiligung (%)')
@@ -383,22 +338,7 @@ class ParticipationsTable extends Component implements HasForms, HasTable
                                                     $set('participation_kwp', round($kwp, 4));
                                                 }
                                             }
-                                        })
-                                        ->suffixAction(
-                                            Forms\Components\Actions\Action::make('calculate_from_percentage_edit')
-                                                ->label('Aus % berechnen')
-                                                ->button()
-                                                ->color('success')
-                                                ->action(function (Forms\Get $get, Forms\Set $set) {
-                                                    $percentage = $get('percentage');
-                                                    if ($percentage && $percentage > 0) {
-                                                        if ($this->solarPlant && $this->solarPlant->total_capacity_kw > 0) {
-                                                            $kwp = ($percentage / 100) * $this->solarPlant->total_capacity_kw;
-                                                            $set('participation_kwp', round($kwp, 4));
-                                                        }
-                                                    }
-                                                })
-                                        ),
+                                        }),
                                 ])
                                 ->columns(2),
                             
