@@ -358,7 +358,7 @@
                     @if($logoBase64)
                         <img src="{{ $logoBase64 }}" 
                              alt="Firmenlogo" 
-                             style="max-width: 150px; max-height: 60px; object-fit: contain;">
+                             style="@if($companySetting->logo_styles){{ $companySetting->logo_styles }}; @else max-width: 150px; max-height: 60px; @endif object-fit: contain;">
                     @endif
             <!--<h3>{{ $companySetting->company_name }}</h3>-->
         </div>
