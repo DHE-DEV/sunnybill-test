@@ -91,7 +91,7 @@ class EpcQrCodeService
             $month = \Carbon\Carbon::createFromDate($billing->billing_year, $billing->billing_month, 1);
             $referenceArray[] = "Zeitraum: " . $month->locale('de')->translatedFormat('m/Y');
             
-            $finalReference = implode(' | ', $referenceArray);
+            $finalReference = implode(' --- ', $referenceArray);
         }
         
         return $this->generateEpcQrCodeData(
@@ -126,7 +126,7 @@ class EpcQrCodeService
         $month = \Carbon\Carbon::createFromDate($billing->billing_year, $billing->billing_month, 1);
         $reference[] = "Zeitraum: " . $month->locale('de')->translatedFormat('m/Y');
         
-        return implode(' | ', $reference);
+        return implode(' --- ', $reference);
     }
 
     /**

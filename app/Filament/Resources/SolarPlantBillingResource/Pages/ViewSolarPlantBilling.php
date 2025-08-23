@@ -704,19 +704,19 @@ class ViewSolarPlantBilling extends ViewRecord
                                                             $reference = $get('reference') ?: $qrService->getDefaultReference($record);
                                                             
                                                             $info = [];
-                                                            $info[] = '<strong>Banking-App QR-Code</strong>';
-                                                            $info[] = 'Empfänger: ' . ($customer->account_holder ?? 'Nicht hinterlegt');
+                                                            $info[] = '<strong>Banking-App QR-Code - Überweisung</strong>';
+                                                            $info[] = '<strong>Empfänger:</strong> ' . ($customer->account_holder ?? 'Nicht hinterlegt');
                                                             if ($customer->iban) {
-                                                                $info[] = 'IBAN: ' . chunk_split($customer->iban, 4, ' ');
+                                                                $info[] = '<strong>IBAN:</strong> ' . chunk_split($customer->iban, 4, ' ');
                                                             }
                                                             if ($customer->bic) {
-                                                                $info[] = 'BIC: ' . $customer->bic;
+                                                                $info[] = '<strong>BIC:</strong> ' . $customer->bic;
                                                             }
-                                                            $info[] = 'Betrag: € ' . number_format($amount, 2, ',', '.');
-                                                            $info[] = 'Verwendungszweck: ' . $reference;
+                                                            $info[] = '<strong>Betrag: €</strong> ' . number_format($amount, 2, ',', '.');
+                                                            $info[] = '<strong>Verwendungszweck:</strong> ' . $reference;
                                                             $info[] = '';
                                                             if ($record->net_amount < 0) {
-                                                                $info[] = '<em>Dies ist eine Gutschrift. Der QR-Code zeigt den Betrag als positive Überweisung an.</em>';
+                                                                $info[] = '<em>Scannen Sie den QR-Code mit Ihrer Banking-App für eine schnelle Überweisung.</em>';
                                                             } else {
                                                                 $info[] = '<em>Scannen Sie den QR-Code mit Ihrer Banking-App für eine schnelle Überweisung.</em>';
                                                             }
@@ -907,7 +907,7 @@ class ViewSolarPlantBilling extends ViewRecord
                             ]),
                         */
                         // QR-Code für Banking-Apps
-                        Infolists\Components\Grid::make(2)
+                        Infolists\Components\Grid::make(3)
                             ->schema([
                                 Infolists\Components\ImageEntry::make('epc_qr_code')
                                     ->label('QR-Code für Banking-App')
@@ -931,10 +931,11 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->visible(function ($record) {
                                         $qrService = new EpcQrCodeService();
                                         return $qrService->canGenerateQrCode($record);
-                                    }),
+                                    })
+                                    ->columnSpan(1),
                                 
                                 Infolists\Components\TextEntry::make('qr_code_info')
-                                    ->label('QR-Code Informationen')
+                                    ->label('QR-Code Informationen für Überweisung')
                                     ->state(function ($record) {
                                         $qrService = new EpcQrCodeService();
                                         
@@ -946,31 +947,30 @@ class ViewSolarPlantBilling extends ViewRecord
                                         $solarPlant = $record->solarPlant;
                                         
                                         $info = [];
-                                        $info[] = "**Banking-App QR-Code**";
-                                        $info[] = "Empfänger: {$customer->account_holder}";
-                                        $info[] = "IBAN: " . chunk_split($customer->iban, 4, ' ');
+                                        $info[] = "**Empfänger:** {$customer->account_holder}";
+                                        $info[] = "<br>**IBAN:** " . chunk_split($customer->iban, 4, ' ');
                                         if ($customer->bic) {
-                                            $info[] = "BIC: {$customer->bic}";
+                                            $info[] = "&nbsp;&nbsp;&nbsp;**BIC:** {$customer->bic}";
                                         }
-                                        $info[] = "Betrag: € " . number_format(abs($record->net_amount), 2, ',', '.');
+                                        $info[] = "&nbsp;&nbsp;&nbsp;**Betrag: €** " . number_format(abs($record->net_amount), 2, ',', '.');
                                         
                                         $reference = [];
                                         if ($record->invoice_number) {
                                             $reference[] = $record->invoice_number;
                                         }
                                         if ($customer && $customer->customer_number) {
-                                            $reference[] = "Kunde: {$customer->customer_number}";
+                                            $reference[] = "{$customer->customer_number}";
                                         }
                                         if ($solarPlant && $solarPlant->name) {
                                             $reference[] = $solarPlant->name;
                                         }
                                         $month = \Carbon\Carbon::createFromDate($record->billing_year, $record->billing_month, 1);
-                                        $reference[] = "Zeitraum: " . $month->locale('de')->translatedFormat('m/Y');
+                                        $reference[] = "Zeitraum: " . $month->locale('de')->translatedFormat('m-Y');
                                         
-                                        $info[] = "Verwendungszweck: " . implode(' | ', $reference);
+                                        $info[] = "<br><br>**Verwendungszweck:**<br>" . implode(' --- ', $reference);
                                         $info[] = "";
                                         if ($record->net_amount < 0) {
-                                            $info[] = "*Dies ist eine Gutschrift. Der QR-Code zeigt den Betrag als positive Überweisung an.*";
+                                            $info[] = "**<br>Scannen Sie den QR-Code mit Ihrer Banking-App für eine schnelle Überweisung.**";
                                         } else {
                                             $info[] = "*Scannen Sie den QR-Code mit Ihrer Banking-App für eine schnelle Überweisung.*";
                                         }
@@ -986,7 +986,8 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->visible(function ($record) {
                                         // Zeige Info immer an, aber Inhalt abhängig von QR-Code Verfügbarkeit
                                         return true;
-                                    }),
+                                    })
+                                    ->columnSpan(2),
                             ])
                             ->visible(function ($record) {
                                 // Zeige gesamtes Grid für alle Beträge außer 0 an (auch Gutschriften)
