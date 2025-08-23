@@ -1088,7 +1088,8 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('customer_number')
                     ->label('Kundennummer')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->getStateUsing(function ($record) {
@@ -1111,7 +1112,8 @@ class CustomerResource extends Resource
                         'business' => 'primary',
                         'private' => 'info',
                         default => 'gray',
-                    }),
+                    })
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('ranking')
                     ->label('Ranking')
                     ->formatStateUsing(fn (?string $state): string => $state ? $state . ' Kunde' : '-')
@@ -1142,15 +1144,40 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Telefon')
                     ->searchable()
+                    ->sortable()
                     ->toggleable()
                     ->url(fn ($record) => $record->phone ? 'tel:' . preg_replace('/[\s\-\/]/', '', $record->phone) : null)
                     ->openUrlInNewTab(false),
+                Tables\Columns\TextColumn::make('street')
+                    ->label('Straße')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('city')
                     ->label('Ort')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('account_holder')
+                    ->label('Kontoinhaber')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('iban')
+                    ->label('IBAN')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('bic')
+                    ->label('BIC')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('country_code')
                     ->label('Land')
-                    ->badge(),
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('lexoffice_synced')
                     ->label('Lexoffice')
                     ->boolean()
@@ -1177,12 +1204,14 @@ class CustomerResource extends Resource
                     ->label('Rechnungen')
                     ->counts('invoices')
                     ->badge()
-                    ->color('primary'),
+                    ->color('primary')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('solar_participations_count')
                     ->label('Solar-Beteiligungen')
                     ->counts('solarParticipations')
                     ->badge()
-                    ->color('success'),
+                    ->color('success')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('total_solar_participation')
                     ->label('Gesamtbeteiligung')
                     ->getStateUsing(function ($record) {
@@ -1208,7 +1237,8 @@ class CustomerResource extends Resource
                     ->tooltip(fn ($record) => $record->is_active
                         ? 'Aktiv'
                         : 'Deaktiviert' . ($record->deactivated_at ? ' am ' . $record->deactivated_at->format('d.m.Y H:i') : '')
-                    ),
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('deactivated_at')
                     ->label('Deaktiviert am')
                     ->dateTime('d.m.Y H:i')
@@ -1354,6 +1384,7 @@ class CustomerResource extends Resource
                 ->button()
             ])
             ->headerActions([
+                /*
                 Tables\Actions\Action::make('import_from_lexoffice')
                     ->label('Von Lexoffice importieren')
                     ->icon('heroicon-o-arrow-down-tray')
@@ -1380,6 +1411,7 @@ class CustomerResource extends Resource
                     ->modalHeading('Kunden von Lexoffice importieren')
                     ->modalDescription('Möchten Sie alle Kunden von Lexoffice importieren? Bestehende Kunden werden aktualisiert.')
                     ->modalSubmitActionLabel('Importieren'),
+                    */
             ]);
     }
 
