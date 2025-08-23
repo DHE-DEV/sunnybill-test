@@ -784,53 +784,197 @@ class ViewSolarPlantBilling extends ViewRecord
                     ->schema([
                         Infolists\Components\Grid::make(3)
                             ->schema([
-                                Infolists\Components\TextEntry::make('finalized_at')
-                                    ->label('Finalisiert am')
-                                    ->dateTime('d.m.Y H:i')
-                                    ->placeholder('Noch nicht finalisiert')
-                                    ->icon('heroicon-o-check-circle')
-                                    ->color('info'),
-                                Infolists\Components\TextEntry::make('sent_at')
-                                    ->label('Versendet am')
-                                    ->dateTime('d.m.Y H:i')
-                                    ->placeholder('Noch nicht versendet')
-                                    ->icon('heroicon-o-paper-airplane')
-                                    ->color('warning'),
-                                Infolists\Components\TextEntry::make('paid_at')
-                                    ->label('Bezahlt am')
-                                    ->dateTime('d.m.Y H:i')
-                                    ->placeholder('Noch nicht bezahlt')
-                                    ->icon('heroicon-o-currency-euro')
-                                    ->color('success'),
+                                Infolists\Components\Group::make([
+                                    Infolists\Components\TextEntry::make('finalized_at')
+                                        ->label('Finalisiert am')
+                                        ->dateTime('d.m.Y H:i')
+                                        ->placeholder('Noch nicht finalisiert')
+                                        ->icon('heroicon-o-check-circle')
+                                        ->color('info'),
+                                    Infolists\Components\Actions::make([
+                                        Infolists\Components\Actions\Action::make('finalize_today')
+                                            ->label('Heute')
+                                            ->icon('heroicon-o-calendar')
+                                            ->color('info')
+                                            ->size('sm')
+                                            ->visible(fn ($record) => !$record->finalized_at)
+                                            ->requiresConfirmation()
+                                            ->modalHeading('Abrechnung als finalisiert markieren')
+                                            ->modalDescription('Möchten Sie die Abrechnung mit dem heutigen Datum als finalisiert markieren?')
+                                            ->action(function ($livewire) {
+                                                $livewire->record->update([
+                                                    'finalized_at' => now(),
+                                                    'status' => 'finalized'
+                                                ]);
+                                                
+                                                Notification::make()
+                                                    ->title('Abrechnung finalisiert')
+                                                    ->body('Die Abrechnung wurde als finalisiert markiert.')
+                                                    ->success()
+                                                    ->send();
+                                            })
+                                    ])
+                                ]),
+                                Infolists\Components\Group::make([
+                                    Infolists\Components\TextEntry::make('sent_at')
+                                        ->label('Versendet am')
+                                        ->dateTime('d.m.Y H:i')
+                                        ->placeholder('Noch nicht versendet')
+                                        ->icon('heroicon-o-paper-airplane')
+                                        ->color('warning'),
+                                    Infolists\Components\Actions::make([
+                                        Infolists\Components\Actions\Action::make('sent_today')
+                                            ->label('Heute')
+                                            ->icon('heroicon-o-calendar')
+                                            ->color('warning')
+                                            ->size('sm')
+                                            ->visible(fn ($record) => !$record->sent_at)
+                                            ->requiresConfirmation()
+                                            ->modalHeading('Abrechnung als versendet markieren')
+                                            ->modalDescription('Möchten Sie die Abrechnung mit dem heutigen Datum als versendet markieren?')
+                                            ->action(function ($livewire) {
+                                                $livewire->record->update([
+                                                    'sent_at' => now(),
+                                                    'status' => 'sent'
+                                                ]);
+                                                
+                                                Notification::make()
+                                                    ->title('Abrechnung versendet')
+                                                    ->body('Die Abrechnung wurde als versendet markiert.')
+                                                    ->success()
+                                                    ->send();
+                                            })
+                                    ])
+                                ]),
+                                Infolists\Components\Group::make([
+                                    Infolists\Components\TextEntry::make('paid_at')
+                                        ->label('Bezahlt am')
+                                        ->dateTime('d.m.Y H:i')
+                                        ->placeholder('Noch nicht bezahlt')
+                                        ->icon('heroicon-o-currency-euro')
+                                        ->color('success'),
+                                    Infolists\Components\Actions::make([
+                                        Infolists\Components\Actions\Action::make('paid_today')
+                                            ->label('Heute')
+                                            ->icon('heroicon-o-calendar')
+                                            ->color('success')
+                                            ->size('sm')
+                                            ->visible(fn ($record) => !$record->paid_at)
+                                            ->requiresConfirmation()
+                                            ->modalHeading('Abrechnung als bezahlt markieren')
+                                            ->modalDescription('Möchten Sie die Abrechnung mit dem heutigen Datum als bezahlt markieren?')
+                                            ->action(function ($livewire) {
+                                                $livewire->record->update([
+                                                    'paid_at' => now(),
+                                                    'status' => 'paid'
+                                                ]);
+                                                
+                                                Notification::make()
+                                                    ->title('Abrechnung bezahlt')
+                                                    ->body('Die Abrechnung wurde als bezahlt markiert.')
+                                                    ->success()
+                                                    ->send();
+                                            })
+                                    ])
+                                ]),
                             ]),
                         Infolists\Components\Grid::make(2)
                             ->schema([
-                                Infolists\Components\TextEntry::make('payment_status')
-                                    ->label('Zahlungsstatus')
-                                    ->state(function ($record) {
-                                        if ($record->paid_at) {
-                                            return 'Bezahlt';
-                                        } elseif ($record->sent_at) {
-                                            return 'Ausstehend';
-                                        } elseif ($record->finalized_at) {
-                                            return 'Bereit zum Versand';
-                                        } else {
-                                            return 'In Bearbeitung';
-                                        }
-                                    })
-                                    ->badge()
-                                    ->color(function ($record) {
-                                        if ($record->paid_at) {
-                                            return 'success';
-                                        } elseif ($record->sent_at) {
-                                            return 'warning';
-                                        } elseif ($record->finalized_at) {
-                                            return 'info';
-                                        } else {
-                                            return 'gray';
-                                        }
-                                    })
-                                    ->size('xl'),
+                                Infolists\Components\Group::make([
+                                    Infolists\Components\TextEntry::make('payment_status')
+                                        ->label('Zahlungsstatus')
+                                        ->state(function ($record) {
+                                            if ($record->paid_at) {
+                                                return 'Bezahlt';
+                                            } elseif ($record->sent_at) {
+                                                return 'Ausstehend';
+                                            } elseif ($record->finalized_at) {
+                                                return 'Bereit zum Versand';
+                                            } else {
+                                                return 'In Bearbeitung';
+                                            }
+                                        })
+                                        ->badge()
+                                        ->color(function ($record) {
+                                            if ($record->paid_at) {
+                                                return 'success';
+                                            } elseif ($record->sent_at) {
+                                                return 'warning';
+                                            } elseif ($record->finalized_at) {
+                                                return 'info';
+                                            } else {
+                                                return 'gray';
+                                            }
+                                        })
+                                        ->size('xl'),
+                                    Infolists\Components\Actions::make([
+                                        Infolists\Components\Actions\Action::make('change_status')
+                                            ->label('Status ändern')
+                                            ->icon('heroicon-o-pencil')
+                                            ->color('gray')
+                                            ->size('sm')
+                                            ->modalHeading('Zahlungsstatus ändern')
+                                            ->modalDescription('Wählen Sie den neuen Status für diese Abrechnung.')
+                                            ->form([
+                                                Forms\Components\Select::make('status')
+                                                    ->label('Status')
+                                                    ->options([
+                                                        'draft' => 'Entwurf',
+                                                        'finalized' => 'Finalisiert',
+                                                        'sent' => 'Versendet',
+                                                        'paid' => 'Bezahlt',
+                                                    ])
+                                                    ->default(fn ($livewire) => $livewire->record->status)
+                                                    ->required()
+                                                    ->native(false),
+                                                Forms\Components\Toggle::make('update_dates')
+                                                    ->label('Entsprechende Datumsfelder automatisch setzen')
+                                                    ->helperText('Setzt automatisch die passenden Datumsfelder (finalized_at, sent_at, paid_at) auf das heutige Datum')
+                                                    ->default(true),
+                                            ])
+                                            ->action(function (array $data, $livewire) {
+                                                $updateData = ['status' => $data['status']];
+                                                
+                                                if ($data['update_dates']) {
+                                                    $now = now();
+                                                    switch ($data['status']) {
+                                                        case 'finalized':
+                                                            if (!$livewire->record->finalized_at) {
+                                                                $updateData['finalized_at'] = $now;
+                                                            }
+                                                            break;
+                                                        case 'sent':
+                                                            if (!$livewire->record->finalized_at) {
+                                                                $updateData['finalized_at'] = $now;
+                                                            }
+                                                            if (!$livewire->record->sent_at) {
+                                                                $updateData['sent_at'] = $now;
+                                                            }
+                                                            break;
+                                                        case 'paid':
+                                                            if (!$livewire->record->finalized_at) {
+                                                                $updateData['finalized_at'] = $now;
+                                                            }
+                                                            if (!$livewire->record->sent_at) {
+                                                                $updateData['sent_at'] = $now;
+                                                            }
+                                                            if (!$livewire->record->paid_at) {
+                                                                $updateData['paid_at'] = $now;
+                                                            }
+                                                            break;
+                                                    }
+                                                }
+                                                
+                                                $livewire->record->update($updateData);
+                                                
+                                                Notification::make()
+                                                    ->title('Status aktualisiert')
+                                                    ->body('Der Zahlungsstatus wurde erfolgreich geändert.')
+                                                    ->success()
+                                                    ->send();
+                                            })
+                                    ])
+                                ]),
                                 Infolists\Components\TextEntry::make('payment_amount')
                                     ->label('Zahlungsbetrag')
                                     ->state(fn ($record) => $record->net_amount >= 0 
