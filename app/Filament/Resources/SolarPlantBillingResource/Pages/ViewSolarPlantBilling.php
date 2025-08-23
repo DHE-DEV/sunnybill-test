@@ -991,18 +991,18 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->state(function ($record) {
                                         $timeline = [];
                                         
-                                        $timeline[] = '📝 Erstellt: ' . $record->created_at->format('d.m.Y H:i');
+                                        $timeline[] = '<b>Erstellt:</b> ' . $record->created_at->format('d.m.Y H:i');
                                         
                                         if ($record->finalized_at) {
-                                            $timeline[] = '✅ Finalisiert: ' . $record->finalized_at->format('d.m.Y H:i');
+                                            $timeline[] = '<b>Finalisiert:</b> ' . $record->finalized_at->format('d.m.Y H:i');
                                         }
                                         
                                         if ($record->sent_at) {
-                                            $timeline[] = '📧 Versendet: ' . $record->sent_at->format('d.m.Y H:i');
+                                            $timeline[] = '<b>Versendet:</b> ' . $record->sent_at->format('d.m.Y H:i');
                                         }
                                         
                                         if ($record->paid_at) {
-                                            $timeline[] = '💰 Bezahlt: ' . $record->paid_at->format('d.m.Y H:i');
+                                            $timeline[] = '<b>Bezahlt:</b> ' . $record->paid_at->format('d.m.Y H:i');
                                         }
                                         
                                         return implode(' → ', $timeline);
