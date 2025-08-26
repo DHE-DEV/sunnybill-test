@@ -56,6 +56,11 @@ class ArticleResource extends Resource
                             ->label('Beschreibung')
                             ->rows(3)
                             ->columnSpanFull(),
+                        Forms\Components\Textarea::make('detailed_description')
+                            ->label('Detaillierte Beschreibung / Hinweise')
+                            ->helperText('Wird als Hinweistext in Abrechnungen angezeigt')
+                            ->rows(4)
+                            ->columnSpanFull(),
                     ]),
                 
                 Forms\Components\Section::make('Preise & Steuern')

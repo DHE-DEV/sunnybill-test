@@ -22,4 +22,15 @@ class EditArticle extends EditRecord
         // Dispatch ein Event um die Versionshistorie zu aktualisieren
         $this->dispatch('refresh-versions-table');
     }
+
+    public function getTitle(): string
+    {
+        $title = 'Artikel bearbeiten';
+        
+        if ($this->record && $this->record->isContractBound()) {
+            $title .= ' (Vertragsgebundener Artikel)';
+        }
+        
+        return $title;
+    }
 }

@@ -285,7 +285,15 @@ class ViewSolarPlantBilling extends ViewRecord
                                             $html .= '<td class="px-3 py-6 border-r border-gray-300" style="vertical-align: top;">';
                                             $html .= '<div class="font-medium text-gray-900">' . htmlspecialchars($item['contract_title']) . '</div>';
                                             $html .= '<div class="text-sm text-gray-600 mt-1">';
-                                            $html .= 'Lieferant: <span class="text-blue-600 font-medium">' . $supplierName . '</span> | Abrechnungsnr.: <span class="text-orange-600 font-medium">' . $billingNumber . '</span>';
+                                            
+                                            // Lieferanten-Link
+                                            $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
+                                            $html .= 'Lieferant: <a href="' . $supplierUrl . '" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 hover:underline">' . $supplierName . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
+                                            
+                                            // Abrechnungs-Link  
+                                            $billingUrl = route('filament.admin.resources.supplier-contract-billings.view', $item['contract_billing_id']);
+                                            $html .= ' | Abrechnungsnr.: <a href="' . $billingUrl . '" target="_blank" class="text-orange-600 font-medium hover:text-orange-800 hover:underline">' . $billingNumber . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
+                                            
                                             $html .= '</div>';
                                             
                                             // Artikel-Details anzeigen
@@ -295,7 +303,34 @@ class ViewSolarPlantBilling extends ViewRecord
                                                 
                                                 foreach ($item['articles'] as $article) {
                                                     $html .= '<div class="text-xs text-gray-600 mb-0 mt-3">';
-                                                    $html .= '<div class="font-medium">' . htmlspecialchars($article['article_name']) . '</div>';
+                                                    
+                                                    // Artikel-Name mit Links - sowohl zum Artikel als auch zum Vertrag
+                                                    $html .= '<div class="font-medium flex items-center gap-1">';
+                                                    
+                                                    // Artikel-Name als Link zum Artikel (ursprüngliche Verlinkung)
+                                                    if (isset($article['article_id']) && $article['article_id']) {
+                                                        $articleUrl = route('filament.admin.resources.articles.edit', $article['article_id']);
+                                                        $html .= '<a href="' . $articleUrl . '" target="_blank" class="text-purple-600 hover:text-purple-800 hover:underline" title="Artikel bearbeiten">' . htmlspecialchars($article['article_name']) . '</a>';
+                                                    } else {
+                                                        $html .= htmlspecialchars($article['article_name']);
+                                                    }
+                                                    
+                                                    // Text "info_artikel_xxx" nach dem Artikel-Namen hinzufügen
+                                                    $html .= ' <span class="text-gray-500 text-xs">info_artikel_xxx</span>';
+                                                    
+                                                    // Info-Symbol zum Artikel
+                                                    if (isset($article['article_id']) && $article['article_id']) {
+                                                        $articleViewUrl = route('filament.admin.resources.articles.edit', $article['article_id']);
+                                                        $html .= ' <a href="' . $articleViewUrl . '" target="_blank" class="text-gray-600 hover:text-gray-800" title="Artikel-Info anzeigen"><svg class="inline-block w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"></path></svg></a>';
+                                                    }
+                                                    
+                                                    // Zusätzliches Symbol zum Vertragsartikel
+                                                    if (isset($item['contract_id'])) {
+                                                        $contractUrl = route('filament.admin.resources.supplier-contracts.view', $item['contract_id']);
+                                                        $html .= ' <a href="' . $contractUrl . '" target="_blank" class="text-blue-600 hover:text-blue-800" title="Vertrag anzeigen"><svg class="inline-block w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></a>';
+                                                    }
+                                                    
+                                                    $html .= '</div>';
                                                     $html .= '<div class="flex flex-wrap gap-4 mt-1">';
                                                     $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
                                                     $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
@@ -303,6 +338,15 @@ class ViewSolarPlantBilling extends ViewRecord
                                                     $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
                                                     $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
                                                     $html .= '</div>';
+                                                    
+                                                    // Artikel-Hinweis anzeigen falls vorhanden
+                                                    if (!empty($article['detailed_description'])) {
+                                                        $html .= '<div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">';
+                                                        $html .= '<div class="font-medium text-blue-800 mb-1">Hinweis:</div>';
+                                                        $html .= '<div class="text-blue-700">' . nl2br(htmlspecialchars($article['detailed_description'])) . '</div>';
+                                                        $html .= '</div>';
+                                                    }
+                                                    
                                                     $html .= '</div>';
                                                 }
                                                 $html .= '</div>';
@@ -368,7 +412,15 @@ class ViewSolarPlantBilling extends ViewRecord
                                             $html .= '<td class="px-3 py-6 border-r border-gray-300" style="vertical-align: top;">';
                                             $html .= '<div class="font-medium text-gray-900">' . htmlspecialchars($item['contract_title']) . '</div>';
                                             $html .= '<div class="text-sm text-gray-600 mt-1">';
-                                            $html .= 'Lieferant: <span class="text-blue-600 font-medium">' . $supplierName . '</span> | Abrechnungsnr.: <span class="text-orange-600 font-medium">' . $billingNumber . '</span>';
+                                            
+                                            // Lieferanten-Link
+                                            $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
+                                            $html .= 'Lieferant: <a href="' . $supplierUrl . '" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 hover:underline">' . $supplierName . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
+                                            
+                                            // Abrechnungs-Link  
+                                            $billingUrl = route('filament.admin.resources.supplier-contract-billings.view', $item['contract_billing_id']);
+                                            $html .= ' | Abrechnungsnr.: <a href="' . $billingUrl . '" target="_blank" class="text-orange-600 font-medium hover:text-orange-800 hover:underline">' . $billingNumber . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
+                                            
                                             $html .= '</div>';
                                             
                                             // Artikel-Details anzeigen
@@ -378,7 +430,34 @@ class ViewSolarPlantBilling extends ViewRecord
                                                 
                                                 foreach ($item['articles'] as $article) {
                                                     $html .= '<div class="text-xs text-gray-600 mb-1">';
-                                                    $html .= '<div class="font-medium">' . htmlspecialchars($article['article_name']) . '</div>';
+                                                    
+                                                    // Artikel-Name mit Links - sowohl zum Artikel als auch zum Vertrag
+                                                    $html .= '<div class="font-medium flex items-center gap-1">';
+                                                    
+                                                    // Artikel-Name als Link zum Artikel (ursprüngliche Verlinkung)
+                                                    if (isset($article['article_id']) && $article['article_id']) {
+                                                        $articleUrl = route('filament.admin.resources.articles.edit', $article['article_id']);
+                                                        $html .= '<a href="' . $articleUrl . '" target="_blank" class="text-purple-600 hover:text-purple-800 hover:underline" title="Artikel bearbeiten">' . htmlspecialchars($article['article_name']) . '</a>';
+                                                    } else {
+                                                        $html .= htmlspecialchars($article['article_name']);
+                                                    }
+                                                    
+                                                    // Text "info_artikel_xxx" nach dem Artikel-Namen hinzufügen
+                                                    $html .= ' <span class="text-gray-500 text-xs">info_artikel_xxx_2</span> ('. $article['article_id'].')';
+                                                    
+                                                    // Info-Symbol zum Artikel
+                                                    if (isset($article['article_id']) && $article['article_id']) {
+                                                        $articleViewUrl = route('filament.admin.resources.articles.edit', $article['article_id']);
+                                                        $html .= ' <a href="' . $articleViewUrl . '" target="_blank" class="text-gray-600 hover:text-gray-800" title="Artikel-Info anzeigen"><svg class="inline-block w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"></path></svg></a>';
+                                                    }
+                                                    
+                                                    // Zusätzliches Symbol zum Vertragsartikel
+                                                    if (isset($item['contract_id'])) {
+                                                        $contractUrl = route('filament.admin.resources.supplier-contracts.view', $item['contract_id']);
+                                                        $html .= ' <a href="' . $contractUrl . '" target="_blank" class="text-blue-600 hover:text-blue-800" title="Vertrag anzeigen"><svg class="inline-block w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></a>';
+                                                    }
+                                                    
+                                                    $html .= '</div>';
                                                     $html .= '<div class="flex flex-wrap gap-4 mt-1">';
                                                     $html .= '<span>Menge: ' . number_format($article['quantity'], 4, ',', '.') . ' ' . htmlspecialchars($article['unit']) . '</span>';
                                                     $html .= '<span>Preis: ' . number_format($article['unit_price'], 6, ',', '.') . ' €</span>';
@@ -386,6 +465,15 @@ class ViewSolarPlantBilling extends ViewRecord
                                                     $html .= '<span>Steuer: ' . number_format($article['tax_rate'] * 100, 1, ',', '.') . '% = ' . number_format($article['tax_amount'], 2, ',', '.') . ' €</span>';
                                                     $html .= '<span>Gesamt brutto: ' . number_format($article['total_price_gross'], 2, ',', '.') . ' €</span>';
                                                     $html .= '</div>';
+                                                    
+                                                    // Artikel-Hinweis anzeigen falls vorhanden
+                                                    if (!empty($article['detailed_description'])) {
+                                                        $html .= '<div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs">';
+                                                        $html .= '<div class="font-medium text-orange-800 mb-1">Hinweis:</div>';
+                                                        $html .= '<div class="text-orange-700">' . nl2br(htmlspecialchars($article['detailed_description'])) . '</div>';
+                                                        $html .= '</div>';
+                                                    }
+                                                    
                                                     $html .= '</div>';
                                                 }
                                                 $html .= '</div>';
@@ -777,6 +865,42 @@ class ViewSolarPlantBilling extends ViewRecord
                     ->collapsible()
                     ->collapsed(false)
                     ->visible(fn ($record) => $record->net_amount != 0), // Nur anzeigen wenn Betrag != 0
+
+                Infolists\Components\Section::make('Hinweise')
+                    ->icon('heroicon-o-information-circle')
+                    ->description('Wichtige Informationen zu Ihrer Abrechnung')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('billing_hints')
+                            ->label('')
+                            ->state(function ($record) {
+                                $solarPlant = $record->solarPlant;
+                                $customer = $record->customer;
+                                $participation = $solarPlant->participations()
+                                    ->where('customer_id', $customer->id)
+                                    ->first();
+                                $currentPercentage = $participation ? $participation->percentage : $record->participation_percentage;
+
+                                $hints = [];
+                                $hints[] = "• Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {$solarPlant->name}.";
+                                $hints[] = "• Ihr aktueller Beteiligungsanteil beträgt " . number_format($currentPercentage, 2, ',', '.') . "%.";
+                                $hints[] = "• Die Abrechnung der Marktprämie erfolgt Umsatzsteuerfrei.";
+                                
+                                if ($record->total_credits > 0) {
+                                    $hints[] = "• Die Einnahmen/Gutschriften stammen aus Vertragsabrechnungen unserer Lieferanten für diese Solaranlage.";
+                                }
+                                
+                                $hints[] = "• Bei Fragen zu dieser Abrechnung wenden Sie sich bitte an uns.";
+
+                                return implode("\n", $hints);
+                            })
+                            ->prose()
+                            ->markdown()
+                            ->color('info'),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed(false)
+                    ->visible(fn ($record) => $record->show_hints ?? true),
 
                 Infolists\Components\Section::make('Zahlungsinformationen')
                     ->icon('heroicon-o-credit-card')

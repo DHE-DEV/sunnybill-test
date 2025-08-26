@@ -399,65 +399,130 @@ class ArticlesRelationManager extends RelationManager
                         ->modalWidth('4xl')
                         ->fillForm(function ($record): array {
                             return [
+                                // Artikel-Daten
                                 'name' => $record->name,
                                 'description' => $record->description,
-                                'formatted_price' => $record->formatted_price,
-                                'tax_rate_percent' => $record->tax_rate_percent,
+                                'notes' => $record->notes,
+                                'type' => $record->type,
                                 'unit' => $record->unit,
+                                'price' => $record->price,
+                                'tax_rate_name' => $record->taxRate?->name ?? 'Unbekannt',
+                                'decimal_places' => $record->decimal_places ?? 2,
+                                'total_decimal_places' => $record->total_decimal_places ?? 2,
+                                // Pivot-Daten
                                 'quantity' => $record->pivot->quantity,
                                 'unit_price' => $record->pivot->unit_price,
-                                'notes' => $record->pivot->notes,
+                                'unit_price_override' => $record->pivot->unit_price !== $record->price ? $record->pivot->unit_price : null,
+                                'supplier_notes' => $record->pivot->notes,
                                 'is_active' => $record->pivot->is_active,
                                 'billing_requirement' => $record->pivot->billing_requirement,
                                 'created_at' => $record->pivot->created_at,
+                                'updated_at' => $record->updated_at,
                             ];
                         })
                         ->form([
-                            Forms\Components\Section::make('Artikel-Details')
+                            Forms\Components\Section::make('Artikel-Details yyy')
+                                ->description('Vollständige Übersicht aller Artikel-Eigenschaften und der Verknüpfung mit diesem Lieferanten.')
                                 ->schema([
                                     Forms\Components\TextInput::make('name')
                                         ->label('Artikelname')
                                         ->disabled()
                                         ->columnSpanFull(),
+                                    
                                     Forms\Components\Textarea::make('description')
                                         ->label('Beschreibung')
                                         ->disabled()
+                                        ->rows(2)
                                         ->columnSpanFull(),
-                                    Forms\Components\TextInput::make('quantity')
-                                        ->label('Menge')
+                                    
+                                    Forms\Components\Textarea::make('notes')
+                                        ->label('Ausführliche Erklärung')
                                         ->disabled()
-                                        ->formatStateUsing(fn ($state) => number_format($state, 2)),
+                                        ->rows(4)
+                                        ->columnSpanFull()
+                                        ->visible(fn ($get) => !empty($get('notes'))),
+                                    
+                                    Forms\Components\TextInput::make('type')
+                                        ->label('Artikeltyp')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => match (strtolower($state)) {
+                                            'service' => 'Dienstleistung',
+                                            'product' => 'Produkt',
+                                            'subscription' => 'Abonnement',
+                                            'maintenance' => 'Wartung',
+                                            'other' => 'Sonstiges',
+                                            default => $state,
+                                        }),
+                                    
                                     Forms\Components\TextInput::make('unit')
                                         ->label('Einheit')
                                         ->disabled(),
-                                    Forms\Components\TextInput::make('formatted_price')
-                                        ->label('Preis netto')
+                                    
+                                    Forms\Components\TextInput::make('price')
+                                        ->label('Preis (Netto)')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => number_format($state, 6, ',', '.') . ' €'),
+                                    
+                                    Forms\Components\TextInput::make('tax_rate_name')
+                                        ->label('Steuersatz')
                                         ->disabled(),
-                                    Forms\Components\TextInput::make('tax_rate_percent')
-                                        ->label('zzgl. Steuer')
+                                    
+                                    Forms\Components\TextInput::make('decimal_places')
+                                        ->label('Nachkommastellen (Preis)')
                                         ->disabled(),
+                                    
+                                    Forms\Components\TextInput::make('total_decimal_places')
+                                        ->label('Nachkommastellen (Gesamtpreis)')
+                                        ->disabled(),
+                                ])->columns(2),
+                            
+                            Forms\Components\Section::make('Lieferantenverknüpfung')
+                                ->description('Details zur Verknüpfung dieses Artikels mit dem Lieferanten.')
+                                ->schema([
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->label('Menge')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => number_format($state, 2) . ' Stk.'),
+                                    
                                     Forms\Components\TextInput::make('unit_price')
-                                        ->label('Stückpreis')
+                                        ->label('Verwendeter Stückpreis')
                                         ->disabled()
-                                        ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . ' €')
-                                        ->hiddenOn('view'),
-                                    Forms\Components\Textarea::make('notes')
-                                        ->label('Notizen')
+                                        ->formatStateUsing(fn ($state) => number_format($state, 6, ',', '.') . ' €'),
+                                    
+                                    Forms\Components\TextInput::make('unit_price_override')
+                                        ->label('Abweichender Stückpreis')
                                         ->disabled()
+                                        ->formatStateUsing(fn ($state) => $state ? number_format($state, 6, ',', '.') . ' €' : 'Standard-Artikelpreis verwendet')
                                         ->columnSpanFull(),
+                                    
+                                    Forms\Components\Textarea::make('supplier_notes')
+                                        ->label('Lieferantennotizen')
+                                        ->disabled()
+                                        ->rows(3)
+                                        ->columnSpanFull()
+                                        ->visible(fn ($get) => !empty($get('supplier_notes'))),
+                                    
                                     Forms\Components\Toggle::make('is_active')
                                         ->label('Aktiv')
                                         ->disabled(),
+                                    
                                     Forms\Components\TextInput::make('billing_requirement')
                                         ->label('Abrechnungsanforderung')
+                                        ->disabled()
                                         ->formatStateUsing(fn ($state) => match ($state) {
                                             'optional' => 'Optional',
-                                            'mandatory' => 'Pflicht',
+                                            'mandatory' => 'Pflichtartikel',
                                             default => $state,
-                                        })
-                                        ->disabled(),
+                                        }),
+                                    
                                     Forms\Components\TextInput::make('created_at')
                                         ->label('Hinzugefügt am')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => $state instanceof \Carbon\Carbon ? $state->format('d.m.Y H:i') : $state)
+                                        ->columnSpanFull(),
+                                    
+                                    Forms\Components\TextInput::make('updated_at')
+                                        ->label('Zuletzt geändert am')
                                         ->disabled()
                                         ->formatStateUsing(fn ($state) => $state instanceof \Carbon\Carbon ? $state->format('d.m.Y H:i') : $state)
                                         ->columnSpanFull(),
@@ -488,8 +553,8 @@ class ArticlesRelationManager extends RelationManager
                             ];
                         })
                         ->form([
-                            Forms\Components\Section::make('Artikel bearbeiten')
-                                ->description('Bearbeiten Sie die Artikel-Eigenschaften und die Verknüpfung mit diesem Lieferanten.')
+                            Forms\Components\Section::make('Artikel bearbeiten xxx')
+                                ->description('Bearbeiten Sie die Artikel-Eigenschaften und die Verknüpfung mit diesem Lieferanten. xxx')
                                 ->schema([
                                     Forms\Components\TextInput::make('name')
                                         ->label('Artikelname')

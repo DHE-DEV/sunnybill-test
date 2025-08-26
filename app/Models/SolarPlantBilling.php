@@ -22,7 +22,8 @@ class SolarPlantBilling extends Model
         parent::boot();
         
         static::creating(function ($billing) {
-            if (empty($billing->invoice_number)) {
+            // Only generate invoice number if it's not already provided
+            if (empty($billing->invoice_number) || is_null($billing->invoice_number)) {
                 $billing->invoice_number = static::generateInvoiceNumber();
             }
         });
@@ -183,6 +184,45 @@ class SolarPlantBilling extends Model
     }
 
     /**
+     * Generiert mehrere fortlaufende Rechnungsnummern auf einmal (thread-safe)
+     */
+    public static function generateBatchInvoiceNumbers(int $count): array
+    {
+        if ($count <= 0) {
+            return [];
+        }
+
+        $currentYear = date('Y');
+        $prefix = "RG-{$currentYear}-";
+        
+        // Verwende Database Lock für thread-safe Operation
+        return \DB::transaction(function() use ($prefix, $count) {
+            // Hole die letzte Rechnungsnummer für das aktuelle Jahr mit FOR UPDATE Lock
+            $lastBilling = static::where('invoice_number', 'LIKE', $prefix . '%')
+                ->orderBy('invoice_number', 'desc')
+                ->lockForUpdate()
+                ->first();
+            
+            if ($lastBilling) {
+                // Extrahiere die Nummer aus der letzten Rechnungsnummer
+                $lastNumber = intval(substr($lastBilling->invoice_number, strlen($prefix)));
+                $startNumber = $lastNumber + 1;
+            } else {
+                // Erste Rechnung des Jahres
+                $startNumber = 1;
+            }
+            
+            $invoiceNumbers = [];
+            for ($i = 0; $i < $count; $i++) {
+                $number = $startNumber + $i;
+                $invoiceNumbers[] = $prefix . str_pad($number, 6, '0', STR_PAD_LEFT);
+            }
+            
+            return $invoiceNumbers;
+        });
+    }
+
+    /**
      * Prüft ob alle Vertragsabrechnungen für eine Solaranlage und einen Monat vorhanden sind
      */
     public static function canCreateBillingForMonth(string $solarPlantId, int $year, int $month): bool
@@ -236,8 +276,8 @@ class SolarPlantBilling extends Model
             throw new \Exception('Keine aktiven Kundenbeteiligungen gefunden');
         }
 
-        $createdBillings = [];
-
+        // Filtere Beteiligungen für die noch keine Abrechnung existiert
+        $participationsToProcess = [];
         foreach ($participations as $participation) {
             // Prüfe ob bereits eine Abrechnung für diesen Kunden und Monat existiert (auch gelöschte)
             $existingBilling = self::withTrashed()
@@ -251,16 +291,29 @@ class SolarPlantBilling extends Model
                 if ($existingBilling->trashed()) {
                     // Wenn die Abrechnung gelöscht wurde, entferne sie permanent und erstelle eine neue
                     $existingBilling->forceDelete();
+                    $participationsToProcess[] = $participation;
                 } else {
                     // Abrechnung existiert bereits und ist nicht gelöscht - überspringe
                     continue;
                 }
+            } else {
+                $participationsToProcess[] = $participation;
             }
+        }
 
+        if (empty($participationsToProcess)) {
+            return [];
+        }
+
+        // Generiere alle Rechnungsnummern im Voraus um Duplikate zu vermeiden
+        $invoiceNumbers = self::generateBatchInvoiceNumbers(count($participationsToProcess));
+        $createdBillings = [];
+        
+        foreach ($participationsToProcess as $index => $participation) {
             // Berechne Kosten und Gutschriften für diesen Kunden
             $costData = self::calculateCostsForCustomer($solarPlantId, $participation->customer_id, $year, $month, $participation->percentage);
 
-            // Erstelle die Abrechnung
+            // Erstelle die Abrechnung mit vorgenerierter Rechnungsnummer
             $billing = self::create([
                 'solar_plant_id' => $solarPlantId,
                 'customer_id' => $participation->customer_id,
@@ -278,6 +331,7 @@ class SolarPlantBilling extends Model
                 'credit_breakdown' => $costData['credit_breakdown'],
                 'status' => 'draft',
                 'created_by' => auth()->id(),
+                'invoice_number' => $invoiceNumbers[$index],
             ]);
 
             $createdBillings[] = $billing;
@@ -409,7 +463,7 @@ class SolarPlantBilling extends Model
                         'tax_amount' => $taxAmount,
                         'total_price_gross' => $grossTotal,
                         'description' => $article->description,
-                        'detailed_description' => $article->detailed_description,
+                        'detailed_description' => $article->detailed_description ?: ($articleRecord ? $articleRecord->detailed_description : '') ?: '',
                     ];
                 }
                 
@@ -484,7 +538,7 @@ class SolarPlantBilling extends Model
                         'tax_amount' => $taxAmount,
                         'total_price_gross' => $grossTotal,
                         'description' => $article->description,
-                        'detailed_description' => $article->detailed_description,
+                        'detailed_description' => $article->detailed_description ?: ($articleRecord ? $articleRecord->detailed_description : '') ?: '',
                     ];
                 }
 

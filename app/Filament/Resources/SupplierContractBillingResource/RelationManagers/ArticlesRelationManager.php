@@ -40,7 +40,7 @@ class ArticlesRelationManager extends RelationManager
         return $form
             ->schema([
                 Forms\Components\Select::make('article_group')
-                    ->label('Artikelgruppe')
+                    ->label('Artikelgruppe_xxx')
                     ->options([
                         'supplier' => 'Lieferantengebundene Artikel',
                         'contract' => 'Vertragsgebundene Artikel',
@@ -242,6 +242,17 @@ class ArticlesRelationManager extends RelationManager
                         return strlen($state) > 50 ? $state : null;
                     }),
 
+                Tables\Columns\TextColumn::make('detailed_description')
+                    ->label('Hinweistext')
+                    ->searchable()
+                    ->limit(60)
+                    ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
+                        $state = $column->getState();
+                        return strlen($state) > 60 ? $state : null;
+                    })
+                    ->placeholder('Kein Hinweistext')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('quantity')
                     ->label('Menge')
                     ->numeric(decimalPlaces: 4)
@@ -324,6 +335,7 @@ class ArticlesRelationManager extends RelationManager
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\EditAction::make()
                         ->label('Bearbeiten')
+                        ->modalWidth('4xl')
                         ->fillForm(function ($record): array {
                             // Bestimme die Artikelgruppe basierend auf der Herkunft
                             $articleGroup = null;
@@ -352,17 +364,237 @@ class ArticlesRelationManager extends RelationManager
                             }
                             
                             return [
+                                // Artikel-Gruppierung
                                 'article_group' => $articleGroup,
                                 'article_id' => $record->article_id,
-                                'detailed_description' => $record->detailed_description ?? $record->article?->notes, // Lade die gespeicherte oder Artikel-Beschreibung
+                                // Artikel-Grunddaten
+                                'name' => $record->article?->name,
+                                'article_description' => $record->article?->description,
+                                'type' => $record->article?->type,
+                                'unit' => $record->article?->unit,
+                                'price' => $record->article?->price,
+                                'tax_rate_name' => $record->article?->taxRate?->name ?? 'Unbekannt',
+                                'decimal_places' => $record->article?->decimal_places ?? 2,
+                                'total_decimal_places' => $record->article?->total_decimal_places ?? 2,
+                                // Abrechnungs-spezifische Daten
+                                'description' => $record->description,
+                                'detailed_description' => $record->detailed_description ?? $record->article?->notes,
                                 'quantity' => $record->quantity,
                                 'unit_price' => $record->unit_price,
                                 'total_price' => $record->total_price,
-                                'description' => $record->description,
                                 'notes' => $record->notes,
                                 'is_active' => $record->is_active,
+                                'created_at' => $record->created_at,
+                                'updated_at' => $record->updated_at,
                             ];
                         })
+                        ->form([
+                            Forms\Components\Section::make('Artikel bearbeiten xxx')
+                                ->description('Bearbeiten Sie die Artikel-Eigenschaften und die Verknüpfung mit dieser Abrechnung.')
+                                ->schema([
+                                    Forms\Components\Select::make('article_group')
+                                        ->label('Artikelgruppe_xxx')
+                                        ->options([
+                                            'supplier' => 'Lieferantengebundene Artikel',
+                                            'contract' => 'Vertragsgebundene Artikel',
+                                            'customer' => 'Kundengebundene Artikel', 
+                                            'solar_plant' => 'Solaranlagengebundene Artikel',
+                                        ])
+                                        ->placeholder('Wählen Sie eine Artikelgruppe')
+                                        ->reactive()
+                                        ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                            // Reset article selection when group changes
+                                            $set('article_id', null);
+                                            $set('unit_price', null);
+                                            $set('description', null);
+                                            $set('total_price', null);
+                                        })
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Select::make('article_id')
+                                        ->label('Artikel')
+                                        ->searchable()
+                                        ->preload()
+                                        ->required()
+                                        ->reactive()
+                                        ->visible(fn (callable $get) => $get('article_group'))
+                                        ->options(function (callable $get) {
+                                            $group = $get('article_group');
+                                            $ownerRecord = $this->getOwnerRecord();
+                                            
+                                            if (!$group || !$ownerRecord) {
+                                                return [];
+                                            }
+
+                                            $supplierId = $ownerRecord->supplierContract->supplier_id;
+                                            $contractId = $ownerRecord->supplier_contract_id;
+                                            
+                                            return match ($group) {
+                                                'supplier' => Article::whereHas('suppliers', function ($query) use ($supplierId) {
+                                                    $query->where('supplier_article.supplier_id', $supplierId)
+                                                          ->where('supplier_article.billing_requirement', 'mandatory');
+                                                })->pluck('name', 'id'),
+                                                
+                                                'contract' => Article::whereHas('supplierContracts', function ($query) use ($contractId) {
+                                                    $query->where('supplier_contract_articles.supplier_contract_id', $contractId)
+                                                          ->where('supplier_contract_articles.billing_requirement', 'mandatory');
+                                                })->pluck('name', 'id'),
+                                                
+                                                'customer' => Article::whereHas('customers', function ($query) use ($ownerRecord) {
+                                                    $customerIds = $ownerRecord->supplierContract->solarPlants()
+                                                        ->with('customers')
+                                                        ->get()
+                                                        ->pluck('customers')
+                                                        ->flatten()
+                                                        ->pluck('id')
+                                                        ->unique();
+                                                    
+                                                    $query->whereIn('customer_article.customer_id', $customerIds)
+                                                          ->where('customer_article.billing_requirement', 'mandatory');
+                                                })->pluck('name', 'id'),
+                                                
+                                                'solar_plant' => Article::whereHas('solarPlants', function ($query) use ($ownerRecord) {
+                                                    $solarPlantIds = $ownerRecord->supplierContract->solarPlants()->pluck('id');
+                                                    $query->whereIn('solar_plant_article.solar_plant_id', $solarPlantIds)
+                                                          ->where('solar_plant_article.billing_requirement', 'mandatory');
+                                                })->pluck('name', 'id'),
+                                                
+                                                default => [],
+                                            };
+                                        })
+                                        ->afterStateUpdated(function (callable $get, callable $set, $state, $record) {
+                                            if ($state) {
+                                                $article = Article::find($state);
+                                                if ($article) {
+                                                    $set('unit_price', $article->price);
+                                                    $set('description', $article->description ?? $article->name);
+                                                    $set('detailed_description', $article->notes ?? '');
+                                                }
+                                            }
+                                        }),
+                                    
+                                    Forms\Components\Placeholder::make('article_info')
+                                        ->label('Artikel-Details')
+                                        ->content(function (callable $get) {
+                                            $articleId = $get('article_id');
+                                            if (!$articleId) return 'Kein Artikel ausgewählt';
+                                            
+                                            $article = Article::with('taxRate')->find($articleId);
+                                            if (!$article) return 'Artikel nicht gefunden';
+                                            
+                                            return "Name: {$article->name}\n" .
+                                                   "Beschreibung: " . ($article->description ?? 'Keine Beschreibung') . "\n" .
+                                                   "Typ: " . match($article->type) {
+                                                       'service' => 'Dienstleistung',
+                                                       'product' => 'Produkt',
+                                                       'subscription' => 'Abonnement',
+                                                       'maintenance' => 'Wartung',
+                                                       'other' => 'Sonstiges',
+                                                       default => $article->type ?? 'Unbekannt',
+                                                   } . "\n" .
+                                                   "Einheit: " . ($article->unit ?? 'Stk.') . "\n" .
+                                                   "Standard-Preis: " . number_format($article->price ?? 0, 6, ',', '.') . " €\n" .
+                                                   "Steuersatz: " . ($article->taxRate?->name ?? 'Unbekannt') . "\n" .
+                                                   "Nachkommastellen (Preis): " . ($article->decimal_places ?? 2) . "\n" .
+                                                   "Nachkommastellen (Gesamt): " . ($article->total_decimal_places ?? 2);
+                                        })
+                                        ->visible(fn (callable $get) => $get('article_id'))
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\TextInput::make('description')
+                                        ->label('Beschreibung')
+                                        ->maxLength(255)
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Textarea::make('detailed_description')
+                                        ->label('Ausführliche Artikelbeschreibung')
+                                        ->rows(5)
+                                        ->maxLength(5000)
+                                        ->columnSpanFull()
+                                        ->helperText('Diese Beschreibung wird aus dem Artikelstamm vorausgefüllt, kann aber für diese Abrechnung individuell angepasst werden.')
+                                        ->visible(fn (callable $get, $state) => $get('article_id') || !empty($state))
+                                        ->placeholder('Keine ausführliche Beschreibung vorhanden'),
+
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->label('Menge')
+                                        ->required()
+                                        ->numeric()
+                                        ->step(0.0001)
+                                        ->default(1)
+                                        ->minValue(0)
+                                        ->reactive()
+                                        ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                            $unitPrice = $get('unit_price');
+                                            if ($unitPrice && $state) {
+                                                $set('total_price', $unitPrice * $state);
+                                            }
+                                        }),
+
+                                    Forms\Components\TextInput::make('unit_price')
+                                        ->label('Einzelpreis')
+                                        ->required()
+                                        ->numeric()
+                                        ->step(0.000001)
+                                        ->prefix('€')
+                                        ->minValue(0)
+                                        ->reactive()
+                                        ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                            $quantity = $get('quantity');
+                                            if ($quantity && $state) {
+                                                $set('total_price', $quantity * $state);
+                                            }
+                                        }),
+
+                                    Forms\Components\TextInput::make('total_price')
+                                        ->label('Gesamtpreis netto')
+                                        ->numeric()
+                                        ->step(0.01)
+                                        ->prefix('€')
+                                        ->disabled()
+                                        ->dehydrated(true),
+
+                                    Forms\Components\Placeholder::make('article_tax_info')
+                                        ->label('Steuersatz des Artikels')
+                                        ->content(function (callable $get) {
+                                            $articleId = $get('article_id');
+                                            if (!$articleId) return 'Kein Artikel ausgewählt';
+                                            
+                                            $article = Article::with('taxRate')->find($articleId);
+                                            if (!$article) return 'Artikel nicht gefunden';
+                                            
+                                            $taxRate = $article->getCurrentTaxRate();
+                                            $totalPrice = $get('total_price') ?? 0;
+                                            $grossPrice = $totalPrice * (1 + $taxRate);
+                                            $decimalPlaces = $article->total_decimal_places ?? 2;
+                                            
+                                            return "MwSt.: " . number_format($taxRate * 100, 2) . "%\n" .
+                                                   "Gesamtpreis brutto: " . number_format($grossPrice, $decimalPlaces, ',', '.') . " €";
+                                        })
+                                        ->visible(fn (callable $get) => $get('article_id'))
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Textarea::make('notes')
+                                        ->label('Notizen')
+                                        ->rows(3)
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Toggle::make('is_active')
+                                        ->label('Aktiv')
+                                        ->default(true),
+                                        
+                                    Forms\Components\TextInput::make('created_at')
+                                        ->label('Erstellt am')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => $state instanceof \Carbon\Carbon ? $state->format('d.m.Y H:i') : $state)
+                                        ->columnSpanFull(),
+                                        
+                                    Forms\Components\TextInput::make('updated_at')
+                                        ->label('Zuletzt geändert am')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => $state instanceof \Carbon\Carbon ? $state->format('d.m.Y H:i') : $state)
+                                        ->columnSpanFull(),
+                                ])->columns(2),
+                        ])
                         ->mutateFormDataUsing(function (array $data): array {
                             // Berechne den Gesamtpreis beim Bearbeiten
                             $data['total_price'] = $data['quantity'] * $data['unit_price'];

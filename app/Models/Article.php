@@ -17,6 +17,7 @@ class Article extends Model
     protected $fillable = [
         'name',
         'description',
+        'detailed_description',
         'notes',
         'type',
         'price',
@@ -48,7 +49,7 @@ class Article extends Model
             $changedFields = [];
             $original = $article->getOriginal();
             
-            foreach (['name', 'description', 'type', 'price', 'tax_rate', 'tax_rate_id', 'unit', 'decimal_places', 'total_decimal_places'] as $field) {
+            foreach (['name', 'description', 'detailed_description', 'type', 'price', 'tax_rate', 'tax_rate_id', 'unit', 'decimal_places', 'total_decimal_places'] as $field) {
                 if ($article->wasChanged($field)) {
                     $changedFields[$field] = [
                         'old' => $original[$field] ?? null,
@@ -266,5 +267,13 @@ class Article extends Model
     public function canBeDeleted(): bool
     {
         return !$this->isUsedInInvoices();
+    }
+
+    /**
+     * Prüft ob der Artikel an Lieferantenverträge gebunden ist
+     */
+    public function isContractBound(): bool
+    {
+        return $this->supplierContracts()->exists();
     }
 }
