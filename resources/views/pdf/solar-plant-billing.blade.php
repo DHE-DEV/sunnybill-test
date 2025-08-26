@@ -819,9 +819,9 @@
                             <tbody>
                                 <tr>
                                     <td style="text-align: center; padding: 4px 8px;">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
-                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
+                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format(abs($credit['customer_share_net'] ?? 0), 2, ',', '.') }}</td>
                                     <td style="text-align: center; padding: 4px 8px;">{{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
-                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                                    <td style="text-align: right; padding: 4px 8px;">{{ number_format(abs($credit['customer_share'] ?? 0), 2, ',', '.') }}</td>
                                 </tr>
                             </tbody>
                         </table>
