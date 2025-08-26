@@ -386,7 +386,7 @@
     <div class="billing-info">
         <table>
             <tr>
-                <td>Rechnungs-Nr.:</td>
+                <td>Belegnummer:</td>
                 <td>{{ $billing->invoice_number }}</td>
             </tr>
             <tr>
@@ -410,7 +410,7 @@
     </div>
     
     <div class="billing-period">
-        <h3>Kundeninformation zur Abrechnungsperiode {{ $monthName }} {{ $billing->billing_year }}</h3>
+        <h3>Gutschrift für Einspeisungsperiode {{ $monthName }} {{ $billing->billing_year }}</h3>
     </div>
 
     <!-- Anlageninfo -->
@@ -552,7 +552,7 @@
     <div class="footer-first-page" style="margin-top: 50px;">
         <!-- Erste Zeile: Rechnungsnummer mittig mit Seitenangabe -->
         <div style="text-align: center; margin-bottom: 5px;">
-            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>@if(isset($totalPages) && $totalPages > 0) von {{ $totalPages }}@endif
+            Belegnummer: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>@if(isset($totalPages) && $totalPages > 0) von {{ $totalPages }}@endif
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
@@ -632,7 +632,7 @@
                                 <tr>
                                     <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Ihr Anteil</th>
                                     <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Netto (€)</th>
-                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">MwSt.</th>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">USt.</th>
                                     <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Gesamtbetrag Brutto (€)</th>
                                 </tr>
                             </thead>
@@ -957,7 +957,7 @@
                 </div>
             </div>
             <div style="display: table-row;">
-                <div style="display: table-cell; padding: 1px 0;">Zzgl. MwSt. von 19%:</div>
+                <div style="display: table-cell; padding: 1px 0;">Zzgl. USt. von 19%:</div>
                 <div style="display: table-cell; text-align: right; padding: 1px 0;">
                     {{ number_format(abs($billing->total_vat_amount ?? 0), 2, ',', '.') }} €
                 </div>
@@ -1004,7 +1004,7 @@
     <div class="footer">
         <!-- Erste Zeile: Rechnungsnummer mittig mit Seitenangabe -->
         <div style="text-align: center; margin-bottom: 5px;">
-            Rechnungs-Nr.: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>@if(isset($totalPages) && $totalPages > 0) von {{ $totalPages }}@endif
+            Belegnummer: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>@if(isset($totalPages) && $totalPages > 0) von {{ $totalPages }}@endif
         </div>
         
         <!-- Zeile 2: Firmeninfo -->
