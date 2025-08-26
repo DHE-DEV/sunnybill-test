@@ -391,8 +391,7 @@ class SolarPlantBillingResource extends Resource
                             ->label('Bemerkung')
                             ->helperText('Wird auf der PDF Abrechnung unter der Gesamtsumme angezeigt.')
                             ->rows(3)
-                            ->default('Diese Rechnung / Gutschrift, wurde maschinell erstellt und bedarf keiner Unterschrift.
-Wir legen höchsten Wert auf Transparenz und hoffen, dass wir ihnen die abrechnungsrelevanten Positionen klar und einfach verständlich erläutern konnten. Sollten Sie noch weitere Informationen zu Ihrer Abrechnung wünschen, rufen Sie uns gerne unter 02234-4300614 an oder schreiben Sie uns  eine Mail mit Ihrem Anliegen an: abrechnung@prosoltec-anlagenbetreiber.de'),
+                            ->default('Diese Rechnung / Gutschrift, wurde maschinell erstellt und bedarf keiner Unterschrift. Wir legen höchsten Wert auf Transparenz und hoffen, dass wir ihnen die abrechnungsrelevanten Positionen klar und einfach verständlich erläutern konnten. Sollten Sie noch weitere Informationen zu Ihrer Abrechnung wünschen, rufen Sie uns gerne unter 02234-4300614 an oder schreiben Sie uns  eine Mail mit Ihrem Anliegen an: abrechnung@prosoltec-anlagenbetreiber.de'),
 
                         Forms\Components\Toggle::make('show_hints')
                             ->label('Hinweistext auf PDF anzeigen')
