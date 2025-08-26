@@ -520,12 +520,12 @@
                             <br><small style="font-style: italic; color: #666;">{{ $credit['billing_description'] }}</small>
                         @endif
                     </td>
-                    <td class="number">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
+                    <td class="number">{{ number_format(abs($credit['customer_share_net'] ?? 0), 2, ',', '.') }}</td>
                     <td class="number">
                         {{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%<br>
-                        <small>{{ number_format(($credit['customer_share'] ?? 0) - ($credit['customer_share_net'] ?? 0), 2, ',', '.') }} €</small>
+                        <small>{{ number_format(abs(($credit['customer_share'] ?? 0) - ($credit['customer_share_net'] ?? 0)), 2, ',', '.') }} €</small>
                     </td>
-                    <td class="number">{{ number_format($credit['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                    <td class="number">{{ number_format(abs($credit['customer_share'] ?? 0), 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             @elseif($billing->total_credits > 0)
@@ -537,19 +537,19 @@
                         <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 2, ',', '.') }}% Anteil</small><br>
                         <small style="color: #888;">Sammelposten</small>
                     </td>
-                    <td class="number">{{ number_format(($billing->total_credits_net ?? $billing->total_credits), 2, ',', '.') }}</td>
+                    <td class="number">{{ number_format(abs($billing->total_credits_net ?? $billing->total_credits), 2, ',', '.') }}</td>
                     <td class="number">
                         19%<br>
-                        <small>{{ number_format(($billing->total_credits) - ($billing->total_credits_net ?? $billing->total_credits), 2, ',', '.') }} €</small>
+                        <small>{{ number_format(abs(($billing->total_credits) - ($billing->total_credits_net ?? $billing->total_credits)), 2, ',', '.') }} €</small>
                     </td>
-                    <td class="number">{{ number_format($billing->total_credits, 2, ',', '.') }}</td>
+                    <td class="number">{{ number_format(abs($billing->total_credits), 2, ',', '.') }}</td>
                 </tr>
             @endif
 
             <!-- Detaillierte Auflistung der Kosten -->
             @if(!empty($billing->cost_breakdown))
                 @foreach($billing->cost_breakdown as $cost)
-                <tr style="background: #fff8f8;">
+                <tr style="background: #ffffff;">
                     <td>{{ $positionCounter++ }}</td>
                     <td>
                         <strong>{{ $cost['contract_title'] ?? 'Betriebskosten' }}</strong><br>
