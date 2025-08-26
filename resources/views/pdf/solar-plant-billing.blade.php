@@ -538,7 +538,7 @@
 
 
     <!-- Gesamtergebnis prominent -->
-    <div style="clear: both; margin: 44px 0; text-align: center;">
+    <div style="clear: both; margin: 44px 0; text-align: center; page-break-inside: avoid;">
         <div style="display: inline-block; background: #f0f8ff; color: black; padding: 5px 30px; border-radius: 5px; font-size: 14pt; font-weight: bold;">
             @if($billing->net_amount < 0)
                 Ihre Gutschrift beträgt: {{ number_format(abs($billing->net_amount), 2, ',', '.') }} €
@@ -944,7 +944,7 @@
     @endif
 
     <!-- MwSt.-Aufschlüsselung -->
-    <div style="margin-top: 30px; background: #e6f3ff; color: black; padding: 15px; border-radius: 5px;">
+    <div style="margin-top: 30px; background: #e6f3ff; color: black; padding: 15px; border-radius: 5px; page-break-inside: avoid;">
         <div style="display: table; width: 100%; font-size: 9pt;">
             <div style="display: table-row;">
                 <div style="display: table-cell; padding: 1px 0;">
@@ -977,7 +977,7 @@
 
     <!-- Bemerkung -->
     @if($billing->notes)
-    <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
+    <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0; page-break-inside: avoid;">
         <div style="font-size: 9pt; color: #374151; line-height: 1.4;">
             {!! nl2br(e($billing->notes)) !!}
         </div>
