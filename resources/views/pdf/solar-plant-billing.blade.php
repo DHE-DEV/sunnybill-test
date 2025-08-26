@@ -497,9 +497,8 @@
             <tr>
                 <th>Pos.</th>
                 <th>Beschreibung</th>
-                <th>Lieferant/Vertrag</th>
                 <th class="number">Netto (€)</th>
-                <th class="number">MwSt./USt.</th>
+                <th class="number">USt.</th>
                 <th class="number">Brutto (€)</th>
             </tr>
         </thead>
@@ -515,15 +514,10 @@
                     <td>{{ $positionCounter++ }}</td>
                     <td>
                         <strong>{{ $credit['contract_title'] ?? 'Einnahmen/Gutschriften' }}</strong><br>
-                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($credit['customer_percentage'] ?? $currentPercentage, 2, ',', '.') }}% Anteil</small>
+                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($credit['customer_percentage'] ?? $currentPercentage, 2, ',', '.') }}% Anteil</small><br>
+                        <small style="color: #888;">{{ $credit['supplier_name'] ?? 'Unbekannt' }}@if(!empty($credit['contract_number'])) - {{ $credit['contract_number'] }}@endif</small>
                         @if(!empty($credit['billing_description']))
                             <br><small style="font-style: italic; color: #666;">{{ $credit['billing_description'] }}</small>
-                        @endif
-                    </td>
-                    <td style="font-size: 8pt;">
-                        {{ $credit['supplier_name'] ?? 'Unbekannt' }}
-                        @if(!empty($credit['contract_number']))
-                            <br><small>{{ $credit['contract_number'] }}</small>
                         @endif
                     </td>
                     <td class="number">{{ number_format($credit['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
@@ -540,9 +534,9 @@
                     <td>{{ $positionCounter++ }}</td>
                     <td>
                         <strong>Einnahmen/Gutschriften</strong><br>
-                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 2, ',', '.') }}% Anteil</small>
+                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 2, ',', '.') }}% Anteil</small><br>
+                        <small style="color: #888;">Sammelposten</small>
                     </td>
-                    <td style="font-size: 8pt;">Sammelposten</td>
                     <td class="number">{{ number_format(($billing->total_credits_net ?? $billing->total_credits), 2, ',', '.') }}</td>
                     <td class="number">
                         19%<br>
@@ -559,15 +553,10 @@
                     <td>{{ $positionCounter++ }}</td>
                     <td>
                         <strong>{{ $cost['contract_title'] ?? 'Betriebskosten' }}</strong><br>
-                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($cost['customer_percentage'] ?? $currentPercentage, 2, ',', '.') }}% Anteil</small>
+                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($cost['customer_percentage'] ?? $currentPercentage, 2, ',', '.') }}% Anteil</small><br>
+                        <small style="color: #888;">{{ $cost['supplier_name'] ?? 'Unbekannt' }}@if(!empty($cost['contract_number'])) - {{ $cost['contract_number'] }}@endif</small>
                         @if(!empty($cost['billing_description']))
                             <br><small style="font-style: italic; color: #666;">{{ $cost['billing_description'] }}</small>
-                        @endif
-                    </td>
-                    <td style="font-size: 8pt;">
-                        {{ $cost['supplier_name'] ?? 'Unbekannt' }}
-                        @if(!empty($cost['contract_number']))
-                            <br><small>{{ $cost['contract_number'] }}</small>
                         @endif
                     </td>
                     <td class="number">-{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
@@ -584,9 +573,9 @@
                     <td>{{ $positionCounter++ }}</td>
                     <td>
                         <strong>Betriebskosten</strong><br>
-                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 2, ',', '.') }}% Anteil</small>
+                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 2, ',', '.') }}% Anteil</small><br>
+                        <small style="color: #888;">Sammelposten</small>
                     </td>
-                    <td style="font-size: 8pt;">Sammelposten</td>
                     <td class="number">-{{ number_format(($billing->total_costs_net ?? abs($billing->total_costs ?? 0)), 2, ',', '.') }}</td>
                     <td class="number">
                         19%<br>
