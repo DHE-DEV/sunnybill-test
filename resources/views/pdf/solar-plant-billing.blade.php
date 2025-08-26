@@ -562,7 +562,12 @@
                     <td class="number">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
                     <td class="number">
                         {{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%<br>
-                        <small>{{ number_format(($cost['customer_share'] ?? 0) - ($cost['customer_share_net'] ?? 0), 2, ',', '.') }} €</small>
+                        @php
+                            $netAmount = $cost['customer_share_net'] ?? 0;
+                            $grossAmount = $cost['customer_share'] ?? 0;
+                            $taxAmount = $grossAmount - $netAmount;
+                        @endphp
+                        <small>{{ number_format($taxAmount, 2, ',', '.') }} €</small>
                     </td>
                     <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
                 </tr>
