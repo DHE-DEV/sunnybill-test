@@ -1571,7 +1571,7 @@
                         <h3>Support</h3>
                         <p><a href="#">Dokumentation</a></p>
                         <p><a href="#">API</a></p>
-                        <p><a href="#">Status</a></p>
+                        <p><a href="{{ route('api-leads') }}">API - Leads</a></p>
                         <p><a href="mailto:support@voltmaster.de">Kontakt</a></p>
                     </div>
                 </div>

@@ -106,6 +106,14 @@ class AppToken extends Model
             'customers:delete' => 'Kunden löschen',
             'customers:status' => 'Kunden-Status ändern',
             
+            // Lead-Verwaltung
+            'leads:read' => 'Leads lesen',
+            'leads:create' => 'Leads erstellen',
+            'leads:update' => 'Leads bearbeiten',
+            'leads:delete' => 'Leads löschen',
+            'leads:status' => 'Lead-Status ändern',
+            'leads:convert' => 'Leads zu Kunden konvertieren',
+            
             // Lieferanten-Verwaltung
             'suppliers:read' => 'Lieferanten lesen',
             'suppliers:create' => 'Lieferanten erstellen',

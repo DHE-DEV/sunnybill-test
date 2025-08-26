@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunnyBill Lead API Dokumentation</title>
+    <style>
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+        
+        .header-banner {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header-banner h1 {
+            color: white;
+            margin: 0 0 10px 0;
+            font-size: 2.8em;
+            font-weight: 300;
+        }
+        
+        .header-banner .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .version-info {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        h1, h2, h3 { 
+            color: #2c3e50; 
+            page-break-after: avoid;
+            margin-top: 2em;
+        }
+        
+        h1 { font-size: 2.5em; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { font-size: 2em; border-bottom: 2px solid #3498db; padding-bottom: 8px; }
+        h3 { font-size: 1.5em; color: #34495e; }
+        
+        .toc {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+            margin: 20px 0;
+        }
+        
+        .toc h2 { margin-top: 0; border: none; }
+        .toc ol { margin: 0; }
+        .toc li { margin: 8px 0; }
+        .toc a { color: #3498db; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        
+        .endpoint {
+            background-color: #f8f9fa;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+        
+        .method-post { background: #28a745; }
+        .method-get { background: #007bff; }
+        .method-put { background: #ffc107; color: #333; }
+        .method-delete { background: #dc3545; }
+        .method-patch { background: #6f42c1; }
+        
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "SF Mono", Monaco, Consolas, "Roboto Mono", monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+        
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            font-size: 0.85em;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) { background: #f8f9fa; }
+        tr:hover { background: #e8f4f8; }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .feature-card h3 { color: white; margin: 0 0 10px 0; }
+        
+        ul, ol { padding-left: 2em; margin: 16px 0; }
+        li { margin: 6px 0; }
+        
+        .warning {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 5px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .success {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px 20px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 10px;
+        }
+        
+        @media print {
+            body { margin: 0; font-size: 11pt; }
+            .header-banner { background: #3498db !important; }
+            h1, h2, h3 { page-break-after: avoid; }
+            pre, table, .endpoint { page-break-inside: avoid; }
+            .no-print { display: none; }
+        }
+        
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-banner">
+        <h1 class="text-white">VoltMaster Lead Management API</h1>
+        <div class="subtitle">Integrationsleitfaden für externe Anbieter</div>
+        <div class="version-info">
+            <strong>Version 1.0</strong> | August 2025<br>
+            Base URL: <code>https://voltmaster.cloud/api/app</code>
+        </div>
+    </div>
+
+    <div class="toc">
+        <h2>Inhaltsverzeichnis</h2>
+        <ol>
+            <li><a href="#overview">Übersicht</a></li>
+            <li><a href="#auth">Authentifizierung</a></li>
+            <li><a href="#endpoints">API-Endpoints</a></li>
+            <li><a href="#data">Datenstrukturen</a></li>
+            <li><a href="#examples">Beispiele</a></li>
+            <li><a href="#errors">Fehlerbehandlung</a></li>
+            <li><a href="#limits">Rate Limiting</a></li>
+            <li><a href="#support">Support & Kontakt</a></li>
+        </ol>
+    </div>
+
+    <h2 id="overview">Übersicht</h2>
+    
+    <p>Die VoltMaster Lead-Management API ermöglicht es externen Systemen, Leads zu erstellen, zu verwalten und zu verfolgen. Alle Leads werden sicher in unserem System gespeichert und können über das Admin-Panel verwaltet werden.</p>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h3>Lead-Erstellung</h3>
+            <p>Sichere Erstellung neuer Leads</p>
+        </div>
+        <div class="feature-card">
+            <h3>CRUD-Operationen</h3>
+            <p>Vollständige Verwaltung</p>
+        </div>
+        <div class="feature-card">
+            <h3>A-E Qualifizierung</h3>
+            <p>Lead-Ranking System</p>
+        </div>
+        <div class="feature-card">
+            <h3>Konvertierung</h3>
+            <p>Lead zu Kunde</p>
+        </div>
+    </div>
+
+    <h2 id="auth">Authentifizierung</h2>
+
+    <div class="info">
+        <strong>API-Token erforderlich:</strong> Um die API zu nutzen, benötigen Sie einen API-Token mit entsprechenden Berechtigungen.
+    </div>
+
+    <h3>Token anfordern</h3>
+    <p><strong>Kontaktieren Sie uns zur Token-Erstellung:</strong></p>
+    <ul>
+        <li>E-Mail: <code>voltmaster.saas@gmail.com</code></li>
+    </ul>
+
+    <h3>Token verwenden</h3>
+    <pre><code>Authorization: Bearer YOUR_API_TOKEN_HERE
+Content-Type: application/json</code></pre>
+
+    <h3>Verfügbare Berechtigungen</h3>
+    <table>
+        <tr><th>Berechtigung</th><th>Beschreibung</th></tr>
+        <tr><td><code>leads:create</code></td><td>Leads erstellen</td></tr>
+        <tr><td><code>leads:read</code></td><td>Leads anzeigen/auflisten</td></tr>
+        <tr><td><code>leads:update</code></td><td>Leads bearbeiten</td></tr>
+        <tr><td><code>leads:delete</code></td><td>Leads löschen</td></tr>
+        <tr><td><code>leads:status</code></td><td>Lead-Status ändern</td></tr>
+        <tr><td><code>leads:convert</code></td><td>Leads zu Kunden konvertieren</td></tr>
+    </table>
+
+    <h2 id="endpoints">API-Endpoints</h2>
+
+    <div class="endpoint">
+        <h3><span class="method method-post">POST</span>/leads</h3>
+        <p><strong>Beschreibung:</strong> Erstellt einen neuen Lead im System.</p>
+        <p><strong>Erforderliche Berechtigung:</strong> <code>leads:create</code></p>
+        
+        <h4>Request Body (Minimum):</h4>
+        <pre><code>{
+  "name": "Firmenname"
+}</code></pre>
+
+        <h4>Request Body (Vollständig):</h4>
+        <pre><code>{
+  "name": "Beispiel GmbH & Co. KG",
+  "contact_person": "Max Mustermann",
+  "department": "Geschäftsführung",
+  "email": "kontakt@beispiel.de",
+  "phone": "+49 30 12345678",
+  "website": "https://www.beispiel.de",
+  "street": "Musterstraße 123",
+  "address_line_2": "2. OG, Büro 42",
+  "postal_code": "10115",
+  "city": "Berlin",
+  "state": "Berlin",
+  "country": "Deutschland",
+  "country_code": "DE",
+  "ranking": "A",
+  "notes": "Interessanter Lead mit großem Potenzial",
+  "is_active": true
+}</code></pre>
+    </div>
+
+    <div class="endpoint">
+        <h3><span class="method method-get">GET</span>/leads</h3>
+        <p><strong>Beschreibung:</strong> Ruft eine paginierte Liste aller Leads ab.</p>
+        <p><strong>Erforderliche Berechtigung:</strong> <code>leads:read</code></p>
+        
+        <h4>Query Parameter:</h4>
+        <ul>
+            <li><code>page</code> (int): Seitennummer (Standard: 1)</li>
+            <li><code>per_page</code> (int): Einträge pro Seite (Max: 100, Standard: 15)</li>
+            <li><code>search</code> (string): Suchbegriff</li>
+            <li><code>ranking</code> (string): Filter nach Ranking (A, B, C, D, E)</li>
+            <li><code>city</code> (string): Filter nach Stadt</li>
+            <li><code>is_active</code> (boolean): Filter nach Status</li>
+        </ul>
+    </div>
+
+    <div class="endpoint">
+        <h3><span class="method method-get">GET</span>/leads/{id}</h3>
+        <p><strong>Beschreibung:</strong> Ruft Details eines spezifischen Leads ab.</p>
+        <p><strong>Erforderliche Berechtigung:</strong> <code>leads:read</code></p>
+    </div>
+
+    <div class="endpoint">
+        <h3><span class="method method-put">PUT</span>/leads/{id}</h3>
+        <p><strong>Beschreibung:</strong> Aktualisiert die Daten eines bestehenden Leads.</p>
+        <p><strong>Erforderliche Berechtigung:</strong> <code>leads:update</code></p>
+    </div>
+
+    <div class="endpoint">
+        <h3><span class="method method-delete">DELETE</span>/leads/{id}</h3>
+        <p><strong>Beschreibung:</strong> Löscht einen Lead aus dem System.</p>
+        <p><strong>Erforderliche Berechtigung:</strong> <code>leads:delete</code></p>
+    </div>
+
+    <div class="endpoint">
+        <h3><span class="method method-patch">PATCH</span>/leads/{id}/convert-to-customer</h3>
+        <p><strong>Beschreibung:</strong> Konvertiert einen Lead in einen Kunden.</p>
+        <p><strong>Erforderliche Berechtigung:</strong> <code>leads:convert</code></p>
+    </div>
+
+    <h2 id="data">Datenstrukturen</h2>
+
+    <h3>Lead-Rankings</h3>
+    <table>
+        <tr><th>Code</th><th>Beschreibung</th><th>Bedeutung</th></tr>
+        <tr><td><strong>A</strong></td><td>Heißer Lead</td><td>Sehr interessiert, hohe Abschlusswahrscheinlichkeit</td></tr>
+        <tr><td><strong>B</strong></td><td>Warmer Lead</td><td>Interessiert, mittlere Abschlusswahrscheinlichkeit</td></tr>
+        <tr><td><strong>C</strong></td><td>Kalter Lead</td><td>Wenig Interesse, niedrige Priorität</td></tr>
+        <tr><td><strong>D</strong></td><td>Unqualifiziert</td><td>Lead muss noch qualifiziert werden</td></tr>
+        <tr><td><strong>E</strong></td><td>Nicht interessiert</td><td>Kein Interesse, Follow-up nicht empfohlen</td></tr>
+    </table>
+
+    <h2 id="examples">Beispiele</h2>
+
+    <h3>Beispiel 1: Minimaler Lead</h3>
+    <pre><code>curl -X POST https://voltmaster.cloud/api/app/leads \
+  -H "Authorization: Bearer sb_abc123..." \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Acme Corporation"}'</code></pre>
+
+    <h3>Beispiel 2: Vollständiger Lead</h3>
+    <pre><code>curl -X POST https://voltmaster.cloud/api/app/leads \
+  -H "Authorization: Bearer sb_abc123..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Tech Solutions GmbH",
+    "contact_person": "Anna Schmidt",
+    "department": "Einkauf",
+    "email": "anna.schmidt@tech-solutions.de",
+    "phone": "+49 40 987654321",
+    "website": "https://www.tech-solutions.de",
+    "street": "Innovationsallee 42",
+    "postal_code": "20095",
+    "city": "Hamburg",
+    "state": "Hamburg",
+    "country": "Deutschland",
+    "country_code": "DE",
+    "ranking": "A",
+    "notes": "Großes Potenzial für Solaranlagen-Projekt",
+    "is_active": true
+  }'</code></pre>
+
+    <h2 id="errors">Fehlerbehandlung</h2>
+
+    <h3>Standard HTTP-Statuscodes</h3>
+    <table>
+        <tr><th>Code</th><th>Beschreibung</th></tr>
+        <tr><td><code>200</code></td><td>Erfolgreich</td></tr>
+        <tr><td><code>201</code></td><td>Erfolgreich erstellt</td></tr>
+        <tr><td><code>400</code></td><td>Fehlerhafte Anfrage</td></tr>
+        <tr><td><code>401</code></td><td>Nicht authentifiziert</td></tr>
+        <tr><td><code>403</code></td><td>Berechtigung fehlt</td></tr>
+        <tr><td><code>404</code></td><td>Ressource nicht gefunden</td></tr>
+        <tr><td><code>422</code></td><td>Validierungsfehler</td></tr>
+        <tr><td><code>500</code></td><td>Serverfehler</td></tr>
+    </table>
+
+    <h3>Fehler-Response Format</h3>
+    <pre><code>{
+  "success": false,
+  "message": "Beschreibung des Fehlers",
+  "errors": {
+    "field_name": ["Spezifische Fehlermeldung"]
+  }
+}</code></pre>
+
+    <h2 id="limits">Rate Limiting</h2>
+
+    <div class="warning">
+        <p><strong>Rate Limits:</strong></p>
+        <ul>
+            <li><strong>Standard-Token:</strong> 1000 Anfragen pro Stunde</li>
+            <li><strong>Premium-Token:</strong> 5000 Anfragen pro Stunde</li>
+        </ul>
+        <p>Bei Überschreitung: Status <code>429 Too Many Requests</code></p>
+    </div>
+
+    <h2 id="support">Support & Kontakt</h2>
+
+    <div class="success">
+        <h3>Technischer Support</h3>
+        <ul>
+            <li><strong>E-Mail:</strong> voltmaster.saas@gmail.com</li>
+            <li><strong>Support-Zeiten:</strong> Mo-Fr, 9:00-17:00 Uhr</li>
+        </ul>
+    </div>
+
+    <h3>Integrations-Checkliste</h3>
+
+    <h4>Vor der Integration:</h4>
+    <ul>
+        <li>☐ API-Token angefordert und erhalten</li>
+        <li>☐ Benötigte Berechtigungen definiert</li>
+        <li>☐ Test-Umgebung eingerichtet</li>
+        <li>☐ Error-Handling implementiert</li>
+    </ul>
+
+    <h4>Nach der Integration:</h4>
+    <ul>
+        <li>☐ Vollständige Tests durchgeführt</li>
+        <li>☐ Rate-Limiting berücksichtigt</li>
+        <li>☐ Monitoring eingerichtet</li>
+        <li>☐ Dokumentation erstellt</li>
+    </ul>
+
+    <div class="footer">
+        <h2>© 2025 dhe, Daniel Henninger</h2>
+        <p><strong>Alle Rechte vorbehalten</strong></p>
+        <p><em>Diese Dokumentation unterliegt der Verschwiegenheit und ist ausschließlich für autorisierte Partner bestimmt.</em></p>
+        <p>Generiert am: 26. August 2025</p>
+    </div>
+</body>
+</html>

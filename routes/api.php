@@ -117,6 +117,22 @@ Route::prefix('app')->middleware('app_token')->group(function () {
         Route::get('/{customer}/financials', [App\Http\Controllers\Api\CustomerApiController::class, 'financials'])->middleware('app_token:customers:read');
     });
     
+    // Lead-Management
+    Route::prefix('leads')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\LeadApiController::class, 'index'])->middleware('app_token:leads:read');
+        Route::post('/', [App\Http\Controllers\Api\LeadApiController::class, 'store'])->middleware('app_token:leads:create');
+        Route::get('/{lead}', [App\Http\Controllers\Api\LeadApiController::class, 'show'])->middleware('app_token:leads:read');
+        Route::put('/{lead}', [App\Http\Controllers\Api\LeadApiController::class, 'update'])->middleware('app_token:leads:update');
+        Route::delete('/{lead}', [App\Http\Controllers\Api\LeadApiController::class, 'destroy'])->middleware('app_token:leads:delete');
+        
+        // Spezielle Aktionen
+        Route::patch('/{lead}/status', [App\Http\Controllers\Api\LeadApiController::class, 'updateStatus'])->middleware('app_token:leads:status');
+        Route::patch('/{lead}/convert-to-customer', [App\Http\Controllers\Api\LeadApiController::class, 'convertToCustomer'])->middleware('app_token:leads:convert');
+        
+        // API-Optionen
+        Route::get('/options', [App\Http\Controllers\Api\LeadApiController::class, 'options'])->middleware('app_token:leads:read');
+    });
+    
     // Lieferanten-Management
     Route::prefix('suppliers')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\SupplierApiController::class, 'index'])->middleware('app_token:suppliers:read');

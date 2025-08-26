@@ -38,6 +38,11 @@ Route::get('/nutzungsbedingungen', function () {
     return view('nutzungsbedingungen');
 })->name('nutzungsbedingungen');
 
+// API Leads Dokumentation
+Route::get('/api-leads', function () {
+    return view('api-leads');
+})->name('api-leads');
+
 // Infolist State Management
 Route::post('/api/infolist-state', [InfolistStateController::class, 'save'])
     ->name('infolist.state.save')
