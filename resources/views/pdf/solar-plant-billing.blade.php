@@ -410,7 +410,7 @@
     </div>
     
     <div class="billing-period">
-        <h3>Gutschrift für Einspeisungsperiode {{ $monthName }} {{ $billing->billing_year }}</h3>
+        <h3>Gutschrift für Ihre Einspeisung {{ $monthName }} {{ $billing->billing_year }}</h3>
     </div>
 
     <!-- Anlageninfo -->

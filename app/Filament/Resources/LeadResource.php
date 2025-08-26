@@ -31,7 +31,7 @@ class LeadResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Lead - Kontakte';
 
-    protected static ?string $navigationGroup = 'Leads';
+    protected static ?string $navigationGroup = 'Javiers $ Sot Machine';
 
     protected static ?int $navigationSort = -10;
 
