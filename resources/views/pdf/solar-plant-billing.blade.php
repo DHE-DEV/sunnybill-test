@@ -558,8 +558,9 @@
                         @if(!empty($cost['billing_description']))
                             <br><small style="font-style: italic; color: #666;">{{ $cost['billing_description'] }}</small>
                         @endif
+                        <br>{{ $cost['billing_number'] }}
                     </td>
-                    <td class="number">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
+                    <td class="number">{{ number_format(-abs($cost['customer_share_net'] ?? 0), 2, ',', '.') }}</td>
                     <td class="number">
                         {{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%<br>
                         @php
