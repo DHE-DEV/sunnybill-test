@@ -598,6 +598,135 @@
         </tbody>
     </table>
 
+    <!-- MwSt./USt.-Aufschlüsselung für finanzamtskonformen Ausweis -->
+    <div style="margin-top: 30px; background: #e6f3ff; color: black; padding: 15px; border-radius: 5px; page-break-inside: avoid;">
+        <h4 style="margin: 0 0 10px 0; font-size: 10pt; color: #2563eb;">Steuer-Aufschlüsselung</h4>
+        
+        @php
+            // Sammle alle verschiedenen Steuersätze und berechne Gesamtbeträge
+            $taxBreakdown = [];
+            $totalNet = 0;
+            $totalTax = 0;
+            $totalGross = 0;
+            
+            // Gutschriften/Einnahmen durchgehen
+            if (!empty($billing->credit_breakdown)) {
+                foreach ($billing->credit_breakdown as $credit) {
+                    $vatRate = $credit['vat_rate'] ?? 0.19;
+                    $vatRatePercent = ($vatRate <= 1 ? $vatRate * 100 : $vatRate);
+                    $netAmount = $credit['customer_share_net'] ?? 0;
+                    $grossAmount = $credit['customer_share'] ?? 0;
+                    $taxAmount = $grossAmount - $netAmount;
+                    
+                    if (!isset($taxBreakdown[$vatRatePercent])) {
+                        $taxBreakdown[$vatRatePercent] = ['net' => 0, 'tax' => 0, 'gross' => 0];
+                    }
+                    
+                    $taxBreakdown[$vatRatePercent]['net'] += $netAmount;
+                    $taxBreakdown[$vatRatePercent]['tax'] += $taxAmount;
+                    $taxBreakdown[$vatRatePercent]['gross'] += $grossAmount;
+                    
+                    $totalNet += $netAmount;
+                    $totalTax += $taxAmount;
+                    $totalGross += $grossAmount;
+                }
+            }
+            
+            // Kosten durchgehen (als negative Werte)
+            if (!empty($billing->cost_breakdown)) {
+                foreach ($billing->cost_breakdown as $cost) {
+                    $vatRate = $cost['vat_rate'] ?? 0.19;
+                    $vatRatePercent = ($vatRate <= 1 ? $vatRate * 100 : $vatRate);
+                    $netAmount = -($cost['customer_share_net'] ?? 0);
+                    $grossAmount = -($cost['customer_share'] ?? 0);
+                    $taxAmount = $grossAmount - $netAmount;
+                    
+                    if (!isset($taxBreakdown[$vatRatePercent])) {
+                        $taxBreakdown[$vatRatePercent] = ['net' => 0, 'tax' => 0, 'gross' => 0];
+                    }
+                    
+                    $taxBreakdown[$vatRatePercent]['net'] += $netAmount;
+                    $taxBreakdown[$vatRatePercent]['tax'] += $taxAmount;
+                    $taxBreakdown[$vatRatePercent]['gross'] += $grossAmount;
+                    
+                    $totalNet += $netAmount;
+                    $totalTax += $taxAmount;
+                    $totalGross += $grossAmount;
+                }
+            }
+            
+            // Sortiere nach Steuersatz
+            ksort($taxBreakdown);
+        @endphp
+        
+        <table style="width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 10px;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Steuersatz</th>
+                    <th style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Nettobetrag</th>
+                    <th style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Steuerbetrag</th>
+                    <th style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Bruttobetrag</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(!empty($taxBreakdown))
+                    @foreach($taxBreakdown as $rate => $amounts)
+                    <tr>
+                        <td style="text-align: left; padding: 2px 0;">{{ number_format($rate, 0, ',', '.') }}%</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($amounts['net'], 2, ',', '.') }} €</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($amounts['tax'], 2, ',', '.') }} €</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format($amounts['gross'], 2, ',', '.') }} €</td>
+                    </tr>
+                    @endforeach
+                @else
+                    <!-- Fallback wenn keine detaillierte Aufschlüsselung verfügbar -->
+                    <tr>
+                        <td style="text-align: left; padding: 2px 0;">19%</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format(abs(($billing->total_costs_net ?? 0) - ($billing->total_credits_net ?? 0)), 2, ',', '.') }} €</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format(abs($billing->total_vat_amount ?? 0), 2, ',', '.') }} €</td>
+                        <td style="text-align: right; padding: 2px 0;">{{ number_format(abs($billing->net_amount ?? 0), 2, ',', '.') }} €</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+        
+        <!-- Gesamtsummen -->
+        <div style="border-top: 2px solid rgba(255,255,255,0.5); padding-top: 8px; margin-top: 5px;">
+            <div style="display: table; width: 100%; font-size: 10pt; font-weight: bold;">
+                <div style="display: table-row;">
+                    <div style="display: table-cell; padding: 2px 0;">
+                        Gesamtsumme 
+                        @if($billing->net_amount < 0) der Gutschrift @else der Rechnung @endif
+                        netto:
+                    </div>
+                    <div style="display: table-cell; text-align: right; padding: 2px 0;">
+                        {{ number_format(abs($totalNet ?: (($billing->total_costs_net ?? 0) - ($billing->total_credits_net ?? 0))), 2, ',', '.') }} €
+                    </div>
+                </div>
+                <div style="display: table-row;">
+                    <div style="display: table-cell; padding: 2px 0;">Zzgl. Gesamtsteuer:</div>
+                    <div style="display: table-cell; text-align: right; padding: 2px 0;">
+                        {{ number_format(abs($totalTax ?: ($billing->total_vat_amount ?? 0)), 2, ',', '.') }} €
+                    </div>
+                </div>
+                <div style="display: table-row; border-top: 1px solid rgba(255,255,255,0.3);">
+                    <div style="display: table-cell; padding: 3px 0 0 0; font-size: 11pt;">
+                        Gesamtsumme 
+                        @if($billing->net_amount < 0) der Gutschrift @else der Rechnung @endif
+                        brutto:
+                    </div>
+                    <div style="display: table-cell; text-align: right; padding: 3px 0 0 0; font-size: 11pt;">
+                        {{ number_format(abs($totalGross ?: ($billing->net_amount ?? 0)), 2, ',', '.') }} €
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hinweis zur maschinellen Erstellung -->
+    <div style="margin-top: 15px; padding: 10px; border-left: 4px solid #2563eb; background-color: #f0f8ff; color: #374151; font-size: 9pt; line-height: 1.4;">
+        Diese Rechnung / Gutschrift, wurde maschinell erstellt und bedarf keiner Unterschrift. Wir legen höchsten Wert auf Transparenz und hoffen, dass wir Ihnen die abrechnungsrelevanten Positionen klar und einfach verständlich erläutern konnten. Sollten Sie noch weitere Informationen zu Ihrer Abrechnung wünschen, rufen Sie uns gerne unter 02234-4300614 an oder schreiben Sie uns eine Mail mit Ihrem Anliegen an: abrechnung@prosoltec-anlagenbetreiber.de
+    </div>
 
     <!-- Gesamtergebnis prominent -->
     <div style="clear: both; margin: 44px 0; text-align: center; page-break-inside: avoid;">
@@ -1004,131 +1133,6 @@
         @endif
     </div>
     @endif
-
-    <!-- MwSt./USt.-Aufschlüsselung für finanzamtskonformen Ausweis -->
-    <div style="margin-top: 30px; background: #e6f3ff; color: black; padding: 15px; border-radius: 5px; page-break-inside: avoid;">
-        <h4 style="margin: 0 0 10px 0; font-size: 10pt; color: #2563eb;">Steuer-Aufschlüsselung</h4>
-        
-        @php
-            // Sammle alle verschiedenen Steuersätze und berechne Gesamtbeträge
-            $taxBreakdown = [];
-            $totalNet = 0;
-            $totalTax = 0;
-            $totalGross = 0;
-            
-            // Gutschriften/Einnahmen durchgehen
-            if (!empty($billing->credit_breakdown)) {
-                foreach ($billing->credit_breakdown as $credit) {
-                    $vatRate = $credit['vat_rate'] ?? 0.19;
-                    $vatRatePercent = ($vatRate <= 1 ? $vatRate * 100 : $vatRate);
-                    $netAmount = $credit['customer_share_net'] ?? 0;
-                    $grossAmount = $credit['customer_share'] ?? 0;
-                    $taxAmount = $grossAmount - $netAmount;
-                    
-                    if (!isset($taxBreakdown[$vatRatePercent])) {
-                        $taxBreakdown[$vatRatePercent] = ['net' => 0, 'tax' => 0, 'gross' => 0];
-                    }
-                    
-                    $taxBreakdown[$vatRatePercent]['net'] += $netAmount;
-                    $taxBreakdown[$vatRatePercent]['tax'] += $taxAmount;
-                    $taxBreakdown[$vatRatePercent]['gross'] += $grossAmount;
-                    
-                    $totalNet += $netAmount;
-                    $totalTax += $taxAmount;
-                    $totalGross += $grossAmount;
-                }
-            }
-            
-            // Kosten durchgehen (als negative Werte)
-            if (!empty($billing->cost_breakdown)) {
-                foreach ($billing->cost_breakdown as $cost) {
-                    $vatRate = $cost['vat_rate'] ?? 0.19;
-                    $vatRatePercent = ($vatRate <= 1 ? $vatRate * 100 : $vatRate);
-                    $netAmount = -($cost['customer_share_net'] ?? 0);
-                    $grossAmount = -($cost['customer_share'] ?? 0);
-                    $taxAmount = $grossAmount - $netAmount;
-                    
-                    if (!isset($taxBreakdown[$vatRatePercent])) {
-                        $taxBreakdown[$vatRatePercent] = ['net' => 0, 'tax' => 0, 'gross' => 0];
-                    }
-                    
-                    $taxBreakdown[$vatRatePercent]['net'] += $netAmount;
-                    $taxBreakdown[$vatRatePercent]['tax'] += $taxAmount;
-                    $taxBreakdown[$vatRatePercent]['gross'] += $grossAmount;
-                    
-                    $totalNet += $netAmount;
-                    $totalTax += $taxAmount;
-                    $totalGross += $grossAmount;
-                }
-            }
-            
-            // Sortiere nach Steuersatz
-            ksort($taxBreakdown);
-        @endphp
-        
-        <table style="width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 10px;">
-            <thead>
-                <tr>
-                    <th style="text-align: left; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Steuersatz</th>
-                    <th style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Nettobetrag</th>
-                    <th style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Steuerbetrag</th>
-                    <th style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Bruttobetrag</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if(!empty($taxBreakdown))
-                    @foreach($taxBreakdown as $rate => $amounts)
-                    <tr>
-                        <td style="text-align: left; padding: 2px 0;">{{ number_format($rate, 0, ',', '.') }}%</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format($amounts['net'], 2, ',', '.') }} €</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format($amounts['tax'], 2, ',', '.') }} €</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format($amounts['gross'], 2, ',', '.') }} €</td>
-                    </tr>
-                    @endforeach
-                @else
-                    <!-- Fallback wenn keine detaillierte Aufschlüsselung verfügbar -->
-                    <tr>
-                        <td style="text-align: left; padding: 2px 0;">19%</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format(abs(($billing->total_costs_net ?? 0) - ($billing->total_credits_net ?? 0)), 2, ',', '.') }} €</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format(abs($billing->total_vat_amount ?? 0), 2, ',', '.') }} €</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format(abs($billing->net_amount ?? 0), 2, ',', '.') }} €</td>
-                    </tr>
-                @endif
-            </tbody>
-        </table>
-        
-        <!-- Gesamtsummen -->
-        <div style="border-top: 2px solid rgba(255,255,255,0.5); padding-top: 8px; margin-top: 5px;">
-            <div style="display: table; width: 100%; font-size: 10pt; font-weight: bold;">
-                <div style="display: table-row;">
-                    <div style="display: table-cell; padding: 2px 0;">
-                        Gesamtsumme 
-                        @if($billing->net_amount < 0) der Gutschrift @else der Rechnung @endif
-                        netto:
-                    </div>
-                    <div style="display: table-cell; text-align: right; padding: 2px 0;">
-                        {{ number_format(abs($totalNet ?: (($billing->total_costs_net ?? 0) - ($billing->total_credits_net ?? 0))), 2, ',', '.') }} €
-                    </div>
-                </div>
-                <div style="display: table-row;">
-                    <div style="display: table-cell; padding: 2px 0;">Zzgl. Gesamtsteuer:</div>
-                    <div style="display: table-cell; text-align: right; padding: 2px 0;">
-                        {{ number_format(abs($totalTax ?: ($billing->total_vat_amount ?? 0)), 2, ',', '.') }} €
-                    </div>
-                </div>
-                <div style="display: table-row; border-top: 1px solid rgba(255,255,255,0.3);">
-                    <div style="display: table-cell; padding: 3px 0 0 0; font-size: 11pt;">
-                        Gesamtsumme 
-                        @if($billing->net_amount < 0) der Gutschrift @else der Rechnung @endif
-                        brutto:
-                    </div>
-                    <div style="display: table-cell; text-align: right; padding: 3px 0 0 0; font-size: 11pt;">
-                        {{ number_format(abs($totalGross ?: ($billing->net_amount ?? 0)), 2, ',', '.') }} €
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Bemerkung -->
     @if($billing->notes)
