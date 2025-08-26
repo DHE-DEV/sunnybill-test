@@ -202,9 +202,7 @@
             border-bottom: 1px solid #ddd;
         }
         
-        .positions-table tr:nth-child(even) {
-            background: #f8f9fa;
-        }
+        /* Alternating row backgrounds removed for German tax office compliance */
         
         .positions-table .number {
             text-align: right;
