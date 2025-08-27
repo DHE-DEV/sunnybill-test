@@ -41,7 +41,7 @@
         .header {
             display: table;
             width: 100%;
-            margin-bottom: 20px;
+            margin-bottom: 0px;
         }
         
         .logo {
@@ -72,6 +72,7 @@
         .recipient {
             margin: 30px 0;
             width: 50%;
+            margin-top: -40px;
         }
         
         .recipient h3 {
@@ -83,7 +84,7 @@
         .billing-info {
             float: right;
             width: 45%;
-            margin-top: -128px;
+            margin-top: -190px;
             font-size: 9pt;
         }
         
