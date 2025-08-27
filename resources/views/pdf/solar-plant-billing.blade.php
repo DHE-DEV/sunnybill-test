@@ -517,9 +517,6 @@
                     <td>
                         <small>{{ $credit['contract_title'] ?? 'Einnahmen/Gutschriften' }}</small><br>
                         <small style="">{{ $credit['supplier_name'] ?? 'Unbekannt' }}</small>
-                        @if(!empty($credit['billing_description']))
-                            <br><small style="">{{ $credit['billing_description'] }}</small>
-                        @endif
                     </td>
                     <td class="number"><small>{{ number_format(abs($credit['customer_share_net'] ?? 0), 2, ',', '.') }}</small></td>
                     <td class="number">
@@ -554,9 +551,6 @@
                     <td>
                         <small>{{ $cost['contract_title'] ?? 'Betriebskosten' }}</small><br>
                         <small style="">{{ $cost['supplier_name'] ?? 'Unbekannt' }}</small>
-                        @if(!empty($cost['billing_description']))
-                            <br><small style="">{{ $cost['billing_description'] }}</small>
-                        @endif
                     </td>
                     <td class="number"><small>{{ number_format(-abs($cost['customer_share_net'] ?? 0), 2, ',', '.') }}</small></td>
                     <td class="number">
