@@ -190,11 +190,12 @@
         
         .positions-table th {
             #background: #2563eb;
-            background: #96989aff;
-            color: white;
-            padding: 10px 8px;
+            #background: #96989aff;
+            color: black;
+            padding: 0px 8px;
             text-align: left;
-            font-weight: bold;
+            #font-weight: bold;
+            border-bottom: 1px solid #000000;
         }
         
         .positions-table td {
@@ -403,9 +404,10 @@
     </div>
 
     <!-- Titel -->
+     <!--
     <div class="document-title">
-        <!--<h2>Solaranlagen-Abrechnung</h2>-->
-    </div>
+        
+    </div>-->
     
     <div class="billing-period">
         <h3>Gutschrift für Ihre Einspeisung {{ $monthName }} {{ $billing->billing_year }}</h3>
@@ -497,9 +499,9 @@
             <tr>
                 <th>Pos.</th>
                 <th>Beschreibung</th>
-                <th class="number">Netto (€)</th>
-                <th class="number">USt.</th>
-                <th class="number">Brutto (€)</th>
+                <th class="number">Netto €</th>
+                <th class="number">USt. € (Satz)</th>
+                <th class="number">Brutto €</th>
             </tr>
         </thead>
         <tbody>
@@ -511,21 +513,19 @@
             @if(!empty($billing->credit_breakdown))
                 @foreach($billing->credit_breakdown as $credit)
                 <tr>
-                    <td>{{ $positionCounter++ }}</td>
+                    <td><small>{{ $positionCounter++ }}</small></td>
                     <td>
-                        <strong>{{ $credit['contract_title'] ?? 'Einnahmen/Gutschriften' }}</strong><br>
-                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($credit['customer_percentage'] ?? $currentPercentage, 2, ',', '.') }}% Anteil</small><br>
-                        <small style="color: #888;">{{ $credit['supplier_name'] ?? 'Unbekannt' }}@if(!empty($credit['contract_number'])) - {{ $credit['contract_number'] }}@endif</small>
+                        <small>{{ $credit['contract_title'] ?? 'Einnahmen/Gutschriften' }}</small><br>
+                        <small style="">{{ $credit['supplier_name'] ?? 'Unbekannt' }}</small>
                         @if(!empty($credit['billing_description']))
-                            <br><small style="font-style: italic; color: #666;">{{ $credit['billing_description'] }}</small>
+                            <br><small style="">{{ $credit['billing_description'] }}</small>
                         @endif
                     </td>
-                    <td class="number">{{ number_format(abs($credit['customer_share_net'] ?? 0), 2, ',', '.') }}</td>
+                    <td class="number"><small>{{ number_format(abs($credit['customer_share_net'] ?? 0), 2, ',', '.') }}</small></td>
                     <td class="number">
-                        {{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%<br>
-                        <small>{{ number_format(abs(($credit['customer_share'] ?? 0) - ($credit['customer_share_net'] ?? 0)), 2, ',', '.') }} €</small>
+                        <small>{{ number_format(abs(($credit['customer_share'] ?? 0) - ($credit['customer_share_net'] ?? 0)), 2, ',', '.') }} € ({{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%)</small>
                     </td>
-                    <td class="number">{{ number_format(abs($credit['customer_share'] ?? 0), 2, ',', '.') }}</td>
+                    <td class="number"><small>{{ number_format(abs($credit['customer_share'] ?? 0), 2, ',', '.') }}</small></td>
                 </tr>
                 @endforeach
             @elseif($billing->total_credits > 0)
@@ -550,27 +550,24 @@
             @if(!empty($billing->cost_breakdown))
                 @foreach($billing->cost_breakdown as $cost)
                 <tr style="background: #ffffff;">
-                    <td>{{ $positionCounter++ }}</td>
+                    <td><small>{{ $positionCounter++ }}</small></td>
                     <td>
-                        <strong>{{ $cost['contract_title'] ?? 'Betriebskosten' }}</strong><br>
-                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($cost['customer_percentage'] ?? $currentPercentage, 2, ',', '.') }}% Anteil</small><br>
-                        <small style="color: #888;">{{ $cost['supplier_name'] ?? 'Unbekannt' }}@if(!empty($cost['contract_number'])) - {{ $cost['contract_number'] }}@endif</small>
+                        <small>{{ $cost['contract_title'] ?? 'Betriebskosten' }}</small><br>
+                        <small style="">{{ $cost['supplier_name'] ?? 'Unbekannt' }}</small>
                         @if(!empty($cost['billing_description']))
-                            <br><small style="font-style: italic; color: #666;">{{ $cost['billing_description'] }}</small>
+                            <br><small style="">{{ $cost['billing_description'] }}</small>
                         @endif
-                        <br>{{ $cost['billing_number'] }}
                     </td>
-                    <td class="number">{{ number_format(-abs($cost['customer_share_net'] ?? 0), 2, ',', '.') }}</td>
+                    <td class="number"><small>{{ number_format(-abs($cost['customer_share_net'] ?? 0), 2, ',', '.') }}</small></td>
                     <td class="number">
-                        {{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%<br>
                         @php
                             $netAmount = $cost['customer_share_net'] ?? 0;
                             $grossAmount = $cost['customer_share'] ?? 0;
                             $taxAmount = $grossAmount - $netAmount;
                         @endphp
-                        <small>{{ number_format($taxAmount, 2, ',', '.') }} €</small>
+                        <small>{{ number_format($taxAmount, 2, ',', '.') }} € ({{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%)</small>
                     </td>
-                    <td class="number">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
+                    <td class="number"><small>{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</small></td>
                 </tr>
                 @endforeach
             @elseif($billing->total_costs > 0 || isset($billing->total_costs))
@@ -590,14 +587,8 @@
                     <td class="number">-{{ number_format(abs($billing->total_costs ?? 0), 2, ',', '.') }}</td>
                 </tr>
             @endif
-        </tbody>
-    </table>
 
-    <!-- MwSt./USt.-Aufschlüsselung für finanzamtskonformen Ausweis -->
-    <div style="margin-top: 30px; background: #e6f3ff; color: black; padding: 15px; border-radius: 5px; page-break-inside: avoid;">
-        <h4 style="margin: 0 0 10px 0; font-size: 10pt; color: #2563eb;">Steuer-Aufschlüsselung</h4>
-        
-        @php
+            @php
             // Sammle alle verschiedenen Steuersätze und berechne Gesamtbeträge
             $taxBreakdown = [];
             $totalNet = 0;
@@ -653,86 +644,20 @@
             // Sortiere nach Steuersatz
             ksort($taxBreakdown);
         @endphp
-        
-        <table style="width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 10px;">
-            <thead>
-                <tr>
-                    <th style="text-align: left; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Steuersatz</th>
-                    <th style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Nettobetrag</th>
-                    <th style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Steuerbetrag</th>
-                    <th style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.3);">Bruttobetrag</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if(!empty($taxBreakdown))
-                    @foreach($taxBreakdown as $rate => $amounts)
-                    <tr>
-                        <td style="text-align: left; padding: 2px 0;">{{ number_format($rate, 0, ',', '.') }}%</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format($amounts['net'], 2, ',', '.') }} €</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format($amounts['tax'], 2, ',', '.') }} €</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format($amounts['gross'], 2, ',', '.') }} €</td>
-                    </tr>
-                    @endforeach
-                @else
-                    <!-- Fallback wenn keine detaillierte Aufschlüsselung verfügbar -->
-                    <tr>
-                        <td style="text-align: left; padding: 2px 0;">19%</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format(abs(($billing->total_costs_net ?? 0) - ($billing->total_credits_net ?? 0)), 2, ',', '.') }} €</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format(abs($billing->total_vat_amount ?? 0), 2, ',', '.') }} €</td>
-                        <td style="text-align: right; padding: 2px 0;">{{ number_format(abs($billing->net_amount ?? 0), 2, ',', '.') }} €</td>
-                    </tr>
-                @endif
-            </tbody>
-        </table>
-        
-        <!-- Gesamtsummen -->
-        <div style="border-top: 2px solid rgba(255,255,255,0.5); padding-top: 8px; margin-top: 5px;">
-            <div style="display: table; width: 100%; font-size: 10pt; font-weight: bold;">
-                <div style="display: table-row;">
-                    <div style="display: table-cell; padding: 2px 0;">
-                        Gesamtsumme 
-                        @if($billing->net_amount < 0) der Gutschrift @else der Rechnung @endif
-                        netto:
-                    </div>
-                    <div style="display: table-cell; text-align: right; padding: 2px 0;">
-                        {{ number_format(abs($totalNet ?: (($billing->total_costs_net ?? 0) - ($billing->total_credits_net ?? 0))), 2, ',', '.') }} €
-                    </div>
-                </div>
-                <div style="display: table-row;">
-                    <div style="display: table-cell; padding: 2px 0;">Zzgl. Gesamtsteuer:</div>
-                    <div style="display: table-cell; text-align: right; padding: 2px 0;">
-                        {{ number_format(abs($totalTax ?: ($billing->total_vat_amount ?? 0)), 2, ',', '.') }} €
-                    </div>
-                </div>
-                <div style="display: table-row; border-top: 1px solid rgba(255,255,255,0.3);">
-                    <div style="display: table-cell; padding: 3px 0 0 0; font-size: 11pt;">
-                        Gesamtsumme 
-                        @if($billing->net_amount < 0) der Gutschrift @else der Rechnung @endif
-                        brutto:
-                    </div>
-                    <div style="display: table-cell; text-align: right; padding: 3px 0 0 0; font-size: 11pt;">
-                        {{ number_format(abs($totalGross ?: ($billing->net_amount ?? 0)), 2, ',', '.') }} €
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Hinweis zur maschinellen Erstellung -->
-    <div style="margin-top: 15px; padding: 10px; border-left: 4px solid #2563eb; background-color: #f0f8ff; color: #374151; font-size: 9pt; line-height: 1.4;">
-        Diese Rechnung / Gutschrift, wurde maschinell erstellt und bedarf keiner Unterschrift. Wir legen höchsten Wert auf Transparenz und hoffen, dass wir Ihnen die abrechnungsrelevanten Positionen klar und einfach verständlich erläutern konnten. Sollten Sie noch weitere Informationen zu Ihrer Abrechnung wünschen, rufen Sie uns gerne unter 02234-4300614 an oder schreiben Sie uns eine Mail mit Ihrem Anliegen an: abrechnung@prosoltec-anlagenbetreiber.de
-    </div>
-
-    <!-- Gesamtergebnis prominent -->
-    <div style="clear: both; margin: 44px 0; text-align: center; page-break-inside: avoid;">
-        <div style="display: inline-block; background: #f0f8ff; color: black; padding: 5px 30px; border-radius: 5px; font-size: 14pt; font-weight: bold;">
-            @if($billing->net_amount < 0)
-                Ihre Gutschrift beträgt: {{ number_format(abs($billing->net_amount), 2, ',', '.') }} €
-            @else
-                Ihre Rechnungssumme beträgt: {{ number_format($billing->net_amount, 2, ',', '.') }} €
-            @endif
-        </div>
-    </div>
+            <tr style="background: #f0f8ff;">
+                <td colspan="4"><strong>
+                    @if($billing->net_amount < 0)
+                        Guthaben
+                    @else
+                        Rechnungssumme
+                    @endif
+                    </strong>
+                </td>
+                <td class="number"><strong>{{ number_format(abs($totalGross ?: ($billing->net_amount ?? 0)), 2, ',', '.') }} €</strong></td>
+            </tr>
+        </tbody>
+    </table>
 
     <!-- Footer für erste Seite -->
     <div class="footer-first-page" style="margin-top: 50px;">
