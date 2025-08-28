@@ -31,9 +31,9 @@ class LeadResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Lead - Kontakte';
 
-    protected static ?string $navigationGroup = 'Javiers $ Sot Machine';
+    protected static ?string $navigationGroup = 'Javier\'s 💰💵 Sot Machine';
 
-    protected static ?int $navigationSort = -10;
+    protected static ?int $navigationSort = 1;
 
     public static function getEloquentQuery(): Builder
     {

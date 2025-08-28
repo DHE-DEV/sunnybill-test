@@ -1,0 +1,84 @@
+[
+    {
+        "articles": [
+            {
+                "unit": "Stk.",
+                "quantity": "1.0000",
+                "tax_rate": 0.19,
+                "article_id": "0198a902-b988-7237-a29b-8ffb7c4ec4b7",
+                "tax_amount": 78.66,
+                "unit_price": "414.000000",
+                "description": "Betrag für die gesamte PVA",
+                "article_name": "Abrechnung der Betriebsführung",
+                "total_price_net": "414.000000",
+                "total_price_gross": 492.66,
+                "detailed_description": "In dieser Position werden alle anfallenden Kosten der Betriebsführung der gesamten PVA gezeigt. Diese Kosten werden Ihrem Anteil entsprechend, anteilig an Sie berechnet. Versicherung, Wartung, Reinigung usw."
+            }
+        ],
+        "vat_rate": "19.00",
+        "contract_id": "0198c3cc-bd84-7084-bde3-d0834bb1bd8e",
+        "supplier_id": "01980e8f-9926-7189-9a5a-aafb2fb85785",
+        "total_amount": "492.660000",
+        "supplier_name": "Prosoltec Anlagenbetreiber GmbH",
+        "billing_number": "AB-2025-0150",
+        "contract_title": "Abrechnung der Betriebsführung",
+        "customer_share": 492.66,
+        "contract_number": "LV-0114",
+        "customer_share_net": "414.000000",
+        "customer_share_vat": 78.66000000000003,
+        "billing_description": null,
+        "contract_billing_id": "0198e07f-ac95-7236-a7ac-f7826ffd8a99",
+        "customer_percentage": 100,
+        "solar_plant_percentage": "100.00"
+    },
+    {
+        "articles": [],
+        "vat_rate": "19.00",
+        "contract_id": "0198c3cc-bd84-7084-bde3-d0834bb1bd8e",
+        "supplier_id": "01980e8f-9926-7189-9a5a-aafb2fb85785",
+        "total_amount": "-492.660000",
+        "supplier_name": "Prosoltec Anlagenbetreiber GmbH",
+        "billing_number": "AB-2025-0151",
+        "contract_title": "Abrechnung der Betriebsführung",
+        "customer_share": -492.66,
+        "contract_number": "LV-0114",
+        "customer_share_net": "-414.000000",
+        "customer_share_vat": -78.66000000000003,
+        "billing_description": null,
+        "contract_billing_id": "0198e081-de85-729d-b66b-b172fa755e8d",
+        "customer_percentage": 100,
+        "solar_plant_percentage": "100.00"
+    },
+    {
+        "articles": [
+            {
+                "unit": "Stk.",
+                "quantity": "1.0000",
+                "tax_rate": 0.19,
+                "article_id": "0198e119-f674-7277-a116-e0a6d5657a29",
+                "tax_amount": 40.1128,
+                "unit_price": "211.120000",
+                "description": "Stromlieferung laut Abschlagsplan",
+                "article_name": "Stromlieferung laut Abschlagsplan",
+                "total_price_net": "211.120000",
+                "total_price_gross": 251.2328,
+                "detailed_description": "In dieser Position sehen Sie die Kosten für die von der gesamten Photovoltaikanlage verbrauchte Strommenge, die an diesem Standort über den Lieferanten Sachsen Netze im aktuellen Monat bezogen wurde. Diese Kosten werden Ihrem Anteil entsprechend, anteilig an Sie berechnet."
+            }
+        ],
+        "vat_rate": "19.00",
+        "contract_id": "0198e111-661e-7200-8c4a-71250eda34f3",
+        "supplier_id": "01983c6c-bed1-7360-8718-d1824b94868d",
+        "total_amount": "211.120000",
+        "supplier_name": "Sachsen Netze HS.HD GmbH",
+        "billing_number": "AB-2025-0173",
+        "contract_title": "Stromlieferungsvertrag Sachsen Netze",
+        "customer_share": 211.12,
+        "contract_number": "LV-0120",
+        "customer_share_net": "177.410000",
+        "customer_share_vat": 33.71000000000001,
+        "billing_description": null,
+        "contract_billing_id": "0198e11b-573c-7216-b307-16504d731ef9",
+        "customer_percentage": 100,
+        "solar_plant_percentage": "100.00"
+    }
+]
