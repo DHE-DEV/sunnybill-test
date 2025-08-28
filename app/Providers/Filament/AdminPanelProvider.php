@@ -77,7 +77,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('3rem')
             ->favicon(asset('images/voltmaster-favicon.svg'))
             ->navigationGroups([
-                'Javier\'s $ Sot Machine',
+                'Javier\'s 💰 Sot Machine',
                 'Kunden',
                 'Lieferanten',
                 'Solar Management',
