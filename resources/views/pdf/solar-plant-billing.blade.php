@@ -915,7 +915,7 @@
                                 <tr>
                                     <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Ihr Anteil</th>
                                     <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Netto (€)</th>
-                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">MwSt.</th>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">USt.</th>
                                     <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Gesamtbetrag Brutto (€)</th>
                                 </tr>
                             </thead>
@@ -976,7 +976,7 @@
                                             <th style="text-align: left; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Menge</th>
                                             <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Einzelpreis</th>
                                             <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtpreis (netto)</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Steuer ({{ number_format(($taxRate <= 1 ? $taxRate * 100 : $taxRate), 1, ',', '.') }}%)</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">USt. ({{ number_format(($taxRate <= 1 ? $taxRate * 100 : $taxRate), 1, ',', '.') }}%)</th>
                                             <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtbetrag (brutto)</th>
                                         </tr>
                                     </thead>
