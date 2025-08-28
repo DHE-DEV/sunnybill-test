@@ -576,6 +576,7 @@ class SolarPlantBilling extends Model
 
                 $vatRate = $billing->vat_rate ?? 0.19;
 
+                /*
                 if ($billing->billing_number == "AB-2025-0151") {
                     dump($billing->billing_number);
                     dump($billing->description);
@@ -584,7 +585,7 @@ class SolarPlantBilling extends Model
                     dump($customerCost);
                     dump($vatRate);
                     dump($billing);
-                }
+                }*/
 
                 $costBreakdown[] = [
                     'contract_id' => $contract->id,
