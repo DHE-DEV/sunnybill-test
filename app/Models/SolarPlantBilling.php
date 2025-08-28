@@ -20,7 +20,7 @@ class SolarPlantBilling extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($billing) {
             // Only generate invoice number if it's not already provided
             if (empty($billing->invoice_number) || is_null($billing->invoice_number)) {
@@ -163,13 +163,14 @@ class SolarPlantBilling extends Model
     public static function generateInvoiceNumber(): string
     {
         $currentYear = date('Y');
-        $prefix = "RG-{$currentYear}-";
-        
+        //$prefix = "RG-{$currentYear}-";
+        $prefix = "";
+
         // Hole die letzte Rechnungsnummer für das aktuelle Jahr
         $lastBilling = static::where('invoice_number', 'LIKE', $prefix . '%')
             ->orderBy('invoice_number', 'desc')
             ->first();
-        
+
         if ($lastBilling) {
             // Extrahiere die Nummer aus der letzten Rechnungsnummer
             $lastNumber = intval(substr($lastBilling->invoice_number, strlen($prefix)));
@@ -178,7 +179,7 @@ class SolarPlantBilling extends Model
             // Erste Rechnung des Jahres
             $nextNumber = 1;
         }
-        
+
         // Formatiere die Nummer mit führenden Nullen (6 Stellen)
         return $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
@@ -193,8 +194,9 @@ class SolarPlantBilling extends Model
         }
 
         $currentYear = date('Y');
-        $prefix = "RG-{$currentYear}-";
-        
+        //$prefix = "RG-{$currentYear}-";
+        $prefix="";
+
         // Verwende Database Lock für thread-safe Operation
         return \DB::transaction(function() use ($prefix, $count) {
             // Hole die letzte Rechnungsnummer für das aktuelle Jahr mit FOR UPDATE Lock
@@ -202,7 +204,7 @@ class SolarPlantBilling extends Model
                 ->orderBy('invoice_number', 'desc')
                 ->lockForUpdate()
                 ->first();
-            
+
             if ($lastBilling) {
                 // Extrahiere die Nummer aus der letzten Rechnungsnummer
                 $lastNumber = intval(substr($lastBilling->invoice_number, strlen($prefix)));
@@ -211,13 +213,13 @@ class SolarPlantBilling extends Model
                 // Erste Rechnung des Jahres
                 $startNumber = 1;
             }
-            
+
             $invoiceNumbers = [];
             for ($i = 0; $i < $count; $i++) {
                 $number = $startNumber + $i;
                 $invoiceNumbers[] = $prefix . str_pad($number, 6, '0', STR_PAD_LEFT);
             }
-            
+
             return $invoiceNumbers;
         });
     }
@@ -234,7 +236,7 @@ class SolarPlantBilling extends Model
 
         // Hole alle aktiven Verträge für diese Solaranlage
         $activeContracts = $solarPlant->activeSupplierContracts()->get();
-        
+
         if ($activeContracts->isEmpty()) {
             return false;
         }
@@ -245,7 +247,7 @@ class SolarPlantBilling extends Model
                 ->where('billing_year', $year)
                 ->where('billing_month', $month)
                 ->exists();
-                
+
             if (!$billingExists) {
                 return false;
             }
@@ -271,7 +273,7 @@ class SolarPlantBilling extends Model
 
         // Hole alle Kundenbeteiligungen
         $participations = $solarPlant->participations()->get();
-        
+
         if ($participations->isEmpty()) {
             throw new \Exception('Keine aktiven Kundenbeteiligungen gefunden');
         }
@@ -308,7 +310,7 @@ class SolarPlantBilling extends Model
         // Generiere alle Rechnungsnummern im Voraus um Duplikate zu vermeiden
         $invoiceNumbers = self::generateBatchInvoiceNumbers(count($participationsToProcess));
         $createdBillings = [];
-        
+
         foreach ($participationsToProcess as $index => $participation) {
             // Berechne Kosten und Gutschriften für diesen Kunden
             $costData = self::calculateCostsForCustomer($solarPlantId, $participation->customer_id, $year, $month, $participation->percentage);
@@ -351,7 +353,7 @@ class SolarPlantBilling extends Model
             ->where('billing_year', $year)
             ->where('billing_month', $month)
             ->forceDelete();
-            
+
         return $deletedCount;
     }
 
@@ -394,24 +396,24 @@ class SolarPlantBilling extends Model
             $solarPlantPivot = $contract->solarPlants()
                 ->where('solar_plant_id', $solarPlantId)
                 ->first();
-                
+
             if (!$solarPlantPivot) {
                 // Wenn diese Solaranlage nicht als Kostenträger für diesen Vertrag hinterlegt ist, überspringe
                 continue;
             }
-            
+
             $solarPlantPercentage = $solarPlantPivot->pivot->percentage ?? 100;
 
             // Berechne den Anteil: Vertragsbetrag * Solaranlagen-Anteil * Kunden-Anteil
             $solarPlantShare = ($solarPlantPercentage / 100);
             $customerShare = ($percentage / 100);
             $finalShare = $solarPlantShare * $customerShare;
-            
+
             // Verarbeite ALLE Belege für diesen Vertrag
             foreach ($billings as $billing) {
                 // Prüfe ob es sich um Kosten oder Gutschriften handelt basierend auf .env Konfiguration
                 $minusIntoInvoiceSetting = config('app.minus_into_invoice', 'CREDIT_NOTE');
-                
+
                 if ($minusIntoInvoiceSetting === 'INVOICE') {
                     // Bei INVOICE: nur billing_type 'credit_note' ist Gutschrift
                     // Negative Beträge mit billing_type 'invoice' sind Kosten mit negativem Vorzeichen
@@ -420,17 +422,17 @@ class SolarPlantBilling extends Model
                     // Bei CREDIT_NOTE (Standard): billing_type 'credit_note' ODER negativer Betrag ist Gutschrift
                     $isCredit = $billing->billing_type === 'credit_note' || $billing->total_amount < 0;
                 }
-            
+
             if ($isCredit) {
                 // Gutschriften - verwende den absoluten Betrag für die Berechnung
                 $customerCredit = abs($billing->total_amount) * $finalShare;
                 $totalCredits += $customerCredit;
-                
+
                 // Berechne Netto-Gutschriften und MwSt.
                 if ($billing->net_amount) {
                     $customerCreditNet = abs($billing->net_amount) * $finalShare;
                     $totalCreditsNet += $customerCreditNet;
-                    
+
                     // MwSt.-Betrag = Brutto - Netto
                     $vatAmount = $customerCredit - $customerCreditNet;
                     $totalVatAmount -= $vatAmount; // Subtrahiere MwSt. bei Gutschriften
@@ -440,18 +442,18 @@ class SolarPlantBilling extends Model
                     $totalCreditsNet += $customerCreditNet;
                     $totalVatAmount -= ($customerCredit - $customerCreditNet);
                 }
-                
+
                 // Hole die Artikel-Details für diese Gutschrift
                 $articles = $billing->articles()->get();
                 $articleDetails = [];
-                
+
                 foreach ($articles as $article) {
                     $articleRecord = $article->article;
                     $netTotal = $article->total_price;
                     $taxRate = $articleRecord ? $articleRecord->getCurrentTaxRate() : 0.19;
                     $taxAmount = $netTotal * $taxRate;
                     $grossTotal = $netTotal + $taxAmount;
-                    
+
                     $articleDetails[] = [
                         'article_id' => $article->article_id,
                         'article_name' => $articleRecord ? $articleRecord->name : ($article->description ?? 'Unbekannt'),
@@ -466,12 +468,12 @@ class SolarPlantBilling extends Model
                         'detailed_description' => $article->detailed_description ?: ($articleRecord ? $articleRecord->detailed_description : '') ?: '',
                     ];
                 }
-                
+
                 // Berechne Netto- und MwSt.-Beträge für diese Gutschrift
                 $customerCreditNet = $billing->net_amount ? (abs($billing->net_amount) * $finalShare) : ($customerCredit / 1.19);
                 $customerCreditVat = $customerCredit - $customerCreditNet;
                 $vatRate = $billing->vat_rate ?? 0.19;
-                
+
                 $creditBreakdown[] = [
                     'contract_id' => $contract->id,
                     'contract_title' => $contract->title,
@@ -491,42 +493,66 @@ class SolarPlantBilling extends Model
                     'articles' => $articleDetails,
                 ];
             } else {
+                //dump($billing);
+                //dump('Kosten berechnen');
                 // Kosten - behandle je nach Konfiguration
                 if ($minusIntoInvoiceSetting === 'INVOICE' && $billing->total_amount < 0 && $billing->billing_type === 'invoice') {
+                    //dump('start debug');
                     // Bei INVOICE Modus: negative Beträge mit billing_type 'invoice' als negative Kosten
                     $customerCost = $billing->total_amount * $finalShare; // Behalte das negative Vorzeichen
+                    //dump($billing->total_amount);
+                    //dump($finalShare);
+                    //dump($customerCost);
+                    //dump('stop debug');
                 } else {
+                    //dump('Gesamtbetrag brutto: ');
                     // Standard: alle Kosten als positive Beträge
                     $customerCost = abs($billing->total_amount) * $finalShare;
+                    //dump($customerCost);
                 }
                 $totalCosts += $customerCost;
-                
+
                 // Berechne Netto-Kosten und MwSt.
                 if ($billing->net_amount) {
-                    $customerCostNet = abs($billing->net_amount) * $finalShare;
-                    $totalCostsNet += $customerCostNet;
-                    
+                    //dump($billing->net_amount);
+                    //dump($finalShare);
+                    //$customerCostNet = abs($billing->net_amount) * $finalShare;
+                    $customerCostNet = $billing->net_amount * $finalShare;
+                    //dump('Gesamtbetrag netto: ');
+                    //dump($customerCostNet);
+                    //$totalCostsNet += $customerCostNet;
+                    $totalCostsNet = $customerCostNet;
+                    //dump('Betrag TotalCostsNet');
+                    //dump($totalCostsNet);
                     // MwSt.-Betrag = Brutto - Netto
                     $vatAmount = $customerCost - $customerCostNet;
-                    $totalVatAmount += $vatAmount; // Addiere MwSt. bei Kosten
+                    //$totalVatAmount += $vatAmount; // Addiere MwSt. bei Kosten
+                    $totalVatAmount = $vatAmount; // Addiere MwSt. bei Kosten
+                    //dump('Betrag TotalCostsNet');
+                    //dump($customerCostNet);
+                    //dump($totalCostsNet);
+                    //dump($vatAmount);
+                    //dump($totalVatAmount);
                 } else {
                     // Fallback: Verwende 19% MwSt. wenn net_amount nicht verfügbar
                     $customerCostNet = $customerCost / 1.19;
-                    $totalCostsNet += $customerCostNet;
-                    $totalVatAmount += ($customerCost - $customerCostNet);
+                    //$totalCostsNet += $customerCostNet;
+                    //$totalVatAmount += ($customerCost - $customerCostNet);
+                    $totalCostsNet = $customerCostNet;
+                    $totalVatAmount = ($customerCost - $customerCostNet);
                 }
-                    
+
                 // Hole die Artikel-Details für diese Abrechnung
                 $articles = $billing->articles()->get();
                 $articleDetails = [];
-                
+
                 foreach ($articles as $article) {
                     $articleRecord = $article->article;
                     $netTotal = $article->total_price;
                     $taxRate = $articleRecord ? $articleRecord->getCurrentTaxRate() : 0.19;
                     $taxAmount = $netTotal * $taxRate;
                     $grossTotal = $netTotal + $taxAmount;
-                    
+
                     $articleDetails[] = [
                         'article_id' => $article->article_id,
                         'article_name' => $articleRecord ? $articleRecord->name : ($article->description ?? 'Unbekannt'),
@@ -543,10 +569,23 @@ class SolarPlantBilling extends Model
                 }
 
                 // Berechne Netto- und MwSt.-Beträge für diese Kosten
-                $customerCostNet = $billing->net_amount ? (abs($billing->net_amount) * $finalShare) : ($customerCost / 1.19);
+                //$customerCostNet = $billing->net_amount ? (abs($billing->net_amount) * $finalShare) : ($customerCost / 1.19);
+                //$customerCostVat = $customerCost - $customerCostNet;
+                $customerCostNet = $billing->net_amount;
                 $customerCostVat = $customerCost - $customerCostNet;
+
                 $vatRate = $billing->vat_rate ?? 0.19;
-                
+
+                if ($billing->billing_number == "AB-2025-0151") {
+                    dump($billing->billing_number);
+                    dump($billing->description);
+                    dump($customerCostNet);
+                    dump($customerCostVat);
+                    dump($customerCost);
+                    dump($vatRate);
+                    dump($billing);
+                }
+
                 $costBreakdown[] = [
                     'contract_id' => $contract->id,
                     'contract_title' => $contract->title,
@@ -568,7 +607,7 @@ class SolarPlantBilling extends Model
             }
             } // ✅ Schließe die foreach($billings as $billing) Schleife
         } // ✅ Schließe die foreach($activeContracts as $contract) Schleife
-
+#exit;
         return [
             'total_costs' => $totalCosts,
             'total_credits' => $totalCredits,

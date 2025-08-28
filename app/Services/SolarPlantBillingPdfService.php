@@ -16,26 +16,26 @@ class SolarPlantBillingPdfService
     public function generateBillingPdf(SolarPlantBilling $billing, CompanySetting $companySetting = null): string
     {
         $companySetting = $companySetting ?? CompanySetting::current();
-        
+
         // Two-Pass Rendering für korrekte Seitenzahlen:
-        
+
         // 1. Pass: PDF ohne Gesamtseitenzahl generieren um Seitenzahl zu ermitteln
         $data = $this->preparePdfData($billing, $companySetting);
         $data['totalPages'] = 0; // Erstmal 0 setzen
-        
+
         $pdf = Pdf::loadView('pdf.solar-plant-billing', $data);
         $this->configurePdf($pdf);
-        
+
         // Seitenzahl aus erster PDF extrahieren
         $tempPdfContent = $pdf->output();
         $totalPages = $this->extractPageCount($tempPdfContent);
-        
+
         // 2. Pass: PDF mit korrekter Gesamtseitenzahl generieren
         $data['totalPages'] = $totalPages;
-        
+
         $finalPdf = Pdf::loadView('pdf.solar-plant-billing', $data);
         $this->configurePdf($finalPdf);
-        
+
         return $finalPdf->output();
     }
 
@@ -63,7 +63,7 @@ class SolarPlantBillingPdfService
             if (preg_match('/\/Type\s*\/Pages[^}]*\/Count\s*(\d+)/', $pdfContent, $matches)) {
                 return (int) $matches[1];
             }
-            
+
             // Methode 2: Zähle Kids array references (sehr zuverlässig)
             if (preg_match('/\/Kids\s*\[([^\]]*)\]/', $pdfContent, $kidsMatch)) {
                 $kidsContent = $kidsMatch[1];
@@ -72,13 +72,13 @@ class SolarPlantBillingPdfService
                     return $pageRefs;
                 }
             }
-            
+
             // Methode 3: Zähle tatsächliche Page-Objekte (nicht /Type /Pages)
             $pageRefs = preg_match_all('/(\d+)\s+0\s+obj\s*<<[^>]*\/Type\s*\/Page[^s]/', $pdfContent, $matches);
             if ($pageRefs > 0) {
                 return $pageRefs;
             }
-            
+
             // Fallback: Mindestens 1 Seite
             return 1;
         } catch (\Exception $e) {
@@ -93,14 +93,14 @@ class SolarPlantBillingPdfService
     public function saveBillingPdf(SolarPlantBilling $billing): string
     {
         $pdfContent = $this->generateBillingPdf($billing);
-        
+
         // Dateiname generieren
         $filename = $this->generatePdfFilename($billing);
         $path = "billing-pdfs/{$filename}";
-        
+
         // PDF speichern
         Storage::disk('public')->put($path, $pdfContent);
-        
+
         return $path;
     }
 
@@ -111,22 +111,22 @@ class SolarPlantBillingPdfService
     {
         $customer = $billing->customer;
         $solarPlant = $billing->solarPlant;
-        
+
         // Beteiligungsprozentsatz und kWp aus der aktuellen participation Tabelle holen
         $participation = $solarPlant->participations()
             ->where('customer_id', $customer->id)
             ->first();
-        
+
         $currentPercentage = $participation ? $participation->percentage : $billing->participation_percentage;
         $currentParticipationKwp = $participation ? $participation->participation_kwp : null;
-        
+
         // Monatsnamen
         $monthNames = [
             1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
             5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
         ];
-        
+
         // Logo als base64 für PDF konvertieren
         $logoBase64 = null;
         if ($companySetting->hasLogo()) {
@@ -141,7 +141,7 @@ class SolarPlantBillingPdfService
                 // Logo konnte nicht geladen werden - wird ignoriert
             }
         }
-        
+
         return [
             'billing' => $billing,
             'customer' => $customer,
@@ -163,16 +163,16 @@ class SolarPlantBillingPdfService
     {
         $customer = $billing->customer;
         $solarPlant = $billing->solarPlant;
-        
+
         // Solaranlagen-Namen bereinigen (Leerzeichen durch Bindestriche ersetzen)
         $plantName = $this->sanitizeForFilename($solarPlant->name);
-        
+
         // Kundennamen bereinigen
-        $customerName = $customer->customer_type === 'business' && $customer->company_name 
-            ? $customer->company_name 
+        $customerName = $customer->customer_type === 'business' && $customer->company_name
+            ? $customer->company_name
             : $customer->name;
         $customerName = $this->sanitizeForFilename($customerName);
-        
+
         return sprintf(
             '%04d-%02d_%s_%s.pdf',
             $billing->billing_year,
@@ -211,22 +211,22 @@ class SolarPlantBillingPdfService
     {
         // Entferne führende/trailing Leerzeichen
         $text = trim($text);
-        
+
         // Ersetze mehrere Leerzeichen durch eines
         $text = preg_replace('/\s+/', ' ', $text);
-        
+
         // Ersetze Leerzeichen durch Bindestriche
         $text = str_replace(' ', '-', $text);
-        
+
         // Entferne ungültige Zeichen (behalte Buchstaben, Zahlen, Bindestriche)
         $text = preg_replace('/[^a-zA-Z0-9\-äöüÄÖÜß]/', '', $text);
-        
+
         // Entferne mehrfache Bindestriche
         $text = preg_replace('/-+/', '-', $text);
-        
+
         // Entferne Bindestriche am Anfang und Ende
         $text = trim($text, '-');
-        
+
         return $text;
     }
 
@@ -237,7 +237,7 @@ class SolarPlantBillingPdfService
     {
         $pdfContent = $this->generateBillingPdf($billing);
         $filename = $this->generatePdfFilename($billing);
-        
+
         return response($pdfContent)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="' . $filename . '"')

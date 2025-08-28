@@ -1,3 +1,7 @@
+@php
+   //dump($billing);
+@endphp
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -12,14 +16,14 @@
                 content: "";
             }
         }
-        
+
         @page :first {
             margin: {{ $companySetting->pdf_margins ?? '1.5cm 1.5cm 4cm 1.5cm' }};
             @bottom-center {
                 content: "";
             }
         }
-        
+
         @page :left, @page :right {
             margin-top: {{ $companySetting->pdf_margins ? explode(' ', $companySetting->pdf_margins)[0] : '1.5cm' }};
             margin-top: calc({{ $companySetting->pdf_margins ? explode(' ', $companySetting->pdf_margins)[0] : '1.5cm' }} + 20px);
@@ -27,7 +31,7 @@
             margin-bottom: {{ $companySetting->pdf_margins ? (explode(' ', $companySetting->pdf_margins)[2] ?? '1.5cm') : '1.5cm' }};
             margin-left: {{ $companySetting->pdf_margins ? (explode(' ', $companySetting->pdf_margins)[3] ?? '1.5cm') : '1.5cm' }};
         }
-        
+
         body {
             font-family: 'DejaVu Sans', Arial, sans-serif;
             font-size: 10pt;
@@ -37,24 +41,24 @@
             padding: 0;
             counter-reset: page;
         }
-        
+
         .header {
             display: table;
             width: 100%;
             margin-bottom: 0px;
         }
-        
+
         .logo {
             display: table-cell;
             width: 40%;
             vertical-align: top;
         }
-        
+
         .logo img {
             max-width: 150px;
             max-height: 60px;
         }
-        
+
         .company-info {
             display: table-cell;
             width: 60%;
@@ -62,57 +66,57 @@
             vertical-align: top;
             font-size: 9pt;
         }
-        
+
         .company-info h1 {
             margin: 0 0 10px 0;
             font-size: 16pt;
             color: #2563eb;
         }
-        
+
         .recipient {
             margin: 30px 0;
             width: 50%;
             margin-top: -40px;
         }
-        
+
         .recipient h3 {
             margin: 0 0 5px 0;
             font-size: 11pt;
             color: #555;
         }
-        
+
         .billing-info {
             float: right;
             width: 45%;
             margin-top: -135px;
             font-size: 9pt;
         }
-        
+
         .billing-info table {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         .billing-info td {
             padding: 3px 5px;
             border-bottom: 1px solid #eee;
         }
-        
+
         .billing-info td:first-child {
             font-weight: bold;
             width: 40%;
         }
-        
+
         .billing-info td:last-child {
             text-align: right;
         }
-        
+
         .document-title {
             clear: both;
             margin: 40px 0 30px 0;
             text-align: center;
         }
-        
+
         .document-title h2 {
             margin: 0;
             font-size: 18pt;
@@ -121,7 +125,7 @@
             padding-bottom: 10px;
             display: inline-block;
         }
-        
+
         .billing-period {
             text-align: center;
             margin: 20px 0;
@@ -130,65 +134,65 @@
             #color: #666;
             border-bottom: 2px solid #2563eb;
         }
-        
+
         .plant-info {
             background: #f8f9fa;
             padding: 15px;
             margin: 0px 0;
             #border-left: 4px solid #2563eb;
         }
-        
+
         .plant-info h3 {
             margin: 0 0 10px 0;
             color: #2563eb;
         }
-        
+
         .plant-details {
             display: table;
             width: 100%;
         }
-        
+
         .plant-details > div:first-child {
             display: table-cell;
             width: 56%;
             vertical-align: top;
         }
-        
+
         .plant-details > div:last-child {
             display: table-cell;
             width: 44%;
             vertical-align: top;
         }
-        
+
         .energy-details {
             display: table;
             width: 100%;
         }
-        
+
         .energy-details > div:first-child {
             display: table-cell;
             width: 56%;
             vertical-align: top;
         }
-        
+
         .energy-details > div:nth-child(2) {
             display: table-cell;
             width: 27%;
             vertical-align: top;
         }
-        
+
         .energy-details > div:last-child {
             display: table-cell;
             width: 17%;
             vertical-align: top;
         }
-        
+
         .positions-table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
         }
-        
+
         .positions-table th {
             #background: #2563eb;
             #background: #96989aff;
@@ -198,87 +202,87 @@
             #font-weight: bold;
             border-bottom: 1px solid #000000;
         }
-        
+
         .positions-table td {
             padding: 8px;
             border-bottom: 1px solid #ddd;
         }
-        
+
         /* Alternating row backgrounds removed for German tax office compliance */
-        
+
         .positions-table .number {
             text-align: right;
             #font-family: 'Courier New', monospace;
         }
-        
+
         .totals {
             float: right;
             width: 200px;
             margin: 20px 0;
             margin-right: 20px;
         }
-        
+
         .totals table {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         .totals td {
             padding: 4px 8px;
             border-bottom: 1px solid #ddd;
             font-size: 9pt;
         }
-        
+
         .totals .subtotal-row {
             font-weight: normal;
         }
-        
+
         .totals .total-row {
             font-weight: bold;
             font-size: 10pt;
             background: #2563eb;
             color: white;
         }
-        
+
         .breakdown {
             clear: both;
             margin: 15px 0;
         }
-        
+
         .breakdown h3 {
             color: #2563eb;
             border-bottom: 1px solid #2563eb;
             padding-bottom: 5px;
         }
-        
+
         .breakdown-table {
             width: 100%;
             border-collapse: collapse;
             margin: 10px 0;
             font-size: 9pt;
         }
-        
+
         .breakdown-table th {
             background: #f8f9fa;
             padding: 8px;
             text-align: left;
             #border: 1px solid #ddd;
         }
-        
+
         .breakdown-table .article-header th {
             background: #f8f9fa !important;
         }
-        
+
         .breakdown-table td {
             padding: 6px 8px;
             #border: 1px solid #ddd;
         }
-        
+
         .breakdown-table .number {
             text-align: right;
             #font-family: 'Courier New', monospace;
         }
-        
+
         .footer {
             position: fixed;
             bottom: 0;
@@ -291,7 +295,7 @@
             color: #666;
             z-index: 9999;
         }
-        
+
         .footer-first-page {
             position: absolute;
             bottom: 0;
@@ -304,45 +308,45 @@
             color: #666;
             z-index: 9999;
         }
-        
+
         .footer-content {
             display: table;
             width: 100%;
         }
-        
+
         .footer-section {
             display: table-cell;
             width: 33.33%;
             vertical-align: top;
         }
-        
+
         .page-number::after {
             content: counter(page);
         }
-        
+
         .total-pages::after {
             content: counter(pages);
         }
-        
+
         /* Alternative approach for PDF engines that don't support counter(pages) */
         @page {
             @bottom-center {
                 content: counter(page) " / " counter(pages);
             }
         }
-        
+
         .text-right {
             text-align: right;
         }
-        
+
         .text-center {
             text-align: center;
         }
-        
+
         .mb-0 {
             margin-bottom: 0;
         }
-        
+
         .mt-0 {
             margin-top: 0;
         }
@@ -356,8 +360,8 @@
         </div>
         <div class="company-info">
                     @if($logoBase64)
-                        <img src="{{ $logoBase64 }}" 
-                             alt="Firmenlogo" 
+                        <img src="{{ $logoBase64 }}"
+                             alt="Firmenlogo"
                              style="@if($companySetting->logo_styles){{ $companySetting->logo_styles }}; @else max-width: 150px; max-height: 60px; @endif object-fit: contain; position: relative; top: -20px; right: -15px;">
                     @endif
             <!--<h3>{{ $companySetting->company_name }}</h3>-->
@@ -407,9 +411,9 @@
     <!-- Titel -->
      <!--
     <div class="document-title">
-        
+
     </div>-->
-    
+
     <div class="billing-period">
         <h3>Gutschrift für Ihre Einspeisung {{ $monthName }} {{ $billing->billing_year }}</h3>
     </div>
@@ -429,20 +433,20 @@
                     @php
                         // Formatiere Standort als Straße<br>PLZ Ort
                         $location = trim($solarPlant->location);
-                        
+
                         // Trenne verschiedene Adressteile
                         $parts = preg_split('/[,;|]/', $location);
                         $parts = array_map('trim', $parts);
                         $parts = array_filter($parts);
-                        
+
                         if (count($parts) >= 2) {
                             // Erste Zeile: Straße
                             $street = $parts[0];
-                            
+
                             // Versuche PLZ und Ort aus den restlichen Teilen zu identifizieren
                             $remaining = array_slice($parts, 1);
                             $address = implode(' ', $remaining);
-                            
+
                             $formattedLocation = $street . '<br>' . $address;
                         } else {
                             // Fallback: versuche PLZ + Ort Pattern zu finden
@@ -464,7 +468,7 @@
             <div>
                 <strong>Ihr Anlagenanteil:</strong><br>
                 @if($currentParticipationKwp)
-                    {{ number_format($currentParticipationKwp, 2, ',', '.') }} kWp 
+                    {{ number_format($currentParticipationKwp, 2, ',', '.') }} kWp
                     ({{ number_format($currentPercentage, 2, ',', '.') }}%)
                 @else
                     {{ number_format($currentPercentage, 2, ',', '.') }}%
@@ -509,7 +513,7 @@
             @php
                 $positionCounter = 1;
             @endphp
-            
+
             <!-- Detaillierte Auflistung der Gutschriften/Einnahmen -->
             @if(!empty($billing->credit_breakdown))
                 @foreach($billing->credit_breakdown as $credit)
@@ -553,9 +557,10 @@
                         <small>{{ $cost['contract_title'] ?? 'Betriebskosten' }}</small><br>
                         <small style="">{{ $cost['supplier_name'] ?? 'Unbekannt' }}</small>
                     </td>
-                    <td class="number"><small>{{ number_format(-abs($cost['customer_share_net'] ?? 0), 2, ',', '.') }}</small></td>
+                    <td class="number"><small>{{ number_format($cost['customer_share_net'], 2, ',', '.') }}</small></td>
                     <td class="number">
                         @php
+                        //dump($cost);
                             $netAmount = $cost['customer_share_net'] ?? 0;
                             $grossAmount = $cost['customer_share'] ?? 0;
                             $taxAmount = $grossAmount - $netAmount;
@@ -589,7 +594,7 @@
             $totalNet = 0;
             $totalTax = 0;
             $totalGross = 0;
-            
+
             // Gutschriften/Einnahmen durchgehen
             if (!empty($billing->credit_breakdown)) {
                 foreach ($billing->credit_breakdown as $credit) {
@@ -598,21 +603,21 @@
                     $netAmount = $credit['customer_share_net'] ?? 0;
                     $grossAmount = $credit['customer_share'] ?? 0;
                     $taxAmount = $grossAmount - $netAmount;
-                    
+
                     if (!isset($taxBreakdown[$vatRatePercent])) {
                         $taxBreakdown[$vatRatePercent] = ['net' => 0, 'tax' => 0, 'gross' => 0];
                     }
-                    
+
                     $taxBreakdown[$vatRatePercent]['net'] += $netAmount;
                     $taxBreakdown[$vatRatePercent]['tax'] += $taxAmount;
                     $taxBreakdown[$vatRatePercent]['gross'] += $grossAmount;
-                    
+
                     $totalNet += $netAmount;
                     $totalTax += $taxAmount;
                     $totalGross += $grossAmount;
                 }
             }
-            
+
             // Kosten durchgehen (als negative Werte)
             if (!empty($billing->cost_breakdown)) {
                 foreach ($billing->cost_breakdown as $cost) {
@@ -621,21 +626,21 @@
                     $netAmount = -($cost['customer_share_net'] ?? 0);
                     $grossAmount = -($cost['customer_share'] ?? 0);
                     $taxAmount = $grossAmount - $netAmount;
-                    
+
                     if (!isset($taxBreakdown[$vatRatePercent])) {
                         $taxBreakdown[$vatRatePercent] = ['net' => 0, 'tax' => 0, 'gross' => 0];
                     }
-                    
+
                     $taxBreakdown[$vatRatePercent]['net'] += $netAmount;
                     $taxBreakdown[$vatRatePercent]['tax'] += $taxAmount;
                     $taxBreakdown[$vatRatePercent]['gross'] += $grossAmount;
-                    
+
                     $totalNet += $netAmount;
                     $totalTax += $taxAmount;
                     $totalGross += $grossAmount;
                 }
             }
-            
+
             // Sortiere nach Steuersatz
             ksort($taxBreakdown);
         @endphp
@@ -660,7 +665,7 @@
         <div style="text-align: center; margin-bottom: 5px;">
             Belegnummer: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>@if(isset($totalPages) && $totalPages > 0) von {{ $totalPages }}@endif
         </div>
-        
+
         <!-- Zeile 2: Firmeninfo -->
         <div style="text-align: center; margin-bottom: 2px; font-size: 6pt; color: #2563eb;">
             {{ $companySetting->company_name }}
@@ -668,7 +673,7 @@
             @if($companySetting->phone) | {{ $companySetting->phone }}@endif
             @if($companySetting->email) | {{ $companySetting->email }}@endif
         </div>
-        
+
         <!-- Zeile 4: Amtsgericht und Geschäftsführer -->
         <div style="text-align: center; margin-bottom: 2px; font-size: 6pt; color: #2563eb;">
             @if($companySetting->formatted_commercial_register){{ $companySetting->formatted_commercial_register }}@endif
@@ -676,7 +681,7 @@
             @if($companySetting->vat_id)USt-IdNr.: {{ $companySetting->vat_id }}@endif
             @if($companySetting->management) | Geschäftsführung: {{ $companySetting->management }}@endif
         </div>
-        
+
         <!-- Bisherige Footer-Inhalte -->
         <div class="footer-content">
             <div class="footer-section">
@@ -717,12 +722,12 @@
                         <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
                             {{ $credit['supplier_name'] ?? 'Unbekannt' }}
                         </div>
-                        
+
                         <!-- Contract Title - Zeile 2 -->
                         <div style="font-size: 9pt; color: #666; margin-bottom: 3px;">
                             {{ $credit['contract_title'] ?? ($credit['contract_number'] ?? 'Unbekannt') }}
                         </div>
-                        
+
                         <!-- Billing Description - Zeile 3 -->
                         @if(isset($credit['billing_description']) && !empty($credit['billing_description']))
                         <div style="font-size: 8pt; color: #888; margin-bottom: 8px; font-style: italic;">
@@ -731,7 +736,7 @@
                         @else
                         <div style="margin-bottom: 5px;"></div>
                         @endif
-                        
+
                         <!-- Werte-Tabelle -->
                         <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
                             <thead>
@@ -770,7 +775,7 @@
                                 $articleModel = null;
                                 $decimalPlaces = 2;
                                 $totalDecimalPlaces = 2;
-                                
+
                                 if (isset($article['article_id']) && $article['article_id']) {
                                     $articleModel = \App\Models\Article::find($article['article_id']);
                                     if ($articleModel) {
@@ -778,7 +783,7 @@
                                         $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
                                     }
                                 }
-                                
+
                                 // Berechne Steuer und Brutto-Betrag
                                 $netPrice = $article['total_price_net'] ?? 0;
                                 $taxRate = $article['tax_rate'] ?? 0.19;
@@ -790,14 +795,14 @@
                                 <div style="font-weight: bold; font-size: 8pt; color: #333; margin-bottom: 3px;">
                                     {{ $article['article_name'] ?? 'Unbekannt' }}
                                 </div>
-                                
+
                                 <!-- Artikel Beschreibung (falls vorhanden und unterschiedlich) -->
                                 @if(isset($article['description']) && $article['description'] !== $article['article_name'] && !empty($article['description']))
                                 <div style="font-size: 8pt; color: #666; margin-bottom: 12px;">
                                     {{ $article['description'] }}
                                 </div>
                                 @endif
-                                
+
                                 <!-- Details als Tabelle -->
                                 <table style="width: 100%; border-collapse: collapse; font-size: 8pt; color: #555;">
                                     <thead>
@@ -805,7 +810,7 @@
                                             <th style="text-align: left; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Menge</th>
                                             <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Einzelpreis</th>
                                             <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtpreis (netto)</th>
-                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Steuer ({{ number_format(($taxRate <= 1 ? $taxRate * 100 : $taxRate), 1, ',', '.') }}%)</th>
+                                            <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">USt. ({{ number_format(($taxRate <= 1 ? $taxRate * 100 : $taxRate), 1, ',', '.') }}%)</th>
                                             <th style="text-align: right; padding: 3px 6px; border-bottom: 1px solid #ddd; font-weight: bold;">Gesamtbetrag (brutto)</th>
                                         </tr>
                                     </thead>
@@ -834,12 +839,12 @@
                 @endforeach
             </tbody>
         </table>
-        
+
         <!-- Artikel-Erklärungen für Einnahmen/Gutschriften -->
         @php
             $hasDetailedDescriptions = false;
             $detailedArticles = [];
-            
+
             foreach($billing->credit_breakdown as $credit) {
                 if(isset($credit['articles']) && is_array($credit['articles'])) {
                     foreach($credit['articles'] as $article) {
@@ -857,7 +862,7 @@
 
             $hasDetailedDescriptions = false; # nur zum Ausblenden wegen Beschreibung in der aufschlüsselung
         @endphp
-        
+
         @if($hasDetailedDescriptions)
         <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
             <h4 style="margin: 0 0 10px 0; color: #2563eb; font-size: 8pt;">Erklärung der Artikel</h4>
@@ -894,12 +899,12 @@
                         <div style="font-weight: bold; font-size: 10pt; color: #333; margin-bottom: 3px;">
                             {{ $cost['supplier_name'] ?? 'Unbekannt' }}
                         </div>
-                        
+
                         <!-- Contract Title - Zeile 2 -->
                         <div style="font-size: 9pt; color: #666; margin-bottom: 3px;">
                             {{ $cost['contract_title'] ?? ($cost['contract_number'] ?? 'Unbekannt') }}
                         </div>
-                        
+
                         <!-- Billing Description - Zeile 3 -->
                         @if(isset($cost['billing_description']) && !empty($cost['billing_description']))
                         <div style="font-size: 8pt; color: #888; margin-bottom: 8px; font-style: italic;">
@@ -908,7 +913,7 @@
                         @else
                         <div style="margin-bottom: 5px;"></div>
                         @endif
-                        
+
                         <!-- Werte-Tabelle -->
                         <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
                             <thead>
@@ -941,7 +946,7 @@
                                 $articleModel = null;
                                 $decimalPlaces = 2;
                                 $totalDecimalPlaces = 2;
-                                
+
                                 if (isset($article['article_id']) && $article['article_id']) {
                                     $articleModel = \App\Models\Article::find($article['article_id']);
                                     if ($articleModel) {
@@ -949,7 +954,7 @@
                                         $totalDecimalPlaces = $articleModel->getTotalDecimalPlaces();
                                     }
                                 }
-                                
+
                                 // Berechne Steuer und Brutto-Betrag
                                 $netPrice = $article['total_price_net'] ?? 0;
                                 $taxRate = $article['tax_rate'] ?? 0.19;
@@ -961,14 +966,14 @@
                                 <div style="font-weight: bold; font-size: 8pt; color: #333; margin-bottom: 3px;">
                                     {{ $article['article_name'] ?? 'Unbekannt' }}
                                 </div>
-                                
+
                                 <!-- Artikel Beschreibung (falls vorhanden und unterschiedlich) -->
                                 @if(isset($article['description']) && $article['description'] !== $article['article_name'] && !empty($article['description']))
                                 <div style="font-size: 7pt; color: #666; margin-bottom: 6px; font-style: italic;">
                                     {{ $article['description'] }}
                                 </div>
                                 @endif
-                                
+
                                 <!-- Details als Tabelle -->
                                 <table style="width: 100%; border-collapse: collapse; font-size: 7pt; color: #555;">
                                     <thead>
@@ -1004,12 +1009,12 @@
                 @endforeach
             </tbody>
         </table>
-        
+
         <!-- Artikel-Erklärungen für Kosten -->
         @php
             $hasCostDetailedDescriptions = false;
             $costDetailedArticles = [];
-            
+
             foreach($billing->cost_breakdown as $cost) {
                 if(isset($cost['articles']) && is_array($cost['articles'])) {
                     foreach($cost['articles'] as $article) {
@@ -1027,7 +1032,7 @@
 
             $hasCostDetailedDescriptions = false; # nur zum Ausblenden wegen Beschreibung in der aufschlüsselung
         @endphp
-        
+
         @if($hasCostDetailedDescriptions)
         <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
             <h4 style="margin: 0 0 10px 0; color: #2563eb; font-size: 8pt;">Erklärung der Kosten-Artikel</h4>
@@ -1080,7 +1085,7 @@
         <div style="text-align: center; margin-bottom: 5px;">
             Belegnummer: {{ $billing->invoice_number }} / Seite <span class="page-number"></span>@if(isset($totalPages) && $totalPages > 0) von {{ $totalPages }}@endif
         </div>
-        
+
         <!-- Zeile 2: Firmeninfo -->
         <div style="text-align: center; margin-bottom: 2px; font-size: 6pt; color: #2563eb;">
             {{ $companySetting->company_name }}
@@ -1088,7 +1093,7 @@
             @if($companySetting->phone) | {{ $companySetting->phone }}@endif
             @if($companySetting->email) | {{ $companySetting->email }}@endif
         </div>
-        
+
         <!-- Zeile 4: Amtsgericht und Geschäftsführer -->
         <div style="text-align: center; margin-bottom: 2px; font-size: 6pt; color: #2563eb;">
             @if($companySetting->formatted_commercial_register){{ $companySetting->formatted_commercial_register }}@endif
@@ -1096,7 +1101,7 @@
             @if($companySetting->vat_id)USt-IdNr.: {{ $companySetting->vat_id }}@endif
             @if($companySetting->management) | Geschäftsführung: {{ $companySetting->management }}@endif
         </div>
-        
+
         <!-- Bisherige Footer-Inhalte -->
         <div class="footer-content">
             <div class="footer-section">
