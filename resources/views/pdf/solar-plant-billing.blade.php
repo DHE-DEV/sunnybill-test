@@ -402,7 +402,7 @@
                 <td>{{ $generatedAt->format('d.m.Y') }}</td>
             </tr>
             <tr>
-                <td>Periode:</td>
+                <td>Leistungszeitraum:</td>
                 <td>{{ $monthName }} {{ $billing->billing_year }}</td>
             </tr>
         </table>
@@ -718,7 +718,7 @@
     <!-- Aufschlüsselung der Gutschriften/Einnahmen -->
     @if(!empty($billing->credit_breakdown))
     <div class="breakdown" style="page-break-before: always;">
-        <h3>Aufschlüsselung der Einnahmen/Gutschriften</h3>
+        <h3>Kundeninformation zu der Aufstellung der Gutschriften</h3>
         <table class="breakdown-table">
 
             <tbody>
@@ -895,7 +895,7 @@
     <!-- Aufschlüsselung der Kosten -->
     @if(!empty($billing->cost_breakdown))
     <div class="breakdown" style="page-break-before: always;">
-        <h3>Aufschlüsselung der Kosten</h3>
+        <h3>Kundeninformation zu der Aufstellung der Kosten</h3>
         <table class="breakdown-table">
 
             <tbody>
