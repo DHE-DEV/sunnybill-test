@@ -755,7 +755,8 @@
                                 <tr>
                                     <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Ihr Anteil</th>
                                     <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Netto (€)</th>
-                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">USt.</th>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">USt. (%)</th>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">USt. (€)</th>
                                     <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Gesamtbetrag Brutto (€)</th>
                                 </tr>
                             </thead>
@@ -764,6 +765,7 @@
                                     <td style="text-align: center; padding: 4px 8px;">{{ number_format($credit['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                                     <td style="text-align: right; padding: 4px 8px;">{{ number_format(abs($credit['customer_share_net'] ?? 0), 2, ',', '.') }}</td>
                                     <td style="text-align: center; padding: 4px 8px;">{{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
+                                    <td style="text-align: right; padding: 3px 6px;">{{ number_format(($credit['customer_share'] ?? 0) - ($credit['customer_share_net'] ?? 0), 2, ',', '.') }}€</td>
                                     <td style="text-align: right; padding: 4px 8px;">{{ number_format(abs($credit['customer_share'] ?? 0), 2, ',', '.') }}</td>
                                 </tr>
                             </tbody>
@@ -932,7 +934,8 @@
                                 <tr>
                                     <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Ihr Anteil</th>
                                     <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Netto (€)</th>
-                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">USt.</th>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">USt. (%)</th>
+                                    <th style="text-align: center; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">USt. (€)</th>
                                     <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #ddd; font-weight: bold; background: #f8f9fa;">Gesamtbetrag Brutto (€)</th>
                                 </tr>
                             </thead>
@@ -941,6 +944,7 @@
                                     <td style="text-align: center; padding: 4px 8px;">{{ number_format($cost['customer_percentage'] ?? 0, 2, ',', '.') }}%</td>
                                     <td style="text-align: right; padding: 4px 8px;">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
                                     <td style="text-align: center; padding: 4px 8px;">{{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
+                                    <td style="text-align: right; padding: 3px 6px;">{{ number_format(($cost['customer_share'] ?? 0) - ($cost['customer_share_net'] ?? 0), 2, ',', '.') }}€</td>
                                     <td style="text-align: right; padding: 4px 8px;">{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</td>
                                 </tr>
                             </tbody>
