@@ -402,7 +402,7 @@
                 <td>{{ $customer->customer_number }}</td>
             </tr>
             <tr>
-                <td>Datum:</td>
+                <td>Druckdatum:</td>
                 <td>{{ $generatedAt->format('d.m.Y') }}</td>
             </tr>
             <tr>
