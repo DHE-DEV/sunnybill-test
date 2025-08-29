@@ -394,6 +394,10 @@
                 <td>{{ $billing->invoice_number }}</td>
             </tr>
             <tr>
+                <td>Belegdatum:</td>
+                <td>{{ $billing->created_at->format('d.m.Y') }}</td>
+            </tr>
+            <tr>
                 <td>Kundennummer:</td>
                 <td>{{ $customer->customer_number }}</td>
             </tr>
@@ -1062,28 +1066,21 @@
     </div>
     @endif
 
+    <!-- Hinweise -->
+    @if($billing->show_hints ?? true)
+    <div style="margin-top: 20px; font-size: 9pt; color: #666; page-break-inside: avoid;">
+        <p><strong>Wichtiger Hinweis:</strong></p>
+        <p>Die Verrechnung der aktuellen Gutschriften und Kosten führt im aufgeführten Monat zu einer negativen Gutschrift, also zu einer <b>Rechnung</b>. Der daraus entstehende Rechnungsbetrag wird von unserem System automatisch mit der <b>nächsten</b> Abrechnung verrechnet.
+Den ausstehenden Rechnungsbetrag finden Sie auf Ihrer nächsten Abrechnung unter der entsprechenden Belegnummer in der Kostenaufstellung als separate Position aufgeführt.<br>Bitte führen Sie <b>keine eigenständige Überweisung</b> durch.</p>
+    </div>
+    @endif
+
     <!-- Bemerkung -->
     @if($billing->notes)
     <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0; page-break-inside: avoid;">
         <div style="font-size: 9pt; color: #374151; line-height: 1.4;">
             {!! nl2br(e($billing->notes)) !!}
         </div>
-    </div>
-    @endif
-
-    <!-- Hinweise -->
-    @if($billing->show_hints ?? true)
-    <div style="margin-top: 20px; font-size: 9pt; color: #666; page-break-inside: avoid;">
-        <p><strong>Hinweise:</strong></p>
-        <ul>
-            <li>Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {{ $solarPlant->name }}.</li>
-            <li>Ihr aktueller Beteiligungsanteil beträgt {{ number_format($currentPercentage, 2, ',', '.') }}%.</li>
-            <li>Die Abrechnung der Marktprämie erfolgt Umsatzsteuerfrei.</li>
-            @if($billing->total_credits > 0)
-            <li>Die Einnahmen/Gutschriften stammen aus Vertragsabrechnungen unserer Lieferanten für diese Solaranlage.</li>
-            @endif
-            <li>Bei Fragen zu dieser Abrechnung wenden Sie sich bitte an uns.</li>
-        </ul>
     </div>
     @endif
 
