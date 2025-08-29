@@ -551,23 +551,31 @@
             <!-- Detaillierte Auflistung der Kosten -->
             @if(!empty($billing->cost_breakdown))
                 @foreach($billing->cost_breakdown as $cost)
+                    @php
+                        $netAmount   = ($cost['customer_share_net'] ?? 0) * -1;
+                        $grossAmount = ($cost['customer_share'] ?? 0) * -1;
+                        $taxAmount   = $grossAmount - $netAmount;
+                        //dump($netAmount);
+                        //dump($grossAmount);
+                        //dump($taxAmount);
+                    @endphp
                 <tr style="background: #ffffff;">
                     <td><small>{{ $positionCounter++ }}</small></td>
                     <td>
                         <small>{{ $cost['contract_title'] ?? 'Betriebskosten' }}</small><br>
                         <small style="">{{ $cost['supplier_name'] ?? 'Unbekannt' }}</small>
                     </td>
-                    <td class="number"><small>{{ number_format($cost['customer_share_net'], 2, ',', '.') }}</small></td>
+                    <td class="number"><small>{{ number_format($netAmount, 2, ',', '.') }}</small></td>
                     <td class="number">
                         @php
                         //dump($cost);
-                            $netAmount = $cost['customer_share_net'] ?? 0;
-                            $grossAmount = $cost['customer_share'] ?? 0;
-                            $taxAmount = $grossAmount - $netAmount;
+                            //$netAmount = $cost['customer_share_net'] ?? 0;
+                            //$grossAmount = $cost['customer_share'] ?? 0;
+                            //$taxAmount = $grossAmount - $netAmount;
                         @endphp
                         <small>{{ number_format($taxAmount, 2, ',', '.') }} € ({{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%)</small>
                     </td>
-                    <td class="number"><small>{{ number_format($cost['customer_share'] ?? 0, 2, ',', '.') }}</small></td>
+                    <td class="number"><small>{{ number_format($grossAmount ?? 0, 2, ',', '.') }}</small></td>
                 </tr>
                 @endforeach
             @elseif($billing->total_costs > 0 || isset($billing->total_costs))
