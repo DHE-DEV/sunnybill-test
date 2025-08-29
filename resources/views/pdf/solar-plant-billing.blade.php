@@ -1071,7 +1071,7 @@
     <div style="margin-top: 20px; font-size: 9pt; color: #666; page-break-inside: avoid;">
         <p><strong>Wichtiger Hinweis:</strong></p>
         <p>Die Verrechnung der aktuellen Gutschriften und Kosten führt im aufgeführten Monat zu einer negativen Gutschrift, also zu einer <b>Rechnung</b>. Der daraus entstehende Rechnungsbetrag wird von unserem System automatisch mit der <b>nächsten</b> Abrechnung verrechnet.
-Den ausstehenden Rechnungsbetrag finden Sie auf Ihrer nächsten Abrechnung unter der entsprechenden Belegnummer in der Kostenaufstellung als separate Position aufgeführt.<br>Bitte führen Sie <b>keine eigenständige Überweisung</b> durch.</p>
+Den ausstehenden Rechnungsbetrag finden Sie auf Ihrer nächsten Abrechnung unter der entsprechenden Belegnummer in der Kostenaufstellung als separate Position aufgeführt.</p><p>Bitte führen Sie <b>keine eigenständige Überweisung</b> durch.</p>
     </div>
     @endif
 
