@@ -472,10 +472,10 @@
             <div>
                 <strong>Ihr Anlagenanteil:</strong><br>
                 @if($currentParticipationKwp)
-                    {{ number_format($currentParticipationKwp, 2, ',', '.') }} kWp
-                    ({{ number_format($currentPercentage, 2, ',', '.') }}%)
+                    {{ number_format($currentParticipationKwp, 4, ',', '.') }} kWp
+                    ({{ number_format($currentPercentage, 4, ',', '.') }}%)
                 @else
-                    {{ number_format($currentPercentage, 2, ',', '.') }}%
+                    {{ number_format($currentPercentage, 4, ',', '.') }}%
                 @endif
             </div>
         </div>
