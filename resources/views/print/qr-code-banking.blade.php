@@ -224,12 +224,12 @@
                 <span class="info-value">{{ $solarPlantBilling->invoice_number }}</span>
             </div>
             <div class="info-item">
-                <span class="info-label">Datum</span>
+                <span class="info-label">Abrechnungsdatum</span>
                 <span class="info-value">{{ $solarPlantBilling->created_at?->format('d.m.Y') }}</span>
             </div>
             <div class="info-item">
-                <span class="info-label">Kunde</span>
-                <span class="info-value">{{ $customer->company_name ?: $customer->first_name . ' ' . $customer->last_name }}</span>
+                <span class="info-label">Kunde / Kundennummer</span>
+                <span class="info-value">{{ $customer->name }} ( {{ $customer->customer_number }} )</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Solaranlage</span>
@@ -252,7 +252,7 @@
             
             <div class="detail-row">
                 <span class="detail-label">IBAN:</span>
-                <span class="detail-value">{{ $qrCodeData['data']['beneficiaryAccount'] }}</span>
+                <span class="detail-value">{{ rtrim(chunk_split($qrCodeData['data']['beneficiaryAccount'], 4, ' ')) }}</span>
             </div>
             
             @if(!empty($qrCodeData['data']['beneficiaryBIC']))
