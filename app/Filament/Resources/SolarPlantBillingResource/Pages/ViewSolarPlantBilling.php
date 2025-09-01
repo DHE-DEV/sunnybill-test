@@ -1271,6 +1271,18 @@ class ViewSolarPlantBilling extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('printQrCode')
+                ->label('QR-Code drucken')
+                ->icon('heroicon-o-qr-code')
+                ->color('info')
+                ->visible(function () {
+                    $qrService = new EpcQrCodeService();
+                    return $qrService->canGenerateQrCode($this->record);
+                })
+                ->url(function () {
+                    return route('admin.solar-plant-billing.qr-code-print', $this->record);
+                })
+                ->openUrlInNewTab(),
             Actions\Action::make('recordPayment')
                 ->label('Zahlung erfassen')
                 ->icon('heroicon-o-plus')

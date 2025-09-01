@@ -62,4 +62,9 @@ Route::get('/admin/download-bulk-pdfs', [App\Http\Controllers\BulkPdfDownloadCon
     ->name('admin.download-bulk-pdfs')
     ->middleware('auth');
 
+// QR-Code print route for solar plant billing
+Route::get('/admin/solar-plant-billing/{solarPlantBilling}/qr-code-print', [App\Http\Controllers\SolarPlantBillingController::class, 'printQrCode'])
+    ->name('admin.solar-plant-billing.qr-code-print')
+    ->middleware('auth');
+
 // Remove conflicting route - let L5-Swagger handle its own routes
