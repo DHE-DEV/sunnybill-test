@@ -17,8 +17,13 @@ class SolarPlantBillingController extends Controller
 
     public function printQrCode(SolarPlantBilling $solarPlantBilling)
     {
-        // Load required relationships
-        $solarPlantBilling->load(['customer', 'solarPlant']);
+        // Load required relationships and fetch customer explicitly
+        $solarPlantBilling->load(['solarPlant']);
+        $customer = \App\Models\Customer::find($solarPlantBilling->customer_id);
+        
+        if (!$customer) {
+            return redirect()->back()->with('error', 'Kunde für diese Abrechnung nicht gefunden.');
+        }
         
         // Check if QR code can be generated for this billing
         if (!$this->epcQrCodeService->canGenerateQrCode($solarPlantBilling)) {
@@ -29,7 +34,6 @@ class SolarPlantBillingController extends Controller
         $qrCodeImage = $this->epcQrCodeService->generateEpcQrCode($solarPlantBilling);
         
         // Get customer and billing data
-        $customer = $solarPlantBilling->customer;
         $solarPlant = $solarPlantBilling->solarPlant;
         $amount = abs($solarPlantBilling->net_amount);
         
@@ -50,6 +54,7 @@ class SolarPlantBillingController extends Controller
         
         return view('print.qr-code-banking', [
             'solarPlantBilling' => $solarPlantBilling,
+            'customer' => $customer,
             'qrCodeData' => $qrCodeData,
         ]);
     }

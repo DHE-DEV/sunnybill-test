@@ -229,7 +229,7 @@
             </div>
             <div class="info-item">
                 <span class="info-label">Kunde</span>
-                <span class="info-value">{{ $solarPlantBilling->customer?->company_name ?: $solarPlantBilling->customer?->first_name . ' ' . $solarPlantBilling->customer?->last_name }}</span>
+                <span class="info-value">{{ $customer->company_name ?: $customer->first_name . ' ' . $customer->last_name }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Solaranlage</span>
