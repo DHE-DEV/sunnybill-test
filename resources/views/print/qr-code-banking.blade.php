@@ -213,10 +213,9 @@
 <body>
     <div class="print-header">
         <h1>Banking-App QR-Code</h1>
-        <div class="subtitle"></div>
+        <div class="subtitle">Einfach scannen und bezahlen</div>
     </div>
-@php dump($qrCodeData); @endphp
-@php dump($solarPlantBilling); @endphp
+
     <div class="billing-info">
         <h2>Abrechnungsdetails</h2>
         <div class="info-grid">

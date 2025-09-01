@@ -17,6 +17,9 @@ class SolarPlantBillingController extends Controller
 
     public function printQrCode(SolarPlantBilling $solarPlantBilling)
     {
+        // Load required relationships
+        $solarPlantBilling->load(['customer', 'solarPlant']);
+        
         // Check if QR code can be generated for this billing
         if (!$this->epcQrCodeService->canGenerateQrCode($solarPlantBilling)) {
             return redirect()->back()->with('error', 'QR-Code kann für diese Abrechnung nicht generiert werden.');
