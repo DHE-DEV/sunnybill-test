@@ -568,7 +568,7 @@ class SolarPlantBilling extends Model
                         'detailed_description' => $article->detailed_description ?: ($articleRecord ? $articleRecord->detailed_description : '') ?: '',
                     ];
                 }
-
+                /*
                 if ($billing->billing_number == "AB-2025-0307") {
                     dump('start debug Kostenrechnung');
                     dump($customerCost.'_x_');
@@ -578,7 +578,7 @@ class SolarPlantBilling extends Model
                     dump($totalVatAmount);
                     dump('ende debug Kostenrechnung');
                 }
-
+                */
                 // Berechne Netto- und MwSt.-Beträge für diese Kosten
                 //$customerCostNet = $billing->net_amount ? (abs($billing->net_amount) * $finalShare) : ($customerCost / 1.19);
                 //$customerCostVat = $customerCost - $customerCostNet;
@@ -597,7 +597,7 @@ class SolarPlantBilling extends Model
                     dump($vatRate);
                     dump($billing);
                 }*/
-
+/*
                 if ($billing->billing_number == "AB-2025-0307") {
                     dump($billing->billing_number);
                     dump($billing->description);
@@ -607,7 +607,7 @@ class SolarPlantBilling extends Model
                     dump($vatRate);
                     dump($billing);
                 }
-
+*/
                 $costBreakdown[] = [
                     'contract_id' => $contract->id,
                     'contract_title' => $contract->title,
