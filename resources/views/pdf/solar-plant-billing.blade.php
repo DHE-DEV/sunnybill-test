@@ -540,7 +540,7 @@
                     <td>{{ $positionCounter++ }}</td>
                     <td>
                         <strong>Einnahmen/Gutschriften</strong><br>
-                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 2, ',', '.') }}% Anteil</small><br>
+                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 4, ',', '.') }}% Anteil</small><br>
                         <small style="color: #888;">Sammelposten</small>
                     </td>
                     <td class="number">{{ number_format(abs($billing->total_credits_net ?? $billing->total_credits), 2, ',', '.') }}</td>
@@ -588,7 +588,7 @@
                     <td>{{ $positionCounter++ }}</td>
                     <td>
                         <strong>Betriebskosten</strong><br>
-                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 2, ',', '.') }}% Anteil</small><br>
+                        <small>{{ $monthName }} {{ $billing->billing_year }} - {{ number_format($currentPercentage, 4, ',', '.') }}% Anteil</small><br>
                         <small style="color: #888;">Sammelposten</small>
                     </td>
                     <td class="number">-{{ number_format(($billing->total_costs_net ?? abs($billing->total_costs ?? 0)), 2, ',', '.') }}</td>
