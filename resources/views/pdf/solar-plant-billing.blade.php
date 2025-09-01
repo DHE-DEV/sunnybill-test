@@ -473,11 +473,22 @@
                 <strong>Ihr Anlagenanteil:</strong><br>
                 @if($currentParticipationKwp)
                     {{ number_format($currentParticipationKwp, 2, ',', '.') }} kWp
-                    ({{ number_format($currentPercentage, 4, ',', '.') }}%)
+                    (
+                    @if(round($currentPercentage, 10) == 100)
+                        {{ rtrim(rtrim(number_format($currentPercentage, 10, ',', '.'), '0'), ',') }}%
+                    @else
+                        {{ number_format($currentPercentage, 4, ',', '.') }}%
+                    @endif
+                    )
                 @else
-                    {{ number_format($currentPercentage, 4, ',', '.') }}%
+                    @if(round($currentPercentage, 10) == 100)
+                        {{ rtrim(rtrim(number_format($currentPercentage, 10, ',', '.'), '0'), ',') }}%
+                    @else
+                        {{ number_format($currentPercentage, 4, ',', '.') }}%
+                    @endif
                 @endif
             </div>
+
         </div>
         @if($billing->produced_energy_kwh)
         <div style="margin-top: 10px; padding: 10px; background-color: #f0f8ff;">
@@ -762,7 +773,13 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format($credit['customer_percentage'] ?? 0, 4, ',', '.') }}%</td>
+                                    <td style="text-align: center; padding: 4px 8px;">
+                                        @if(($credit['customer_percentage'] ?? 0) == 100)
+                                            100%
+                                        @else
+                                            {{ number_format($credit['customer_percentage'] ?? 0, 4, ',', '.') }}%
+                                        @endif
+                                    </td>
                                     <td style="text-align: right; padding: 4px 8px;">{{ number_format(abs($credit['customer_share_net'] ?? 0), 2, ',', '.') }}</td>
                                     <td style="text-align: center; padding: 4px 8px;">{{ number_format((($credit['vat_rate'] ?? 0.19) <= 1 ? ($credit['vat_rate'] ?? 0.19) * 100 : ($credit['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
                                     <td style="text-align: right; padding: 3px 6px;">{{ number_format(($credit['customer_share'] ?? 0) - ($credit['customer_share_net'] ?? 0), 2, ',', '.') }}€</td>
@@ -941,7 +958,13 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td style="text-align: center; padding: 4px 8px;">{{ number_format($cost['customer_percentage'] ?? 0, 4, ',', '.') }}%</td>
+                                    <td style="text-align: center; padding: 4px 8px;">
+                                        @if(($cost['customer_percentage'] ?? 0) == 100)
+                                            100%
+                                        @else
+                                            {{ number_format($cost['customer_percentage'] ?? 0, 4, ',', '.') }}%
+                                        @endif
+                                    </td>
                                     <td style="text-align: right; padding: 4px 8px;">{{ number_format($cost['customer_share_net'] ?? 0, 2, ',', '.') }}</td>
                                     <td style="text-align: center; padding: 4px 8px;">{{ number_format((($cost['vat_rate'] ?? 0.19) <= 1 ? ($cost['vat_rate'] ?? 0.19) * 100 : ($cost['vat_rate'] ?? 19)), 0, ',', '.') }}%</td>
                                     <td style="text-align: right; padding: 3px 6px;">{{ number_format(($cost['customer_share'] ?? 0) - ($cost['customer_share_net'] ?? 0), 2, ',', '.') }}€</td>
