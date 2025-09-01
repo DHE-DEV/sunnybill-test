@@ -57,4 +57,9 @@ Route::get('/documents/{document}/download', [\App\Http\Controllers\DocumentCont
     ->name('documents.download')
     ->middleware('auth');
 
+// Bulk PDF download route
+Route::get('/admin/download-bulk-pdfs', [App\Http\Controllers\BulkPdfDownloadController::class, 'index'])
+    ->name('admin.download-bulk-pdfs')
+    ->middleware('auth');
+
 // Remove conflicting route - let L5-Swagger handle its own routes

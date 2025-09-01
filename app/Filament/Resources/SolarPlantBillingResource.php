@@ -843,6 +843,8 @@ class SolarPlantBillingResource extends Resource
                                             ? $currentParticipation->percentage 
                                             : $billing->participation_percentage;
 
+                                        $currentParticipationKwp = $currentParticipation ? $currentParticipation->participation_kwp : null;
+
                                         // Generiere aktuelles Datum
                                         $generatedAt = now();
                                         
@@ -870,6 +872,7 @@ class SolarPlantBillingResource extends Resource
                                             'customer' => $billing->customer,
                                             'companySetting' => $companySetting,
                                             'currentPercentage' => $currentPercentage,
+                                            'currentParticipationKwp' => $currentParticipationKwp,
                                             'generatedAt' => $generatedAt,
                                             'monthName' => $monthName,
                                             'logoBase64' => $logoBase64,
