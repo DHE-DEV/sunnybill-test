@@ -225,12 +225,12 @@
                 <span class="info-value">{{ $solarPlantBilling->invoice_number }}</span>
             </div>
             <div class="info-item">
-                <span class="info-label">Abrechnungsdatum</span>
-                <span class="info-value">{{ $solarPlantBilling->created_at?->format('d.m.Y') }}</span>
+                <span class="info-label">Abrechnungsdatum / Periode</span>
+                <span class="info-value">{{ $solarPlantBilling->created_at?->format('d.m.Y') }} / {{ $solarPlantBilling->billing_month }}-{{ $solarPlantBilling->billing_year }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Kunde / Kundennummer</span>
-                <span class="info-value">{{ $customer->name }} ( {{ $customer->customer_number }} )</span>
+                <span class="info-value">{{ $customer->name }} / {{ $customer->customer_number }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Solaranlage</span>
