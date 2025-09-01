@@ -1256,16 +1256,290 @@ class ViewSolarPlantBilling extends ViewRecord
                                         return true;
                                     })
                                     ->columnSpan(2),
-                            ])
-                            ->visible(function ($record) {
-                                // Zeige gesamtes Grid für alle Beträge außer 0 an (auch Gutschriften)
-                                return $record->net_amount != 0;
-                            }),
+                            ]),
+                        
+                        // QR-Code Drucken Button
+                        Infolists\Components\Actions::make([
+                            Infolists\Components\Actions\Action::make('print_qr_code')
+                                ->label('QR-Code Drucken')
+                                ->icon('heroicon-o-printer')
+                                ->color('info')
+                                ->action('printQrCode')
+                                ->visible(function ($record) {
+                                    $qrService = new EpcQrCodeService();
+                                    return $qrService->canGenerateQrCode($record);
+                                })
+                        ])
+                        ->alignment('center')
+                        ->visible(function ($record) {
+                            // Zeige Button nur wenn QR-Code generiert werden kann
+                            $qrService = new EpcQrCodeService();
+                            return $qrService->canGenerateQrCode($record) && $record->net_amount != 0;
+                        }),
+                    ])
+                    ->visible(function ($record) {
+                        // Zeige gesamtes Grid für alle Beträge außer 0 an (auch Gutschriften)
+                        return $record->net_amount != 0;
+                    }),
                     ])
                     ->compact()
                     ->collapsible()
                     ->collapsed(false),
             ]);
+    }
+
+    public function printQrCode()
+    {
+        try {
+            $record = $this->record;
+            $qrService = new EpcQrCodeService();
+            
+            if (!$qrService->canGenerateQrCode($record)) {
+                Notification::make()
+                    ->title('QR-Code kann nicht erstellt werden')
+                    ->body($qrService->getQrCodeErrorMessage($record))
+                    ->warning()
+                    ->send();
+                return;
+            }
+            
+            // QR-Code und Informationen für den Druck vorbereiten
+            $customer = $record->customer;
+            $solarPlant = $record->solarPlant;
+            
+            // QR-Code generieren
+            $base64QrCode = $qrService->generateEpcQrCode($record);
+            $qrCodeDataUri = 'data:image/png;base64,' . $base64QrCode;
+            
+            // Verwendungszweck erstellen
+            $reference = [];
+            if ($record->invoice_number) {
+                $reference[] = $record->invoice_number;
+            }
+            if ($customer && $customer->customer_number) {
+                $reference[] = $customer->customer_number;
+            }
+            if ($solarPlant && $solarPlant->name) {
+                $reference[] = $solarPlant->name;
+            }
+            $month = \Carbon\Carbon::createFromDate($record->billing_year, $record->billing_month, 1);
+            $reference[] = "Zeitraum: " . $month->locale('de')->translatedFormat('m-Y');
+            
+            $referenceText = implode(' --- ', $reference);
+            
+            // JavaScript für Druckfenster erstellen
+            $printData = [
+                'qrCodeDataUri' => $qrCodeDataUri,
+                'accountHolder' => $customer->account_holder,
+                'iban' => chunk_split($customer->iban, 4, ' '),
+                'bic' => $customer->bic ?? '',
+                'amount' => number_format(abs($record->net_amount), 2, ',', '.'),
+                'reference' => $referenceText,
+                'invoiceNumber' => $record->invoice_number,
+                'billingPeriod' => $month->locale('de')->translatedFormat('F Y'),
+                'isCredit' => $record->net_amount < 0
+            ];
+            
+            $printScript = "
+                const printWindow = window.open('', 'QR_Code_Print', 'width=800,height=600,scrollbars=yes');
+                const printData = " . json_encode($printData) . ";
+                
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>QR-Code Überweisung - \${printData.invoiceNumber}</title>
+                        <style>
+                            @page { 
+                                margin: 1.5cm; 
+                                size: A4 portrait;
+                            }
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                margin: 0; 
+                                padding: 20px; 
+                                line-height: 1.4;
+                            }
+                            .header { 
+                                text-align: center; 
+                                margin-bottom: 30px; 
+                                border-bottom: 2px solid #333; 
+                                padding-bottom: 15px;
+                            }
+                            .header h1 { 
+                                margin: 0; 
+                                color: #333; 
+                                font-size: 24px;
+                            }
+                            .header h2 { 
+                                margin: 5px 0 0 0; 
+                                color: #666; 
+                                font-size: 16px; 
+                                font-weight: normal;
+                            }
+                            .qr-section { 
+                                display: flex; 
+                                align-items: flex-start; 
+                                gap: 30px; 
+                                margin: 30px 0;
+                            }
+                            .qr-code { 
+                                flex-shrink: 0;
+                            }
+                            .qr-code img { 
+                                border: 2px solid #ddd; 
+                                padding: 10px; 
+                                border-radius: 8px;
+                                width: 200px;
+                                height: 200px;
+                            }
+                            .payment-info { 
+                                flex: 1;
+                            }
+                            .payment-info h3 { 
+                                margin-top: 0; 
+                                color: #333; 
+                                font-size: 18px; 
+                                border-bottom: 1px solid #ddd; 
+                                padding-bottom: 8px;
+                            }
+                            .info-row { 
+                                margin: 12px 0; 
+                                display: flex; 
+                                align-items: flex-start;
+                            }
+                            .info-label { 
+                                font-weight: bold; 
+                                color: #333; 
+                                min-width: 120px; 
+                                flex-shrink: 0;
+                            }
+                            .info-value { 
+                                color: #555; 
+                                word-break: break-all;
+                            }
+                            .amount { 
+                                font-size: 18px; 
+                                font-weight: bold; 
+                                color: \${printData.isCredit ? '#0066cc' : '#cc6600'};
+                            }
+                            .reference { 
+                                font-size: 12px; 
+                                line-height: 1.3;
+                            }
+                            .instructions { 
+                                background-color: #f8f9fa; 
+                                border: 1px solid #dee2e6; 
+                                border-radius: 8px; 
+                                padding: 20px; 
+                                margin-top: 30px;
+                            }
+                            .instructions h3 { 
+                                margin-top: 0; 
+                                color: #495057;
+                            }
+                            .instructions ol { 
+                                margin: 10px 0; 
+                                padding-left: 20px;
+                            }
+                            .instructions li { 
+                                margin: 8px 0; 
+                                color: #495057;
+                            }
+                            @media print {
+                                .no-print { display: none; }
+                                body { margin: 0; padding: 15px; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class=\"header\">
+                            <h1>\${printData.isCredit ? 'Guthaben-Überweisung' : 'Zahlungsüberweisung'}</h1>
+                            <h2>Abrechnung \${printData.invoiceNumber} - \${printData.billingPeriod}</h2>
+                        </div>
+                        
+                        <div class=\"qr-section\">
+                            <div class=\"qr-code\">
+                                <img src=\"\${printData.qrCodeDataUri}\" alt=\"QR-Code für Banking-App\" />
+                            </div>
+                            
+                            <div class=\"payment-info\">
+                                <h3>Überweisungsdetails</h3>
+                                
+                                <div class=\"info-row\">
+                                    <span class=\"info-label\">Empfänger:</span>
+                                    <span class=\"info-value\">\${printData.accountHolder}</span>
+                                </div>
+                                
+                                <div class=\"info-row\">
+                                    <span class=\"info-label\">IBAN:</span>
+                                    <span class=\"info-value\">\${printData.iban}</span>
+                                </div>
+                                
+                                \${printData.bic ? `
+                                <div class=\"info-row\">
+                                    <span class=\"info-label\">BIC:</span>
+                                    <span class=\"info-value\">\${printData.bic}</span>
+                                </div>
+                                ` : ''}
+                                
+                                <div class=\"info-row\">
+                                    <span class=\"info-label\">Betrag:</span>
+                                    <span class=\"info-value amount\">€ \${printData.amount}</span>
+                                </div>
+                                
+                                <div class=\"info-row\">
+                                    <span class=\"info-label\">Verwendungszweck:</span>
+                                    <span class=\"info-value reference\">\${printData.reference}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class=\"instructions\">
+                            <h3>Anleitung für Banking-App QR-Code</h3>
+                            <ol>
+                                <li>Öffnen Sie Ihre Banking-App auf dem Smartphone</li>
+                                <li>Wählen Sie die Funktion \"Überweisung\" oder \"QR-Code scannen\"</li>
+                                <li>Scannen Sie den QR-Code mit der Kamera Ihres Smartphones</li>
+                                <li>Prüfen Sie die automatisch ausgefüllten Daten</li>
+                                <li>Bestätigen Sie die Überweisung in Ihrer Banking-App</li>
+                            </ol>
+                            <p><strong>Hinweis:</strong> Der QR-Code enthält alle notwendigen Überweisungsdaten nach EPC-Standard und ist mit den meisten deutschen Banking-Apps kompatibel.</p>
+                        </div>
+                        
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                window.onafterprint = function() {
+                                    window.close();
+                                };
+                            };
+                        </script>
+                    </body>
+                    </html>
+                `);
+                
+                printWindow.document.close();
+            ";
+            
+            // JavaScript zurückgeben um das Druckfenster zu öffnen
+            $this->js($printScript);
+            
+            Notification::make()
+                ->title('QR-Code Druck geöffnet')
+                ->body('Das Druckfenster wurde geöffnet. Falls es blockiert wurde, erlauben Sie Pop-ups für diese Seite.')
+                ->success()
+                ->send();
+                
+        } catch (\Exception $e) {
+            \Log::error('QR-Code print failed: ' . $e->getMessage());
+            
+            Notification::make()
+                ->title('Fehler beim QR-Code Druck')
+                ->body('Der QR-Code konnte nicht gedruckt werden: ' . $e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 
     protected function getHeaderActions(): array
