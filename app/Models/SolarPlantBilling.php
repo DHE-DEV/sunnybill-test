@@ -533,6 +533,7 @@ class SolarPlantBilling extends Model
                     //dump($totalCostsNet);
                     //dump($vatAmount);
                     //dump($totalVatAmount);
+
                 } else {
                     // Fallback: Verwende 19% MwSt. wenn net_amount nicht verfügbar
                     $customerCostNet = $customerCost / 1.19;
@@ -568,10 +569,20 @@ class SolarPlantBilling extends Model
                     ];
                 }
 
+                if ($billing->billing_number == "AB-2025-0307") {
+                    dump('start debug Kostenrechnung');
+                    dump($customerCost.'_x_');
+                    dump($customerCostNet);
+                    dump($totalCostsNet);
+                    dump($vatAmount);
+                    dump($totalVatAmount);
+                    dump('ende debug Kostenrechnung');
+                }
+
                 // Berechne Netto- und MwSt.-Beträge für diese Kosten
                 //$customerCostNet = $billing->net_amount ? (abs($billing->net_amount) * $finalShare) : ($customerCost / 1.19);
                 //$customerCostVat = $customerCost - $customerCostNet;
-                $customerCostNet = $billing->net_amount;
+                $customerCostNet = $billing->net_amount * $finalShare;
                 $customerCostVat = $customerCost - $customerCostNet;
 
                 $vatRate = $billing->vat_rate ?? 0.19;
@@ -586,6 +597,16 @@ class SolarPlantBilling extends Model
                     dump($vatRate);
                     dump($billing);
                 }*/
+
+                if ($billing->billing_number == "AB-2025-0307") {
+                    dump($billing->billing_number);
+                    dump($billing->description);
+                    dump($customerCostNet);
+                    dump($customerCostVat);
+                    dump($customerCost);
+                    dump($vatRate);
+                    dump($billing);
+                }
 
                 $costBreakdown[] = [
                     'contract_id' => $contract->id,
