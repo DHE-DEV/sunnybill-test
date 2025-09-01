@@ -58,9 +58,9 @@
         .billing-info {
             background: #f8fafc;
             padding: 1.5rem;
-            border-radius: 8px;
+            #border-radius: 8px;
             margin-bottom: 2rem;
-            border-left: 4px solid #3b82f6;
+            #border-left: 4px solid #3b82f6;
         }
 
         .billing-info h2 {
@@ -103,8 +103,9 @@
             margin: 2rem 0;
             padding: 2rem;
             background: white;
-            border: 2px solid #e5e5e5;
-            border-radius: 8px;
+            background: #f8fafc;
+            #border: 2px solid #e5e5e5;
+            #border-radius: 8px;
         }
 
         .qr-code-container {
@@ -152,7 +153,7 @@
         .detail-row:last-child {
             border-bottom: none;
             font-weight: 600;
-            background: #ffffff;
+            #background: #ffffff;
             #padding: 1rem;
             border-radius: 6px;
             margin-top: 0.5rem;
@@ -170,27 +171,27 @@
         }
 
         .instructions {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
-            border-radius: 8px;
-            padding: 1.5rem;
+            #background: #fef3c7;
+            #border: 1px solid #f59e0b;
+            #border-radius: 8px;
+            #padding: 1.5rem;
             margin-top: 2rem;
         }
 
         .instructions h4 {
             font-size: 16px;
             font-weight: 600;
-            color: #92400e;
+            #color: #92400e;
             margin-bottom: 0.75rem;
         }
 
         .instructions p {
-            color: #92400e;
+            #color: #92400e;
             margin-bottom: 0.5rem;
         }
 
         .instructions ul {
-            color: #92400e;
+            #color: #92400e;
             margin-left: 1.5rem;
         }
 
@@ -244,33 +245,32 @@
         </div>
 
         <div class="transfer-details">
+            <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Empfänger</span>
+                <span class="info-value">{{ $qrCodeData['data']['beneficiaryName'] }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">IBAN</span>
+                <span class="info-value">{{ rtrim(chunk_split($qrCodeData['data']['beneficiaryAccount'], 4, ' ')) }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Betrag</span>
+                <span class="info-value">{{ number_format($qrCodeData['data']['amount'], 2, ',', '.') }} EUR
+            </div>
+            <div class="info-item">
+                <span class="info-label">BIC</span>
+                <span class="info-value">{{ $qrCodeData['data']['beneficiaryBIC'] }}</span>
+            </div>
+        </div>
+            
+            
             
             <div class="detail-row">
-                <span class="detail-label">Empfänger:</span>
-                <span class="detail-value">{{ $qrCodeData['data']['beneficiaryName'] }}</span>
-            </div>
-            
-            <div class="detail-row">
-                <span class="detail-label">IBAN:</span>
-                <span class="detail-value">{{ rtrim(chunk_split($qrCodeData['data']['beneficiaryAccount'], 4, ' ')) }}</span>
-            </div>
-            
-            @if(!empty($qrCodeData['data']['beneficiaryBIC']))
-            <div class="detail-row">
-                <span class="detail-label">BIC:</span>
-                <span class="detail-value">{{ $qrCodeData['data']['beneficiaryBIC'] }}</span>
-            </div>
-            @endif
-            
-            <div class="detail-row">
-                <span class="detail-label">Betrag:</span>
-                <span class="detail-value">{{ number_format($qrCodeData['data']['amount'], 2, ',', '.') }} EUR</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="detail-label">Verwendungszweck:<br>{{ $qrCodeData['data']['remittanceInformation'] }}</span>
-            </div>
-            
+                <div class="info-item">
+                <span class="info-label">Verwendungszweck</span>
+                <span class="info-value">{{ $qrCodeData['data']['remittanceInformation'] }}</span>
+            </div></div>
             
         </div>
     </div>
