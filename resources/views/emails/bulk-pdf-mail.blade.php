@@ -71,7 +71,7 @@
                         <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e9ecef; font-size: 12px; color: #666; font-family: Arial, Helvetica, sans-serif;">
                             @if(isset($logoBase64) && $logoBase64)
                             <div style="text-align: center; margin-bottom: 15px;">
-                                <img src="{{ $logoBase64 }}" alt="{{ $companyName }} Logo" style="max-height: 30px; max-width: 100px; height: auto; width: auto; border: none; display: block; margin: 0 auto;">
+                                <img src="{{ $logoBase64 }}" alt="{{ $companyName }} Logo" style="max-height: 60px; max-width: 200px; height: auto; width: auto; border: none; display: block; margin: 0 auto;">
                             </div>
                             @elseif($settings && $settings->hasLogo())
                             <div style="text-align: center; margin-bottom: 15px; color: #999; font-size: 11px;">
