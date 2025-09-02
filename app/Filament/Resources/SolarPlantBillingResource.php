@@ -810,9 +810,46 @@ class SolarPlantBillingResource extends Resource
                         ->label('PDF Abrechnungen generieren')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('primary')
-                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                        ->form([
+                            Forms\Components\Checkbox::make('include_qr_code')
+                                ->label('Inklusive QR-Code Deckblatt')
+                                ->helperText('Erstellt automatisch ein QR-Code Deckblatt für jede Abrechnung, wenn Banking-Daten verfügbar sind.')
+                                ->default(false),
+                            
+                            Forms\Components\Checkbox::make('send_emails')
+                                ->label('Automatischer E-Mail Versand')
+                                ->helperText('Sendet die generierten PDFs automatisch an die konfigurierten E-Mail-Adressen.')
+                                ->default(false)
+                                ->live()
+                                ->columnSpanFull(),
+                            
+                            Forms\Components\Section::make('E-Mail-Adressen')
+                                ->schema([
+                                    Forms\Components\TextInput::make('email_1')
+                                        ->label('E-Mail-Adresse 1')
+                                        ->email()
+                                        ->default(env('MAIL_1_PDF_ABRECHNUNG'))
+                                        ->placeholder('erste@email.de'),
+                                    
+                                    Forms\Components\TextInput::make('email_2')
+                                        ->label('E-Mail-Adresse 2')
+                                        ->email()
+                                        ->default(env('MAIL_2_PDF_ABRECHNUNG'))
+                                        ->placeholder('zweite@email.de'),
+                                    
+                                    Forms\Components\TextInput::make('email_3')
+                                        ->label('E-Mail-Adresse 3')
+                                        ->email()
+                                        ->default(env('MAIL_3_PDF_ABRECHNUNG'))
+                                        ->placeholder('dritte@email.de'),
+                                ])
+                                ->columns(3)
+                                ->visible(fn ($get) => $get('send_emails')),
+                        ])
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
                             try {
                                 $pdfService = new \App\Services\SolarPlantBillingPdfService();
+                                $epcQrCodeService = new \App\Services\EpcQrCodeService();
                                 $successCount = 0;
                                 $errorCount = 0;
                                 $errors = [];
@@ -823,6 +860,9 @@ class SolarPlantBillingResource extends Resource
                                 
                                 // Erstelle Session-ID für diese Batch
                                 $batchId = uniqid('pdf_batch_');
+                                
+                                // Prüfe ob QR-Code-Option aktiviert ist
+                                $includeQrCode = $data['include_qr_code'] ?? false;
                                 
                                 foreach ($records as $billing) {
                                     try {
@@ -916,7 +956,7 @@ class SolarPlantBillingResource extends Resource
                                         $tempPath = "temp/bulk-pdfs/{$batchId}/{$filename}";
                                         Storage::disk('public')->put($tempPath, $pdfContent);
                                         
-                                        // Erstelle Download-URL
+                                        // Erstelle Download-URL für Hauptabrechnung
                                         $downloadUrls[] = [
                                             'filename' => $filename,
                                             'url' => Storage::disk('public')->url($tempPath),
@@ -925,11 +965,146 @@ class SolarPlantBillingResource extends Resource
                                             'status' => 'success'
                                         ];
                                         
+                                        // QR-Code PDF generieren falls gewünscht und möglich
+                                        if ($includeQrCode && $epcQrCodeService->canGenerateQrCode($billing)) {
+                                            try {
+                                                // Generate QR code (base64 encoded image)
+                                                $qrCodeImage = $epcQrCodeService->generateEpcQrCode($billing);
+                                                
+                                                // Get customer and billing data for QR code
+                                                $amount = abs($billing->net_amount);
+                                                
+                                                // Generate reference/purpose
+                                                $reference = $epcQrCodeService->getDefaultReference($billing);
+                                                
+                                                // Prepare data structure that the template expects
+                                                $qrCodeData = [
+                                                    'qrCode' => $qrCodeImage,
+                                                    'data' => [
+                                                        'beneficiaryName' => $customer->account_holder,
+                                                        'beneficiaryAccount' => strtoupper(str_replace(' ', '', $customer->iban)),
+                                                        'beneficiaryBIC' => $customer->bic ?: '',
+                                                        'remittanceInformation' => $reference,
+                                                        'amount' => $amount,
+                                                    ]
+                                                ];
+                                                
+                                                // Generate QR-Code PDF using the same view as the controller
+                                                $qrPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('print.qr-code-banking', [
+                                                    'solarPlantBilling' => $billing,
+                                                    'customer' => $customer,
+                                                    'qrCodeData' => $qrCodeData,
+                                                ])
+                                                ->setPaper('a4', 'portrait')
+                                                ->setOptions([
+                                                    'dpi' => 150,
+                                                    'defaultFont' => 'DejaVu Sans',
+                                                    'isRemoteEnabled' => true,
+                                                    'isHtml5ParserEnabled' => true,
+                                                ]);
+                                                
+                                                $qrPdfContent = $qrPdf->output();
+                                                
+                                                // QR-Code Dateiname mit Prefix
+                                                $qrFilename = sprintf(
+                                                    '%04d-%02d_%s_%s_QR-Code.pdf',
+                                                    $billing->billing_year,
+                                                    $billing->billing_month,
+                                                    $plantName,
+                                                    $customerName
+                                                );
+                                                
+                                                // Speichere QR-Code PDF temporär
+                                                $qrTempPath = "temp/bulk-pdfs/{$batchId}/{$qrFilename}";
+                                                Storage::disk('public')->put($qrTempPath, $qrPdfContent);
+                                                
+                                                // Erstelle Download-URL für QR-Code PDF
+                                                $downloadUrls[] = [
+                                                    'filename' => $qrFilename,
+                                                    'url' => Storage::disk('public')->url($qrTempPath),
+                                                    'customer_name' => $customerName,
+                                                    'period' => sprintf('%04d-%02d', $billing->billing_year, $billing->billing_month),
+                                                    'status' => 'success',
+                                                    'type' => 'qr-code'
+                                                ];
+                                                
+                                            } catch (\Exception $qrError) {
+                                                // QR-Code Fehler sammeln, aber nicht abbrechen
+                                                $errors[] = "QR-Code für Abrechnung {$billing->id} konnte nicht erstellt werden: " . $qrError->getMessage();
+                                            }
+                                        }
+                                        
                                         $successCount++;
                                         
                                     } catch (\Exception $e) {
                                         $errorCount++;
                                         $errors[] = "Fehler bei Abrechnung {$billing->id}: " . $e->getMessage();
+                                    }
+                                }
+                                
+                                // Email-Versand verarbeiten falls aktiviert
+                                $emailSent = false;
+                                if ($data['send_emails'] ?? false) {
+                                    try {
+                                        // Sammle E-Mail-Adressen aus dem Formular
+                                        $emailAddresses = array_filter([
+                                            $data['email_1'] ?? null,
+                                            $data['email_2'] ?? null,
+                                            $data['email_3'] ?? null,
+                                        ]);
+                                        
+                                        if (!empty($emailAddresses)) {
+                                            // Konvertiere Download-URLs zu PDF-Files Array für E-Mail
+                                            $pdfFiles = [];
+                                            foreach ($downloadUrls as $downloadUrl) {
+                                                if ($downloadUrl['status'] === 'success') {
+                                                    // Konvertiere URL zurück zum lokalen Pfad
+                                                    $relativePath = str_replace(Storage::disk('public')->url(''), '', $downloadUrl['url']);
+                                                    $fullPath = Storage::disk('public')->path($relativePath);
+                                                    
+                                                    if (file_exists($fullPath)) {
+                                                        $pdfFiles[] = [
+                                                            'path' => $fullPath,
+                                                            'name' => $downloadUrl['filename']
+                                                        ];
+                                                    }
+                                                }
+                                            }
+                                            
+                                            if (!empty($pdfFiles)) {
+                                                // Versende E-Mails an alle konfigurierten Adressen
+                                                $totalCount = count($pdfFiles);
+                                                $bulkPdfMail = new \App\Mail\BulkPdfMail($pdfFiles, $totalCount);
+                                                
+                                                foreach ($emailAddresses as $email) {
+                                                    try {
+                                                        \Mail::to($email)->send($bulkPdfMail);
+                                                    } catch (\Exception $mailError) {
+                                                        \Log::error('Email sending failed', [
+                                                            'email' => $email,
+                                                            'error' => $mailError->getMessage()
+                                                        ]);
+                                                        $errors[] = "E-Mail an {$email} konnte nicht gesendet werden: " . $mailError->getMessage();
+                                                    }
+                                                }
+                                                
+                                                $emailSent = true;
+                                                
+                                                Notification::make()
+                                                    ->title('E-Mails versendet')
+                                                    ->body("PDFs wurden an " . count($emailAddresses) . " E-Mail-Adresse(n) gesendet.")
+                                                    ->success()
+                                                    ->send();
+                                            }
+                                        }
+                                    } catch (\Exception $emailError) {
+                                        $errors[] = "E-Mail-Versand fehlgeschlagen: " . $emailError->getMessage();
+                                        
+                                        Notification::make()
+                                            ->title('E-Mail-Versand fehlgeschlagen')
+                                            ->body($emailError->getMessage())
+                                            ->danger()
+                                            ->send();
                                     }
                                 }
                                 
@@ -947,6 +1122,9 @@ class SolarPlantBillingResource extends Resource
                                     $message = "{$successCount} PDF" . ($successCount !== 1 ? 's' : '') . " wurden erstellt und werden jetzt heruntergeladen";
                                     if ($errorCount > 0) {
                                         $message .= " ({$errorCount} Fehler aufgetreten)";
+                                    }
+                                    if ($emailSent) {
+                                        $message .= " und per E-Mail versendet";
                                     }
                                     
                                     $notification = Notification::make()
