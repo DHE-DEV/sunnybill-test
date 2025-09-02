@@ -74,7 +74,7 @@
                                 <img src="{{ $logoBase64 }}" alt="{{ $companyName }} Logo" style="max-height: 60px; max-width: 200px; height: auto; width: auto; border: none; display: block; margin: 0 auto;">
                             </div>
                             @elseif($settings && $settings->hasLogo())
-                            <div style="text-align: center; margin-bottom: 15px; color: #999; font-size: 11px;">
+                            <div style="text-align: center; margin-bottom: 15px; color: #999; font-size: 11px; max-height: 60px; max-width: 200px;">
                                 [Logo konfiguriert aber konnte nicht geladen werden: {{ $settings->logo_path }}]
                             </div>
                             @endif
