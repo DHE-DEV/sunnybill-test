@@ -179,10 +179,26 @@ class SolarPlantBilling extends Model
         $prefix = !empty($prefixParts) ? implode('-', $prefixParts) . '-' : '';
 
         // Hole die letzte Rechnungsnummer mit dem aktuellen Präfix (auch aus gelöschten Datensätzen)
-        $lastBilling = static::withTrashed()
-            ->where('invoice_number', 'LIKE', $prefix . '%')
-            ->orderBy('invoice_number', 'desc')
-            ->first();
+        // Wichtig: Filtere NULL/leere Rechnungsnummern aus und verwende numerische Sortierung
+        $query = static::withTrashed()
+            ->whereNotNull('invoice_number')
+            ->where('invoice_number', '!=', '');
+            
+        if ($prefix) {
+            // Mit Präfix: verwende LIKE Pattern
+            $query->where('invoice_number', 'LIKE', $prefix . '%');
+        } else {
+            // Ohne Präfix: nur numerische Invoice-Nummern (keine mit Bindestrichen)
+            $query->where('invoice_number', 'REGEXP', '^[0-9]+$');
+        }
+
+        if ($prefix) {
+            // Mit Präfix: String-Sortierung
+            $lastBilling = $query->orderBy('invoice_number', 'desc')->first();
+        } else {
+            // Ohne Präfix: numerische Sortierung für bessere Genauigkeit
+            $lastBilling = $query->orderByRaw('CAST(invoice_number AS UNSIGNED) DESC')->first();
+        }
 
         if ($lastBilling) {
             // Extrahiere die Nummer aus der letzten Rechnungsnummer
@@ -225,11 +241,21 @@ class SolarPlantBilling extends Model
         // Verwende Database Lock für thread-safe Operation
         return \DB::transaction(function() use ($prefix, $count) {
             // Hole die letzte Rechnungsnummer mit dem aktuellen Präfix mit FOR UPDATE Lock (auch aus gelöschten Datensätzen)
-            $lastBilling = static::withTrashed()
-                ->where('invoice_number', 'LIKE', $prefix . '%')
-                ->orderBy('invoice_number', 'desc')
-                ->lockForUpdate()
-                ->first();
+            // Wichtig: Filtere NULL/leere Rechnungsnummern aus und verwende numerische Sortierung
+            $query = static::withTrashed()
+                ->whereNotNull('invoice_number')
+                ->where('invoice_number', '!=', '')
+                ->lockForUpdate();
+                
+            if ($prefix) {
+                // Mit Präfix: verwende LIKE Pattern
+                $query->where('invoice_number', 'LIKE', $prefix . '%');
+                $lastBilling = $query->orderBy('invoice_number', 'desc')->first();
+            } else {
+                // Ohne Präfix: nur numerische Invoice-Nummern (keine mit Bindestrichen)
+                $query->where('invoice_number', 'REGEXP', '^[0-9]+$');
+                $lastBilling = $query->orderByRaw('CAST(invoice_number AS UNSIGNED) DESC')->first();
+            }
 
             if ($lastBilling) {
                 // Extrahiere die Nummer aus der letzten Rechnungsnummer
