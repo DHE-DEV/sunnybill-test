@@ -39,10 +39,10 @@
                             </div>
 
                             <!-- Abrechnungs-Details Box -->
-                            <div style="background-color: #f8f9fa; padding: 20px; margin: 20px 0; border-left: 4px solid #2563eb;">
+                            <div style="background-color: #f8f9fa !important; padding: 20px; margin: 20px 0; border-left: 4px solid #2563eb;">
                                 <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px; font-family: Arial, Helvetica, sans-serif;">Abrechnungs-Details</h3>
                                 
-                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 14px;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 14px; background-color: #f8f9fa !important;">
                                     <tr>
                                         <td style="padding: 5px 0; font-weight: 600; color: #666; width: 40%; font-family: Arial, Helvetica, sans-serif;">Kunde:</td>
                                         <td style="padding: 5px 0; font-weight: 600; color: #333; font-family: Arial, Helvetica, sans-serif;">
