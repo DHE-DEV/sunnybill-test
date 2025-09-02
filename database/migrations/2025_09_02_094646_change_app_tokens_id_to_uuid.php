@@ -11,16 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('app_tokens', function (Blueprint $table) {
-            // First, drop the primary key constraint
-            $table->dropPrimary(['id']);
-            
-            // Change the id column from integer to UUID
-            $table->uuid('id')->change();
-            
-            // Re-add the primary key constraint
-            $table->primary('id');
-        });
+        // First, we need to handle the auto-increment column properly
+        \DB::statement('ALTER TABLE app_tokens MODIFY id BIGINT UNSIGNED NOT NULL');
+        \DB::statement('ALTER TABLE app_tokens DROP PRIMARY KEY');
+        \DB::statement('ALTER TABLE app_tokens MODIFY id VARCHAR(36) NOT NULL');
+        \DB::statement('ALTER TABLE app_tokens ADD PRIMARY KEY (id)');
     }
 
     /**
@@ -28,12 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('app_tokens', function (Blueprint $table) {
-            // Drop the primary key constraint
-            $table->dropPrimary(['id']);
-            
-            // Change the id column back to integer
-            $table->id()->change();
-        });
+        \DB::statement('ALTER TABLE app_tokens DROP PRIMARY KEY');
+        \DB::statement('ALTER TABLE app_tokens MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+        \DB::statement('ALTER TABLE app_tokens ADD PRIMARY KEY (id)');
     }
 };
