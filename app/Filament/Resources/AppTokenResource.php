@@ -138,6 +138,14 @@ class AppTokenResource extends Resource
                         }
                     }),
 
+                Forms\Components\Hidden::make('leads_abilities')
+                    ->afterStateHydrated(function ($component, $state, $record, callable $set) {
+                        if ($record && $record->abilities) {
+                            $abilities = array_intersect($record->abilities, ['leads:read', 'leads:create', 'leads:update', 'leads:delete', 'leads:status', 'leads:convert']);
+                            $set('leads_abilities', $abilities);
+                        }
+                    }),
+
                 Section::make('Token-Informationen')
                     ->schema([
                         Forms\Components\Select::make('user_id')
@@ -210,6 +218,21 @@ class AppTokenResource extends Resource
                                                     'solar-plants:create' => 'Solaranlagen erstellen',
                                                     'solar-plants:update' => 'Solaranlagen bearbeiten',
                                                     'solar-plants:delete' => 'Solaranlagen löschen',
+                                                ]),
+                                            ])
+                                            ->collapsible()
+                                            ->persistCollapsed(),
+
+                                        Forms\Components\Section::make('Lead-Verwaltung')
+                                            ->description('Verwaltung von Leads')
+                                            ->schema([
+                                                static::createAbilityCheckboxList('leads_abilities', [
+                                                    'leads:read' => 'Leads lesen',
+                                                    'leads:create' => 'Leads erstellen',
+                                                    'leads:update' => 'Leads bearbeiten',
+                                                    'leads:delete' => 'Leads löschen',
+                                                    'leads:status' => 'Lead-Status ändern',
+                                                    'leads:convert' => 'Leads zu Kunden konvertieren',
                                                 ]),
                                             ])
                                             ->collapsible()
@@ -329,6 +352,7 @@ class AppTokenResource extends Resource
                                                             $set('costs_abilities', ['costs:read', 'costs:create', 'costs:reports']);
                                                             $set('user_abilities', ['user:profile']);
                                                             $set('notification_abilities', ['notifications:read', 'notifications:create']);
+                                                            $set('leads_abilities', ['leads:read', 'leads:create', 'leads:update', 'leads:delete', 'leads:status', 'leads:convert']);
                                                         }),
 
                                                     Forms\Components\Actions\Action::make('set_read_only')
@@ -348,6 +372,7 @@ class AppTokenResource extends Resource
                                                             $set('costs_abilities', ['costs:read']);
                                                             $set('user_abilities', ['user:profile']);
                                                             $set('notification_abilities', ['notifications:read']);
+                                                            $set('leads_abilities', ['leads:read']);
                                                         }),
 
                                                     Forms\Components\Actions\Action::make('set_extended')
@@ -367,6 +392,7 @@ class AppTokenResource extends Resource
                                                             $set('costs_abilities', ['costs:read', 'costs:create', 'costs:reports']);
                                                             $set('user_abilities', ['user:profile']);
                                                             $set('notification_abilities', ['notifications:read', 'notifications:create']);
+                                                            $set('leads_abilities', ['leads:read', 'leads:create', 'leads:update', 'leads:delete', 'leads:status', 'leads:convert']);
                                                         }),
 
                                                     Forms\Components\Actions\Action::make('clear_all')
@@ -386,6 +412,7 @@ class AppTokenResource extends Resource
                                                             $set('costs_abilities', []);
                                                             $set('user_abilities', []);
                                                             $set('notification_abilities', []);
+                                                            $set('leads_abilities', []);
                                                         }),
                                                 ])
                                                 ->alignCenter(),
@@ -407,7 +434,8 @@ class AppTokenResource extends Resource
                                     $get('appointments_abilities') ?? [],
                                     $get('costs_abilities') ?? [],
                                     $get('user_abilities') ?? [],
-                                    $get('notification_abilities') ?? []
+                                    $get('notification_abilities') ?? [],
+                                    $get('leads_abilities') ?? []
                                 );
                             }),
                     ]),
