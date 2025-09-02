@@ -21,6 +21,9 @@ use Filament\Infolists\Components\TextEntry;
 use Illuminate\Support\Facades\Storage;
 use App\Exports\SolarPlantBillingsExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Mail\SingleBillingMail;
+use App\Services\SolarPlantBillingPdfService;
+use Illuminate\Support\Facades\Mail;
 
 class SolarPlantBillingResource extends Resource
 {
@@ -727,6 +730,103 @@ class SolarPlantBillingResource extends Resource
                         ->modalSubmitActionLabel('Speichern')
                         ->modalCancelActionLabel('Abbrechen')
                         ->modalWidth('2xl'),
+                    Tables\Actions\Action::make('email_billing')
+                        ->label('E-Mail Abrechnung')
+                        ->icon('heroicon-o-envelope')
+                        ->color('info')
+                        ->form([
+                            Forms\Components\TextInput::make('email_recipient')
+                                ->label('E-Mail-Empfänger')
+                                ->email()
+                                ->required()
+                                ->placeholder('kunde@example.com')
+                                ->helperText('E-Mail-Adresse des Empfängers')
+                                ->columnSpanFull(),
+
+                            Forms\Components\Textarea::make('email_message')
+                                ->label('E-Mail-Text')
+                                ->rows(6)
+                                ->placeholder('Geben Sie hier Ihren individuellen E-Mail-Text ein...')
+                                ->helperText('Lassen Sie das Feld leer für eine Standard-Nachricht')
+                                ->columnSpanFull(),
+                        ])
+                        ->fillForm(function (SolarPlantBilling $record): array {
+                            $customer = $record->customer;
+                            $defaultEmail = '';
+                            
+                            // Versuche E-Mail-Adresse aus Kundendaten zu ermitteln
+                            if ($customer) {
+                                $defaultEmail = $customer->email ?? '';
+                            }
+                            
+                            return [
+                                'email_recipient' => $defaultEmail,
+                                'email_message' => '',
+                            ];
+                        })
+                        ->action(function (array $data, SolarPlantBilling $record): void {
+                            try {
+                                // PDF generieren
+                                $pdfService = new SolarPlantBillingPdfService();
+                                $pdfContent = $pdfService->generateBillingPdf($record);
+                                
+                                // Dateiname erstellen
+                                $customer = $record->customer;
+                                $solarPlant = $record->solarPlant;
+                                
+                                $plantName = preg_replace('/[^a-zA-Z0-9\-äöüÄÖÜß]/', '', str_replace(' ', '-', trim($solarPlant->name)));
+                                $plantName = preg_replace('/-+/', '-', $plantName);
+                                $plantName = trim($plantName, '-');
+                                
+                                $customerName = $customer->customer_type === 'business' && $customer->company_name 
+                                    ? $customer->company_name 
+                                    : $customer->name;
+                                $customerName = preg_replace('/[^a-zA-Z0-9\-äöüÄÖÜß]/', '', str_replace(' ', '-', trim($customerName)));
+                                $customerName = preg_replace('/-+/', '-', $customerName);
+                                $customerName = trim($customerName, '-');
+                                
+                                $fileName = sprintf(
+                                    'Abrechnung_%04d-%02d_%s_%s.pdf',
+                                    $record->billing_year,
+                                    $record->billing_month,
+                                    $plantName,
+                                    $customerName
+                                );
+                                
+                                // Temporäre Datei speichern
+                                $tempPath = 'temp/email/' . uniqid() . '_' . $fileName;
+                                \Storage::disk('public')->put($tempPath, $pdfContent);
+                                $fullPath = \Storage::disk('public')->path($tempPath);
+                                
+                                // E-Mail senden
+                                $customMessage = !empty($data['email_message']) ? $data['email_message'] : null;
+                                
+                                Mail::to($data['email_recipient'])->send(
+                                    new SingleBillingMail($record, $customMessage, $fullPath, $fileName)
+                                );
+                                
+                                // Temporäre Datei löschen
+                                \Storage::disk('public')->delete($tempPath);
+                                
+                                Notification::make()
+                                    ->title('E-Mail erfolgreich versendet')
+                                    ->body("Die Abrechnung wurde per E-Mail an {$data['email_recipient']} gesendet.")
+                                    ->success()
+                                    ->send();
+                                    
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Fehler beim E-Mail-Versand')
+                                    ->body('Die E-Mail konnte nicht gesendet werden: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->modalHeading('E-Mail Abrechnung senden')
+                        ->modalDescription('Senden Sie die PDF-Abrechnung per E-Mail an den gewünschten Empfänger.')
+                        ->modalSubmitActionLabel('E-Mail senden')
+                        ->modalCancelActionLabel('Abbrechen')
+                        ->modalWidth('2xl'),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                 ])
@@ -872,9 +972,9 @@ class SolarPlantBillingResource extends Resource
                                         // Verwende den gleichen Service wie bei der Einzelgenerierung für konsistente Ergebnisse
                                         $pdfContent = $pdfService->generateBillingPdf($billing);
                                         
-                                        // Erstelle Dateiname
-                                        $customer = $billing->customer;
-                                        $solarPlant = $billing->solarPlant;
+                        // Erstelle Dateiname - hole Daten für aktuelle Abrechnung
+                        $customer = $billing->customer;
+                        $solarPlant = $billing->solarPlant;
                                         
                                         // Solaranlagen-Namen bereinigen
                                         $plantName = preg_replace('/[^a-zA-Z0-9\-äöüÄÖÜß]/', '', str_replace(' ', '-', trim($solarPlant->name)));
@@ -910,37 +1010,40 @@ class SolarPlantBillingResource extends Resource
                                             'status' => 'success'
                                         ];
                                         
-                                        // QR-Code PDF generieren falls gewünscht und möglich
-                                        if ($includeQrCode && $epcQrCodeService->canGenerateQrCode($billing)) {
-                                            try {
-                                                // Generate QR code (base64 encoded image)
-                                                $qrCodeImage = $epcQrCodeService->generateEpcQrCode($billing);
+                        // QR-Code PDF generieren falls gewünscht und möglich
+                        if ($includeQrCode && $epcQrCodeService->canGenerateQrCode($billing)) {
+                            try {
+                                // Hole aktuellen Kunden für diese spezifische Abrechnung
+                                $currentCustomer = $billing->customer;
+                                
+                                // Generate QR code (base64 encoded image)
+                                $qrCodeImage = $epcQrCodeService->generateEpcQrCode($billing);
+                                
+                                // Get customer and billing data for QR code
+                                $amount = abs($billing->net_amount);
+                                
+                                // Generate reference/purpose
+                                $reference = $epcQrCodeService->getDefaultReference($billing);
+                                
+                                // Prepare data structure that the template expects
+                                $qrCodeData = [
+                                    'qrCode' => $qrCodeImage,
+                                    'data' => [
+                                        'beneficiaryName' => $currentCustomer->account_holder,
+                                        'beneficiaryAccount' => strtoupper(str_replace(' ', '', $currentCustomer->iban)),
+                                        'beneficiaryBIC' => $currentCustomer->bic ?: '',
+                                        'remittanceInformation' => $reference,
+                                        'amount' => $amount,
+                                    ]
+                                ];
                                                 
-                                                // Get customer and billing data for QR code
-                                                $amount = abs($billing->net_amount);
-                                                
-                                                // Generate reference/purpose
-                                                $reference = $epcQrCodeService->getDefaultReference($billing);
-                                                
-                                                // Prepare data structure that the template expects
-                                                $qrCodeData = [
-                                                    'qrCode' => $qrCodeImage,
-                                                    'data' => [
-                                                        'beneficiaryName' => $customer->account_holder,
-                                                        'beneficiaryAccount' => strtoupper(str_replace(' ', '', $customer->iban)),
-                                                        'beneficiaryBIC' => $customer->bic ?: '',
-                                                        'remittanceInformation' => $reference,
-                                                        'amount' => $amount,
-                                                    ]
-                                                ];
-                                                
-                                                // Generate QR-Code PDF using exakt the same view and settings as individual QR-Code print
-                                                // to ensure identical design and layout
-                                                $qrPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('print.qr-code-banking', [
-                                                    'solarPlantBilling' => $billing,
-                                                    'customer' => $customer,
-                                                    'qrCodeData' => $qrCodeData,
-                                                ])
+                                // Generate QR-Code PDF using exakt the same view and settings as individual QR-Code print
+                                // to ensure identical design and layout
+                                $qrPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('print.qr-code-banking', [
+                                    'solarPlantBilling' => $billing,
+                                    'customer' => $currentCustomer,
+                                    'qrCodeData' => $qrCodeData,
+                                ])
                                                 ->setPaper('a4', 'portrait')
                                                 ->setOptions([
                                                     'defaultFont' => '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
