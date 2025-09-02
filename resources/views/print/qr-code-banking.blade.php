@@ -26,8 +26,8 @@
 
         .print-header {
             text-align: center;
-            #margin-bottom: 3rem;
-            #border-bottom: 2px solid #e5e5e5;
+            /* margin-bottom: 3rem; */
+            /* border-bottom: 2px solid #e5e5e5; */
             padding-bottom: 2rem;
         }
 
@@ -35,7 +35,7 @@
             font-size: 28px;
             font-weight: 700;
             color: #1f2937;
-            #margin-bottom: 0.5rem;
+            /* margin-bottom: 0.5rem; */
         }
 
         .print-header .subtitle {
@@ -58,9 +58,9 @@
         .billing-info {
             background: #f8fafc;
             padding: 1.5rem;
-            #border-radius: 8px;
+            /* border-radius: 8px; */
             margin-bottom: 2rem;
-            #border-left: 4px solid #3b82f6;
+            /* border-left: 4px solid #3b82f6; */
         }
 
         .billing-info h2 {
@@ -104,8 +104,8 @@
             padding: 2rem;
             background: white;
             background: #f8fafc;
-            #border: 2px solid #e5e5e5;
-            #border-radius: 8px;
+            /* border: 2px solid #e5e5e5; */
+            /* border-radius: 8px; */
         }
 
         .qr-code-container {
@@ -153,8 +153,8 @@
         .detail-row:last-child {
             border-bottom: none;
             font-weight: 600;
-            #background: #ffffff;
-            #padding: 1rem;
+            /* background: #ffffff; */
+            /* padding: 1rem; */
             border-radius: 6px;
             margin-top: 0.5rem;
         }
@@ -171,27 +171,27 @@
         }
 
         .instructions {
-            #background: #fef3c7;
-            #border: 1px solid #f59e0b;
-            #border-radius: 8px;
-            #padding: 1.5rem;
+            /* background: #fef3c7; */
+            /* border: 1px solid #f59e0b; */
+            /* border-radius: 8px; */
+            /* padding: 1.5rem; */
             margin-top: 2rem;
         }
 
         .instructions h4 {
             font-size: 16px;
             font-weight: 600;
-            #color: #92400e;
+            /* color: #92400e; */
             margin-bottom: 0.75rem;
         }
 
         .instructions p {
-            #color: #92400e;
+            /* color: #92400e; */
             margin-bottom: 0.5rem;
         }
 
         .instructions ul {
-            #color: #92400e;
+            /* color: #92400e; */
             margin-left: 1.5rem;
         }
 
@@ -214,7 +214,7 @@
 <body>
     <div class="print-header">
         <h1>Banking-App QR-Code</h1>
-        <div class="subtitle">Einfach scannen und bezahlen</div>
+        <div class="subtitle">Einfach scannen und bezahlen...</div>
     </div>
 
     <div class="billing-info">
