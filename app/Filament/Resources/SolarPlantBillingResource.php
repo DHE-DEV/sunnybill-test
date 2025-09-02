@@ -866,66 +866,11 @@ class SolarPlantBillingResource extends Resource
                                 
                                 foreach ($records as $billing) {
                                     try {
-                                        // Verwende exakt dieselbe Logik wie der Einzeldownload
+                                        // Verwende exakt dieselbe Logik und denselben Service wie der Einzeldownload
                                         $billing->load(['solarPlant', 'customer']);
                                         
-                                        $companySetting = \App\Models\CompanySetting::first();
-                                        if (!$companySetting) {
-                                            throw new \Exception('Firmeneinstellungen nicht gefunden');
-                                        }
-
-                                        // Aktueller Beteiligungsanteil aus der participation Tabelle
-                                        $currentParticipation = $billing->solarPlant->participations()
-                                            ->where('customer_id', $billing->customer_id)
-                                            ->first();
-                                        
-                                        $currentPercentage = $currentParticipation 
-                                            ? $currentParticipation->percentage 
-                                            : $billing->participation_percentage;
-
-                                        $currentParticipationKwp = $currentParticipation ? $currentParticipation->participation_kwp : null;
-
-                                        // Generiere aktuelles Datum
-                                        $generatedAt = now();
-                                        
-                                        // Monatsnamen
-                                        $monthNames = [
-                                            1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
-                                            5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
-                                            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
-                                        ];
-                                        
-                                        $monthName = $monthNames[$billing->billing_month];
-
-                                        // Logo laden (falls vorhanden)
-                                        $logoBase64 = null;
-                                        if ($companySetting->logo_path && Storage::disk('public')->exists($companySetting->logo_path)) {
-                                            $logoContent = Storage::disk('public')->get($companySetting->logo_path);
-                                            $logoMimeType = Storage::disk('public')->mimeType($companySetting->logo_path);
-                                            $logoBase64 = 'data:' . $logoMimeType . ';base64,' . base64_encode($logoContent);
-                                        }
-
-                                        // PDF generieren mit exakt denselben Einstellungen wie Einzeldownload
-                                        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.solar-plant-billing', [
-                                            'billing' => $billing,
-                                            'solarPlant' => $billing->solarPlant,
-                                            'customer' => $billing->customer,
-                                            'companySetting' => $companySetting,
-                                            'currentPercentage' => $currentPercentage,
-                                            'currentParticipationKwp' => $currentParticipationKwp,
-                                            'generatedAt' => $generatedAt,
-                                            'monthName' => $monthName,
-                                            'logoBase64' => $logoBase64,
-                                        ])
-                                        ->setPaper('a4', 'portrait')
-                                        ->setOptions([
-                                            'dpi' => 150,
-                                            'defaultFont' => 'DejaVu Sans',
-                                            'isRemoteEnabled' => true,
-                                            'isHtml5ParserEnabled' => true,
-                                        ]);
-                                        
-                                        $pdfContent = $pdf->output();
+                                        // Verwende den gleichen Service wie bei der Einzelgenerierung für konsistente Ergebnisse
+                                        $pdfContent = $pdfService->generateBillingPdf($billing);
                                         
                                         // Erstelle Dateiname
                                         $customer = $billing->customer;
