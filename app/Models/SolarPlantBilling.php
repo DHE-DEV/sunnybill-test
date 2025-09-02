@@ -158,16 +158,29 @@ class SolarPlantBilling extends Model
     }
 
     /**
-     * Generiert eine fortlaufende Rechnungsnummer
+     * Generiert eine fortlaufende Rechnungsnummer basierend auf den Firmeneinstellungen
      */
     public static function generateInvoiceNumber(): string
     {
+        $companySettings = \App\Models\CompanySetting::current();
         $currentYear = date('Y');
-        //$prefix = "RG-{$currentYear}-";
-        $prefix = "";
+        
+        // Erstelle das Präfix basierend auf den Firmeneinstellungen
+        $prefixParts = [];
+        
+        if ($companySettings->invoice_number_prefix) {
+            $prefixParts[] = $companySettings->invoice_number_prefix;
+        }
+        
+        if ($companySettings->invoice_number_include_year) {
+            $prefixParts[] = $currentYear;
+        }
+        
+        $prefix = !empty($prefixParts) ? implode('-', $prefixParts) . '-' : '';
 
-        // Hole die letzte Rechnungsnummer für das aktuelle Jahr
-        $lastBilling = static::where('invoice_number', 'LIKE', $prefix . '%')
+        // Hole die letzte Rechnungsnummer mit dem aktuellen Präfix (auch aus gelöschten Datensätzen)
+        $lastBilling = static::withTrashed()
+            ->where('invoice_number', 'LIKE', $prefix . '%')
             ->orderBy('invoice_number', 'desc')
             ->first();
 
@@ -176,7 +189,7 @@ class SolarPlantBilling extends Model
             $lastNumber = intval(substr($lastBilling->invoice_number, strlen($prefix)));
             $nextNumber = $lastNumber + 1;
         } else {
-            // Erste Rechnung des Jahres
+            // Erste Rechnung mit diesem Präfix
             $nextNumber = 1;
         }
 
@@ -193,14 +206,27 @@ class SolarPlantBilling extends Model
             return [];
         }
 
+        $companySettings = \App\Models\CompanySetting::current();
         $currentYear = date('Y');
-        //$prefix = "RG-{$currentYear}-";
-        $prefix="";
+        
+        // Erstelle das Präfix basierend auf den Firmeneinstellungen
+        $prefixParts = [];
+        
+        if ($companySettings->invoice_number_prefix) {
+            $prefixParts[] = $companySettings->invoice_number_prefix;
+        }
+        
+        if ($companySettings->invoice_number_include_year) {
+            $prefixParts[] = $currentYear;
+        }
+        
+        $prefix = !empty($prefixParts) ? implode('-', $prefixParts) . '-' : '';
 
         // Verwende Database Lock für thread-safe Operation
         return \DB::transaction(function() use ($prefix, $count) {
-            // Hole die letzte Rechnungsnummer für das aktuelle Jahr mit FOR UPDATE Lock
-            $lastBilling = static::where('invoice_number', 'LIKE', $prefix . '%')
+            // Hole die letzte Rechnungsnummer mit dem aktuellen Präfix mit FOR UPDATE Lock (auch aus gelöschten Datensätzen)
+            $lastBilling = static::withTrashed()
+                ->where('invoice_number', 'LIKE', $prefix . '%')
                 ->orderBy('invoice_number', 'desc')
                 ->lockForUpdate()
                 ->first();
@@ -210,7 +236,7 @@ class SolarPlantBilling extends Model
                 $lastNumber = intval(substr($lastBilling->invoice_number, strlen($prefix)));
                 $startNumber = $lastNumber + 1;
             } else {
-                // Erste Rechnung des Jahres
+                // Erste Rechnung mit diesem Präfix
                 $startNumber = 1;
             }
 
