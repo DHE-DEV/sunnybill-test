@@ -382,6 +382,9 @@ class Customer extends Model
         if ($this->customer_type === 'business') {
             return $this->company_name ?: $this->name;
         }
+        if ($this->customer_type === 'lead') {
+            return ($this->company_name ?: $this->name) . ' (Lead)';
+        }
         return $this->name;
     }
 
@@ -399,6 +402,14 @@ class Customer extends Model
     public function isPrivateCustomer(): bool
     {
         return $this->customer_type === 'private';
+    }
+
+    /**
+     * Prüft ob es sich um einen Lead handelt
+     */
+    public function isLead(): bool
+    {
+        return $this->customer_type === 'lead';
     }
 
     /**
@@ -455,6 +466,14 @@ class Customer extends Model
     public function scopePrivateCustomers($query)
     {
         return $query->where('customer_type', 'private');
+    }
+
+    /**
+     * Scope für Leads
+     */
+    public function scopeLeads($query)
+    {
+        return $query->where('customer_type', 'lead');
     }
 
     /**
