@@ -1140,6 +1140,16 @@ class CustomerResource extends Resource
                         default => 'gray',
                     })
                     ->sortable(),
+                Tables\Columns\TextColumn::make('contact_source')
+                    ->label('Kontaktquelle')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(30)
+                    ->tooltip(function ($record) {
+                        return $record->contact_source;
+                    })
+                    ->placeholder('Nicht angegeben')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('customer_score')
                     ->label('Score')
                     ->formatStateUsing(fn ($record) => $record->formatted_customer_score)
