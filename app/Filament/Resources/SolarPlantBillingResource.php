@@ -934,7 +934,8 @@ class SolarPlantBillingResource extends Resource
                                                     ]
                                                 ];
                                                 
-                                                // Generate QR-Code PDF using the same view as the controller
+                                                // Generate QR-Code PDF using exakt the same view and settings as individual QR-Code print
+                                                // to ensure identical design and layout
                                                 $qrPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('print.qr-code-banking', [
                                                     'solarPlantBilling' => $billing,
                                                     'customer' => $customer,
@@ -942,10 +943,12 @@ class SolarPlantBillingResource extends Resource
                                                 ])
                                                 ->setPaper('a4', 'portrait')
                                                 ->setOptions([
-                                                    'dpi' => 150,
-                                                    'defaultFont' => 'DejaVu Sans',
-                                                    'isRemoteEnabled' => true,
+                                                    'defaultFont' => '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
                                                     'isHtml5ParserEnabled' => true,
+                                                    'isPhpEnabled' => true,
+                                                    'debugKeepTemp' => false,
+                                                    'isRemoteEnabled' => false,
+                                                    'chroot' => public_path(),
                                                 ]);
                                                 
                                                 $qrPdfContent = $qrPdf->output();
