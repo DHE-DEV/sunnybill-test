@@ -145,6 +145,11 @@ class SolarPlantBillingResource extends Resource
                             ->options(SolarPlantBilling::getStatusOptions())
                             ->default('draft')
                             ->required(),
+
+                        Forms\Components\DatePicker::make('cancellation_date')
+                            ->label('Stornierungsdatum')
+                            ->helperText('Datum der Stornierung (optional)')
+                            ->nullable(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Kostenaufschlüsselung')
@@ -540,6 +545,14 @@ class SolarPlantBillingResource extends Resource
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => SolarPlantBilling::getStatusOptions()[$state] ?? $state),
+
+                Tables\Columns\TextColumn::make('cancellation_date')
+                    ->label('Storniert am')
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->color('danger')
+                    ->badge(fn ($record) => $record->cancellation_date ? true : false),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Erstellt')

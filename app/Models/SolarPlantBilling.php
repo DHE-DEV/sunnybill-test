@@ -52,6 +52,7 @@ class SolarPlantBilling extends Model
         'paid_at',
         'created_by',
         'invoice_number',
+        'cancellation_date',
     ];
 
     protected $casts = [
@@ -68,6 +69,7 @@ class SolarPlantBilling extends Model
         'finalized_at' => 'datetime',
         'sent_at' => 'datetime',
         'paid_at' => 'datetime',
+        'cancellation_date' => 'date',
     ];
 
     /**
