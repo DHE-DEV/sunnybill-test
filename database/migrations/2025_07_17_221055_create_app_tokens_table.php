@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (!Schema::hasTable('app_tokens')) {
             Schema::create('app_tokens', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name'); // Name des Tokens (z.B. "iPhone App", "Desktop Client")
             $table->string('token', 255)->unique(); // Hash des Tokens
