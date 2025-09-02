@@ -64,6 +64,12 @@ class CustomerResource extends Resource
                             ->placeholder('Ranking auswählen')
                             ->helperText('Klassifizierung der Kundenwichtigkeit')
                             ->columnSpanFull(),
+                        Forms\Components\Textarea::make('contact_source')
+                            ->label('Herkunft des Kontaktes')
+                            ->placeholder('z.B. Website, Empfehlung, Messe, Telefonakquise...')
+                            ->helperText('Wie wurde der Kontakt zu diesem Kunden hergestellt?')
+                            ->rows(2)
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('customer_number')
                             ->label('Kundennummer')
                             ->maxLength(255)
@@ -404,6 +410,13 @@ class CustomerResource extends Resource
                             ->badge()
                             ->color('primary')
                             ->tooltip(fn ($record) => 'Basierend auf ' . $record->formatted_total_kwp_participation . ' kWp-Beteiligung'),
+                        
+                        // Herkunft des Kontaktes (über ganze Breite)
+                        \Filament\Infolists\Components\TextEntry::make('contact_source')
+                            ->label('Herkunft des Kontaktes')
+                            ->placeholder('Nicht angegeben')
+                            ->prose()
+                            ->columnSpanFull(),
                         
                         // Zeile 2: Name (1 Spalte), Kundennummer
                         \Filament\Infolists\Components\TextEntry::make('name')

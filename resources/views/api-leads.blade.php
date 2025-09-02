@@ -486,6 +486,7 @@ Content-Type: application/json</code></pre>
   "country_code": "DE",
   "ranking": "A",
   "notes": "Interessanter Lead mit großem Potenzial",
+  "contact_source": "Website-Kontaktformular",
   "is_active": true
 }</code></pre>
                         </div>
@@ -541,6 +542,26 @@ Content-Type: application/json</code></pre>
                             <tr><td><strong>D</strong></td><td>Unqualifiziert</td><td>Lead muss noch qualifiziert werden</td></tr>
                             <tr><td><strong>E</strong></td><td>Nicht interessiert</td><td>Kein Interesse, Follow-up nicht empfohlen</td></tr>
                         </table>
+
+                        <h3 class="scroll-animate">Herkunft des Kontakts (contact_source)</h3>
+                        <p class="scroll-animate">Das Feld <code>contact_source</code> speichert die Herkunft des Leads und hilft bei der Analyse der Akquisitionskanäle.</p>
+                        
+                        <table class="scroll-animate">
+                            <tr><th>Feld</th><th>Typ</th><th>Beschreibung</th><th>Validierung</th></tr>
+                            <tr><td><code>contact_source</code></td><td>Text</td><td>Herkunft des Kontakts</td><td>Optional, max. 1000 Zeichen</td></tr>
+                        </table>
+
+                        <h4 class="scroll-animate">Typische Werte für contact_source:</h4>
+                        <ul class="scroll-animate">
+                            <li><strong>Website-Kontaktformular</strong> - Lead über Website generiert</li>
+                            <li><strong>Telefonakquise</strong> - Durch aktive Anrufe gewonnen</li>
+                            <li><strong>Empfehlung</strong> - Weiterempfehlung von bestehenden Kunden</li>
+                            <li><strong>Messe/Event</strong> - Auf Veranstaltungen kennengelernt</li>
+                            <li><strong>Social Media</strong> - Über soziale Netzwerke kontaktiert</li>
+                            <li><strong>Google Ads</strong> - Über Werbeanzeigen gefunden</li>
+                            <li><strong>Partner</strong> - Über Vertriebspartner vermittelt</li>
+                            <li><strong>Newsletter</strong> - Über E-Mail Marketing gewonnen</li>
+                        </ul>
 
                         <h2 id="examples" class="scroll-animate">Beispiele</h2>
 

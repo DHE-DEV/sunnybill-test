@@ -73,7 +73,7 @@ class LeadApiController extends Controller
             email, phone, website, street, address_line_2, postal_code,
             city, state, country, country_code, notes, 
             is_active, deactivated_at, customer_type, ranking,
-            created_at, updated_at
+            contact_source, created_at, updated_at
         FROM customers 
         WHERE {$whereClause} 
         ORDER BY {$sortBy} {$sortDirection} 
@@ -143,6 +143,7 @@ class LeadApiController extends Controller
             'country_code' => 'nullable|string|max:3',
             'ranking' => 'nullable|in:A,B,C,D,E',
             'notes' => 'nullable|string|max:5000',
+            'contact_source' => 'nullable|string|max:1000',
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -214,6 +215,7 @@ class LeadApiController extends Controller
             'country_code' => 'nullable|string|max:3',
             'ranking' => 'nullable|in:A,B,C,D,E',
             'notes' => 'nullable|string|max:5000',
+            'contact_source' => 'nullable|string|max:1000',
             'is_active' => 'nullable|boolean',
         ]);
 

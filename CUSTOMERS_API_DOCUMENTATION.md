@@ -35,7 +35,7 @@ Authorization: Bearer YOUR_APP_TOKEN
 | Parameter | Typ | Beschreibung | Beispiel |
 |-----------|-----|--------------|----------|
 | `status` | string | Filtert nach Kundenstatus | `active`, `inactive`, `prospect`, `blocked` |
-| `customer_type` | string | Filtert nach Kundentyp | `private`, `business` |
+| `customer_type` | string | Filtert nach Kundentyp | `private`, `business`, `lead` |
 | `city` | string | Filtert nach Stadt (LIKE-Suche) | `Berlin` |
 | `is_active` | boolean | Filtert nach Aktivitätsstatus | `true`, `false` |
 | `has_participations` | boolean | Filtert nach Beteiligungen | `true`, `false` |
@@ -200,7 +200,7 @@ Authorization: Bearer your_app_token_here
 #### Für alle Kunden:
 | Feld | Regeln |
 |------|--------|
-| `customer_type` | **Pflicht** - `private` oder `business` |
+| `customer_type` | **Pflicht** - `private`, `business` oder `lead` |
 | `email` | **Pflicht** - Gültige E-Mail, eindeutig |
 | `phone` | Optional - Max. 50 Zeichen |
 | `street` | Optional - Max. 255 Zeichen |
@@ -223,6 +223,12 @@ Authorization: Bearer your_app_token_here
 | Feld | Regeln |
 |------|--------|
 | `company_name` | **Pflicht** - Max. 255 Zeichen |
+
+#### Zusätzlich für Leads (`customer_type: lead`):
+| Feld | Regeln |
+|------|--------|
+| `first_name` | **Pflicht** - Max. 255 Zeichen |
+| `last_name` | **Pflicht** - Max. 255 Zeichen |
 
 ### Beispiel Request:
 ```http
@@ -672,7 +678,8 @@ Authorization: Bearer your_app_token_here
   "data": {
     "customer_types": {
       "private": "Privatkunde",
-      "business": "Geschäftskunde"
+      "business": "Geschäftskunde",
+      "lead": "Lead/Interessent"
     },
     "statuses": {
       "active": "Aktiv",
