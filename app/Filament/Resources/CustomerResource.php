@@ -47,6 +47,7 @@ class CustomerResource extends Resource
                             ->options([
                                 'business' => 'Firmenkunde',
                                 'private' => 'Privatkunde',
+                                'lead' => 'Lead',
                             ])
                             ->default('business')
                             ->required()
@@ -390,6 +391,7 @@ class CustomerResource extends Resource
                             ->formatStateUsing(fn (string $state): string => match ($state) {
                                 'business' => 'Firmenkunde',
                                 'private' => 'Privatkunde',
+                                'lead' => 'Lead',
                                 default => $state,
                             }),
                         \Filament\Infolists\Components\TextEntry::make('ranking')
@@ -1118,6 +1120,7 @@ class CustomerResource extends Resource
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'business' => 'Firma',
                         'private' => 'Privat',
+                        'lead' => 'Lead',
                         default => $state,
                     })
                     ->badge()
@@ -1149,7 +1152,7 @@ class CustomerResource extends Resource
                         return $record->contact_source;
                     })
                     ->placeholder('Nicht angegeben')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('customer_score')
                     ->label('Score')
                     ->formatStateUsing(fn ($record) => $record->formatted_customer_score)
@@ -1280,6 +1283,7 @@ class CustomerResource extends Resource
                     ->options([
                         'business' => 'Firmenkunde',
                         'private' => 'Privatkunde',
+                        'lead' => 'Lead',
                     ]),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Status')
