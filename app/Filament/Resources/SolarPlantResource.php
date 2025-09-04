@@ -188,8 +188,15 @@ class SolarPlantResource extends Resource
                                     ]),
                                 Forms\Components\Textarea::make('description')
                                     ->label('Beschreibung')
-                                    ->rows(3)
+                                    ->rows(2)
                                     ->placeholder('Zusätzliche Informationen zur Anlage...')
+                                    ->columnSpanFull(),
+                                Forms\Components\Textarea::make('notes')
+                                    ->label('Ausführliche Erklärung')
+                                    ->placeholder('Detaillierte Erklärung zur Solaranlage...')
+                                    ->helperText('Zusätzliche Informationen und Details (max. 5.000 Zeichen)')
+                                    ->rows(4)
+                                    ->maxLength(5000)
                                     ->columnSpanFull(),
                             ]),
                         Forms\Components\Tabs\Tab::make('Technische Daten')

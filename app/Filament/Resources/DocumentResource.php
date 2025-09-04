@@ -18,6 +18,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Illuminate\Support\Str;
 
 class DocumentResource extends Resource
 {
@@ -222,18 +223,20 @@ class DocumentResource extends Resource
                     ->sortable()
                     ->weight('bold')
                     ->limit(50)
-                    ->description(fn (Document $record): ?string => $record->description ?
-                        \Illuminate\Support\Str::limit($record->description, 80) : null
-                    ),
+                    ->description(function (Document $record): ?string {
+                        return $record->description ? 
+                            Str::limit($record->description, 80) : null;
+                    }),
 
+                // Pfad-Spalte als separate Zeile mit vollem Colspan
                 TextColumn::make('path')
-                    ->label('Speicherort')
-                    ->formatStateUsing(fn (string $state): string => dirname($state))
-                    ->badge()
-                    ->color('gray')
-                    ->limit(30)
-                    ->toggleable()
-                    ->toggledHiddenByDefault(),
+                    ->label('')
+                    ->formatStateUsing(fn (Document $record): string => '📁 ' . $record->path)
+                    ->extraAttributes([
+                        'class' => 'col-span-full bg-gray-50 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400 p-2 border-t',
+                        'colspan' => '100%',
+                    ])
+                    ->wrap(),
 
                 TextColumn::make('documentType.name')
                     ->label('Dokumententyp')

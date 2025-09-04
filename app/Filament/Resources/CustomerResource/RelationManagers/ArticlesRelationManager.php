@@ -99,11 +99,19 @@ class ArticlesRelationManager extends RelationManager
                             ->helperText('Leer lassen um den Standard-Artikelpreis zu verwenden')
                             ->placeholder('Wird automatisch gesetzt'),
 
-                        Forms\Components\Textarea::make('notes')
+                        Forms\Components\Textarea::make('customer_notes')
                             ->label('Notizen')
-                            ->rows(3)
+                            ->rows(2)
                             ->maxLength(1000)
                             ->placeholder('Zusätzliche Informationen zu diesem Artikel...'),
+
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Ausführliche Erklärung')
+                            ->rows(4)
+                            ->maxLength(5000)
+                            ->placeholder('Zusätzliche Details und Erklärungen zum Artikel...')
+                            ->helperText('Umfassende Informationen und Erklärungen für diesen Kundenartikel (max. 5000 Zeichen)')
+                            ->columnSpanFull(),
 
                         Forms\Components\Toggle::make('is_active')
                             ->label('Aktiv')
@@ -227,9 +235,17 @@ class ArticlesRelationManager extends RelationManager
                                 
                                 Forms\Components\Textarea::make('description')
                                     ->label('Beschreibung')
-                                    ->rows(3)
+                                    ->rows(2)
                                     ->maxLength(1000)
                                     ->placeholder('Detaillierte Beschreibung des Artikels...')
+                                    ->columnSpanFull(),
+                                
+                                Forms\Components\Textarea::make('notes')
+                                    ->label('Ausführliche Erklärung')
+                                    ->rows(4)
+                                    ->maxLength(5000)
+                                    ->placeholder('Zusätzliche Details und Erklärungen zum Artikel...')
+                                    ->helperText('Umfassende Informationen und Erklärungen für diesen Kundenartikel (max. 5000 Zeichen)')
                                     ->columnSpanFull(),
                                 
                                 Forms\Components\Select::make('type')
@@ -341,6 +357,7 @@ class ArticlesRelationManager extends RelationManager
                         $articleData = [
                             'name' => $data['name'],
                             'description' => $data['description'],
+                            'notes' => $data['notes'] ?? null,
                             'type' => $data['type'],
                             'price' => $data['price'],
                             'tax_rate_id' => $data['tax_rate_id'],
@@ -448,11 +465,19 @@ class ArticlesRelationManager extends RelationManager
                             ->helperText('Leer lassen um den Standard-Artikelpreis zu verwenden')
                             ->placeholder('Wird automatisch gesetzt'),
 
-                        Forms\Components\Textarea::make('notes')
+                        Forms\Components\Textarea::make('customer_notes')
                             ->label('Notizen')
-                            ->rows(3)
+                            ->rows(2)
                             ->maxLength(1000)
                             ->placeholder('Zusätzliche Informationen zu diesem Artikel...'),
+
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Ausführliche Erklärung')
+                            ->rows(4)
+                            ->maxLength(5000)
+                            ->placeholder('Zusätzliche Details und Erklärungen zum Artikel...')
+                            ->helperText('Umfassende Informationen und Erklärungen für diesen Kundenartikel (max. 5000 Zeichen)')
+                            ->columnSpanFull(),
 
                         Forms\Components\Toggle::make('is_active')
                             ->label('Aktiv')

@@ -230,10 +230,18 @@ class ArticlesRelationManager extends RelationManager
                                 
                                 Forms\Components\Textarea::make('description')
                                     ->label('Beschreibung')
-                                    ->rows(3)
+                                    ->rows(2)
                                     ->maxLength(1000)
-                                    ->placeholder('Detaillierte Beschreibung des Artikels...')
+                                    ->placeholder('Kurze Beschreibung des Artikels...')
                                     ->columnSpanFull(),
+                                
+                                Forms\Components\Textarea::make('notes')
+                                    ->label('Ausführliche Erklärung')
+                                    ->rows(4)
+                                    ->maxLength(5000)
+                                    ->placeholder('Ausführliche Erklärung zum Artikel, technische Details, Verwendungszweck, etc...')
+                                    ->columnSpanFull()
+                                    ->helperText('Hier können Sie ausführliche Informationen zum Artikel hinterlegen.'),
                                 
                                 Forms\Components\Select::make('type')
                                     ->label('Artikeltyp')
@@ -344,6 +352,7 @@ class ArticlesRelationManager extends RelationManager
                         $articleData = [
                             'name' => $data['name'],
                             'description' => $data['description'],
+                            'notes' => $data['notes'] ?? null,
                             'type' => $data['type'],
                             'price' => $data['price'],
                             'tax_rate_id' => $data['tax_rate_id'],
@@ -373,123 +382,6 @@ class ArticlesRelationManager extends RelationManager
                     })
                     ->after(function ($livewire) {
                         $livewire->dispatch('refresh');
-                    }),
-                
-                Tables\Actions\AttachAction::make()
-                    ->label('Artikel hinzufügen')
-                    ->icon('heroicon-o-plus')
-                    ->modalWidth('4xl')
-                    ->recordSelectOptionsQuery(function (Builder $query) {
-                        $ownerRecord = $this->getOwnerRecord();
-                        $attachedArticleIds = $ownerRecord->articles()->pluck('articles.id')->toArray();
-                        
-                        return $query->whereNotIn('id', $attachedArticleIds)->orderBy('name');
-                    })
-                    ->recordSelectSearchColumns(['name', 'description'])
-                    ->preloadRecordSelect()
-                    ->form([
-                        Forms\Components\Select::make('recordId')
-                            ->label('Artikel')
-                            ->options(function () {
-                                $ownerRecord = $this->getOwnerRecord();
-                                $attachedArticleIds = $ownerRecord->articles()->pluck('articles.id')->toArray();
-                                
-                                return Article::query()
-                                    ->whereNotIn('id', $attachedArticleIds)
-                                    ->orderBy('name')
-                                    ->get()
-                                    ->mapWithKeys(function ($article) {
-                                        return [$article->id => $article->name . ' (' . $article->formatted_price . ')'];
-                                    })
-                                    ->toArray();
-                            })
-                            ->searchable()
-                            ->required()
-                            ->preload()
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                if ($state) {
-                                    $article = Article::find($state);
-                                    if ($article) {
-                                        $set('unit_price', $article->price);
-                                    }
-                                }
-                            }),
-                        
-                        Forms\Components\Placeholder::make('article_info')
-                            ->label('Artikel-Info')
-                            ->content(function ($get) {
-                                $articleId = $get('recordId');
-                                if (!$articleId) return 'Kein Artikel ausgewählt';
-                                
-                                $article = Article::find($articleId);
-                                if (!$article) return 'Artikel nicht gefunden';
-                                
-                                return "Name: {$article->name}\n" .
-                                       "Beschreibung: " . ($article->description ?? 'Keine Beschreibung') . "\n" .
-                                       "Preis: {$article->formatted_price}\n" .
-                                       "Steuersatz: {$article->tax_rate_percent}";
-                            })
-                            ->visible(fn ($get) => $get('recordId')),
-
-                        Forms\Components\TextInput::make('quantity')
-                            ->label('Menge')
-                            ->numeric()
-                            ->step(0.01)
-                            ->minValue(0.01)
-                            ->required()
-                            ->default(1.00)
-                            ->suffix('Stk.')
-                            ->helperText('Anzahl der Artikel für diese Solaranlage'),
-
-                        Forms\Components\TextInput::make('unit_price')
-                            ->label('Stückpreis')
-                            ->numeric()
-                            ->step(0.01)
-                            ->minValue(0)
-                            ->prefix('€')
-                            ->helperText('Leer lassen um den Standard-Artikelpreis zu verwenden')
-                            ->placeholder('Wird automatisch gesetzt'),
-
-                        Forms\Components\Textarea::make('notes')
-                            ->label('Notizen')
-                            ->rows(3)
-                            ->maxLength(1000)
-                            ->placeholder('Zusätzliche Informationen zu diesem Artikel...'),
-
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Aktiv')
-                            ->default(true)
-                            ->helperText('Nur aktive Artikel werden bei Berechnungen berücksichtigt.'),
-                        Forms\Components\Radio::make('billing_requirement')
-                            ->label('Anforderung bei Abrechnung')
-                            ->options([
-                                'optional' => 'Optional',
-                                'mandatory' => 'Pflichtartikel',
-                            ])
-                            ->default('optional')
-                            ->required(),
-                    ])
-                    ->mutateFormDataUsing(function (array $data): array {
-                        if (empty($data['unit_price']) && !empty($data['recordId'])) {
-                            $article = Article::find($data['recordId']);
-                            if ($article) {
-                                $data['unit_price'] = $article->price;
-                            }
-                        }
-                        
-                        $data['quantity'] = $data['quantity'] ?? 1.00;
-                        $data['is_active'] = $data['is_active'] ?? true;
-                        $data['billing_requirement'] = $data['billing_requirement'] ?? 'optional';
-                        
-                        return $data;
-                    })
-                    ->after(function ($record, $livewire) {
-                        Notification::make()
-                            ->title('Artikel hinzugefügt')
-                            ->body('Der Artikel wurde erfolgreich zur Solaranlage hinzugefügt.')
-                            ->success()
-                            ->send();
                     }),
             ])
             ->actions([
