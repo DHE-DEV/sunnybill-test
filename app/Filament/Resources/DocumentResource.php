@@ -356,8 +356,7 @@ class DocumentResource extends Resource
                     ->icon('heroicon-m-ellipsis-vertical')
                     ->size('sm')
                     ->color('gray')
-                    ->button()
-                    ->closeAfterSelection(),
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
