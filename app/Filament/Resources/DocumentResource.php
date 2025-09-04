@@ -88,6 +88,7 @@ class DocumentResource extends Resource
                         Forms\Components\FileUpload::make('path')
                             ->label('Datei')
                             ->disk('documents')
+                            ->multiple(false)
                             ->directory(function (callable $get) {
                                 // Neue konfigurierbare Verzeichnisstruktur
                                 $type = $get('documentable_type');
