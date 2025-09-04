@@ -348,7 +348,10 @@ class DocumentResource extends Resource
                         ->color('info')
                         ->url(fn (Document $record): string => route('documents.preview', $record))
                         ->openUrlInNewTab()
-                        ->visible(fn (Document $record): bool => str_contains($record->mime_type, 'image') || str_contains($record->mime_type, 'pdf')),
+                        ->visible(fn (Document $record): bool => str_contains($record->mime_type, 'image') || str_contains($record->mime_type, 'pdf'))
+                        ->extraAttributes([
+                            'x-on:click' => '$el.closest("[x-data]").querySelector("[x-data]").__x.$data.open = false'
+                        ]),
                     Tables\Actions\DeleteAction::make()
                         ->visible(fn (): bool => auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false),
                 ])
