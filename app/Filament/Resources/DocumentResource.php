@@ -356,7 +356,12 @@ class DocumentResource extends Resource
                     ->icon('heroicon-m-ellipsis-vertical')
                     ->size('sm')
                     ->color('gray')
-                    ->button(),
+                    ->button()
+                    ->extraAttributes([
+                        'x-data' => '{ open: false }',
+                        'x-on:click' => 'open = !open',
+                        'x-on:click.away' => 'open = false'
+                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
