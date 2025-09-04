@@ -52,7 +52,21 @@ class Document extends Model
     protected $casts = [
         'size' => 'integer',
         'is_favorite' => 'boolean',
+        'path' => 'string',
     ];
+
+    /**
+     * Mutator für das path Attribut - stellt sicher, dass Arrays zu Strings konvertiert werden
+     */
+    public function setPathAttribute($value)
+    {
+        if (is_array($value)) {
+            // Wenn es ein Array ist, nimm das erste Element
+            $this->attributes['path'] = is_array($value) && count($value) > 0 ? $value[0] : '';
+        } else {
+            $this->attributes['path'] = $value;
+        }
+    }
 
     public function documentable(): MorphTo
     {
