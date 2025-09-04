@@ -350,7 +350,7 @@ class DocumentResource extends Resource
                         ->openUrlInNewTab()
                         ->visible(fn (Document $record): bool => str_contains($record->mime_type, 'image') || str_contains($record->mime_type, 'pdf'))
                         ->extraAttributes([
-                            'x-on:click' => '$el.closest("[x-data]").querySelector("[x-data]").__x.$data.open = false'
+                            'x-on:click' => '$dispatch(\'close-dropdown\')'
                         ]),
                     Tables\Actions\DeleteAction::make()
                         ->visible(fn (): bool => auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false),
@@ -363,7 +363,8 @@ class DocumentResource extends Resource
                     ->extraAttributes([
                         'x-data' => '{ open: false }',
                         'x-on:click' => 'open = !open',
-                        'x-on:click.away' => 'open = false'
+                        'x-on:click.away' => 'open = false',
+                        'x-on:close-dropdown' => 'open = false'
                     ]),
             ])
             ->bulkActions([
