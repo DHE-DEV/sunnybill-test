@@ -45,7 +45,7 @@ trait HasPersistentTableState
 
     protected function saveTableState(): void
     {
-        if (!Auth::check()) {
+        if (!Auth::check() || !$this->shouldSaveFilters()) {
             return;
         }
 
@@ -80,7 +80,7 @@ trait HasPersistentTableState
 
     protected function loadTableState(): void
     {
-        if (!Auth::check()) {
+        if (!Auth::check() || !$this->shouldSaveFilters()) {
             return;
         }
 
@@ -134,5 +134,13 @@ trait HasPersistentTableState
     public function shouldPersistTableColumnSearchesInSession(): bool
     {
         return false;
+    }
+
+    /**
+     * Check if filter saving is enabled via .env configuration
+     */
+    protected function shouldSaveFilters(): bool
+    {
+        return config('app.save_filter', false) === true || config('app.save_filter', false) === 'true';
     }
 }

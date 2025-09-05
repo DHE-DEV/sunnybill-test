@@ -837,6 +837,26 @@ class SupplierContractBillingResource extends Resource
                     ->preload()
                     ->multiple(),
 
+                Tables\Filters\SelectFilter::make('amount_type')
+                    ->label('Betragstyp')
+                    ->options([
+                        'all' => 'Alle Beträge',
+                        'positive' => 'Positive Beträge',
+                        'negative' => 'Negative Beträge',
+                    ])
+                    ->default('all')
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (!isset($data['value']) || $data['value'] === 'all') {
+                            return $query;
+                        }
+
+                        return match ($data['value']) {
+                            'positive' => $query->where('total_amount', '>', 0),
+                            'negative' => $query->where('total_amount', '<', 0),
+                            default => $query,
+                        };
+                    }),
+
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

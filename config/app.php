@@ -170,4 +170,16 @@ return [
 
     'minus_into_invoice' => env('MINUS_INTO_INVOICE', 'CREDIT_NOTE'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | User Table Filter Persistence
+    |--------------------------------------------------------------------------
+    |
+    | This setting determines whether user table filters, searches, and sorting
+    | preferences should be saved and restored between sessions.
+    |
+    */
+
+    'save_filter' => env('SAVE_FILTER', false),
+
 ];
