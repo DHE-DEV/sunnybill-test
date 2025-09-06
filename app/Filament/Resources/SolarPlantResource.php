@@ -281,7 +281,7 @@ class SolarPlantResource extends Resource
                         Forms\Components\Tabs\Tab::make('Status')
                             ->icon('heroicon-o-signal')
                             ->schema([
-                                Forms\Components\Grid::make(2)
+                                Forms\Components\Grid::make(3)
                                     ->schema([
                                         Forms\Components\Select::make('status')
                                             ->label('Status')
@@ -295,6 +295,10 @@ class SolarPlantResource extends Resource
                                             ->label('Aktiv')
                                             ->default(true)
                                             ->helperText('Ist die Anlage derzeit in Betrieb?'),
+                                        Forms\Components\Toggle::make('billing')
+                                            ->label('Fakturierbar')
+                                            ->default(true)
+                                            ->helperText('Bestimmt, ob diese Solaranlage für die Abrechnung berücksichtigt wird'),
                                     ]),
                                 Forms\Components\Textarea::make('notes')
                                     ->label('Notizen')
@@ -418,6 +422,11 @@ class SolarPlantResource extends Resource
                                         'inactive' => 'danger',
                                         default => 'gray',
                                     }),
+                                \Filament\Infolists\Components\TextEntry::make('billing')
+                                    ->label('Fakturierbar')
+                                    ->formatStateUsing(fn ($state) => $state ? 'Ja' : 'Nein')
+                                    ->badge()
+                                    ->color(fn ($state) => $state ? 'success' : 'gray'),
                                 \Filament\Infolists\Components\IconEntry::make('is_active')
                                     ->label('Betriebsbereit')
                                     ->boolean(),
@@ -641,6 +650,13 @@ class SolarPlantResource extends Resource
                         $status = \App\Models\SolarPlantStatus::where('key', $state)->first();
                         return $status ? $status->color : 'gray';
                     }),
+                Tables\Columns\TextColumn::make('billing')
+                    ->label('Fakturierbar')
+                    ->formatStateUsing(fn ($state) => $state ? 'Ja' : 'Nein')
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'success' : 'gray')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('total_participation')
                     ->label('Beteiligung')
                     ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . '%')
@@ -722,6 +738,12 @@ class SolarPlantResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
                     ->options(\App\Models\SolarPlantStatus::getActiveOptions()),
+                Tables\Filters\SelectFilter::make('billing')
+                    ->label('Fakturierbar')
+                    ->options([
+                        1 => 'Ja',
+                        0 => 'Nein',
+                    ]),
                 Tables\Filters\Filter::make('is_active')
                     ->label('Nur aktive Anlagen')
                     ->query(fn (Builder $query): Builder => $query->where('is_active', true)),

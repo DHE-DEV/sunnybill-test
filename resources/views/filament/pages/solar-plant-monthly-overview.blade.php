@@ -6,15 +6,22 @@
         $plantsData = $data['plantsData'];
         $allPlantsStats = $data['allPlantsStats'];
         $statusFilter = $data['statusFilter'] ?? 'all';
+        $plantBillingFilter = $data['plantBillingFilter'] ?? 'alle';
         $year = (int) substr($selectedMonth, 0, 4);
         $monthNumber = (int) substr($selectedMonth, 5, 2);
         
-        $filterLabel = match($statusFilter) {
+        $statusFilterLabel = match($statusFilter) {
             'incomplete' => 'Nur Unvollständige',
             'complete' => 'Nur Vollständige', 
             'no_contracts' => 'Nur ohne Verträge',
             'few_contracts' => 'Nur mit weniger als 5 Verträgen',
             default => 'Alle Anlagen'
+        };
+        
+        $plantBillingFilterLabel = match($plantBillingFilter) {
+            'mit_abrechnungen' => 'Nur mit Anlagen-Abrechnungen',
+            'ohne_abrechnungen' => 'Nur ohne Anlagen-Abrechnungen',
+            default => 'Alle Anlagen-Abrechnungen'
         };
     @endphp
 
@@ -27,14 +34,25 @@
                         Abrechnungsübersicht für {{ $monthLabel }}
                     </h2>
                     <div class="flex items-center space-x-2 mt-1">
-                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                            {{ $filterLabel }}
-                        </p>
-                        @if ($statusFilter !== 'all')
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-400">
-                                Gefiltert
-                            </span>
-                        @endif
+                        <div class="flex flex-wrap items-center gap-2">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                {{ $statusFilterLabel }}
+                            </p>
+                            @if ($statusFilter !== 'all')
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-400">
+                                    Status gefiltert
+                                </span>
+                            @endif
+                            <span class="text-sm text-gray-400">•</span>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                {{ $plantBillingFilterLabel }}
+                            </p>
+                            @if ($plantBillingFilter !== 'alle')
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400">
+                                    Anlagen-Abrechnung gefiltert
+                                </span>
+                            @endif
+                        </div>
                     </div>
                 </div>
                 <div class="text-right">
@@ -123,6 +141,9 @@
                     $activeContracts = $plantData['activeContracts'];
                     $totalContracts = $plantData['totalContracts'];
                     $missingCount = $plantData['missingCount'];
+                    $hasPlantBillings = $plantData['hasPlantBillings'];
+                    $plantBillingsCount = $plantData['plantBillingsCount'];
+                    $firstPlantBilling = $plantData['firstPlantBilling'];
                     
                     $statusConfig = match($status) {
                         'Vollständig' => [
@@ -320,6 +341,64 @@
                             </div>
                         </div>
                     @endif
+                    
+                    <!-- Solar Plant Billing Status -->
+                    <div style="padding: 1.5rem; border-top: 1px solid; {{ $borderStyle }}; background-color: #ffffff;">
+                        <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 1rem;">
+                            Anlagen-Abrechnungsstatus für {{ $monthLabel }}
+                        </h4>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-radius: 6px; {{ $hasPlantBillings ? 'background-color: #f0fdf4; border: 1px solid #bbf7d0;' : 'background-color: #fef2f2; border: 1px solid #fecaca;' }}">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div>
+                                    @if ($hasPlantBillings)
+                                        <x-heroicon-o-check-circle style="width: 20px; height: 20px; color: #22c55e;" />
+                                    @else
+                                        <x-heroicon-o-x-circle style="width: 20px; height: 20px; color: #ef4444;" />
+                                    @endif
+                                </div>
+                                <div>
+                                    <p style="font-weight: 500; color: #111827;">
+                                        Anlagen-Abrechnungen
+                                    </p>
+                                    <p style="font-size: 0.875rem; color: #6b7280;">
+                                        @if ($hasPlantBillings)
+                                            {{ $plantBillingsCount }} Abrechnung{{ $plantBillingsCount !== 1 ? 'en' : '' }} vorhanden
+                                        @else
+                                            Keine Abrechnungen für diesen Monat
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                @if ($hasPlantBillings)
+                                    <span style="display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #dcfce7; color: #166534;">
+                                        Anlagen-Abrechnung vorhanden
+                                    </span>
+                                @else
+                                    <span style="display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fee2e2; color: #991b1b;">
+                                        Anlagen-Abrechnung fehlt
+                                    </span>
+                                @endif
+                                @if ($hasPlantBillings && $firstPlantBilling)
+                                    <a href="/admin/solar-plant-billings/{{ $firstPlantBilling->id }}" target="_blank"
+                                       style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #374151; background-color: #ffffff; text-decoration: none; transition: all 0.2s;"
+                                       onmouseover="this.style.backgroundColor='#f9fafb';" 
+                                       onmouseout="this.style.backgroundColor='#ffffff';">
+                                        <x-heroicon-o-arrow-top-right-on-square style="width: 12px; height: 12px; margin-right: 0.5rem;" />
+                                        Anlagen-Abrechnung öffnen
+                                    </a>
+                                @else
+                                    <a href="/admin/solar-plant-billings?tableFilters[solar_plant_id][value]={{ $plant->id }}&tableFilters[billing_year][value]={{ $year }}&tableFilters[billing_month][value]={{ $monthNumber }}" target="_blank"
+                                       style="display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; font-size: 0.75rem; font-weight: 500; border-radius: 4px; color: #374151; background-color: #ffffff; text-decoration: none; transition: all 0.2s;"
+                                       onmouseover="this.style.backgroundColor='#f9fafb';" 
+                                       onmouseout="this.style.backgroundColor='#ffffff';">
+                                        <x-heroicon-o-arrow-top-right-on-square style="width: 12px; height: 12px; margin-right: 0.5rem;" />
+                                        Anlagen-Abrechnungen
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
                 </div>
             @empty
                 <div class="text-center py-12 bg-white dark:bg-gray-900 rounded-lg shadow">

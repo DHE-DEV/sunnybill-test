@@ -20,6 +20,8 @@ class ListSolarPlantMonthlyOverview extends Page
     public ?string $selectedMonth = null;
     
     public ?string $statusFilter = 'all';
+    
+    public ?string $plantBillingFilter = 'alle';
 
     protected function getHeaderActions(): array
     {
@@ -80,6 +82,31 @@ class ListSolarPlantMonthlyOverview extends Page
                     $this->dispatch('statusFilterChanged', status: $this->statusFilter);
                 }),
             
+            Actions\Action::make('filterPlantBilling')
+                ->label('Anlagen-Abrechnung filtern')
+                ->icon('heroicon-o-document-currency-dollar')
+                ->color('gray')
+                ->modalHeading('Nach Anlagen-Abrechnung filtern')
+                ->modalWidth(MaxWidth::Medium)
+                ->form([
+                    Forms\Components\Select::make('plantBilling')
+                        ->label('Anlagen-Abrechnungsstatus')
+                        ->options([
+                            'alle' => 'Alle',
+                            'mit_abrechnungen' => 'Mit Abrechnungen',
+                            'ohne_abrechnungen' => 'Ohne Abrechnungen',
+                        ])
+                        ->default($this->plantBillingFilter)
+                        ->required()
+                        ->placeholder('Status auswählen...'),
+                ])
+                ->action(function (array $data) {
+                    $this->plantBillingFilter = $data['plantBilling'];
+                    // Speichere in der Session
+                    session(['solar_plant_monthly_overview.plant_billing_filter' => $this->plantBillingFilter]);
+                    $this->dispatch('plantBillingFilterChanged', plantBillingStatus: $this->plantBillingFilter);
+                }),
+            
             Actions\Action::make('refresh')
                 ->label('Aktualisieren')
                 ->icon('heroicon-o-arrow-path')
@@ -95,14 +122,16 @@ class ListSolarPlantMonthlyOverview extends Page
         // Lade Werte aus der Session oder setze Defaults
         $this->selectedMonth = session('solar_plant_monthly_overview.selected_month', now()->format('Y-m'));
         $this->statusFilter = session('solar_plant_monthly_overview.status_filter', 'all');
+        $this->plantBillingFilter = session('solar_plant_monthly_overview.plant_billing_filter', 'alle');
     }
 
     protected function getViewData(): array
     {
         $month = $this->selectedMonth ?? now()->format('Y-m');
         
-        // Hole alle Solaranlagen
+        // Hole alle Solaranlagen (nur die mit billing = true)
         $solarPlants = SolarPlant::whereNull('deleted_at')
+            ->where('billing', true)
             ->orderBy('plant_number')
             ->get();
 
@@ -112,6 +141,18 @@ class ListSolarPlantMonthlyOverview extends Page
             $status = SolarPlantMonthlyOverviewResource::getBillingStatusForMonth($plant, $month);
             $missingBillings = SolarPlantMonthlyOverviewResource::getMissingBillingsForMonth($plant, $month);
             $activeContracts = $plant->activeSupplierContracts()->with('supplier')->get()->unique('id');
+            
+            // Prüfe Anlagen-Abrechnungen
+            $hasPlantBillings = SolarPlantMonthlyOverviewResource::hasPlantBillingsForMonth($plant, $month);
+            $plantBillingsCount = SolarPlantMonthlyOverviewResource::getPlantBillingsCountForMonth($plant, $month);
+            
+            // Hole die erste Anlagen-Abrechnung für direkten Link
+            $year = (int) substr($month, 0, 4);
+            $monthNumber = (int) substr($month, 5, 2);
+            $firstPlantBilling = $hasPlantBillings ? $plant->billings()
+                ->where('billing_year', $year)
+                ->where('billing_month', $monthNumber)
+                ->first() : null;
 
             $plantsData[] = [
                 'plant' => $plant,
@@ -120,17 +161,11 @@ class ListSolarPlantMonthlyOverview extends Page
                 'activeContracts' => $activeContracts,
                 'totalContracts' => $activeContracts->count(),
                 'missingCount' => $missingBillings->count(),
+                'hasPlantBillings' => $hasPlantBillings,
+                'plantBillingsCount' => $plantBillingsCount,
+                'firstPlantBilling' => $firstPlantBilling,
             ];
         }
-
-        // Berechne die Gesamt-Statistiken (vor Filterung für korrekte Anzeige)
-        $allPlantsStats = [
-            'total' => count($plantsData),
-            'incomplete' => count(array_filter($plantsData, fn($p) => $p['status'] === 'Unvollständig')),
-            'complete' => count(array_filter($plantsData, fn($p) => $p['status'] === 'Vollständig')),
-            'no_contracts' => count(array_filter($plantsData, fn($p) => $p['status'] === 'Keine Verträge')),
-            'few_contracts' => count(array_filter($plantsData, fn($p) => $p['totalContracts'] > 0 && $p['totalContracts'] < 5)),
-        ];
 
         // Filtere nach Status wenn gewünscht
         if ($this->statusFilter && $this->statusFilter !== 'all') {
@@ -146,6 +181,26 @@ class ListSolarPlantMonthlyOverview extends Page
                 };
             });
         }
+
+        // Filtere nach Anlagen-Abrechnungsstatus wenn gewünscht
+        if ($this->plantBillingFilter && $this->plantBillingFilter !== 'alle') {
+            $plantsData = array_filter($plantsData, function ($plantData) {
+                return match ($this->plantBillingFilter) {
+                    'mit_abrechnungen' => $plantData['hasPlantBillings'],
+                    'ohne_abrechnungen' => !$plantData['hasPlantBillings'],
+                    default => true,
+                };
+            });
+        }
+
+        // Berechne die Statistiken NACH der Filterung für korrekte Anzeige
+        $allPlantsStats = [
+            'total' => count($plantsData),
+            'incomplete' => count(array_filter($plantsData, fn($p) => $p['status'] === 'Unvollständig')),
+            'complete' => count(array_filter($plantsData, fn($p) => $p['status'] === 'Vollständig')),
+            'no_contracts' => count(array_filter($plantsData, fn($p) => $p['status'] === 'Keine Verträge')),
+            'few_contracts' => count(array_filter($plantsData, fn($p) => $p['totalContracts'] > 0 && $p['totalContracts'] < 5)),
+        ];
 
         // Sortiere nach Status (Unvollständig zuerst) und dann nach Anlagennummer
         usort($plantsData, function ($a, $b) {
@@ -172,6 +227,7 @@ class ListSolarPlantMonthlyOverview extends Page
             'plantsData' => $plantsData,
             'allPlantsStats' => $allPlantsStats,
             'statusFilter' => $this->statusFilter,
+            'plantBillingFilter' => $this->plantBillingFilter,
         ];
     }
 

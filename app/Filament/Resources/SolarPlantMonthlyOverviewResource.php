@@ -90,6 +90,34 @@ class SolarPlantMonthlyOverviewResource extends Resource
     }
 
     /**
+     * Prüft ob für einen bestimmten Monat Anlagen-Abrechnungen (SolarPlantBilling) existieren
+     */
+    public static function hasPlantBillingsForMonth(SolarPlant $solarPlant, string $month): bool
+    {
+        $year = (int) substr($month, 0, 4);
+        $monthNumber = (int) substr($month, 5, 2);
+
+        return $solarPlant->billings()
+            ->where('billing_year', $year)
+            ->where('billing_month', $monthNumber)
+            ->exists();
+    }
+
+    /**
+     * Ermittelt die Anzahl der Anlagen-Abrechnungen für einen bestimmten Monat
+     */
+    public static function getPlantBillingsCountForMonth(SolarPlant $solarPlant, string $month): int
+    {
+        $year = (int) substr($month, 0, 4);
+        $monthNumber = (int) substr($month, 5, 2);
+
+        return $solarPlant->billings()
+            ->where('billing_year', $year)
+            ->where('billing_month', $monthNumber)
+            ->count();
+    }
+
+    /**
      * Ermittelt fehlende Abrechnungen für einen bestimmten Monat
      */
     public static function getMissingBillingsForMonth(SolarPlant $solarPlant, string $month): Collection

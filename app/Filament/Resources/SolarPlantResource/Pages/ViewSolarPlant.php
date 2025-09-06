@@ -73,7 +73,7 @@ class ViewSolarPlant extends ViewRecord
                     ->id('overview')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
-                        Infolists\Components\Grid::make(3)
+                        Infolists\Components\Grid::make(4)
                             ->schema([
                                 Infolists\Components\TextEntry::make('name')
                                     ->label('Anlagenname')
@@ -104,6 +104,12 @@ class ViewSolarPlant extends ViewRecord
                                         'inactive' => 'danger',
                                         default => 'gray',
                                     }),
+                                Infolists\Components\TextEntry::make('billing')
+                                    ->label('Fakturierbar')
+                                    ->formatStateUsing(fn ($state) => $state ? 'Ja' : 'Nein')
+                                    ->badge()
+                                    ->size('lg')
+                                    ->color(fn ($state) => $state ? 'success' : 'gray'),
                                 Infolists\Components\TextEntry::make('total_capacity_kw')
                                     ->label('Gesamtleistung')
                                     ->formatStateUsing(fn ($state) => number_format($state, 3, ',', '.') . ' kWp')
