@@ -28,6 +28,11 @@ Route::prefix('health')->group(function () {
     Route::get('/live', [HealthController::class, 'live']);
 });
 
+// Router Webhook Endpoints - No authentication required (for Teltonika routers)
+Route::post('/webhook', [App\Http\Controllers\Api\RouterWebhookController::class, 'webhook']);
+Route::get('/api/status', [App\Http\Controllers\Api\RouterWebhookController::class, 'status']);
+Route::get('/api/test-curl', [App\Http\Controllers\Api\RouterWebhookController::class, 'testCurl']);
+
 // Benutzer-Suche für @mentions
 Route::get('/users/search', function (Request $request) {
     $query = $request->get('q', '');
