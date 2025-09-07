@@ -31,12 +31,14 @@ class Router extends Model
         'last_data',
         'total_webhooks',
         'installed_at',
+        'last_restart_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'last_seen_at' => 'datetime',
         'installed_at' => 'datetime',
+        'last_restart_at' => 'datetime',
         'last_data' => 'json',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
@@ -291,5 +293,83 @@ class Router extends Model
     public function getTestCurlCommandAttribute(): string
     {
         return 'curl -k -X POST -H "Content-Type: application/json" -d \'{"operator": "Telekom.de", "signal_strength": -65, "network_type": "5G"}\' ' . $this->webhook_url;
+    }
+
+    /**
+     * Router neu starten
+     * Sendet einen Neustart-Befehl an den Router
+     */
+    public function restart(): bool
+    {
+        if (!$this->ip_address) {
+            return false;
+        }
+
+        try {
+            // Teltonika Router Neustart über HTTP API
+            $restartUrl = "http://{$this->ip_address}/cgi-bin/luci/admin/system/reboot";
+            
+            // Alternative: Über SSH-Befehl (wenn verfügbar)
+            // ssh root@{$this->ip_address} 'reboot'
+            
+            // Für jetzt verwenden wir einen HTTP-Request an den Router
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $restartUrl);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            
+            $result = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            // Restart-Zeitpunkt nur bei Erfolg speichern
+            $success = $httpCode === 200 || $httpCode === 302;
+            
+            if ($success) {
+                $this->update(['last_restart_at' => now()]);
+            }
+            
+            return $success;
+            
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Prüft ob ein Neustart kürzlich durchgeführt wurde
+     */
+    public function hasRecentRestart(): bool
+    {
+        if (!$this->last_restart_at) {
+            return false;
+        }
+        
+        return $this->last_restart_at->diffInMinutes(now()) < 5;
+    }
+
+    /**
+     * Formatierte Anzeige des letzten Neustarts
+     */
+    public function getLastRestartFormattedAttribute(): ?string
+    {
+        if (!$this->last_restart_at) {
+            return null;
+        }
+        
+        $diff = round($this->last_restart_at->diffInMinutes(now()));
+        
+        if ($diff < 1) {
+            return 'Gerade eben';
+        } elseif ($diff < 60) {
+            return "vor {$diff} Minute" . ($diff > 1 ? 'n' : '');
+        } elseif ($diff < 1440) {
+            $hours = floor($diff / 60);
+            return "vor {$hours} Stunde" . ($hours > 1 ? 'n' : '');
+        } else {
+            return $this->last_restart_at->format('d.m.Y H:i') . ' Uhr';
+        }
     }
 }

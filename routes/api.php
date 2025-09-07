@@ -34,6 +34,12 @@ Route::post('/router-webhook/{token}', [App\Http\Controllers\Api\RouterWebhookCo
 Route::get('/api/status', [App\Http\Controllers\Api\RouterWebhookController::class, 'status']);
 Route::get('/api/test-curl', [App\Http\Controllers\Api\RouterWebhookController::class, 'testCurl']);
 
+// Router Restart Endpoints - Protected for admin use
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/routers/{router}/restart', [App\Http\Controllers\RouterRestartController::class, 'restart']);
+    Route::get('/routers/{router}/restart-status', [App\Http\Controllers\RouterRestartController::class, 'status']);
+});
+
 // Benutzer-Suche für @mentions
 Route::get('/users/search', function (Request $request) {
     $query = $request->get('q', '');

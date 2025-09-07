@@ -174,6 +174,14 @@ class RouterResource extends Resource
                                                     ->disabled()
                                                     ->displayFormat('d.m.Y H:i:s'),
                                             ]),
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\DateTimePicker::make('last_restart_at')
+                                                    ->label('Letzter Neustart')
+                                                    ->disabled()
+                                                    ->displayFormat('d.m.Y H:i:s')
+                                                    ->placeholder('Noch nie neu gestartet'),
+                                            ]),
                                     ]),
                             ]),
                         Forms\Components\Tabs\Tab::make('Status')
