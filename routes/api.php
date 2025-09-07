@@ -30,6 +30,7 @@ Route::prefix('health')->group(function () {
 
 // Router Webhook Endpoints - No authentication required (for Teltonika routers)
 Route::post('/webhook', [App\Http\Controllers\Api\RouterWebhookController::class, 'webhook']);
+Route::post('/router-webhook/{token}', [App\Http\Controllers\Api\RouterWebhookController::class, 'routerWebhook']);
 Route::get('/api/status', [App\Http\Controllers\Api\RouterWebhookController::class, 'status']);
 Route::get('/api/test-curl', [App\Http\Controllers\Api\RouterWebhookController::class, 'testCurl']);
 

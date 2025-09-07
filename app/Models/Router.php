@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -62,6 +63,14 @@ class Router extends Model
                 $router->webhook_token = Str::random(32);
             }
         });
+    }
+
+    /**
+     * Relationship to SIM Cards
+     */
+    public function simCards(): HasMany
+    {
+        return $this->hasMany(SimCard::class);
     }
 
     /**

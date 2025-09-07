@@ -12,6 +12,130 @@ use Illuminate\Support\Facades\Validator;
 class RouterWebhookController extends Controller
 {
     /**
+     * Handle webhook data from Teltonika routers with token-based authentication
+     *
+     * @param Request $request
+     * @param string $token
+     * @return JsonResponse
+     */
+    public function routerWebhook(Request $request, string $token): JsonResponse
+    {
+        try {
+            // Validate incoming webhook data
+            $validator = Validator::make($request->all(), [
+                'operator' => 'required|string|max:255',
+                'signal_strength' => 'required|integer',
+                'network_type' => 'required|string|max:50',
+                'connection_time' => 'sometimes|integer', // Optional: seconds connected
+                'data_usage_mb' => 'sometimes|numeric', // Optional: data usage
+                'ip_address' => 'sometimes|ip', // Optional: router's IP
+            ]);
+
+            if ($validator->fails()) {
+                Log::warning('Router webhook validation failed', [
+                    'token' => $token,
+                    'errors' => $validator->errors(),
+                    'data' => $request->all(),
+                    'ip' => $request->ip()
+                ]);
+
+                return response()->json([
+                    'error' => 'Invalid webhook data',
+                    'details' => $validator->errors()
+                ], 400);
+            }
+
+            $data = $validator->validated();
+            $clientIp = $request->ip();
+
+            // Find router by webhook token
+            $router = Router::where('webhook_token', $token)->first();
+
+            if (!$router) {
+                Log::warning('Router webhook with invalid token', [
+                    'token' => $token,
+                    'ip' => $clientIp,
+                    'data' => $data
+                ]);
+
+                return response()->json([
+                    'error' => 'Invalid webhook token',
+                    'message' => 'Router not found for this token'
+                ], 404);
+            }
+
+            // Update router with new webhook data
+            $updateData = [
+                'operator' => $data['operator'],
+                'signal_strength' => $data['signal_strength'], 
+                'network_type' => $data['network_type'],
+                'last_seen_at' => now(),
+                'total_webhooks' => $router->total_webhooks + 1,
+                'last_data' => $data
+            ];
+
+            // Add optional fields if provided
+            if (isset($data['connection_time'])) {
+                $updateData['connection_time_seconds'] = $data['connection_time'];
+            }
+            
+            if (isset($data['data_usage_mb'])) {
+                $updateData['data_usage_mb'] = $data['data_usage_mb'];
+            }
+
+            if (isset($data['ip_address'])) {
+                $updateData['ip_address'] = $data['ip_address'];
+            }
+
+            $router->update($updateData);
+            
+            // Update connection status
+            $router->updateConnectionStatus();
+
+            Log::info('Router updated from webhook', [
+                'router_id' => $router->id,
+                'router_name' => $router->name,
+                'token' => $token,
+                'operator' => $data['operator'],
+                'signal_strength' => $data['signal_strength'],
+                'network_type' => $data['network_type'],
+                'status' => $router->connection_status
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Router data updated successfully',
+                'router' => [
+                    'id' => $router->id,
+                    'name' => $router->name,
+                    'status' => $router->connection_status,
+                    'operator' => $router->operator,
+                    'signal_strength' => $router->signal_strength,
+                    'signal_bars' => $router->calculateSignalBars(),
+                    'network_type' => $router->network_type,
+                    'last_seen' => $router->last_seen_at->toISOString(),
+                    'total_webhooks' => $router->total_webhooks
+                ],
+                'timestamp' => now()->toISOString()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Router webhook processing failed', [
+                'token' => $token,
+                'error' => $e->getMessage(),
+                'data' => $request->all(),
+                'ip' => $request->ip(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Internal server error',
+                'message' => 'Failed to process router webhook data'
+            ], 500);
+        }
+    }
+
+    /**
      * Handle webhook data from Teltonika routers
      *
      * @param Request $request

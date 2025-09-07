@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Models\GmailEmail;
 use App\Filament\Resources\GmailEmailResource;
+use App\Jobs\RefreshSimCardDataJob;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -102,3 +103,10 @@ Schedule::command('gmail:sync')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/gmail-sync.log'));
+
+// SIM Card Data Refresh Scheduler
+$refreshInterval = (int) env('1NCE_REFRESH', 5); // Default to 5 minutes if not set
+Schedule::job(new RefreshSimCardDataJob)
+    ->cron("*/{$refreshInterval} * * * *")
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/sim-card-refresh.log'));
