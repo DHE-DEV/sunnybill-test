@@ -23,11 +23,17 @@ class RouterWebhookController extends Controller
     {
         $startTime = microtime(true);
         
-        // Log every incoming webhook signal
-        Log::info('Router webhook signal received', [
+        // Log complete incoming webhook request
+        Log::info('Router webhook request received', [
             'token' => $token,
+            'method' => $request->method(),
+            'url' => $request->fullUrl(),
             'client_ip' => $request->ip(),
             'user_agent' => $request->userAgent() ?? 'Unknown',
+            'headers' => $request->headers->all(),
+            'query_parameters' => $request->query(),
+            'request_body' => $request->all(),
+            'content_type' => $request->header('Content-Type'),
             'data_size' => strlen(json_encode($request->all())),
             'timestamp' => now()->toISOString()
         ]);
@@ -76,6 +82,15 @@ class RouterWebhookController extends Controller
                     'failed'
                 );
 
+                // Log complete response for failed validation
+                Log::info('Router webhook response sent', [
+                    'token' => $token,
+                    'http_status' => 400,
+                    'response_body' => $response,
+                    'processing_time_ms' => round((microtime(true) - $startTime) * 1000, 2),
+                    'timestamp' => now()->toISOString()
+                ]);
+
                 return response()->json($response, 400);
             }
 
@@ -110,6 +125,15 @@ class RouterWebhookController extends Controller
                     $request->userAgent() ?? 'Unknown',
                     'failed'
                 );
+
+                // Log complete response for invalid token
+                Log::info('Router webhook response sent', [
+                    'token' => $token,
+                    'http_status' => 404,
+                    'response_body' => $response,
+                    'processing_time_ms' => round((microtime(true) - $startTime) * 1000, 2),
+                    'timestamp' => now()->toISOString()
+                ]);
 
                 return response()->json($response, 404);
             }
@@ -183,9 +207,23 @@ class RouterWebhookController extends Controller
                 'success'
             );
 
+            // Log complete successful response
+            Log::info('Router webhook response sent', [
+                'token' => $token,
+                'http_status' => 200,
+                'response_body' => $response,
+                'processing_time_ms' => round((microtime(true) - $startTime) * 1000, 2),
+                'timestamp' => now()->toISOString()
+            ]);
+
             return response()->json($response);
 
         } catch (\Exception $e) {
+            $errorResponse = [
+                'error' => 'Internal server error',
+                'message' => 'Failed to process router webhook data'
+            ];
+
             Log::error('Router webhook processing failed', [
                 'token' => $token,
                 'error' => $e->getMessage(),
@@ -194,10 +232,17 @@ class RouterWebhookController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return response()->json([
-                'error' => 'Internal server error',
-                'message' => 'Failed to process router webhook data'
-            ], 500);
+            // Log complete error response
+            Log::info('Router webhook response sent', [
+                'token' => $token,
+                'http_status' => 500,
+                'response_body' => $errorResponse,
+                'processing_time_ms' => round((microtime(true) - $startTime) * 1000, 2),
+                'error' => $e->getMessage(),
+                'timestamp' => now()->toISOString()
+            ]);
+
+            return response()->json($errorResponse, 500);
         }
     }
 
