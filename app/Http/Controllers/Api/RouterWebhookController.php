@@ -78,8 +78,8 @@ class RouterWebhookController extends Controller
                 $this->logWebhookAttempt(
                     null,
                     $token,
-                    $request->all(),
-                    $data,
+                    $rawData,
+                    $transformedData,
                     ['token' => 'Invalid webhook token'],
                     $response,
                     $startTime,

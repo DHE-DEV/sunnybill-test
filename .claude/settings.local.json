@@ -15,7 +15,13 @@
       "Bash(ls:*)",
       "Bash(cmd.exe /c \"php artisan test tests/Feature/Api/\")",
       "Bash(cmd.exe:*)",
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(bash:*)",
+      "Bash(herd php artisan migrate:status:*)",
+      "Bash(C:/Users/dh/.config/herd/bin/php artisan migrate:status)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
