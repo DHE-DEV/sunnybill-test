@@ -293,6 +293,13 @@ class RouterResource extends Resource
                     ->sortable(query: function (Builder $query, string $direction): Builder {
                         return $query->orderBy('last_seen_at', $direction);
                     }),
+                Tables\Columns\TextColumn::make('last_restart_formatted')
+                    ->label('Letzter Neustart')
+                    ->placeholder('Nie neu gestartet')
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->orderBy('last_restart_at', $direction);
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
                     ->boolean()

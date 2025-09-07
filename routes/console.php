@@ -110,3 +110,10 @@ Schedule::job(new RefreshSimCardDataJob)
     ->cron("*/{$refreshInterval} * * * *")
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/sim-card-refresh.log'));
+
+// Router Status Update Scheduler - runs every 2 minutes
+Schedule::command('routers:update-statuses --notify')
+    ->everyTwoMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/router-status.log'));
