@@ -290,6 +290,6 @@ class Router extends Model
      */
     public function getTestCurlCommandAttribute(): string
     {
-        return 'curl -X POST -H "Content-Type: application/json" -d \'{"operator": "Telekom.de", "signal_strength": -65, "network_type": "5G"}\' ' . $this->webhook_url;
+        return 'curl -k -X POST -H "Content-Type: application/json" -d \'{"operator": "Telekom.de", "signal_strength": -65, "network_type": "5G"}\' ' . $this->webhook_url;
     }
 }

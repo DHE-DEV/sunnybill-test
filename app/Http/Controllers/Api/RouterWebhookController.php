@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Router;
+use App\Models\RouterWebhookLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +21,8 @@ class RouterWebhookController extends Controller
      */
     public function routerWebhook(Request $request, string $token): JsonResponse
     {
+        $startTime = microtime(true);
+        
         try {
             // Validate incoming webhook data
             $validator = Validator::make($request->all(), [
@@ -39,10 +42,26 @@ class RouterWebhookController extends Controller
                     'ip' => $request->ip()
                 ]);
 
-                return response()->json([
+                $response = [
                     'error' => 'Invalid webhook data',
                     'details' => $validator->errors()
-                ], 400);
+                ];
+
+                // Log failed validation attempt
+                $this->logWebhookAttempt(
+                    null,
+                    $token,
+                    $request->all(),
+                    null,
+                    $validator->errors()->toArray(),
+                    $response,
+                    $startTime,
+                    $request->ip(),
+                    $request->userAgent() ?? 'Unknown',
+                    'failed'
+                );
+
+                return response()->json($response, 400);
             }
 
             $data = $validator->validated();
@@ -58,10 +77,26 @@ class RouterWebhookController extends Controller
                     'data' => $data
                 ]);
 
-                return response()->json([
+                $response = [
                     'error' => 'Invalid webhook token',
                     'message' => 'Router not found for this token'
-                ], 404);
+                ];
+
+                // Log failed token validation
+                $this->logWebhookAttempt(
+                    null,
+                    $token,
+                    $request->all(),
+                    $data,
+                    ['token' => 'Invalid webhook token'],
+                    $response,
+                    $startTime,
+                    $request->ip(),
+                    $request->userAgent() ?? 'Unknown',
+                    'failed'
+                );
+
+                return response()->json($response, 404);
             }
 
             // Update router with new webhook data
@@ -102,7 +137,7 @@ class RouterWebhookController extends Controller
                 'status' => $router->connection_status
             ]);
 
-            return response()->json([
+            $response = [
                 'success' => true,
                 'message' => 'Router data updated successfully',
                 'router' => [
@@ -117,7 +152,23 @@ class RouterWebhookController extends Controller
                     'total_webhooks' => $router->total_webhooks
                 ],
                 'timestamp' => now()->toISOString()
-            ]);
+            ];
+
+            // Log successful webhook processing
+            $this->logWebhookAttempt(
+                $router->id,
+                $token,
+                $request->all(),
+                $data,
+                null,
+                $response,
+                $startTime,
+                $request->ip(),
+                $request->userAgent() ?? 'Unknown',
+                'success'
+            );
+
+            return response()->json($response);
 
         } catch (\Exception $e) {
             Log::error('Router webhook processing failed', [
@@ -376,5 +427,61 @@ class RouterWebhookController extends Controller
             'test_curl_command' => $router->getTestCurlCommandAttribute(),
             'webhook_url' => $router->getWebhookUrlAttribute()
         ]);
+    }
+
+    /**
+     * Log webhook attempt to database for historical tracking
+     *
+     * @param int|null $routerId
+     * @param string $webhookToken
+     * @param array $rawData
+     * @param array|null $processedData
+     * @param array|null $validationErrors
+     * @param array $responseData
+     * @param float $startTime
+     * @param string $sourceIp
+     * @param string $userAgent
+     * @param string $status
+     * @return void
+     */
+    private function logWebhookAttempt(
+        ?int $routerId,
+        string $webhookToken,
+        array $rawData,
+        ?array $processedData,
+        ?array $validationErrors,
+        array $responseData,
+        float $startTime,
+        string $sourceIp,
+        string $userAgent,
+        string $status
+    ): void {
+        $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+
+        // Extract key data from processed data for quick queries
+        $logData = [
+            'router_id' => $routerId,
+            'webhook_token' => $webhookToken,
+            'raw_data' => $rawData,
+            'validation_errors' => $validationErrors,
+            'response_data' => $responseData,
+            'processing_time_ms' => $processingTime,
+            'client_ip' => $sourceIp,
+            'user_agent' => $userAgent,
+            'status' => $status === 'success' ? 'success' : ($validationErrors ? 'validation_error' : 'processing_error'),
+            'http_response_code' => $status === 'success' ? 200 : ($validationErrors ? 400 : 500),
+        ];
+
+        // Extract individual fields from processed data for quick queries
+        if ($processedData) {
+            $logData['operator'] = $processedData['operator'] ?? null;
+            $logData['signal_strength'] = $processedData['signal_strength'] ?? null;
+            $logData['network_type'] = $processedData['network_type'] ?? null;
+            $logData['connection_time'] = $processedData['connection_time'] ?? null;
+            $logData['data_usage_mb'] = $processedData['data_usage_mb'] ?? null;
+            $logData['router_ip'] = $processedData['ip_address'] ?? null;
+        }
+
+        RouterWebhookLog::create($logData);
     }
 }
