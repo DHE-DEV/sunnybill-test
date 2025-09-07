@@ -3,11 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Models\Router;
-use App\Models\User;
-use App\Notifications\RouterOfflineNotification;
+use App\Services\RouterNotificationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 
 class UpdateRouterStatuses extends Command
 {
@@ -24,6 +22,14 @@ class UpdateRouterStatuses extends Command
      * @var string
      */
     protected $description = 'Update connection status for all active routers and optionally send notifications';
+
+    protected RouterNotificationService $notificationService;
+
+    public function __construct(RouterNotificationService $notificationService)
+    {
+        parent::__construct();
+        $this->notificationService = $notificationService;
+    }
 
     /**
      * Execute the console command.
@@ -67,6 +73,11 @@ class UpdateRouterStatuses extends Command
         if ($this->option('notify') && !empty($statusChanges)) {
             $this->sendNotifications($statusChanges);
         }
+
+        // Notification summary anzeigen
+        if ($this->option('notify')) {
+            $this->displayNotificationSummary();
+        }
         
         $this->info('Router status update completed.');
         $this->table(
@@ -100,59 +111,69 @@ class UpdateRouterStatuses extends Command
             if ($newStatus === 'offline' && $oldStatus !== 'offline') {
                 $this->warn("🚨 ALERT: Router {$router->name} is now OFFLINE");
                 
-                // E-Mail-Benachrichtigung an alle Admins senden
-                $this->sendEmailNotification($router, "{$oldStatus} → {$newStatus}");
+                // E-Mail-Benachrichtigung mit dem neuen Service senden
+                $success = $this->notificationService->sendStatusNotification($router, "{$oldStatus} → {$newStatus}");
                 
-                // Log für Notification System
-                Log::alert("Router offline notification sent", [
-                    'router_id' => $router->id,
-                    'router_name' => $router->name,
-                    'status_change' => "{$oldStatus} → {$newStatus}",
-                    'last_seen' => $router->last_seen_at
-                ]);
+                if ($success) {
+                    $this->info("   📧 E-Mail-Benachrichtigung gesendet");
+                } else {
+                    $this->error("   ❌ E-Mail-Benachrichtigung fehlgeschlagen");
+                }
+                
             } elseif ($newStatus === 'online' && $oldStatus === 'offline') {
                 $this->info("✅ Router {$router->name} is back ONLINE");
                 
                 // Auch bei "wieder online" eine Benachrichtigung senden
-                $this->sendEmailNotification($router, "{$oldStatus} → {$newStatus}");
+                $success = $this->notificationService->sendStatusNotification($router, "{$oldStatus} → {$newStatus}");
                 
-                Log::info("Router back online notification sent", [
-                    'router_id' => $router->id,
-                    'router_name' => $router->name,
-                    'status_change' => "{$oldStatus} → {$newStatus}"
-                ]);
+                if ($success) {
+                    $this->info("   📧 E-Mail-Benachrichtigung gesendet");
+                } else {
+                    $this->error("   ❌ E-Mail-Benachrichtigung fehlgeschlagen");
+                }
             }
         }
     }
     
     /**
-     * Send email notification to administrators
+     * Display notification configuration summary
      */
-    private function sendEmailNotification(Router $router, string $statusChange): void
+    private function displayNotificationSummary(): void
     {
-        try {
-            // Alle Admin-Benutzer finden (E-Mail-basiert da is_admin Spalte nicht existiert)
-            $adminUsers = User::where('email', 'like', '%@prosoltec%')->get();
-            
-            if ($adminUsers->isEmpty()) {
-                // Fallback: Erste 2 Benutzer benachrichtigen wenn keine Admins definiert sind
-                $adminUsers = User::limit(2)->get(); // Begrenzt auf 2 um Spam zu vermeiden
-            }
-            
-            foreach ($adminUsers as $user) {
-                $user->notify(new RouterOfflineNotification($router, $statusChange));
-            }
-            
-            $this->info("E-Mail-Benachrichtigungen an {$adminUsers->count()} Benutzer gesendet");
-            
-        } catch (\Exception $e) {
-            $this->error("Fehler beim Senden der E-Mail-Benachrichtigungen: " . $e->getMessage());
-            
-            Log::error("Failed to send router notification emails", [
-                'router_id' => $router->id,
-                'status_change' => $statusChange,
-                'error' => $e->getMessage()
-            ]);
+        $summary = $this->notificationService->getNotificationSummary();
+        
+        $this->newLine();
+        $this->info('📧 E-Mail-Benachrichtigungs-Konfiguration:');
+        
+        if (!$summary['enabled']) {
+            $this->warn('   ❌ Benachrichtigungen sind deaktiviert');
+            return;
+        }
+        
+        $this->info("   ✅ Benachrichtigungen sind aktiviert");
+        $this->info("   📬 Empfänger gesamt: {$summary['total_recipients']}");
+        
+        if ($summary['to_count'] > 0) {
+            $this->info("      - TO: {$summary['to_count']} Empfänger");
+        }
+        
+        if ($summary['cc_count'] > 0) {
+            $this->info("      - CC: {$summary['cc_count']} Empfänger");
+        }
+        
+        if ($summary['bcc_count'] > 0) {
+            $this->info("      - BCC: {$summary['bcc_count']} Empfänger");
+        }
+        
+        $this->info('   📋 Benachrichtigungstypen:');
+        foreach ($summary['notification_types'] as $type => $enabled) {
+            $status = $enabled ? '✅' : '❌';
+            $this->info("      - {$type}: {$status}");
+        }
+        
+        if ($summary['total_recipients'] === 0) {
+            $this->warn('   ⚠️  Keine E-Mail-Empfänger konfiguriert!');
+            $this->warn('   💡 Konfiguriere ROUTER_NOTIFICATION_TO in der .env Datei');
         }
     }
 }
