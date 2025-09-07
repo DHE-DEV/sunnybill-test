@@ -208,7 +208,7 @@ class Router extends Model
             return 'Nie';
         }
 
-        $diff = $this->last_seen_at->diffInMinutes(now());
+        $diff = round($this->last_seen_at->diffInMinutes(now()));
         
         if ($diff < 1) {
             return 'Gerade eben';
