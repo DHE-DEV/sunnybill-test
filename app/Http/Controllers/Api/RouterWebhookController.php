@@ -98,7 +98,8 @@ class RouterWebhookController extends Controller
                 'network_type' => $data['network_type'],
                 'last_seen_at' => now(),
                 'total_webhooks' => $router->total_webhooks + 1,
-                'last_data' => $data
+                'last_data' => $data,
+                'connection_status' => 'online' // Set to online since we just received data
             ];
 
             // Add optional fields if provided
@@ -115,9 +116,6 @@ class RouterWebhookController extends Controller
             }
 
             $router->update($updateData);
-            
-            // Update connection status
-            $router->updateConnectionStatus();
 
             $response = [
                 'success' => true,
