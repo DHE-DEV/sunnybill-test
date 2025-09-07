@@ -24,8 +24,13 @@ class RouterWebhookController extends Controller
         $startTime = microtime(true);
         
         try {
+            $rawData = $request->all();
+            
+            // Check if data is in VoltMaster format and transform it
+            $transformedData = $this->transformVoltMasterData($rawData);
+            
             // Validate incoming webhook data
-            $validator = Validator::make($request->all(), [
+            $validator = Validator::make($transformedData, [
                 'operator' => 'required|string|max:255',
                 'signal_strength' => 'required|integer',
                 'network_type' => 'required|string|max:50',
@@ -38,7 +43,8 @@ class RouterWebhookController extends Controller
                 Log::warning('Router webhook validation failed', [
                     'token' => $token,
                     'errors' => $validator->errors(),
-                    'data' => $request->all(),
+                    'raw_data' => $rawData,
+                    'transformed_data' => $transformedData,
                     'ip' => $request->ip()
                 ]);
 
@@ -51,8 +57,8 @@ class RouterWebhookController extends Controller
                 $this->logWebhookAttempt(
                     null,
                     $token,
-                    $request->all(),
-                    null,
+                    $rawData,
+                    $transformedData,
                     $validator->errors()->toArray(),
                     $response,
                     $startTime,
@@ -483,5 +489,76 @@ class RouterWebhookController extends Controller
         }
 
         RouterWebhookLog::create($logData);
+    }
+
+    /**
+     * Transform VoltMaster webhook data to expected format
+     *
+     * @param array $rawData
+     * @return array
+     */
+    private function transformVoltMasterData(array $rawData): array
+    {
+        // Check if this is VoltMaster format
+        if (!isset($rawData['VoltMaster']) || !is_array($rawData['VoltMaster'])) {
+            // Return raw data if not VoltMaster format
+            return $rawData;
+        }
+
+        $voltMasterData = $rawData['VoltMaster'];
+        
+        // Transform to expected format
+        $transformedData = [];
+
+        // Extract operator (clean up the name)
+        if (isset($voltMasterData['operator'])) {
+            $operator = $voltMasterData['operator'];
+            // Clean up operator name (remove underscores, country codes)
+            $operator = str_replace(['_', 'Deutschland', 'GER'], [' ', 'DE', ''], $operator);
+            $operator = trim($operator);
+            $transformedData['operator'] = $operator;
+        }
+
+        // Extract signal strength (use RSSI)
+        if (isset($voltMasterData['rssi'])) {
+            $transformedData['signal_strength'] = (int) $voltMasterData['rssi'];
+        }
+
+        // Extract network type (use connection type)
+        if (isset($voltMasterData['conntype'])) {
+            $transformedData['network_type'] = $voltMasterData['conntype'];
+        }
+
+        // Extract IP address from ip object
+        if (isset($voltMasterData['ip']) && is_array($voltMasterData['ip'])) {
+            $ipAddresses = array_keys($voltMasterData['ip']);
+            if (!empty($ipAddresses)) {
+                $transformedData['ip_address'] = $ipAddresses[0];
+            }
+        }
+
+        // Add additional optional fields if they exist
+        if (isset($voltMasterData['temp'])) {
+            $transformedData['temperature'] = $voltMasterData['temp'];
+        }
+
+        if (isset($voltMasterData['imei'])) {
+            $transformedData['imei'] = $voltMasterData['imei'];
+        }
+
+        if (isset($voltMasterData['iccid'])) {
+            $transformedData['iccid'] = $voltMasterData['iccid'];
+        }
+
+        if (isset($voltMasterData['model'])) {
+            $transformedData['modem_model'] = $voltMasterData['model'];
+        }
+
+        Log::info('Transformed VoltMaster data', [
+            'original' => $rawData,
+            'transformed' => $transformedData
+        ]);
+
+        return $transformedData;
     }
 }

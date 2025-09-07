@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('router_webhook_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('router_id')->constrained('routers')->onDelete('cascade');
+            $table->foreignId('router_id')->nullable()->constrained('routers')->onDelete('cascade');
             $table->string('webhook_token')->index();
             
             // Raw webhook data
