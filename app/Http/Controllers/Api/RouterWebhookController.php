@@ -488,7 +488,16 @@ class RouterWebhookController extends Controller
             $logData['router_ip'] = $processedData['ip_address'] ?? null;
         }
 
-        RouterWebhookLog::create($logData);
+        try {
+            RouterWebhookLog::create($logData);
+        } catch (\Exception $e) {
+            // If logging fails (e.g., migration not run), log the error but don't break webhook processing
+            Log::warning('Failed to log webhook attempt', [
+                'error' => $e->getMessage(),
+                'webhook_token' => $webhookToken,
+                'router_id' => $routerId
+            ]);
+        }
     }
 
     /**
@@ -529,11 +538,15 @@ class RouterWebhookController extends Controller
             $transformedData['network_type'] = $voltMasterData['conntype'];
         }
 
-        // Extract IP address from ip object
-        if (isset($voltMasterData['ip']) && is_array($voltMasterData['ip'])) {
-            $ipAddresses = array_keys($voltMasterData['ip']);
-            if (!empty($ipAddresses)) {
-                $transformedData['ip_address'] = $ipAddresses[0];
+        // Extract IP address (can be string or object)
+        if (isset($voltMasterData['ip'])) {
+            if (is_string($voltMasterData['ip'])) {
+                $transformedData['ip_address'] = $voltMasterData['ip'];
+            } elseif (is_array($voltMasterData['ip'])) {
+                $ipAddresses = array_keys($voltMasterData['ip']);
+                if (!empty($ipAddresses)) {
+                    $transformedData['ip_address'] = $ipAddresses[0];
+                }
             }
         }
 
