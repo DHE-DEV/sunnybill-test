@@ -460,6 +460,8 @@ class RouterWebhookController extends Controller
             $operator = $voltMasterData['operator'];
             // Clean up operator name (remove underscores, country codes)
             $operator = str_replace(['_', 'Deutschland', 'GER'], [' ', 'DE', ''], $operator);
+            // Also handle cases where DE is already in the name
+            $operator = str_replace(['Vodafone DE', 'Telekom DE'], ['Vodafone DE', 'Telekom DE'], $operator);
             $operator = trim($operator);
             $transformedData['operator'] = $operator;
         }
@@ -474,14 +476,21 @@ class RouterWebhookController extends Controller
             $transformedData['network_type'] = $voltMasterData['conntype'];
         }
 
-        // Extract IP address (can be string or object)
+        // Extract IP address (can be string, array, or object)
         if (isset($voltMasterData['ip'])) {
             if (is_string($voltMasterData['ip'])) {
                 $transformedData['ip_address'] = $voltMasterData['ip'];
             } elseif (is_array($voltMasterData['ip'])) {
-                $ipAddresses = array_keys($voltMasterData['ip']);
-                if (!empty($ipAddresses)) {
-                    $transformedData['ip_address'] = $ipAddresses[0];
+                // Check if it's a numeric array (["IP"]) or associative array ({"IP": null})
+                if (isset($voltMasterData['ip'][0])) {
+                    // Numeric array format: ["100.114.107.1"]
+                    $transformedData['ip_address'] = $voltMasterData['ip'][0];
+                } else {
+                    // Associative array format: {"100.114.107.1": null}
+                    $ipAddresses = array_keys($voltMasterData['ip']);
+                    if (!empty($ipAddresses)) {
+                        $transformedData['ip_address'] = $ipAddresses[0];
+                    }
                 }
             }
         }
