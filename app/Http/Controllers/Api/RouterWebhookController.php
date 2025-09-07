@@ -23,6 +23,15 @@ class RouterWebhookController extends Controller
     {
         $startTime = microtime(true);
         
+        // Log every incoming webhook signal
+        Log::info('Router webhook signal received', [
+            'token' => $token,
+            'client_ip' => $request->ip(),
+            'user_agent' => $request->userAgent() ?? 'Unknown',
+            'data_size' => strlen(json_encode($request->all())),
+            'timestamp' => now()->toISOString()
+        ]);
+        
         try {
             $rawData = $request->all();
             
