@@ -18,6 +18,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Login route for authentication redirects
+Route::get('/login', function () {
+    return redirect('/admin/login');
+})->name('login');
+
 // Über Uns Seite
 Route::get('/ueber-uns', function () {
     return view('ueber-uns');

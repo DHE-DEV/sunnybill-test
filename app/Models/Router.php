@@ -301,8 +301,113 @@ class Router extends Model
      */
     public function restart(): bool
     {
+        \Log::info("Router restart requested", [
+            'router_id' => $this->id,
+            'router_name' => $this->name,
+            'ip_address' => $this->ip_address,
+            'model' => $this->model
+        ]);
+
+        // Für externe Router verwenden wir verschiedene Methoden
+        if ($this->isExternalRouter()) {
+            return $this->restartExternalRouter();
+        } else {
+            return $this->restartLocalRouter();
+        }
+    }
+
+    /**
+     * Prüft ob Router extern ist (nicht im lokalen Netzwerk)
+     */
+    protected function isExternalRouter(): bool
+    {
         if (!$this->ip_address) {
-            \Log::error("Router restart failed: No IP address configured", [
+            return true; // Ohne IP-Adresse nehmen wir an, dass er extern ist
+        }
+
+        // Lokale IP-Bereiche prüfen
+        $localRanges = [
+            '192.168.',
+            '10.',
+            '172.16.',
+            '172.17.',
+            '172.18.',
+            '172.19.',
+            '172.20.',
+            '172.21.',
+            '172.22.',
+            '172.23.',
+            '172.24.',
+            '172.25.',
+            '172.26.',
+            '172.27.',
+            '172.28.',
+            '172.29.',
+            '172.30.',
+            '172.31.',
+            '127.0.0.1',
+            'localhost'
+        ];
+
+        foreach ($localRanges as $range) {
+            if (str_starts_with($this->ip_address, $range)) {
+                return false; // Lokaler Router
+            }
+        }
+
+        return true; // Externe IP oder unbekannt = extern
+    }
+
+    /**
+     * Neustart für externe Router (über Cloud-Management oder SMS)
+     */
+    protected function restartExternalRouter(): bool
+    {
+        \Log::info("Attempting external router restart", [
+            'router_id' => $this->id,
+            'router_name' => $this->name
+        ]);
+
+        try {
+            // Für externe Router gibt es verschiedene Optionen:
+            // 1. Cloud Management API (falls verfügbar)
+            // 2. SMS-Befehl an Router
+            // 3. Remote Management Platform
+            
+            // Da die Router extern sind, simulieren wir erstmal den Befehl
+            // und loggen ihn für manuelle Bearbeitung
+            
+            \Log::warning("External router restart requested - manual intervention may be required", [
+                'router_id' => $this->id,
+                'router_name' => $this->name,
+                'ip_address' => $this->ip_address,
+                'action_required' => 'Manual router restart via physical access, SMS, or cloud management platform',
+                'timestamp' => now()->toISOString()
+            ]);
+
+            // Restart-Zeitpunkt speichern (auch für externe Router)
+            $this->update(['last_restart_at' => now()]);
+            
+            // Für jetzt geben wir false zurück, da externe Router manuell neugestartet werden müssen
+            return false;
+            
+        } catch (\Exception $e) {
+            \Log::error("External router restart exception", [
+                'router_id' => $this->id,
+                'router_name' => $this->name,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Neustart für lokale Router (HTTP API)
+     */
+    protected function restartLocalRouter(): bool
+    {
+        if (!$this->ip_address) {
+            \Log::error("Local router restart failed: No IP address configured", [
                 'router_id' => $this->id,
                 'router_name' => $this->name
             ]);
@@ -313,69 +418,54 @@ class Router extends Model
             // Teltonika Router Neustart über HTTP API
             $restartUrl = "http://{$this->ip_address}/cgi-bin/luci/admin/system/reboot";
             
-            \Log::info("Attempting router restart", [
+            \Log::info("Attempting local router restart", [
                 'router_id' => $this->id,
                 'router_name' => $this->name,
                 'ip_address' => $this->ip_address,
                 'restart_url' => $restartUrl
             ]);
             
-            // Für jetzt verwenden wir einen HTTP-Request an den Router
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $restartUrl);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 15); // Erhöhtes Timeout
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10); // Connection Timeout
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             
-            // Basic Auth falls erforderlich (Standard Teltonika Credentials)
+            // Basic Auth für Teltonika Router
             curl_setopt($ch, CURLOPT_USERPWD, "root:admin01");
             
             $result = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
-            $curlInfo = curl_getinfo($ch);
             curl_close($ch);
             
-            \Log::info("Router restart attempt result", [
+            \Log::info("Local router restart attempt result", [
                 'router_id' => $this->id,
                 'http_code' => $httpCode,
-                'curl_error' => $curlError,
-                'response_size' => strlen($result ?? ''),
-                'total_time' => $curlInfo['total_time'] ?? 0,
-                'connect_time' => $curlInfo['connect_time'] ?? 0
+                'curl_error' => $curlError
             ]);
             
-            // Bei Teltonika Routern kann auch ein 404 oder andere Codes bei erfolgreichem Neustart kommen
-            // da der Router während des Neustarts nicht mehr antwortet
             $success = ($httpCode >= 200 && $httpCode < 400) || $curlError === '';
             
             if ($success) {
                 $this->update(['last_restart_at' => now()]);
-                \Log::info("Router restart command sent successfully", [
+                \Log::info("Local router restart command sent successfully", [
                     'router_id' => $this->id,
                     'router_name' => $this->name
-                ]);
-            } else {
-                \Log::warning("Router restart may have failed", [
-                    'router_id' => $this->id,
-                    'router_name' => $this->name,
-                    'http_code' => $httpCode,
-                    'curl_error' => $curlError
                 ]);
             }
             
             return $success;
             
         } catch (\Exception $e) {
-            \Log::error("Router restart exception", [
+            \Log::error("Local router restart exception", [
                 'router_id' => $this->id,
                 'router_name' => $this->name,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ]);
             return false;
         }
