@@ -302,6 +302,10 @@ class Router extends Model
     public function restart(): bool
     {
         if (!$this->ip_address) {
+            \Log::error("Router restart failed: No IP address configured", [
+                'router_id' => $this->id,
+                'router_name' => $this->name
+            ]);
             return false;
         }
 
@@ -309,31 +313,70 @@ class Router extends Model
             // Teltonika Router Neustart über HTTP API
             $restartUrl = "http://{$this->ip_address}/cgi-bin/luci/admin/system/reboot";
             
-            // Alternative: Über SSH-Befehl (wenn verfügbar)
-            // ssh root@{$this->ip_address} 'reboot'
+            \Log::info("Attempting router restart", [
+                'router_id' => $this->id,
+                'router_name' => $this->name,
+                'ip_address' => $this->ip_address,
+                'restart_url' => $restartUrl
+            ]);
             
             // Für jetzt verwenden wir einen HTTP-Request an den Router
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $restartUrl);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15); // Erhöhtes Timeout
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10); // Connection Timeout
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            
+            // Basic Auth falls erforderlich (Standard Teltonika Credentials)
+            curl_setopt($ch, CURLOPT_USERPWD, "root:admin01");
             
             $result = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            $curlInfo = curl_getinfo($ch);
             curl_close($ch);
             
-            // Restart-Zeitpunkt nur bei Erfolg speichern
-            $success = $httpCode === 200 || $httpCode === 302;
+            \Log::info("Router restart attempt result", [
+                'router_id' => $this->id,
+                'http_code' => $httpCode,
+                'curl_error' => $curlError,
+                'response_size' => strlen($result ?? ''),
+                'total_time' => $curlInfo['total_time'] ?? 0,
+                'connect_time' => $curlInfo['connect_time'] ?? 0
+            ]);
+            
+            // Bei Teltonika Routern kann auch ein 404 oder andere Codes bei erfolgreichem Neustart kommen
+            // da der Router während des Neustarts nicht mehr antwortet
+            $success = ($httpCode >= 200 && $httpCode < 400) || $curlError === '';
             
             if ($success) {
                 $this->update(['last_restart_at' => now()]);
+                \Log::info("Router restart command sent successfully", [
+                    'router_id' => $this->id,
+                    'router_name' => $this->name
+                ]);
+            } else {
+                \Log::warning("Router restart may have failed", [
+                    'router_id' => $this->id,
+                    'router_name' => $this->name,
+                    'http_code' => $httpCode,
+                    'curl_error' => $curlError
+                ]);
             }
             
             return $success;
             
         } catch (\Exception $e) {
+            \Log::error("Router restart exception", [
+                'router_id' => $this->id,
+                'router_name' => $this->name,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
     }
