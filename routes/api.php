@@ -40,6 +40,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/routers/{router}/restart-status', [App\Http\Controllers\RouterRestartController::class, 'status']);
 });
 
+// Notifications API - Protected endpoints
+Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
+    Route::get('/count', [App\Http\Controllers\Api\NotificationController::class, 'count']);
+    Route::get('/', [App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::patch('/{notification}/read', [App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+    Route::patch('/mark-all-read', [App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+});
+
 // Benutzer-Suche für @mentions
 Route::get('/users/search', function (Request $request) {
     $query = $request->get('q', '');
