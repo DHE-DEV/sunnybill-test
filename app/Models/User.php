@@ -11,6 +11,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use App\Notifications\CustomVerifyEmail;
 use App\Models\Team;
+use App\Models\Notification;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
