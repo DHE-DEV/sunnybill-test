@@ -409,6 +409,21 @@
                 <td>Leistungszeitraum:</td>
                 <td>{{ $monthName }} {{ $billing->billing_year }}</td>
             </tr>
+            @if($billing->status === 'draft')
+            <tr>
+                <td><strong style="color: #9ca3af;">Status:</strong></td>
+                <td><strong style="color: #9ca3af;">ENTWURF</strong></td>
+            </tr>
+            @elseif($billing->status === 'cancelled' && $billing->cancellation_date)
+            <tr>
+                <td><strong style="color: #dc2626;">Status:</strong></td>
+                <td><strong style="color: #dc2626;">STORNIERT</strong></td>
+            </tr>
+            <tr>
+                <td><strong style="color: #dc2626;">Storniert am:</strong></td>
+                <td><strong style="color: #dc2626;">{{ \Carbon\Carbon::parse($billing->cancellation_date)->format('d.m.Y') }}</strong></td>
+            </tr>
+            @endif
         </table>
     </div>
 
@@ -418,7 +433,16 @@
 
     </div>-->
 
-    <div class="billing-period">
+    @php
+        $topMargin = '0cm';
+        if ($billing->status === 'draft') {
+            $topMargin = '1cm';
+        } elseif ($billing->status === 'cancelled') {
+            $topMargin = '2cm';
+        }
+    @endphp
+
+    <div class="billing-period" style="margin-top: {{ $topMargin }};">
         <h3>Gutschrift für Ihre Einspeisung {{ $monthName }} {{ $billing->billing_year }}</h3>
     </div>
 

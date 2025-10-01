@@ -142,14 +142,33 @@ class SolarPlantBillingResource extends Resource
 
                         Forms\Components\Select::make('status')
                             ->label('Status')
-                            ->options(SolarPlantBilling::getStatusOptions())
+                            ->options(function ($record) {
+                                $allOptions = SolarPlantBilling::getStatusOptions();
+
+                                // Wenn finalisiert, nur noch Versendet, Bezahlt und Storniert erlauben
+                                if ($record && $record->status === 'finalized') {
+                                    return [
+                                        'finalized' => $allOptions['finalized'],
+                                        'sent' => $allOptions['sent'],
+                                        'paid' => $allOptions['paid'],
+                                        'cancelled' => $allOptions['cancelled'],
+                                    ];
+                                }
+
+                                return $allOptions;
+                            })
                             ->default('draft')
-                            ->required(),
+                            ->required()
+                            ->disabled(fn ($record) => $record && $record->status === 'cancelled')
+                            ->dehydrated(fn ($record) => !$record || $record->status !== 'cancelled'),
 
                         Forms\Components\DatePicker::make('cancellation_date')
                             ->label('Stornierungsdatum')
-                            ->helperText('Datum der Stornierung (optional)')
-                            ->nullable(),
+                            ->helperText('Diese Abrechnung wurde storniert. Status und Stornierungsdatum können nicht mehr geändert werden.')
+                            ->nullable()
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->visible(fn ($record) => $record && $record->status === 'cancelled'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Kostenaufschlüsselung')
@@ -427,10 +446,14 @@ class SolarPlantBillingResource extends Resource
                     ->label('Kunde')
                     ->getStateUsing(function (SolarPlantBilling $record): string {
                         $customer = $record->customer;
-                        return $customer->customer_type === 'business' && $customer->company_name 
-                            ? $customer->company_name 
+                        return $customer->customer_type === 'business' && $customer->company_name
+                            ? $customer->company_name
                             : $customer->name;
                     })
+                    ->url(fn (SolarPlantBilling $record): string =>
+                        \App\Filament\Resources\CustomerResource::getUrl('view', ['record' => $record->customer_id])
+                    )
+                    ->openUrlInNewTab()
                     ->searchable()
                     ->sortable(),
 
@@ -542,6 +565,7 @@ class SolarPlantBillingResource extends Resource
                         'finalized' => 'warning',
                         'sent' => 'info',
                         'paid' => 'success',
+                        'cancelled' => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => SolarPlantBilling::getStatusOptions()[$state] ?? $state),
@@ -704,6 +728,28 @@ class SolarPlantBillingResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('cancel')
+                        ->label('Stornieren')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Abrechnung stornieren')
+                        ->modalDescription('Möchten Sie diese Abrechnung wirklich stornieren? Das Stornierungsdatum wird auf heute gesetzt.')
+                        ->modalSubmitActionLabel('Stornieren')
+                        ->modalCancelActionLabel('Abbrechen')
+                        ->action(function (SolarPlantBilling $record): void {
+                            $record->update([
+                                'cancellation_date' => now(),
+                                'status' => 'cancelled',
+                            ]);
+
+                            Notification::make()
+                                ->title('Abrechnung storniert')
+                                ->body('Die Abrechnung wurde erfolgreich storniert.')
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn (SolarPlantBilling $record): bool => $record->cancellation_date === null),
                     Tables\Actions\Action::make('edit_notes')
                         ->label('Bemerkung')
                         ->icon('heroicon-o-pencil-square')
@@ -841,7 +887,6 @@ class SolarPlantBillingResource extends Resource
                         ->modalCancelActionLabel('Abbrechen')
                         ->modalWidth('2xl'),
                     Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
                 ])
                 ->label('Aktionen')
                 ->icon('heroicon-m-ellipsis-vertical')
@@ -851,8 +896,6 @@ class SolarPlantBillingResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    
                     Tables\Actions\BulkAction::make('export_excel')
                         ->label('Excel Export')
                         ->icon('heroicon-o-document-arrow-down')

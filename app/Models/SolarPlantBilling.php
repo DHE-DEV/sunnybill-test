@@ -122,6 +122,7 @@ class SolarPlantBilling extends Model
             'finalized' => 'Finalisiert',
             'sent' => 'Versendet',
             'paid' => 'Bezahlt',
+            'cancelled' => 'Storniert',
         ];
     }
 

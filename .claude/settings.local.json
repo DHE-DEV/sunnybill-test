@@ -21,7 +21,8 @@
       "Bash(C:/Users/dh/.config/herd/bin/php artisan migrate:status)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": []
   }

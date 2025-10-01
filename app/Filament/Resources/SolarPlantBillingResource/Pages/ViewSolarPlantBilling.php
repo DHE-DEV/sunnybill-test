@@ -39,6 +39,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                         'finalized' => 'Finalisiert',
                                         'sent' => 'Versendet',
                                         'paid' => 'Bezahlt',
+                                        'cancelled' => 'Storniert',
                                         default => $state,
                                     })
                                     ->badge()
@@ -48,6 +49,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                         'finalized' => 'info',
                                         'sent' => 'warning',
                                         'paid' => 'success',
+                                        'cancelled' => 'danger',
                                         default => 'gray',
                                     }),
                                 Infolists\Components\TextEntry::make('formatted_month')
@@ -1037,17 +1039,35 @@ class ViewSolarPlantBilling extends ViewRecord
                                             ->icon('heroicon-o-pencil')
                                             ->color('gray')
                                             ->size('sm')
+                                            ->visible(fn ($livewire) => $livewire->record->status !== 'cancelled')
                                             ->modalHeading('Zahlungsstatus ändern')
                                             ->modalDescription('Wählen Sie den neuen Status für diese Abrechnung.')
                                             ->form([
                                                 Forms\Components\Select::make('status')
                                                     ->label('Status')
-                                                    ->options([
-                                                        'draft' => 'Entwurf',
-                                                        'finalized' => 'Finalisiert',
-                                                        'sent' => 'Versendet',
-                                                        'paid' => 'Bezahlt',
-                                                    ])
+                                                    ->options(function ($livewire) {
+                                                        $currentStatus = $livewire->record->status;
+                                                        $allOptions = \App\Models\SolarPlantBilling::getStatusOptions();
+
+                                                        // Status-Hierarchie: draft -> finalized -> sent -> paid -> cancelled
+                                                        $statusHierarchy = ['draft', 'finalized', 'sent', 'paid', 'cancelled'];
+                                                        $currentIndex = array_search($currentStatus, $statusHierarchy);
+
+                                                        $availableOptions = [];
+
+                                                        // Aktueller Status ist immer verfügbar
+                                                        $availableOptions[$currentStatus] = $allOptions[$currentStatus];
+
+                                                        // Alle höheren Status sind verfügbar
+                                                        for ($i = $currentIndex + 1; $i < count($statusHierarchy); $i++) {
+                                                            $status = $statusHierarchy[$i];
+                                                            if (isset($allOptions[$status])) {
+                                                                $availableOptions[$status] = $allOptions[$status];
+                                                            }
+                                                        }
+
+                                                        return $availableOptions;
+                                                    })
                                                     ->default(fn ($livewire) => $livewire->record->status)
                                                     ->required()
                                                     ->native(false),
@@ -1058,7 +1078,7 @@ class ViewSolarPlantBilling extends ViewRecord
                                             ])
                                             ->action(function (array $data, $livewire) {
                                                 $updateData = ['status' => $data['status']];
-                                                
+
                                                 if ($data['update_dates']) {
                                                     $now = now();
                                                     switch ($data['status']) {
@@ -1086,11 +1106,16 @@ class ViewSolarPlantBilling extends ViewRecord
                                                                 $updateData['paid_at'] = $now;
                                                             }
                                                             break;
+                                                        case 'cancelled':
+                                                            if (!$livewire->record->cancellation_date) {
+                                                                $updateData['cancellation_date'] = $now;
+                                                            }
+                                                            break;
                                                     }
                                                 }
-                                                
+
                                                 $livewire->record->update($updateData);
-                                                
+
                                                 Notification::make()
                                                     ->title('Status aktualisiert')
                                                     ->body('Der Zahlungsstatus wurde erfolgreich geändert.')
@@ -1271,6 +1296,93 @@ class ViewSolarPlantBilling extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('changeStatus')
+                ->label('Status ändern')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
+                ->visible(fn () => $this->record->status !== 'cancelled')
+                ->modalHeading('Status ändern')
+                ->modalDescription('Wählen Sie den neuen Status für diese Abrechnung.')
+                ->form([
+                    Forms\Components\Select::make('status')
+                        ->label('Status')
+                        ->options(function () {
+                            $currentStatus = $this->record->status;
+                            $allOptions = \App\Models\SolarPlantBilling::getStatusOptions();
+
+                            // Status-Hierarchie: draft -> finalized -> sent -> paid -> cancelled
+                            $statusHierarchy = ['draft', 'finalized', 'sent', 'paid', 'cancelled'];
+                            $currentIndex = array_search($currentStatus, $statusHierarchy);
+
+                            $availableOptions = [];
+
+                            // Aktueller Status ist immer verfügbar
+                            $availableOptions[$currentStatus] = $allOptions[$currentStatus];
+
+                            // Alle höheren Status sind verfügbar
+                            for ($i = $currentIndex + 1; $i < count($statusHierarchy); $i++) {
+                                $status = $statusHierarchy[$i];
+                                if (isset($allOptions[$status])) {
+                                    $availableOptions[$status] = $allOptions[$status];
+                                }
+                            }
+
+                            return $availableOptions;
+                        })
+                        ->default(fn () => $this->record->status)
+                        ->required()
+                        ->native(false),
+                    Forms\Components\Toggle::make('update_dates')
+                        ->label('Entsprechende Datumsfelder automatisch setzen')
+                        ->helperText('Setzt automatisch die passenden Datumsfelder (finalized_at, sent_at, paid_at, cancellation_date) auf das heutige Datum')
+                        ->default(true),
+                ])
+                ->action(function (array $data) {
+                    $updateData = ['status' => $data['status']];
+
+                    if ($data['update_dates']) {
+                        $now = now();
+                        switch ($data['status']) {
+                            case 'finalized':
+                                if (!$this->record->finalized_at) {
+                                    $updateData['finalized_at'] = $now;
+                                }
+                                break;
+                            case 'sent':
+                                if (!$this->record->finalized_at) {
+                                    $updateData['finalized_at'] = $now;
+                                }
+                                if (!$this->record->sent_at) {
+                                    $updateData['sent_at'] = $now;
+                                }
+                                break;
+                            case 'paid':
+                                if (!$this->record->finalized_at) {
+                                    $updateData['finalized_at'] = $now;
+                                }
+                                if (!$this->record->sent_at) {
+                                    $updateData['sent_at'] = $now;
+                                }
+                                if (!$this->record->paid_at) {
+                                    $updateData['paid_at'] = $now;
+                                }
+                                break;
+                            case 'cancelled':
+                                if (!$this->record->cancellation_date) {
+                                    $updateData['cancellation_date'] = $now;
+                                }
+                                break;
+                        }
+                    }
+
+                    $this->record->update($updateData);
+
+                    Notification::make()
+                        ->title('Status aktualisiert')
+                        ->body('Der Status wurde erfolgreich geändert.')
+                        ->success()
+                        ->send();
+                }),
             Actions\Action::make('printQrCode')
                 ->label('QR-Code drucken')
                 ->icon('heroicon-o-qr-code')

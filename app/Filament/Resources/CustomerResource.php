@@ -1446,6 +1446,7 @@ class CustomerResource extends Resource
     {
         return [
             RelationManagers\SolarPlantsRelationManager::class,
+            RelationManagers\SolarPlantBillingsRelationManager::class,
             RelationManagers\ArticlesRelationManager::class,
             RelationManagers\DocumentsRelationManager::class,
             RelationManagers\EmployeesRelationManager::class,

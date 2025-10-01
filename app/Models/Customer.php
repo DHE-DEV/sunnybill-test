@@ -139,6 +139,14 @@ class Customer extends Model
     }
 
     /**
+     * Beziehung zu Solaranlagen-Abrechnungen
+     */
+    public function solarPlantBillings(): HasMany
+    {
+        return $this->hasMany(SolarPlantBilling::class);
+    }
+
+    /**
      * Beziehung zu monatlichen Gutschriften
      */
     public function monthlyCredits(): HasMany
@@ -224,14 +232,6 @@ class Customer extends Model
     public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
-    }
-
-    /**
-     * Beziehung zu Solaranlagen-Abrechnungen
-     */
-    public function solarPlantBillings(): HasMany
-    {
-        return $this->hasMany(SolarPlantBilling::class);
     }
 
     /**
