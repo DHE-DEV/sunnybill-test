@@ -44,6 +44,17 @@ class EditInvoice extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        // Wenn die Rechnung storniert ist, erlaube keine Änderungen
+        if ($this->record->status === 'canceled') {
+            \Filament\Notifications\Notification::make()
+                ->title('Speichern nicht möglich')
+                ->body('Stornierte Rechnungen können nicht bearbeitet werden.')
+                ->danger()
+                ->send();
+
+            $this->halt();
+        }
+
         // Wenn die Rechnung nicht im Entwurf ist, nur Status-Änderungen erlauben
         if ($this->record->status !== 'draft') {
             // Behalte nur den Status, alle anderen Felder bleiben unverändert
