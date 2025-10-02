@@ -295,7 +295,40 @@ class ArticleResource extends Resource
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\DeleteAction::make()
+                        ->before(function (Article $record, Tables\Actions\DeleteAction $action) {
+                            // Prüfe ob Artikel in Verwendung ist
+                            $usageLocations = [];
+
+                            if (\App\Models\InvoiceItem::where('article_id', $record->id)->exists()) {
+                                $usageLocations[] = 'Rechnungen';
+                            }
+
+                            if (class_exists(\App\Models\CreditNoteItem::class) &&
+                                \App\Models\CreditNoteItem::where('article_id', $record->id)->exists()) {
+                                $usageLocations[] = 'Gutschriften';
+                            }
+
+                            if (class_exists(\App\Models\SolarPlantBillingCost::class) &&
+                                \App\Models\SolarPlantBillingCost::where('article_id', $record->id)->exists()) {
+                                $usageLocations[] = 'Solaranlagen-Abrechnungen (Kosten)';
+                            }
+
+                            if (class_exists(\App\Models\SolarPlantBillingCredit::class) &&
+                                \App\Models\SolarPlantBillingCredit::where('article_id', $record->id)->exists()) {
+                                $usageLocations[] = 'Solaranlagen-Abrechnungen (Gutschriften)';
+                            }
+
+                            if (!empty($usageLocations)) {
+                                Notification::make()
+                                    ->title('Artikel kann nicht gelöscht werden')
+                                    ->body('Dieser Artikel wird in folgenden Bereichen verwendet: ' . implode(', ', $usageLocations))
+                                    ->danger()
+                                    ->send();
+
+                                $action->cancel();
+                            }
+                        }),
                     Tables\Actions\RestoreAction::make(),
                     Tables\Actions\ForceDeleteAction::make(),
                     Tables\Actions\Action::make('export_to_lexoffice')
@@ -407,7 +440,41 @@ class ArticleResource extends Resource
 
     public static function canDelete($record): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+        // Prüfe erst Berechtigungen
+        if (!(auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false)) {
+            return false;
+        }
+
+        // Prüfe ob Artikel in Rechnungen verwendet wird
+        $usedInInvoices = \App\Models\InvoiceItem::where('article_id', $record->id)->exists();
+        if ($usedInInvoices) {
+            return false;
+        }
+
+        // Prüfe ob Artikel in Gutschriften verwendet wird (falls vorhanden)
+        if (class_exists(\App\Models\CreditNoteItem::class)) {
+            $usedInCreditNotes = \App\Models\CreditNoteItem::where('article_id', $record->id)->exists();
+            if ($usedInCreditNotes) {
+                return false;
+            }
+        }
+
+        // Prüfe ob Artikel in Solaranlagen-Abrechnungen verwendet wird
+        if (class_exists(\App\Models\SolarPlantBillingCost::class)) {
+            $usedInBillingCosts = \App\Models\SolarPlantBillingCost::where('article_id', $record->id)->exists();
+            if ($usedInBillingCosts) {
+                return false;
+            }
+        }
+
+        if (class_exists(\App\Models\SolarPlantBillingCredit::class)) {
+            $usedInBillingCredits = \App\Models\SolarPlantBillingCredit::where('article_id', $record->id)->exists();
+            if ($usedInBillingCredits) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public static function canDeleteAny(): bool
