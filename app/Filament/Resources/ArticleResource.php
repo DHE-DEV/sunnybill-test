@@ -215,6 +215,34 @@ class ArticleResource extends Resource
                     ->trueColor('success')
                     ->falseColor('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('relation_type')
+                    ->label('Bezug')
+                    ->badge()
+                    ->getStateUsing(function ($record) {
+                        $types = [];
+
+                        if ($record->customers()->exists()) {
+                            $types[] = 'Kunde';
+                        }
+
+                        if ($record->suppliers()->exists()) {
+                            $types[] = 'Lieferant';
+                        }
+
+                        if ($record->supplierContracts()->exists()) {
+                            $types[] = 'Vertrag';
+                        }
+
+                        if (empty($types)) {
+                            return 'Kein Bezug';
+                        }
+
+                        return implode(', ', $types);
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'Kein Bezug' => 'gray',
+                        default => 'info',
+                    }),
                 Tables\Columns\IconColumn::make('used_in_invoices')
                     ->label('In Rechnungen')
                     ->boolean()
@@ -261,34 +289,29 @@ class ArticleResource extends Resource
                         true: fn (Builder $query) => $query->whereHas('invoiceItems'),
                         false: fn (Builder $query) => $query->whereDoesntHave('invoiceItems'),
                     ),
-            ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('type')
-                    ->label('Typ')
+                Tables\Filters\SelectFilter::make('relation_type')
+                    ->label('Bezug')
                     ->options([
-                        'SERVICE' => 'Dienstleistung',
-                        'PRODUCT' => 'Produkt',
-                    ]),
-                Tables\Filters\SelectFilter::make('tax_rate_id')
-                    ->label('Steuersatz')
-                    ->relationship('taxRate', 'name')
-                    ->getOptionLabelFromRecordUsing(fn (TaxRate $record): string =>
-                        "{$record->name} ({$record->current_rate}%)"
-                    )
-                    ->searchable()
-                    ->preload(),
-                Tables\Filters\TernaryFilter::make('lexoffice_synced')
-                    ->label('Lexoffice synchronisiert')
-                    ->queries(
-                        true: fn (Builder $query) => $query->whereNotNull('lexoffice_id'),
-                        false: fn (Builder $query) => $query->whereNull('lexoffice_id'),
-                    ),
-                Tables\Filters\TernaryFilter::make('used_in_invoices')
-                    ->label('In Rechnungen verwendet')
-                    ->queries(
-                        true: fn (Builder $query) => $query->whereHas('invoiceItems'),
-                        false: fn (Builder $query) => $query->whereDoesntHave('invoiceItems'),
-                    ),
+                        'customer' => 'Kundenbezogen',
+                        'supplier' => 'Lieferantenbezogen',
+                        'contract' => 'Vertragsbezogen',
+                        'none' => 'Kein Bezug',
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        if (!isset($data['value'])) {
+                            return $query;
+                        }
+
+                        return match ($data['value']) {
+                            'customer' => $query->whereHas('customers'),
+                            'supplier' => $query->whereHas('suppliers'),
+                            'contract' => $query->whereHas('supplierContracts'),
+                            'none' => $query->whereDoesntHave('customers')
+                                ->whereDoesntHave('suppliers')
+                                ->whereDoesntHave('supplierContracts'),
+                            default => $query,
+                        };
+                    }),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
