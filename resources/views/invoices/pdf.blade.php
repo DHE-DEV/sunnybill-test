@@ -54,7 +54,7 @@
         }
         
         .customer-address {
-            margin-left: 30px;
+            margin-left: 0;
             width: 60%;
         }
         
