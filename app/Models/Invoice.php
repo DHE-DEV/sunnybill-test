@@ -25,6 +25,7 @@ class Invoice extends Model
         'lexoffice_id',
         'due_date',
         'cancellation_date',
+        'cancellation_reason',
     ];
 
     protected $attributes = [

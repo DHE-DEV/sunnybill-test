@@ -130,8 +130,19 @@ class InvoiceResource extends Resource
                                 return $allOptions;
                             })
                             ->default('draft')
+                            ->live()
                             ->disabled(fn ($record) => $record && $record->status === 'canceled')
                             ->dehydrated(fn ($record) => !$record || $record->status !== 'canceled'),
+                        Forms\Components\Textarea::make('cancellation_reason_input')
+                            ->label('Stornierungsgrund')
+                            ->rows(3)
+                            ->required()
+                            ->visible(fn (Forms\Get $get, $record) =>
+                                $get('status') === 'canceled' &&
+                                (!$record || $record->status !== 'canceled')
+                            )
+                            ->helperText('Bitte geben Sie einen Grund für die Stornierung an.')
+                            ->dehydrated(false),
                         Forms\Components\DatePicker::make('due_date')
                             ->label('Fälligkeitsdatum')
                             ->default(function () {
@@ -143,6 +154,13 @@ class InvoiceResource extends Resource
                         Forms\Components\DatePicker::make('cancellation_date')
                             ->label('Stornierungsdatum')
                             ->helperText('Diese Rechnung wurde storniert. Status und Stornierungsdatum können nicht mehr geändert werden.')
+                            ->nullable()
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->visible(fn ($record) => $record && $record->status === 'canceled'),
+                        Forms\Components\Textarea::make('cancellation_reason')
+                            ->label('Stornierungsgrund')
+                            ->rows(3)
                             ->nullable()
                             ->disabled()
                             ->dehydrated(false)

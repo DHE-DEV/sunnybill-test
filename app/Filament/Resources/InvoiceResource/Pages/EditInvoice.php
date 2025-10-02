@@ -55,17 +55,19 @@ class EditInvoice extends EditRecord
             $this->halt();
         }
 
-        // Wenn Status auf storniert geändert wird, setze Stornierungsdatum
+        // Wenn Status auf storniert geändert wird, setze Stornierungsdatum und -grund
         if (isset($data['status']) && $data['status'] === 'canceled' && $this->record->status !== 'canceled') {
             $data['cancellation_date'] = now()->toDateString();
+            $data['cancellation_reason'] = $data['cancellation_reason_input'] ?? null;
         }
 
         // Wenn die Rechnung nicht im Entwurf ist, nur Status-Änderungen erlauben
         if ($this->record->status !== 'draft') {
-            // Behalte nur den Status und ggf. Stornierungsdatum
+            // Behalte nur den Status und ggf. Stornierungsdatum/-grund
             return [
                 'status' => $data['status'] ?? $this->record->status,
                 'cancellation_date' => $data['cancellation_date'] ?? $this->record->cancellation_date,
+                'cancellation_reason' => $data['cancellation_reason'] ?? $this->record->cancellation_reason,
             ];
         }
 
