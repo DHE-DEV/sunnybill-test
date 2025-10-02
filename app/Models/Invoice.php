@@ -24,6 +24,7 @@ class Invoice extends Model
         'total',
         'lexoffice_id',
         'due_date',
+        'cancellation_date',
     ];
 
     protected $attributes = [
@@ -104,6 +105,7 @@ class Invoice extends Model
         'total' => 'decimal:6',
         'lexoffice_id' => 'string',
         'due_date' => 'date',
+        'cancellation_date' => 'date',
     ];
 
     /**

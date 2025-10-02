@@ -140,6 +140,13 @@ class InvoiceResource extends Resource
                                 return now()->addDays($defaultPaymentDays);
                             })
                             ->disabled(fn ($record) => $record && $record->status !== 'draft'),
+                        Forms\Components\DatePicker::make('cancellation_date')
+                            ->label('Stornierungsdatum')
+                            ->helperText('Diese Rechnung wurde storniert. Status und Stornierungsdatum können nicht mehr geändert werden.')
+                            ->nullable()
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->visible(fn ($record) => $record && $record->status === 'canceled'),
                     ])->columns(3),
                 
                 Forms\Components\Section::make('Rechnungsposten')
