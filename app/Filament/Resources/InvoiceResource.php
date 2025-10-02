@@ -152,10 +152,8 @@ class InvoiceResource extends Resource
                 Forms\Components\Section::make('Rechnungsposten')
                     ->schema([
                         Forms\Components\Repeater::make('items')
-                            ->relationship(
-                                name: 'items',
-                                orderColumn: 'order'
-                            )
+                            ->relationship('items')
+                            ->orderColumn('order')
                             ->label('')
                             ->disabled(fn ($record) => $record && $record->status !== 'draft')
                             ->schema([
