@@ -11,10 +11,27 @@ class EditInvoice extends EditRecord
 {
     protected static string $resource = InvoiceResource::class;
 
+    public function mount(int | string $record): void
+    {
+        parent::mount($record);
+
+        // Prüfe ob die Rechnung bearbeitet werden darf
+        if (!$this->record->canBeEdited()) {
+            \Filament\Notifications\Notification::make()
+                ->title('Bearbeitung nicht möglich')
+                ->body('Nur Rechnungen im Status "Entwurf" können bearbeitet werden.')
+                ->danger()
+                ->send();
+
+            $this->redirect('/admin/invoices', navigate: false);
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+                ->visible(fn () => $this->record->canBeEdited()),
         ];
     }
     
