@@ -140,6 +140,7 @@ class Invoice extends Model
 
     /**
      * Gesamtsumme berechnen basierend auf Items
+     * Total = Summe aller Netto-Beträge (quantity * unit_price)
      */
     public function calculateTotal(): float
     {
@@ -148,20 +149,31 @@ class Invoice extends Model
 
     /**
      * Steuersumme berechnen
+     * Steuerbetrag wird auf den Netto-Betrag aufgeschlagen
      */
     public function getTaxAmountAttribute(): float
     {
         return $this->items->sum(function ($item) {
-            return $item->total * $item->tax_rate / (1 + $item->tax_rate);
+            return $item->tax_amount;
         });
     }
 
     /**
      * Nettosumme berechnen
+     * Total ist bereits der Netto-Betrag
      */
     public function getNetAmountAttribute(): float
     {
-        return $this->total - $this->tax_amount;
+        return $this->total;
+    }
+
+    /**
+     * Bruttosumme berechnen
+     * Netto + Steuer
+     */
+    public function getGrossAmountAttribute(): float
+    {
+        return $this->total + $this->tax_amount;
     }
 
     /**

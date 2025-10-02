@@ -117,8 +117,15 @@ class VersionsRelationManager extends RelationManager
                 Tables\Actions\Action::make('download_pdf')
                     ->label('PDF')
                     ->icon('heroicon-o-document-arrow-down')
-                    ->url(fn ($record): string => route('invoice.pdf.version', $record))
-                    ->openUrlInNewTab(),
+                    ->action(function ($record) {
+                        // Use the parent invoice for PDF generation (versions store data as JSON)
+                        $invoice = $record->invoice;
+                        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', ['record' => $invoice]);
+                        return \Illuminate\Support\Facades\Response::streamDownload(
+                            fn () => print($pdf->output()),
+                            "rechnung-{$invoice->invoice_number}-version-{$record->version_number}.pdf"
+                        );
+                    }),
             ])
             ->bulkActions([
                 // Keine Bulk-Actions für Versionen

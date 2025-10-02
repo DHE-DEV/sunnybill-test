@@ -99,7 +99,7 @@ class ArticleVersion extends Model
             'description' => $article->description,
             'type' => $article->type ?? 'SERVICE',
             'price' => $article->price,
-            'tax_rate' => $article->tax_rate,
+            'tax_rate' => $article->getCurrentTaxRate(), // Use getCurrentTaxRate() to support both tax_rate and tax_rate_id
             'unit' => $article->unit ?? 'Stück',
             'decimal_places' => $article->decimal_places ?? 2,
             'total_decimal_places' => $article->total_decimal_places ?? 2,

@@ -72,22 +72,34 @@ class InvoiceItem extends Model
 
     /**
      * Steuerbetrag berechnen
+     * Der Steuerbetrag wird auf den Netto-Betrag (total) aufgeschlagen
      */
     public function getTaxAmountAttribute(): float
     {
-        return $this->total * $this->tax_rate / (1 + $this->tax_rate);
+        return $this->total * $this->tax_rate;
     }
 
     /**
      * Nettobetrag berechnen
+     * Total ist bereits der Netto-Betrag (quantity * unit_price)
      */
     public function getNetAmountAttribute(): float
     {
-        return $this->total - $this->tax_amount;
+        return $this->total;
+    }
+
+    /**
+     * Bruttobetrag berechnen
+     * Netto-Betrag + Steuer
+     */
+    public function getGrossAmountAttribute(): float
+    {
+        return $this->total + $this->tax_amount;
     }
 
     /**
      * Formatierter Gesamtpreis mit artikelspezifischen Nachkommastellen für Gesamtpreise
+     * Zeigt den Netto-Betrag an
      */
     public function getFormattedTotalAttribute(): string
     {
