@@ -21,6 +21,7 @@ class InvoiceItem extends Model
         'tax_rate_version_id',
         'total',
         'description',
+        'order',
     ];
 
     protected $casts = [

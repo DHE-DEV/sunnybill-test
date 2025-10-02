@@ -152,7 +152,10 @@ class InvoiceResource extends Resource
                 Forms\Components\Section::make('Rechnungsposten')
                     ->schema([
                         Forms\Components\Repeater::make('items')
-                            ->relationship()
+                            ->relationship(
+                                name: 'items',
+                                orderColumn: 'order'
+                            )
                             ->label('')
                             ->disabled(fn ($record) => $record && $record->status !== 'draft')
                             ->schema([
@@ -250,6 +253,7 @@ class InvoiceResource extends Resource
                                     ->icon('heroicon-o-plus')
                             )
                             ->reorderableWithButtons()
+                            ->reorderable(fn ($record) => !$record || $record->status === 'draft')
                             ->collapsible()
                             ->collapseAllAction(
                                 fn ($action) => $action
