@@ -2,30 +2,12 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(php artisan test:*)",
-      "Bash(./vendor/bin/pest:*)",
-      "Bash(where php)",
-      "Bash(\"C:\\Users\\dh\\.config\\herd\\bin\\php.bat\" artisan test tests/Feature/Api/)",
-      "Bash(powershell:*)",
-      "Bash(\"C:\\Users\\dh\\.config\\herd\\bin\\php.bat\" run_tests.php)",
-      "Bash(herd php artisan test:*)",
-      "Bash(C:/Users/dh/.config/herd/bin/php artisan test tests/Feature/Api/)",
-      "Bash(/c/Users/dh/.config/herd/bin/php artisan test tests/Feature/Api/)",
-      "Bash(/mnt/c/Users/dh/.config/herd/bin/php.exe artisan test tests/Feature/Api/)",
-      "Bash(ls:*)",
-      "Bash(cmd.exe /c \"php artisan test tests/Feature/Api/\")",
-      "Bash(cmd.exe:*)",
-      "Bash(php artisan:*)",
-      "Bash(bash:*)",
-      "Bash(herd php artisan migrate:status:*)",
-      "Bash(C:/Users/dh/.config/herd/bin/php artisan migrate:status)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(git fetch:*)",
-      "Bash(git config:*)",
-      "Bash(herd php artisan:*)"
+      "Bash(truncate:*)",
+      "Bash(npm run build:*)",
+      "Bash(composer require:*)",
+      "Bash(composer remove:*)"
     ],
-    "deny": []
+    "deny": [],
+    "ask": []
   }
 }
