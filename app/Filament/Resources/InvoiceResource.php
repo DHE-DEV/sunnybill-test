@@ -116,6 +116,7 @@ class InvoiceResource extends Resource
                         Forms\Components\Repeater::make('items')
                             ->relationship()
                             ->label('')
+                            ->disabled(fn ($record) => $record && $record->status !== 'draft')
                             ->schema([
                                 Forms\Components\Select::make('article_id')
                                     ->label('Artikel')

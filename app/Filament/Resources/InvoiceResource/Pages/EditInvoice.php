@@ -15,15 +15,22 @@ class EditInvoice extends EditRecord
     {
         parent::mount($record);
 
-        // Prüfe ob die Rechnung bearbeitet werden darf
-        if (!$this->record->canBeEdited()) {
+        // Wenn die Rechnung storniert ist, Warnung anzeigen
+        if ($this->record->status === 'canceled') {
             \Filament\Notifications\Notification::make()
-                ->title('Bearbeitung nicht möglich')
-                ->body('Nur Rechnungen im Status "Entwurf" können bearbeitet werden.')
-                ->danger()
+                ->title('Rechnung storniert')
+                ->body('Diese Rechnung wurde storniert. Sie können nur noch den Status ändern.')
+                ->warning()
                 ->send();
+        }
 
-            $this->redirect('/admin/invoices', navigate: false);
+        // Wenn die Rechnung versendet oder bezahlt ist, Warnung anzeigen
+        if (in_array($this->record->status, ['sent', 'paid'])) {
+            \Filament\Notifications\Notification::make()
+                ->title('Rechnung nicht bearbeitbar')
+                ->body('Diese Rechnung wurde bereits versendet/bezahlt. Sie können nur noch den Status ändern.')
+                ->warning()
+                ->send();
         }
     }
 
@@ -34,7 +41,19 @@ class EditInvoice extends EditRecord
                 ->visible(fn () => $this->record->canBeEdited()),
         ];
     }
-    
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // Wenn die Rechnung nicht im Entwurf ist, nur Status-Änderungen erlauben
+        if ($this->record->status !== 'draft') {
+            // Behalte nur den Status, alle anderen Felder bleiben unverändert
+            return [
+                'status' => $data['status'] ?? $this->record->status,
+            ];
+        }
+
+        return $data;
+    }
 
     protected function afterSave(): void
     {
