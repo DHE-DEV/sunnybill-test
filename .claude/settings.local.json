@@ -22,7 +22,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(git config:*)",
+      "Bash(herd php artisan:*)"
     ],
     "deny": []
   }
