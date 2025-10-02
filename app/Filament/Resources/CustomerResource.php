@@ -328,15 +328,73 @@ class CustomerResource extends Resource
                             ->placeholder('Name des Kontoinhabers'),
                         Forms\Components\TextInput::make('bank_name')
                             ->label('Bankname')
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->live(onBlur: true),
                         Forms\Components\TextInput::make('iban')
                             ->label('IBAN')
                             ->maxLength(34)
-                            ->placeholder('DE89 3704 0044 0532 0130 00'),
+                            ->placeholder('DE89 3704 0044 0532 0130 00')
+                            ->live(onBlur: true)
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('validate_iban')
+                                    ->label('IBAN prüfen')
+                                    ->icon('heroicon-o-check-circle')
+                                    ->action(function (Forms\Set $set, Forms\Get $get, $state) {
+                                        if (!$state) {
+                                            Notification::make()
+                                                ->title('Bitte IBAN eingeben')
+                                                ->warning()
+                                                ->send();
+                                            return;
+                                        }
+
+                                        $ibanService = new \App\Services\IbanService();
+                                        $result = $ibanService->validateAndGetBankInfo($state);
+
+                                        if (!$result['valid']) {
+                                            Notification::make()
+                                                ->title('IBAN-Validierung fehlgeschlagen')
+                                                ->body($result['error'] ?? 'Die eingegebene IBAN ist ungültig.')
+                                                ->danger()
+                                                ->send();
+                                            return;
+                                        }
+
+                                        // Setze formatierte IBAN
+                                        $set('iban', $result['iban_formatted']);
+
+                                        // Setze BIC wenn verfügbar
+                                        if (!empty($result['bic'])) {
+                                            $set('bic', $result['bic']);
+                                        }
+
+                                        // Setze Bankname wenn verfügbar
+                                        if (!empty($result['bank_name'])) {
+                                            $set('bank_name', $result['bank_name']);
+                                        }
+
+                                        // Erfolgreiche Validierung
+                                        $message = 'IBAN ist gültig.';
+                                        if (!empty($result['bank_name']) && !empty($result['bic'])) {
+                                            $message .= " Bank: {$result['bank_name']}, BIC: {$result['bic']}";
+                                        } elseif (!empty($result['bank_name'])) {
+                                            $message .= " Bank: {$result['bank_name']}";
+                                        } elseif (!empty($result['bic'])) {
+                                            $message .= " BIC: {$result['bic']}";
+                                        }
+
+                                        Notification::make()
+                                            ->title('IBAN erfolgreich validiert')
+                                            ->body($message)
+                                            ->success()
+                                            ->send();
+                                    })
+                            ),
                         Forms\Components\TextInput::make('bic')
                             ->label('BIC')
                             ->maxLength(11)
-                            ->placeholder('COBADEFFXXX'),
+                            ->placeholder('COBADEFFXXX')
+                            ->live(onBlur: true),
                     ])->columns(2),
 
 

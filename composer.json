@@ -13,6 +13,7 @@
         "filament/filament": "^3.2",
         "guzzlehttp/guzzle": "^7.8",
         "horstoeko/zugferd": "^1.0",
+        "jschaedl/iban-validation": "^2.6",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.1",
         "laravel/tinker": "^2.10.1",
