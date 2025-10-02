@@ -440,6 +440,7 @@ class ArticleResource extends Resource
     {
         return [
             RelationManagers\VersionsRelationManager::class,
+            RelationManagers\UsageRelationManager::class,
         ];
     }
 
