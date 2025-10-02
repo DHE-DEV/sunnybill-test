@@ -100,7 +100,9 @@ class InvoiceResource extends Resource
                                 'paid' => 'Bezahlt',
                                 'canceled' => 'Storniert',
                             ])
-                            ->default('draft'),
+                            ->default('draft')
+                            ->disabled(fn ($record) => $record && $record->status === 'canceled')
+                            ->dehydrated(fn ($record) => !$record || $record->status !== 'canceled'),
                         Forms\Components\DatePicker::make('due_date')
                             ->label('Fälligkeitsdatum')
                             ->default(function () {
