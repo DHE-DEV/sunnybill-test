@@ -94,12 +94,41 @@ class InvoiceResource extends Resource
                         Forms\Components\Select::make('status')
                             ->label('Status')
                             ->required()
-                            ->options([
-                                'draft' => 'Entwurf',
-                                'sent' => 'Versendet',
-                                'paid' => 'Bezahlt',
-                                'canceled' => 'Storniert',
-                            ])
+                            ->options(function ($record) {
+                                $allOptions = [
+                                    'draft' => 'Entwurf',
+                                    'sent' => 'Versendet',
+                                    'paid' => 'Bezahlt',
+                                    'canceled' => 'Storniert',
+                                ];
+
+                                // Wenn Rechnung existiert und nicht im Entwurf ist
+                                if ($record) {
+                                    // Storniert: Keine Änderung möglich
+                                    if ($record->status === 'canceled') {
+                                        return ['canceled' => $allOptions['canceled']];
+                                    }
+
+                                    // Versendet: Nur Bezahlt oder Storniert
+                                    if ($record->status === 'sent') {
+                                        return [
+                                            'sent' => $allOptions['sent'],
+                                            'paid' => $allOptions['paid'],
+                                            'canceled' => $allOptions['canceled'],
+                                        ];
+                                    }
+
+                                    // Bezahlt: Nur Bezahlt oder Storniert (kein Zurück zu Versendet)
+                                    if ($record->status === 'paid') {
+                                        return [
+                                            'paid' => $allOptions['paid'],
+                                            'canceled' => $allOptions['canceled'],
+                                        ];
+                                    }
+                                }
+
+                                return $allOptions;
+                            })
                             ->default('draft')
                             ->disabled(fn ($record) => $record && $record->status === 'canceled')
                             ->dehydrated(fn ($record) => !$record || $record->status !== 'canceled'),
