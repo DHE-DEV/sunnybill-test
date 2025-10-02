@@ -163,8 +163,8 @@ class InvoiceResource extends Resource
                             ->rows(3)
                             ->nullable()
                             ->disabled()
-                            ->dehydrated(false)
-                            ->visible(fn ($record) => $record && $record->status === 'canceled'),
+                            ->visible(fn ($record) => $record && $record->status === 'canceled')
+                            ->columnSpanFull(),
                     ])->columns(3),
                 
                 Forms\Components\Section::make('Rechnungsposten')
@@ -350,7 +350,12 @@ class InvoiceResource extends Resource
                         'warning' => 'sent',
                         'success' => 'paid',
                         'danger' => 'canceled',
-                    ]),
+                    ])
+                    ->tooltip(fn ($record) =>
+                        $record->status === 'canceled' && $record->cancellation_reason
+                            ? 'Stornierungsgrund: ' . $record->cancellation_reason
+                            : null
+                    ),
                 Tables\Columns\TextColumn::make('total')
                     ->label('Gesamtsumme')
                     ->formatStateUsing(fn ($state) => PriceFormatter::formatTotalPrice($state))
