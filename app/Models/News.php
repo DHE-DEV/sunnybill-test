@@ -64,14 +64,13 @@ class News extends Model
     }
 
     /**
-     * Get unviewed news for a user (published after user creation)
+     * Get unviewed news for a user
      */
     public static function getUnviewedForUser(User $user)
     {
         return static::where('is_active', true)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
-            ->where('published_at', '>=', $user->created_at)
             ->whereDoesntHave('userViews', function ($query) use ($user) {
                 $query->where('user_id', $user->id)
                     ->where('dont_show_again', true);

@@ -59,6 +59,11 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->size('lg')
                                     ->color('info'),
                             ]),
+                        Infolists\Components\TextEntry::make('cancellation_reason')
+                            ->label('Stornierungsgrund')
+                            ->prose()
+                            ->color('danger')
+                            ->visible(fn ($record) => $record->status === 'cancelled' && $record->cancellation_reason),
                     ])
                     ->compact()
                     ->collapsible()
@@ -1070,7 +1075,13 @@ class ViewSolarPlantBilling extends ViewRecord
                                                     })
                                                     ->default(fn ($livewire) => $livewire->record->status)
                                                     ->required()
-                                                    ->native(false),
+                                                    ->native(false)
+                                                    ->live(),
+                                                Forms\Components\Textarea::make('cancellation_reason')
+                                                    ->label('Stornierungsgrund')
+                                                    ->rows(3)
+                                                    ->visible(fn (Forms\Get $get) => $get('status') === 'cancelled')
+                                                    ->required(fn (Forms\Get $get) => $get('status') === 'cancelled'),
                                                 Forms\Components\Toggle::make('update_dates')
                                                     ->label('Entsprechende Datumsfelder automatisch setzen')
                                                     ->helperText('Setzt automatisch die passenden Datumsfelder (finalized_at, sent_at, paid_at) auf das heutige Datum')
@@ -1078,6 +1089,11 @@ class ViewSolarPlantBilling extends ViewRecord
                                             ])
                                             ->action(function (array $data, $livewire) {
                                                 $updateData = ['status' => $data['status']];
+
+                                                // Stornierungsgrund hinzufügen wenn Status = cancelled
+                                                if ($data['status'] === 'cancelled') {
+                                                    $updateData['cancellation_reason'] = $data['cancellation_reason'] ?? null;
+                                                }
 
                                                 if ($data['update_dates']) {
                                                     $now = now();
@@ -1331,7 +1347,13 @@ class ViewSolarPlantBilling extends ViewRecord
                         })
                         ->default(fn () => $this->record->status)
                         ->required()
-                        ->native(false),
+                        ->native(false)
+                        ->live(),
+                    Forms\Components\Textarea::make('cancellation_reason')
+                        ->label('Stornierungsgrund')
+                        ->rows(3)
+                        ->visible(fn (Forms\Get $get) => $get('status') === 'cancelled')
+                        ->required(fn (Forms\Get $get) => $get('status') === 'cancelled'),
                     Forms\Components\Toggle::make('update_dates')
                         ->label('Entsprechende Datumsfelder automatisch setzen')
                         ->helperText('Setzt automatisch die passenden Datumsfelder (finalized_at, sent_at, paid_at, cancellation_date) auf das heutige Datum')
@@ -1339,6 +1361,11 @@ class ViewSolarPlantBilling extends ViewRecord
                 ])
                 ->action(function (array $data) {
                     $updateData = ['status' => $data['status']];
+
+                    // Stornierungsgrund hinzufügen wenn Status = cancelled
+                    if ($data['status'] === 'cancelled') {
+                        $updateData['cancellation_reason'] = $data['cancellation_reason'] ?? null;
+                    }
 
                     if ($data['update_dates']) {
                         $now = now();

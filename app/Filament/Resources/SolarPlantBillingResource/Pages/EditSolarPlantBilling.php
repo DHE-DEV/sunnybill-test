@@ -58,6 +58,15 @@ class EditSolarPlantBilling extends EditRecord
             $this->halt();
         }
 
+        // Wenn Status auf storniert geändert wird, setze Stornierungsdatum und -grund
+        if (isset($data['status']) && $data['status'] === 'cancelled' && $this->record->status !== 'cancelled') {
+            $data['cancellation_date'] = now()->toDateString();
+            $data['cancellation_reason'] = $data['cancellation_reason_temp'] ?? null;
+        }
+
+        // Entferne temporäres Feld
+        unset($data['cancellation_reason_temp']);
+
         // Berechne Nettobetrag
         $data['net_amount'] = ($data['total_costs'] ?? 0) - ($data['total_credits'] ?? 0);
 

@@ -53,6 +53,7 @@ class SolarPlantBilling extends Model
         'created_by',
         'invoice_number',
         'cancellation_date',
+        'cancellation_reason',
     ];
 
     protected $casts = [

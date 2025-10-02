@@ -95,7 +95,7 @@ class NewsResource extends Resource
                             ->label('Veröffentlichungsdatum')
                             ->default(now())
                             ->required()
-                            ->helperText('Neuigkeiten werden nur Benutzern angezeigt, die nach diesem Datum erstellt wurden'),
+                            ->helperText('Neuigkeiten werden ab diesem Zeitpunkt allen Benutzern angezeigt'),
                     ])
                     ->columns(3),
             ]);

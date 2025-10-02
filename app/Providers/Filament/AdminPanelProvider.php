@@ -115,7 +115,7 @@ class AdminPanelProvider extends PanelProvider
                 'panels::body.end',
                 fn (): string => !request()->routeIs('filament.admin.auth.login')
                     ? view('layouts.filament-notifications')->render() .
-                      '<livewire:news-popup />'
+                      \Blade::render('<livewire:news-popup />')
                     : ''
             )
             ->renderHook(

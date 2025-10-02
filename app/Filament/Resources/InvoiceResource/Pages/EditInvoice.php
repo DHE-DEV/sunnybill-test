@@ -58,8 +58,11 @@ class EditInvoice extends EditRecord
         // Wenn Status auf storniert geändert wird, setze Stornierungsdatum und -grund
         if (isset($data['status']) && $data['status'] === 'canceled' && $this->record->status !== 'canceled') {
             $data['cancellation_date'] = now()->toDateString();
-            $data['cancellation_reason'] = $data['cancellation_reason_input'] ?? null;
+            $data['cancellation_reason'] = $data['cancellation_reason_temp'] ?? null;
         }
+
+        // Entferne temporäres Feld
+        unset($data['cancellation_reason_temp']);
 
         // Wenn die Rechnung nicht im Entwurf ist, nur Status-Änderungen erlauben
         if ($this->record->status !== 'draft') {

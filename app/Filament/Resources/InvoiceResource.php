@@ -133,6 +133,8 @@ class InvoiceResource extends Resource
                             ->live()
                             ->disabled(fn ($record) => $record && $record->status === 'canceled')
                             ->dehydrated(fn ($record) => !$record || $record->status !== 'canceled'),
+                        Forms\Components\Hidden::make('cancellation_reason_temp')
+                            ->default(null),
                         Forms\Components\Textarea::make('cancellation_reason_input')
                             ->label('Stornierungsgrund')
                             ->rows(3)
@@ -141,6 +143,10 @@ class InvoiceResource extends Resource
                                 $get('status') === 'canceled' &&
                                 (!$record || $record->status !== 'canceled')
                             )
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                $set('cancellation_reason_temp', $state);
+                            })
+                            ->live(onBlur: true)
                             ->helperText('Bitte geben Sie einen Grund für die Stornierung an.')
                             ->dehydrated(false),
                         Forms\Components\DatePicker::make('due_date')

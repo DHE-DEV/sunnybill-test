@@ -160,7 +160,21 @@ class SolarPlantBillingResource extends Resource
                             ->default('draft')
                             ->required()
                             ->disabled(fn ($record) => $record && $record->status === 'cancelled')
-                            ->dehydrated(fn ($record) => !$record || $record->status !== 'cancelled'),
+                            ->dehydrated(fn ($record) => !$record || $record->status !== 'cancelled')
+                            ->live(),
+
+                        Forms\Components\Hidden::make('cancellation_reason_temp')
+                            ->default(null),
+
+                        Forms\Components\Textarea::make('cancellation_reason_input')
+                            ->label('Stornierungsgrund')
+                            ->rows(3)
+                            ->visible(fn (Forms\Get $get, $record) => $get('status') === 'cancelled' && (!$record || $record->status !== 'cancelled'))
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                $set('cancellation_reason_temp', $state);
+                            })
+                            ->live(onBlur: true)
+                            ->dehydrated(false),
 
                         Forms\Components\DatePicker::make('cancellation_date')
                             ->label('Stornierungsdatum')
@@ -169,6 +183,13 @@ class SolarPlantBillingResource extends Resource
                             ->disabled()
                             ->dehydrated(false)
                             ->visible(fn ($record) => $record && $record->status === 'cancelled'),
+
+                        Forms\Components\Textarea::make('cancellation_reason')
+                            ->label('Stornierungsgrund')
+                            ->rows(3)
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->visible(fn ($record) => $record && $record->status === 'cancelled' && $record->cancellation_reason),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Kostenaufschlüsselung')
@@ -568,7 +589,10 @@ class SolarPlantBillingResource extends Resource
                         'cancelled' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => SolarPlantBilling::getStatusOptions()[$state] ?? $state),
+                    ->formatStateUsing(fn (string $state): string => SolarPlantBilling::getStatusOptions()[$state] ?? $state)
+                    ->tooltip(fn ($record) => $record->status === 'cancelled' && $record->cancellation_reason
+                        ? 'Stornierungsgrund: ' . $record->cancellation_reason
+                        : null),
 
                 Tables\Columns\TextColumn::make('cancellation_date')
                     ->label('Storniert am')
