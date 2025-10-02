@@ -117,3 +117,27 @@ Schedule::command('routers:update-statuses --notify')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/router-status.log'));
+
+// Clear all user sessions at 4 AM daily to force re-login
+Schedule::call(function () {
+    // Clear database sessions
+    \DB::table('sessions')->truncate();
+
+    // Log the session cleanup
+    \Log::info('Daily session cleanup executed at 4 AM - all users logged out');
+})->dailyAt('04:00')
+    ->name('clear-sessions')
+    ->description('Clear all user sessions at 4 AM to force re-login');
+
+// Manual test command for session cleanup
+Artisan::command('sessions:clear-all', function () {
+    $this->info('Clearing all user sessions...');
+
+    $count = \DB::table('sessions')->count();
+    \DB::table('sessions')->truncate();
+
+    $this->info("✅ {$count} session(s) cleared successfully.");
+    $this->info('All users will be logged out on their next request.');
+
+    \Log::info("Manual session cleanup executed - {$count} sessions cleared");
+})->purpose('Manually clear all user sessions (for testing)');

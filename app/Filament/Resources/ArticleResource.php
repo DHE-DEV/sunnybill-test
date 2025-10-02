@@ -453,26 +453,26 @@ class ArticleResource extends Resource
         ];
     }
 
-    // Zugriffskontrolle für System-Ressourcen (Administrator + Superadmin Teams)
+    // Zugriffskontrolle für System-Ressourcen (Administrator, Superadmin + Manager Teams)
     public static function canViewAny(): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false;
+        return auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false;
     }
 
     public static function canDelete($record): bool
     {
         // Prüfe erst Berechtigungen
-        if (!(auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin'])->exists() ?? false)) {
+        if (!(auth()->user()?->teams()->whereIn('name', ['Administrator', 'Superadmin', 'Manager'])->exists() ?? false)) {
             return false;
         }
 
