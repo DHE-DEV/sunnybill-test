@@ -233,6 +233,10 @@ class ArticleResource extends Resource
                             $types[] = 'Vertrag';
                         }
 
+                        if ($record->solarPlants()->exists()) {
+                            $types[] = 'Solaranlage';
+                        }
+
                         if (empty($types)) {
                             return 'Kein Bezug';
                         }
@@ -295,6 +299,7 @@ class ArticleResource extends Resource
                         'customer' => 'Kundenbezogen',
                         'supplier' => 'Lieferantenbezogen',
                         'contract' => 'Vertragsbezogen',
+                        'solar_plant' => 'Solaranlagenbezogen',
                         'none' => 'Kein Bezug',
                     ])
                     ->query(function (Builder $query, array $data) {
@@ -306,9 +311,11 @@ class ArticleResource extends Resource
                             'customer' => $query->whereHas('customers'),
                             'supplier' => $query->whereHas('suppliers'),
                             'contract' => $query->whereHas('supplierContracts'),
+                            'solar_plant' => $query->whereHas('solarPlants'),
                             'none' => $query->whereDoesntHave('customers')
                                 ->whereDoesntHave('suppliers')
-                                ->whereDoesntHave('supplierContracts'),
+                                ->whereDoesntHave('supplierContracts')
+                                ->whereDoesntHave('solarPlants'),
                             default => $query,
                         };
                     }),
