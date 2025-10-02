@@ -63,7 +63,7 @@
         }
         
         .invoice-title {
-            font-size: 20px;
+            font-size: 14px;
             font-weight: bold;
             margin-bottom: 20px;
             color: #2563eb;
@@ -188,14 +188,6 @@
             @else
                 <h1>{{ $settings->company_name }}</h1>
             @endif
-            <div>{{ $settings->company_address }}</div>
-            <div>{{ $settings->company_postal_code }} {{ $settings->company_city }}</div>
-            @if($settings->phone)
-                <div>Tel: {{ $settings->phone }}</div>
-            @endif
-            @if($settings->email)
-                <div>E-Mail: {{ $settings->email }}</div>
-            @endif
         </div>
     </div>
 
@@ -225,15 +217,9 @@
                     <td style="border: none; padding: 2px 0; text-align: right; white-space: nowrap;">{{ $record->created_at->format('d.m.Y') }}</td>
                 </tr>
                 <tr>
-                    <td style="border: none; padding: 2px 10px 2px 0; text-align: left; white-space: nowrap;"><strong>Kundennummer:</strong></td>
+                    <td style="border: none; padding: 2px 10px 2px 0; text-align: left; white-space: nowrap;"><strong>Ihre Kundennummer:</strong></td>
                     <td style="border: none; padding: 2px 0; text-align: right; white-space: nowrap;">{{ $record->customer->customer_number ?? 'N/A' }}</td>
                 </tr>
-                @if($record->customer->email)
-                <tr>
-                    <td style="border: none; padding: 2px 10px 2px 0; text-align: left; white-space: nowrap;"><strong>E-Mail:</strong></td>
-                    <td style="border: none; padding: 2px 0; text-align: right; white-space: nowrap;">{{ $record->customer->email }}</td>
-                </tr>
-                @endif
                 @if($record->status === 'draft')
                 <tr>
                     <td style="border: none; padding: 2px 10px 2px 0; text-align: left; white-space: nowrap;"><strong style="color: #9ca3af;">Status:</strong></td>
