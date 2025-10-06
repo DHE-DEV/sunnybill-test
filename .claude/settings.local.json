@@ -5,7 +5,12 @@
       "Bash(truncate:*)",
       "Bash(npm run build:*)",
       "Bash(composer require:*)",
-      "Bash(composer remove:*)"
+      "Bash(composer remove:*)",
+      "Bash(git fetch:*)",
+      "Bash(git add:*)",
+      "Bash(git log:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
