@@ -521,4 +521,53 @@ class SupplierApiController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Suche Verträge anhand der Vertragskennungen
+     */
+    public function searchContractsByIdentifiers(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'identifiers' => 'required|array|min:1',
+            'identifiers.*.key' => 'required|in:contract_recognition_1,contract_recognition_2,contract_recognition_3',
+            'identifiers.*.value' => 'required|string',
+            'relations' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validierungsfehler',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $identifiers = $request->input('identifiers');
+        $relations = $request->input('relations', []);
+
+        // Suche nach Verträgen, bei denen die angegebenen Key-Value-Paare übereinstimmen
+        $query = \App\Models\SupplierContract::query();
+
+        // Lade die angeforderten Relations (unterstützt auch nested relations wie "solarPlants.components")
+        if (!empty($relations)) {
+            $query->with($relations);
+        }
+
+        $contracts = $query->where(function (Builder $query) use ($identifiers) {
+                foreach ($identifiers as $identifier) {
+                    $query->orWhere($identifier['key'], 'like', "%{$identifier['value']}%");
+                }
+            })
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $contracts,
+            'summary' => [
+                'total_found' => $contracts->count(),
+                'search_criteria' => $identifiers,
+                'loaded_relations' => $relations,
+            ]
+        ]);
+    }
 }

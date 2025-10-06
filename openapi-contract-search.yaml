@@ -1,0 +1,583 @@
+openapi: 3.0.3
+info:
+  title: SunnyBill Contract Search API
+  description: API zum Suchen von Lieferantenverträgen anhand von Vertragskennungen
+  version: 1.0.0
+  contact:
+    name: SunnyBill Support
+
+servers:
+  - url: http://localhost/api
+    description: Local development server
+  - url: https://your-domain.com/api
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /contracts/search:
+    get:
+      summary: Suche Verträge anhand von Vertragskennungen
+      description: |
+        Sucht nach Lieferantenverträgen basierend auf den Vertragskennungen (contract_recognition_1, contract_recognition_2, contract_recognition_3).
+        Gibt alle Verträge zurück, bei denen mindestens ein Key-Value-Paar übereinstimmt.
+      operationId: searchContractsByIdentifiers
+      tags:
+        - Contracts
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifiers
+              properties:
+                identifiers:
+                  type: array
+                  minItems: 1
+                  description: Array von Key-Value-Paaren zum Durchsuchen der Vertragskennungen
+                  items:
+                    type: object
+                    required:
+                      - key
+                      - value
+                    properties:
+                      key:
+                        type: string
+                        enum:
+                          - contract_recognition_1
+                          - contract_recognition_2
+                          - contract_recognition_3
+                        description: Feld, in dem gesucht werden soll
+                      value:
+                        type: string
+                        description: Suchwert (unterstützt Teilstring-Suche)
+                relations:
+                  type: array
+                  description: |
+                    Optional - Welche Relationen sollen mitgeladen werden.
+                    Unterstützt auch nested relations mit Punkt-Notation (z.B. "solarPlants.components").
+
+                    Verfügbare Basis-Relationen:
+                    - supplier
+                    - solarPlants
+                    - solarPlantAssignments
+                    - billings
+                    - contractNotes
+                    - favoriteNotes
+                    - standardNotes
+                    - documents
+                    - articles
+                    - activeArticles
+                    - contractMatchingRules
+                    - activeContractMatchingRules
+
+                    Verfügbare Nested-Relationen für solarPlants:
+                    - solarPlants.components
+                    - solarPlants.participations
+                    - solarPlants.customers
+                    - solarPlants.monthlyResults
+
+                    Verfügbare Nested-Relationen für solarPlantAssignments:
+                    - solarPlantAssignments.solarPlant
+                    - solarPlantAssignments.solarPlant.components
+                  items:
+                    type: string
+                    example: "solarPlants.components"
+            examples:
+              singleSearch:
+                summary: Suche in einem Feld ohne Relations
+                value:
+                  identifiers:
+                    - key: contract_recognition_1
+                      value: "12345"
+              multipleSearch:
+                summary: Suche in mehreren Feldern mit Relations
+                value:
+                  identifiers:
+                    - key: contract_recognition_1
+                      value: "12345"
+                    - key: contract_recognition_2
+                      value: "ABCDE"
+                    - key: contract_recognition_3
+                      value: "XYZ-789"
+                  relations:
+                    - supplier
+                    - billings
+                    - documents
+              allRelations:
+                summary: Suche mit allen verfügbaren Relations
+                value:
+                  identifiers:
+                    - key: contract_recognition_1
+                      value: "12345"
+                  relations:
+                    - supplier
+                    - solarPlants
+                    - solarPlantAssignments
+                    - billings
+                    - contractNotes
+                    - documents
+                    - articles
+              nestedRelations:
+                summary: Suche mit nested Relations für Solaranlagen-Details
+                value:
+                  identifiers:
+                    - key: contract_recognition_1
+                      value: "12345"
+                  relations:
+                    - supplier
+                    - solarPlants.components
+                    - solarPlants.participations
+                    - solarPlants.customers
+                    - solarPlantAssignments.solarPlant
+                    - billings
+                    - documents
+      responses:
+        '200':
+          description: Erfolgreiche Suche
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupplierContract'
+                  summary:
+                    type: object
+                    properties:
+                      total_found:
+                        type: integer
+                        description: Anzahl der gefundenen Verträge
+                        example: 5
+                      search_criteria:
+                        type: array
+                        description: Verwendete Suchkriterien
+                        items:
+                          type: object
+                          properties:
+                            key:
+                              type: string
+                            value:
+                              type: string
+                      loaded_relations:
+                        type: array
+                        description: Geladene Relationen
+                        items:
+                          type: string
+              examples:
+                successResponse:
+                  summary: Erfolgreiche Antwort mit gefundenen Verträgen
+                  value:
+                    success: true
+                    data:
+                      - id: "9d1a2b3c-4d5e-6f7g-8h9i-0j1k2l3m4n5o"
+                        supplier_id: "8c1a2b3c-4d5e-6f7g-8h9i-0j1k2l3m4n5o"
+                        contract_number: "LV-0001"
+                        contract_recognition_1: "12345"
+                        contract_recognition_2: "ABCDE"
+                        contract_recognition_3: "XYZ-789"
+                        title: "Energieliefervertrag"
+                        status: "active"
+                        supplier:
+                          id: "8c1a2b3c-4d5e-6f7g-8h9i-0j1k2l3m4n5o"
+                          company_name: "Energie AG"
+                        billings: []
+                        documents: []
+                    summary:
+                      total_found: 1
+                      search_criteria:
+                        - key: "contract_recognition_1"
+                          value: "12345"
+                      loaded_relations:
+                        - supplier
+                        - billings
+                        - documents
+        '422':
+          description: Validierungsfehler
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Validierungsfehler"
+                  errors:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+              examples:
+                validationError:
+                  summary: Validierungsfehler
+                  value:
+                    success: false
+                    message: "Validierungsfehler"
+                    errors:
+                      identifiers:
+                        - "The identifiers field is required."
+        '401':
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Unauthenticated."
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        App-Token für API-Zugriff. Benötigte Permission: suppliers:read
+
+        Header-Format: Authorization: Bearer YOUR_APP_TOKEN
+
+  schemas:
+    SupplierContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: UUID des Vertrags
+        supplier_id:
+          type: string
+          format: uuid
+          description: UUID des Lieferanten
+        contract_number:
+          type: string
+          description: Vertragsnummer
+          example: "LV-0001"
+        malo_id:
+          type: string
+          nullable: true
+          description: MaLo-ID
+        ep_id:
+          type: string
+          nullable: true
+          description: EP-ID
+        creditor_number:
+          type: string
+          nullable: true
+          description: Kreditorennummer
+        external_contract_number:
+          type: string
+          nullable: true
+          description: Externe Vertragsnummer
+        title:
+          type: string
+          description: Vertragstitel
+          example: "Energieliefervertrag"
+        description:
+          type: string
+          nullable: true
+          description: Vertragsbeschreibung
+        start_date:
+          type: string
+          format: date
+          nullable: true
+          description: Startdatum des Vertrags
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          description: Enddatum des Vertrags
+        contract_value:
+          type: number
+          format: decimal
+          nullable: true
+          description: Vertragswert
+          example: 10000.00
+        currency:
+          type: string
+          nullable: true
+          description: Währung
+          example: "EUR"
+        default_vat_rate:
+          type: number
+          format: decimal
+          nullable: true
+          description: Standard-Mehrwertsteuersatz
+          example: 19.00
+        status:
+          type: string
+          enum:
+            - draft
+            - active
+            - expired
+            - terminated
+            - completed
+          description: Vertragsstatus
+        payment_terms:
+          type: integer
+          nullable: true
+          description: Zahlungsbedingungen in Tagen
+          example: 30
+        notes:
+          type: string
+          nullable: true
+          description: Notizen
+        contract_recognition_1:
+          type: string
+          nullable: true
+          description: Vertragskennung 1
+          example: "12345"
+        contract_recognition_2:
+          type: string
+          nullable: true
+          description: Vertragskennung 2
+          example: "ABCDE"
+        contract_recognition_3:
+          type: string
+          nullable: true
+          description: Vertragskennung 3
+          example: "XYZ-789"
+        default_title:
+          type: string
+          nullable: true
+          description: Standard-Titel für Abrechnungen
+        default_description:
+          type: string
+          nullable: true
+          description: Standard-Beschreibung für Abrechnungen
+        custom_field_1:
+          type: string
+          nullable: true
+          description: Benutzerdefiniertes Feld 1
+        custom_field_2:
+          type: string
+          nullable: true
+          description: Benutzerdefiniertes Feld 2
+        custom_field_3:
+          type: string
+          nullable: true
+          description: Benutzerdefiniertes Feld 3
+        custom_field_4:
+          type: string
+          nullable: true
+          description: Benutzerdefiniertes Feld 4
+        custom_field_5:
+          type: string
+          nullable: true
+          description: Benutzerdefiniertes Feld 5
+        is_active:
+          type: boolean
+          description: Ist der Vertrag aktiv?
+          example: true
+        created_by:
+          type: string
+          nullable: true
+          description: Erstellt von
+        created_at:
+          type: string
+          format: date-time
+          description: Erstellungsdatum
+        updated_at:
+          type: string
+          format: date-time
+          description: Aktualisierungsdatum
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Löschdatum (Soft Delete)
+        supplier:
+          $ref: '#/components/schemas/Supplier'
+        solar_plants:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolarPlant'
+        solar_plant_assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolarPlantAssignment'
+        billings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Billing'
+        contract_notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractNote'
+        favorite_notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractNote'
+        standard_notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractNote'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        articles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Article'
+        active_articles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Article'
+
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        supplier_number:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - blocked
+
+    SolarPlant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        plant_number:
+          type: string
+        capacity_kwp:
+          type: number
+          format: decimal
+
+    SolarPlantAssignment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        supplier_contract_id:
+          type: string
+          format: uuid
+        solar_plant_id:
+          type: string
+          format: uuid
+        percentage:
+          type: number
+          format: decimal
+          description: Prozentsatz der Zuordnung
+        notes:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+
+    Billing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        supplier_contract_id:
+          type: string
+          format: uuid
+        billing_month:
+          type: string
+          format: date
+        total_amount:
+          type: number
+          format: decimal
+        status:
+          type: string
+
+    ContractNote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        supplier_contract_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+        is_favorite:
+          type: boolean
+        sort_order:
+          type: integer
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentable_type:
+          type: string
+        documentable_id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        file_path:
+          type: string
+        file_size:
+          type: integer
+        mime_type:
+          type: string
+
+    Article:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        article_number:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        unit_price:
+          type: number
+          format: decimal
+        pivot:
+          type: object
+          properties:
+            quantity:
+              type: number
+            unit_price:
+              type: number
+              format: decimal
+            notes:
+              type: string
+            is_active:
+              type: boolean
+            billing_requirement:
+              type: string

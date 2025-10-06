@@ -160,10 +160,10 @@ Route::prefix('app')->middleware('app_token')->group(function () {
         Route::get('/{supplier}', [App\Http\Controllers\Api\SupplierApiController::class, 'show'])->middleware('app_token:suppliers:read');
         Route::put('/{supplier}', [App\Http\Controllers\Api\SupplierApiController::class, 'update'])->middleware('app_token:suppliers:update');
         Route::delete('/{supplier}', [App\Http\Controllers\Api\SupplierApiController::class, 'destroy'])->middleware('app_token:suppliers:delete');
-        
+
         // Spezielle Aktionen
         Route::patch('/{supplier}/status', [App\Http\Controllers\Api\SupplierApiController::class, 'updateStatus'])->middleware('app_token:suppliers:status');
-        
+
         // Zusätzliche Endpoints
         Route::get('/{supplier}/contracts', [App\Http\Controllers\Api\SupplierApiController::class, 'contracts'])->middleware('app_token:suppliers:read');
         Route::get('/{supplier}/projects', [App\Http\Controllers\Api\SupplierApiController::class, 'projects'])->middleware('app_token:suppliers:read');
@@ -171,6 +171,9 @@ Route::prefix('app')->middleware('app_token')->group(function () {
         Route::get('/{supplier}/financials', [App\Http\Controllers\Api\SupplierApiController::class, 'financials'])->middleware('app_token:suppliers:read');
         Route::get('/{supplier}/performance', [App\Http\Controllers\Api\SupplierApiController::class, 'performance'])->middleware('app_token:suppliers:read');
     });
+
+    // Vertragssuche
+    Route::post('/contracts/search', [App\Http\Controllers\Api\SupplierApiController::class, 'searchContractsByIdentifiers'])->middleware('app_token:suppliers:read');
     
     // Projekt-Management
     Route::prefix('projects')->group(function () {

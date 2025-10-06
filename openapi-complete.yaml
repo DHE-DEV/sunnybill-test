@@ -1,0 +1,1844 @@
+openapi: 3.0.3
+info:
+  title: SunnyBill API
+  description: |
+    Vollständige API-Dokumentation für SunnyBill - Solar Plant Management System
+
+    ## Authentifizierung
+    Die meisten Endpunkte erfordern ein App-Token zur Authentifizierung.
+    Das Token muss im Authorization-Header als Bearer Token übergeben werden.
+
+    ## Permissions
+    Jeder Endpunkt erfordert spezifische Permissions, die im Token hinterlegt sein müssen.
+
+  version: 1.0.0
+  contact:
+    name: SunnyBill Support
+
+servers:
+  - url: http://localhost/api/app
+    description: Local development server
+  - url: https://your-domain.com/api/app
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Tasks
+    description: Aufgaben-Management
+  - name: Solar Plants
+    description: Solaranlagen-Management
+  - name: Customers
+    description: Kunden-Management
+  - name: Leads
+    description: Lead-Management
+  - name: Suppliers
+    description: Lieferanten-Management
+  - name: Contracts
+    description: Vertrags-Management
+  - name: Projects
+    description: Projekt-Management
+  - name: Milestones
+    description: Meilenstein-Management
+  - name: Appointments
+    description: Termin-Management
+  - name: Phone Numbers
+    description: Telefonnummern-Management
+  - name: Costs
+    description: Kosten-Management
+  - name: Options
+    description: Dropdown-Daten und Optionen
+
+paths:
+  # =============================================================================
+  # TASKS
+  # =============================================================================
+  /tasks:
+    get:
+      summary: Liste aller Aufgaben
+      tags: [Tasks]
+      operationId: getTasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, cancelled]
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, urgent]
+        - name: assigned_to
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+            maximum: 100
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+
+    post:
+      summary: Neue Aufgabe erstellen
+      tags: [Tasks]
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '201':
+          description: Aufgabe erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /tasks/{task}:
+    get:
+      summary: Einzelne Aufgabe abrufen
+      tags: [Tasks]
+      parameters:
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+    put:
+      summary: Aufgabe aktualisieren
+      tags: [Tasks]
+      parameters:
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateRequest'
+      responses:
+        '200':
+          description: Aufgabe erfolgreich aktualisiert
+
+    delete:
+      summary: Aufgabe löschen
+      tags: [Tasks]
+      parameters:
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Aufgabe erfolgreich gelöscht
+
+  # =============================================================================
+  # SOLAR PLANTS
+  # =============================================================================
+  /solar-plants:
+    get:
+      summary: Liste aller Solaranlagen
+      tags: [Solar Plants]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolarPlantListResponse'
+
+    post:
+      summary: Neue Solaranlage erstellen
+      tags: [Solar Plants]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolarPlantCreateRequest'
+      responses:
+        '201':
+          description: Solaranlage erfolgreich erstellt
+
+  /solar-plants/{solarPlant}:
+    get:
+      summary: Einzelne Solaranlage abrufen
+      tags: [Solar Plants]
+      parameters:
+        - name: solarPlant
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolarPlantResponse'
+
+    put:
+      summary: Solaranlage aktualisieren
+      tags: [Solar Plants]
+      parameters:
+        - name: solarPlant
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolarPlantUpdateRequest'
+      responses:
+        '200':
+          description: Solaranlage erfolgreich aktualisiert
+
+    delete:
+      summary: Solaranlage löschen
+      tags: [Solar Plants]
+      parameters:
+        - name: solarPlant
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Solaranlage erfolgreich gelöscht
+
+  /solar-plants/{solarPlant}/components:
+    get:
+      summary: Komponenten einer Solaranlage
+      tags: [Solar Plants]
+      parameters:
+        - name: solarPlant
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /solar-plants/{solarPlant}/participations:
+    get:
+      summary: Beteiligungen einer Solaranlage
+      tags: [Solar Plants]
+      parameters:
+        - name: solarPlant
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /solar-plants/{solarPlant}/monthly-results:
+    get:
+      summary: Monatsergebnisse einer Solaranlage
+      tags: [Solar Plants]
+      parameters:
+        - name: solarPlant
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /solar-plants/{solarPlant}/statistics:
+    get:
+      summary: Statistiken einer Solaranlage
+      tags: [Solar Plants]
+      parameters:
+        - name: solarPlant
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  # =============================================================================
+  # CUSTOMERS
+  # =============================================================================
+  /customers:
+    get:
+      summary: Liste aller Kunden
+      tags: [Customers]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: customer_type
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerListResponse'
+
+    post:
+      summary: Neuen Kunden erstellen
+      tags: [Customers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreateRequest'
+      responses:
+        '201':
+          description: Kunde erfolgreich erstellt
+
+  /customers/{customer}:
+    get:
+      summary: Einzelnen Kunden abrufen
+      tags: [Customers]
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    put:
+      summary: Kunden aktualisieren
+      tags: [Customers]
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdateRequest'
+      responses:
+        '200':
+          description: Kunde erfolgreich aktualisiert
+
+    delete:
+      summary: Kunden löschen
+      tags: [Customers]
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Kunde erfolgreich gelöscht
+
+  /customers/{customer}/participations:
+    get:
+      summary: Beteiligungen eines Kunden
+      tags: [Customers]
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /customers/{customer}/projects:
+    get:
+      summary: Projekte eines Kunden
+      tags: [Customers]
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /customers/{customer}/tasks:
+    get:
+      summary: Aufgaben eines Kunden
+      tags: [Customers]
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /customers/{customer}/financials:
+    get:
+      summary: Finanzdaten eines Kunden
+      tags: [Customers]
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  # =============================================================================
+  # LEADS
+  # =============================================================================
+  /leads:
+    get:
+      summary: Liste aller Leads
+      tags: [Leads]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    post:
+      summary: Neuen Lead erstellen
+      tags: [Leads]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeadCreateRequest'
+      responses:
+        '201':
+          description: Lead erfolgreich erstellt
+
+  /leads/{lead}:
+    get:
+      summary: Einzelnen Lead abrufen
+      tags: [Leads]
+      parameters:
+        - name: lead
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    put:
+      summary: Lead aktualisieren
+      tags: [Leads]
+      parameters:
+        - name: lead
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lead erfolgreich aktualisiert
+
+    delete:
+      summary: Lead löschen
+      tags: [Leads]
+      parameters:
+        - name: lead
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lead erfolgreich gelöscht
+
+  /leads/{lead}/convert-to-customer:
+    patch:
+      summary: Lead in Kunden konvertieren
+      tags: [Leads]
+      parameters:
+        - name: lead
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lead erfolgreich konvertiert
+
+  # =============================================================================
+  # SUPPLIERS
+  # =============================================================================
+  /suppliers:
+    get:
+      summary: Liste aller Lieferanten
+      tags: [Suppliers]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, blocked]
+        - name: supplier_type
+          in: query
+          schema:
+            type: string
+            enum: [energy_provider, maintenance, installation, consulting, insurance, other]
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Suche nach Firmenname, Kontaktperson, Email, Lieferantennummer
+        - name: has_active_contracts
+          in: query
+          schema:
+            type: boolean
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierListResponse'
+
+    post:
+      summary: Neuen Lieferanten erstellen
+      tags: [Suppliers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierCreateRequest'
+      responses:
+        '201':
+          description: Lieferant erfolgreich erstellt
+
+  /suppliers/{supplier}:
+    get:
+      summary: Einzelnen Lieferanten abrufen
+      tags: [Suppliers]
+      parameters:
+        - name: supplier
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+
+    put:
+      summary: Lieferanten aktualisieren
+      tags: [Suppliers]
+      parameters:
+        - name: supplier
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierUpdateRequest'
+      responses:
+        '200':
+          description: Lieferant erfolgreich aktualisiert
+
+    delete:
+      summary: Lieferanten löschen
+      tags: [Suppliers]
+      parameters:
+        - name: supplier
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lieferant erfolgreich gelöscht
+
+  /suppliers/{supplier}/contracts:
+    get:
+      summary: Verträge eines Lieferanten
+      tags: [Suppliers]
+      description: Ruft alle Verträge eines Lieferanten ab mit Solaranlagen und Abrechnungen
+      parameters:
+        - name: supplier
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupplierContract'
+                  summary:
+                    type: object
+                    properties:
+                      total_contracts:
+                        type: integer
+                      active_contracts:
+                        type: integer
+                      total_contract_value:
+                        type: number
+                      total_billings_12m:
+                        type: number
+
+  /suppliers/{supplier}/projects:
+    get:
+      summary: Projekte eines Lieferanten
+      tags: [Suppliers]
+      parameters:
+        - name: supplier
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /suppliers/{supplier}/tasks:
+    get:
+      summary: Aufgaben eines Lieferanten
+      tags: [Suppliers]
+      parameters:
+        - name: supplier
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /suppliers/{supplier}/financials:
+    get:
+      summary: Finanzielle Übersicht eines Lieferanten
+      tags: [Suppliers]
+      description: Liefert Vertragsübersicht und Abrechnungsperformance der letzten 12 Monate
+      parameters:
+        - name: supplier
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /suppliers/{supplier}/performance:
+    get:
+      summary: Performance-Analyse eines Lieferanten
+      tags: [Suppliers]
+      description: Projekt- und Vertragsperformance, Qualitätsmetriken
+      parameters:
+        - name: supplier
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  # =============================================================================
+  # CONTRACTS
+  # =============================================================================
+  /contracts/search:
+    post:
+      summary: Verträge nach Kennungen durchsuchen
+      tags: [Contracts]
+      description: |
+        Sucht Verträge anhand der Vertragskennungen (contract_recognition_1/2/3).
+        Unterstützt flexible Relation-Loading inkl. nested Relations.
+      operationId: searchContractsByIdentifiers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifiers
+              properties:
+                identifiers:
+                  type: array
+                  minItems: 1
+                  description: Key-Value-Paare zum Durchsuchen der Vertragskennungen
+                  items:
+                    type: object
+                    required:
+                      - key
+                      - value
+                    properties:
+                      key:
+                        type: string
+                        enum:
+                          - contract_recognition_1
+                          - contract_recognition_2
+                          - contract_recognition_3
+                        description: Feld, in dem gesucht werden soll
+                      value:
+                        type: string
+                        description: Suchwert (unterstützt Teilstring-Suche)
+                relations:
+                  type: array
+                  description: |
+                    Optional - Welche Relationen sollen mitgeladen werden.
+
+                    **Basis-Relationen:**
+                    - supplier
+                    - solarPlants
+                    - solarPlantAssignments
+                    - billings
+                    - contractNotes
+                    - favoriteNotes
+                    - standardNotes
+                    - documents
+                    - articles
+                    - activeArticles
+
+                    **Nested Relations (mit Punkt-Notation):**
+                    - solarPlants.components
+                    - solarPlants.participations
+                    - solarPlants.customers
+                    - solarPlants.monthlyResults
+                    - solarPlantAssignments.solarPlant
+                    - solarPlantAssignments.solarPlant.components
+                  items:
+                    type: string
+                    example: "solarPlants.components"
+            examples:
+              basic:
+                summary: Einfache Suche ohne Relations
+                value:
+                  identifiers:
+                    - key: contract_recognition_1
+                      value: "12345"
+              withRelations:
+                summary: Suche mit ausgewählten Relations
+                value:
+                  identifiers:
+                    - key: contract_recognition_1
+                      value: "12345"
+                  relations:
+                    - supplier
+                    - billings
+                    - documents
+              nested:
+                summary: Suche mit nested Relations
+                value:
+                  identifiers:
+                    - key: contract_recognition_1
+                      value: "12345"
+                  relations:
+                    - supplier
+                    - solarPlants.components
+                    - solarPlants.participations
+                    - solarPlantAssignments.solarPlant
+                    - billings
+      responses:
+        '200':
+          description: Erfolgreiche Suche
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupplierContract'
+                  summary:
+                    type: object
+                    properties:
+                      total_found:
+                        type: integer
+                      search_criteria:
+                        type: array
+                        items:
+                          type: object
+                      loaded_relations:
+                        type: array
+                        items:
+                          type: string
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  # =============================================================================
+  # PROJECTS
+  # =============================================================================
+  /projects:
+    get:
+      summary: Liste aller Projekte
+      tags: [Projects]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    post:
+      summary: Neues Projekt erstellen
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreateRequest'
+      responses:
+        '201':
+          description: Projekt erfolgreich erstellt
+
+  /projects/{project}:
+    get:
+      summary: Einzelnes Projekt abrufen
+      tags: [Projects]
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    put:
+      summary: Projekt aktualisieren
+      tags: [Projects]
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Projekt erfolgreich aktualisiert
+
+    delete:
+      summary: Projekt löschen
+      tags: [Projects]
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Projekt erfolgreich gelöscht
+
+  /projects/{project}/milestones:
+    get:
+      summary: Meilensteine eines Projekts
+      tags: [Projects, Milestones]
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    post:
+      summary: Neuen Meilenstein erstellen
+      tags: [Projects, Milestones]
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Meilenstein erfolgreich erstellt
+
+  /projects/{project}/appointments:
+    get:
+      summary: Termine eines Projekts
+      tags: [Projects, Appointments]
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    post:
+      summary: Neuen Termin erstellen
+      tags: [Projects, Appointments]
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Termin erfolgreich erstellt
+
+  # =============================================================================
+  # MILESTONES
+  # =============================================================================
+  /project-milestones:
+    get:
+      summary: Liste aller Meilensteine (projektübergreifend)
+      tags: [Milestones]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /project-milestones/{projectMilestone}:
+    get:
+      summary: Einzelnen Meilenstein abrufen
+      tags: [Milestones]
+      parameters:
+        - name: projectMilestone
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    put:
+      summary: Meilenstein aktualisieren
+      tags: [Milestones]
+      parameters:
+        - name: projectMilestone
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Meilenstein erfolgreich aktualisiert
+
+    delete:
+      summary: Meilenstein löschen
+      tags: [Milestones]
+      parameters:
+        - name: projectMilestone
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Meilenstein erfolgreich gelöscht
+
+  # =============================================================================
+  # APPOINTMENTS
+  # =============================================================================
+  /project-appointments:
+    get:
+      summary: Liste aller Termine (projektübergreifend)
+      tags: [Appointments]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /project-appointments/upcoming:
+    get:
+      summary: Anstehende Termine
+      tags: [Appointments]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /project-appointments/calendar:
+    get:
+      summary: Kalenderansicht der Termine
+      tags: [Appointments]
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /project-appointments/{projectAppointment}:
+    get:
+      summary: Einzelnen Termin abrufen
+      tags: [Appointments]
+      parameters:
+        - name: projectAppointment
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    put:
+      summary: Termin aktualisieren
+      tags: [Appointments]
+      parameters:
+        - name: projectAppointment
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Termin erfolgreich aktualisiert
+
+    delete:
+      summary: Termin löschen
+      tags: [Appointments]
+      parameters:
+        - name: projectAppointment
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Termin erfolgreich gelöscht
+
+  # =============================================================================
+  # PHONE NUMBERS
+  # =============================================================================
+  /users/{userId}/phone-numbers:
+    get:
+      summary: Telefonnummern eines Benutzers
+      tags: [Phone Numbers]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    post:
+      summary: Neue Telefonnummer für Benutzer erstellen
+      tags: [Phone Numbers]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Telefonnummer erfolgreich erstellt
+
+  /phone-numbers:
+    get:
+      summary: Alle Telefonnummern (alle Entitäten)
+      tags: [Phone Numbers]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    post:
+      summary: Neue Telefonnummer erstellen
+      tags: [Phone Numbers]
+      responses:
+        '201':
+          description: Telefonnummer erfolgreich erstellt
+
+  /phone-numbers/{id}:
+    get:
+      summary: Einzelne Telefonnummer abrufen
+      tags: [Phone Numbers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+    put:
+      summary: Telefonnummer aktualisieren
+      tags: [Phone Numbers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Telefonnummer erfolgreich aktualisiert
+
+    delete:
+      summary: Telefonnummer löschen
+      tags: [Phone Numbers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Telefonnummer erfolgreich gelöscht
+
+  # =============================================================================
+  # COSTS
+  # =============================================================================
+  /costs/overview:
+    get:
+      summary: Kostenübersicht
+      tags: [Costs]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /costs/reports:
+    get:
+      summary: Kostenberichte
+      tags: [Costs]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /solar-plants/{solarPlant}/costs:
+    get:
+      summary: Kosten einer Solaranlage
+      tags: [Costs, Solar Plants]
+      parameters:
+        - name: solarPlant
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /solar-plants/{solarPlant}/billings:
+    get:
+      summary: Abrechnungen einer Solaranlage
+      tags: [Costs, Solar Plants]
+      parameters:
+        - name: solarPlant
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  # =============================================================================
+  # OPTIONS & DROPDOWNS
+  # =============================================================================
+  /options/tasks:
+    get:
+      summary: Optionen für Aufgaben (Dropdown-Daten)
+      tags: [Options]
+      description: Status-Optionen, Prioritäten, etc.
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /options/projects:
+    get:
+      summary: Optionen für Projekte
+      tags: [Options]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /options/customers:
+    get:
+      summary: Optionen für Kunden
+      tags: [Options]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /options/suppliers:
+    get:
+      summary: Optionen für Lieferanten
+      tags: [Options]
+      description: Lieferantentypen, Status, Länder, Zahlungsbedingungen
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      supplier_types:
+                        type: object
+                      statuses:
+                        type: object
+                      countries:
+                        type: object
+                      payment_terms:
+                        type: object
+
+  /users:
+    get:
+      summary: Benutzer-Dropdown
+      tags: [Options]
+      description: Liste aller Benutzer für Dropdown-Auswahl
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /customers-dropdown:
+    get:
+      summary: Kunden-Dropdown
+      tags: [Options]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /suppliers:
+    get:
+      summary: Lieferanten-Dropdown
+      tags: [Options]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+  /solar-plants-dropdown:
+    get:
+      summary: Solaranlagen-Dropdown
+      tags: [Options]
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        App-Token für API-Zugriff.
+
+        Benötigte Permissions sind bei jedem Endpunkt dokumentiert.
+        Format: Authorization: Bearer YOUR_APP_TOKEN
+
+  responses:
+    ValidationError:
+      description: Validierungsfehler
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Validierungsfehler"
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+
+    Unauthorized:
+      description: Nicht authentifiziert
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Unauthenticated."
+
+  schemas:
+    # =============================================================================
+    # TASK SCHEMAS
+    # =============================================================================
+    TaskListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    TaskResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Task'
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, cancelled]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        due_date:
+          type: string
+          format: date-time
+        assigned_to:
+          type: string
+          format: uuid
+
+    TaskCreateRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+
+    TaskUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+
+    # =============================================================================
+    # SOLAR PLANT SCHEMAS
+    # =============================================================================
+    SolarPlantListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolarPlant'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    SolarPlantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/SolarPlant'
+
+    SolarPlant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        plant_number:
+          type: string
+        name:
+          type: string
+        location:
+          type: string
+        total_capacity_kw:
+          type: number
+        status:
+          type: string
+        is_active:
+          type: boolean
+
+    SolarPlantCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        total_capacity_kw:
+          type: number
+
+    SolarPlantUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        total_capacity_kw:
+          type: number
+
+    # =============================================================================
+    # CUSTOMER SCHEMAS
+    # =============================================================================
+    CustomerListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_number:
+          type: string
+        company_name:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+
+    CustomerCreateRequest:
+      type: object
+      properties:
+        company_name:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+
+    CustomerUpdateRequest:
+      type: object
+      properties:
+        company_name:
+          type: string
+        email:
+          type: string
+
+    # =============================================================================
+    # LEAD SCHEMAS
+    # =============================================================================
+    LeadCreateRequest:
+      type: object
+      required:
+        - source
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        source:
+          type: string
+
+    # =============================================================================
+    # SUPPLIER SCHEMAS
+    # =============================================================================
+    SupplierListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    SupplierResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Supplier'
+
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        supplier_number:
+          type: string
+        company_name:
+          type: string
+        supplier_type:
+          type: string
+          enum: [energy_provider, maintenance, installation, consulting, insurance, other]
+        contact_person:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, blocked]
+        is_active:
+          type: boolean
+
+    SupplierCreateRequest:
+      type: object
+      required:
+        - company_name
+        - supplier_type
+        - email
+        - status
+      properties:
+        company_name:
+          type: string
+        supplier_type:
+          type: string
+        email:
+          type: string
+        contact_person:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+
+    SupplierUpdateRequest:
+      type: object
+      properties:
+        company_name:
+          type: string
+        supplier_type:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+
+    # =============================================================================
+    # SUPPLIER CONTRACT SCHEMAS
+    # =============================================================================
+    SupplierContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        supplier_id:
+          type: string
+          format: uuid
+        contract_number:
+          type: string
+        malo_id:
+          type: string
+        ep_id:
+          type: string
+        creditor_number:
+          type: string
+        external_contract_number:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        contract_value:
+          type: number
+          format: decimal
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, expired, terminated, completed]
+        contract_recognition_1:
+          type: string
+          description: Vertragskennung 1
+        contract_recognition_2:
+          type: string
+          description: Vertragskennung 2
+        contract_recognition_3:
+          type: string
+          description: Vertragskennung 3
+        is_active:
+          type: boolean
+        supplier:
+          $ref: '#/components/schemas/Supplier'
+        solar_plants:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolarPlant'
+        billings:
+          type: array
+          items:
+            type: object
+        documents:
+          type: array
+          items:
+            type: object
+
+    # =============================================================================
+    # PROJECT SCHEMAS
+    # =============================================================================
+    ProjectCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date
+        planned_end_date:
+          type: string
+          format: date
+
+    # =============================================================================
+    # COMMON SCHEMAS
+    # =============================================================================
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        last_page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer

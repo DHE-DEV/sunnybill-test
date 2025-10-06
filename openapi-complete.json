@@ -1,0 +1,958 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SunnyBill API",
+    "description": "Vollständige API-Dokumentation für SunnyBill - Solar Plant Management System",
+    "version": "1.0.0",
+    "contact": {
+      "name": "SunnyBill Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost/api/app",
+      "description": "Local development server"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "tags": [
+    {"name": "Tasks", "description": "Aufgaben-Management"},
+    {"name": "Solar Plants", "description": "Solaranlagen-Management"},
+    {"name": "Customers", "description": "Kunden-Management"},
+    {"name": "Leads", "description": "Lead-Management"},
+    {"name": "Suppliers", "description": "Lieferanten-Management"},
+    {"name": "Contracts", "description": "Vertrags-Management"},
+    {"name": "Projects", "description": "Projekt-Management"},
+    {"name": "Options", "description": "Dropdown-Daten und Optionen"}
+  ],
+  "paths": {
+    "/tasks": {
+      "get": {
+        "summary": "Liste aller Aufgaben",
+        "tags": ["Tasks"],
+        "operationId": "getTasks",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "in_progress", "completed", "cancelled"]
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["low", "medium", "high", "urgent"]
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Erfolgreiche Antwort"
+          }
+        }
+      },
+      "post": {
+        "summary": "Neue Aufgabe erstellen",
+        "tags": ["Tasks"],
+        "operationId": "createTask",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {"type": "string"},
+                  "description": {"type": "string"},
+                  "status": {"type": "string"},
+                  "priority": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Aufgabe erfolgreich erstellt"
+          }
+        }
+      }
+    },
+    "/tasks/{task}": {
+      "get": {
+        "summary": "Einzelne Aufgabe abrufen",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "name": "task",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "put": {
+        "summary": "Aufgabe aktualisieren",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "name": "task",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {"type": "string"},
+                  "description": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Aufgabe erfolgreich aktualisiert"}
+        }
+      },
+      "delete": {
+        "summary": "Aufgabe löschen",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "name": "task",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Aufgabe erfolgreich gelöscht"}
+        }
+      }
+    },
+    "/solar-plants": {
+      "get": {
+        "summary": "Liste aller Solaranlagen",
+        "tags": ["Solar Plants"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {"type": "integer", "default": 15}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "post": {
+        "summary": "Neue Solaranlage erstellen",
+        "tags": ["Solar Plants"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "location": {"type": "string"},
+                  "total_capacity_kw": {"type": "number"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Solaranlage erfolgreich erstellt"}
+        }
+      }
+    },
+    "/solar-plants/{solarPlant}": {
+      "get": {
+        "summary": "Einzelne Solaranlage abrufen",
+        "tags": ["Solar Plants"],
+        "parameters": [
+          {
+            "name": "solarPlant",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "put": {
+        "summary": "Solaranlage aktualisieren",
+        "tags": ["Solar Plants"],
+        "parameters": [
+          {
+            "name": "solarPlant",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "location": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Solaranlage erfolgreich aktualisiert"}
+        }
+      },
+      "delete": {
+        "summary": "Solaranlage löschen",
+        "tags": ["Solar Plants"],
+        "parameters": [
+          {
+            "name": "solarPlant",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Solaranlage erfolgreich gelöscht"}
+        }
+      }
+    },
+    "/solar-plants/{solarPlant}/components": {
+      "get": {
+        "summary": "Komponenten einer Solaranlage",
+        "tags": ["Solar Plants"],
+        "parameters": [
+          {
+            "name": "solarPlant",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/solar-plants/{solarPlant}/participations": {
+      "get": {
+        "summary": "Beteiligungen einer Solaranlage",
+        "tags": ["Solar Plants"],
+        "parameters": [
+          {
+            "name": "solarPlant",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/solar-plants/{solarPlant}/monthly-results": {
+      "get": {
+        "summary": "Monatsergebnisse einer Solaranlage",
+        "tags": ["Solar Plants"],
+        "parameters": [
+          {
+            "name": "solarPlant",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/solar-plants/{solarPlant}/statistics": {
+      "get": {
+        "summary": "Statistiken einer Solaranlage",
+        "tags": ["Solar Plants"],
+        "parameters": [
+          {
+            "name": "solarPlant",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "summary": "Liste aller Kunden",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {"type": "integer", "default": 15}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "post": {
+        "summary": "Neuen Kunden erstellen",
+        "tags": ["Customers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "company_name": {"type": "string"},
+                  "first_name": {"type": "string"},
+                  "last_name": {"type": "string"},
+                  "email": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Kunde erfolgreich erstellt"}
+        }
+      }
+    },
+    "/customers/{customer}": {
+      "get": {
+        "summary": "Einzelnen Kunden abrufen",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "put": {
+        "summary": "Kunden aktualisieren",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Kunde erfolgreich aktualisiert"}
+        }
+      },
+      "delete": {
+        "summary": "Kunden löschen",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Kunde erfolgreich gelöscht"}
+        }
+      }
+    },
+    "/customers/{customer}/participations": {
+      "get": {
+        "summary": "Beteiligungen eines Kunden",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/customers/{customer}/projects": {
+      "get": {
+        "summary": "Projekte eines Kunden",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/customers/{customer}/financials": {
+      "get": {
+        "summary": "Finanzdaten eines Kunden",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/leads": {
+      "get": {
+        "summary": "Liste aller Leads",
+        "tags": ["Leads"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "post": {
+        "summary": "Neuen Lead erstellen",
+        "tags": ["Leads"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {"type": "string"},
+                  "last_name": {"type": "string"},
+                  "email": {"type": "string"},
+                  "source": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Lead erfolgreich erstellt"}
+        }
+      }
+    },
+    "/leads/{lead}": {
+      "get": {
+        "summary": "Einzelnen Lead abrufen",
+        "tags": ["Leads"],
+        "parameters": [
+          {
+            "name": "lead",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "put": {
+        "summary": "Lead aktualisieren",
+        "tags": ["Leads"],
+        "parameters": [
+          {
+            "name": "lead",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Lead erfolgreich aktualisiert"}
+        }
+      },
+      "delete": {
+        "summary": "Lead löschen",
+        "tags": ["Leads"],
+        "parameters": [
+          {
+            "name": "lead",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Lead erfolgreich gelöscht"}
+        }
+      }
+    },
+    "/suppliers": {
+      "get": {
+        "summary": "Liste aller Lieferanten",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "inactive", "blocked"]
+            }
+          },
+          {
+            "name": "supplier_type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["energy_provider", "maintenance", "installation", "consulting", "insurance", "other"]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Suche nach Firmenname, Kontaktperson, Email",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {"type": "integer", "default": 15}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "post": {
+        "summary": "Neuen Lieferanten erstellen",
+        "tags": ["Suppliers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["company_name", "supplier_type", "email", "status"],
+                "properties": {
+                  "company_name": {"type": "string"},
+                  "supplier_type": {
+                    "type": "string",
+                    "enum": ["energy_provider", "maintenance", "installation", "consulting", "insurance", "other"]
+                  },
+                  "email": {"type": "string", "format": "email"},
+                  "contact_person": {"type": "string"},
+                  "phone": {"type": "string"},
+                  "status": {
+                    "type": "string",
+                    "enum": ["active", "inactive", "blocked"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Lieferant erfolgreich erstellt"}
+        }
+      }
+    },
+    "/suppliers/{supplier}": {
+      "get": {
+        "summary": "Einzelnen Lieferanten abrufen",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "supplier",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "put": {
+        "summary": "Lieferanten aktualisieren",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "supplier",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Lieferant erfolgreich aktualisiert"}
+        }
+      },
+      "delete": {
+        "summary": "Lieferanten löschen",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "supplier",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Lieferant erfolgreich gelöscht"}
+        }
+      }
+    },
+    "/suppliers/{supplier}/contracts": {
+      "get": {
+        "summary": "Verträge eines Lieferanten",
+        "description": "Ruft alle Verträge eines Lieferanten mit Solaranlagen und Abrechnungen ab",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "supplier",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/suppliers/{supplier}/financials": {
+      "get": {
+        "summary": "Finanzielle Übersicht eines Lieferanten",
+        "description": "Liefert Vertragsübersicht und Abrechnungsperformance der letzten 12 Monate",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "supplier",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/suppliers/{supplier}/performance": {
+      "get": {
+        "summary": "Performance-Analyse eines Lieferanten",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "supplier",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/contracts/search": {
+      "post": {
+        "summary": "Verträge nach Kennungen durchsuchen",
+        "description": "Sucht Verträge anhand der Vertragskennungen (contract_recognition_1/2/3). Unterstützt flexible Relation-Loading inkl. nested Relations.",
+        "tags": ["Contracts"],
+        "operationId": "searchContractsByIdentifiers",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["identifiers"],
+                "properties": {
+                  "identifiers": {
+                    "type": "array",
+                    "minItems": 1,
+                    "description": "Key-Value-Paare zum Durchsuchen",
+                    "items": {
+                      "type": "object",
+                      "required": ["key", "value"],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": ["contract_recognition_1", "contract_recognition_2", "contract_recognition_3"]
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "relations": {
+                    "type": "array",
+                    "description": "Optional - Welche Relationen laden (z.B. 'supplier', 'solarPlants.components')",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Einfache Suche",
+                  "value": {
+                    "identifiers": [
+                      {
+                        "key": "contract_recognition_1",
+                        "value": "12345"
+                      }
+                    ]
+                  }
+                },
+                "withRelations": {
+                  "summary": "Mit Relations",
+                  "value": {
+                    "identifiers": [
+                      {
+                        "key": "contract_recognition_1",
+                        "value": "12345"
+                      }
+                    ],
+                    "relations": ["supplier", "billings", "documents"]
+                  }
+                },
+                "nested": {
+                  "summary": "Mit Nested Relations",
+                  "value": {
+                    "identifiers": [
+                      {
+                        "key": "contract_recognition_1",
+                        "value": "12345"
+                      }
+                    ],
+                    "relations": [
+                      "supplier",
+                      "solarPlants.components",
+                      "solarPlants.participations",
+                      "billings"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Erfolgreiche Suche",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {
+                      "type": "array",
+                      "items": {"type": "object"}
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "total_found": {"type": "integer"},
+                        "search_criteria": {"type": "array"},
+                        "loaded_relations": {"type": "array"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validierungsfehler"
+          }
+        }
+      }
+    },
+    "/projects": {
+      "get": {
+        "summary": "Liste aller Projekte",
+        "tags": ["Projects"],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      },
+      "post": {
+        "summary": "Neues Projekt erstellen",
+        "tags": ["Projects"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "description": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Projekt erfolgreich erstellt"}
+        }
+      }
+    },
+    "/projects/{project}": {
+      "get": {
+        "summary": "Einzelnes Projekt abrufen",
+        "tags": ["Projects"],
+        "parameters": [
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/options/tasks": {
+      "get": {
+        "summary": "Optionen für Aufgaben",
+        "description": "Status-Optionen, Prioritäten, etc.",
+        "tags": ["Options"],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/options/suppliers": {
+      "get": {
+        "summary": "Optionen für Lieferanten",
+        "description": "Lieferantentypen, Status, Länder, Zahlungsbedingungen",
+        "tags": ["Options"],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Benutzer-Dropdown",
+        "tags": ["Options"],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    },
+    "/customers-dropdown": {
+      "get": {
+        "summary": "Kunden-Dropdown",
+        "tags": ["Options"],
+        "responses": {
+          "200": {"description": "Erfolgreiche Antwort"}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "App-Token für API-Zugriff. Format: Authorization: Bearer YOUR_APP_TOKEN"
+      }
+    }
+  }
+}
