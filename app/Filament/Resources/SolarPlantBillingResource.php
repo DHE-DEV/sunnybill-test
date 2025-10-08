@@ -920,6 +920,69 @@ class SolarPlantBillingResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('change_status')
+                        ->label('Status ändern')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->modalHeading('Status auf Finalisiert ändern')
+                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records): string {
+                            $draftCount = $records->where('status', 'draft')->count();
+                            $totalCount = $records->count();
+                            $nonDraftCount = $totalCount - $draftCount;
+
+                            $message = "Sie haben {$totalCount} Abrechnung(en) ausgewählt.\n\n";
+
+                            if ($draftCount > 0) {
+                                $message .= "{$draftCount} Abrechnung(en) mit Status 'Entwurf' können auf 'Finalisiert' geändert werden.\n";
+                            }
+
+                            if ($nonDraftCount > 0) {
+                                $message .= "\n{$nonDraftCount} Abrechnung(en) haben einen anderen Status und werden übersprungen.\n";
+                            }
+
+                            $message .= "\nWichtig: Nur Abrechnungen mit Status 'Entwurf' werden auf 'Finalisiert' geändert.";
+
+                            return $message;
+                        })
+                        ->modalSubmitActionLabel('Status ändern')
+                        ->modalIcon('heroicon-o-arrow-path')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $updatedCount = 0;
+                            $skippedCount = 0;
+
+                            foreach ($records as $billing) {
+                                if ($billing->status === 'draft') {
+                                    $billing->update([
+                                        'status' => 'finalized',
+                                        'finalized_at' => now(),
+                                    ]);
+                                    $updatedCount++;
+                                } else {
+                                    $skippedCount++;
+                                }
+                            }
+
+                            if ($updatedCount > 0) {
+                                $message = "{$updatedCount} Abrechnung(en) wurden auf 'Finalisiert' gesetzt";
+                                if ($skippedCount > 0) {
+                                    $message .= " ({$skippedCount} übersprungen)";
+                                }
+
+                                Notification::make()
+                                    ->title('Status erfolgreich geändert')
+                                    ->body($message)
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Keine Änderungen')
+                                    ->body('Keine der ausgewählten Abrechnungen hatte den Status "Entwurf".')
+                                    ->warning()
+                                    ->send();
+                            }
+                        }),
+
                     Tables\Actions\BulkAction::make('export_excel')
                         ->label('Excel Export')
                         ->icon('heroicon-o-document-arrow-down')
