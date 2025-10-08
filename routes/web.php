@@ -67,6 +67,16 @@ Route::get('/admin/download-bulk-pdfs', [App\Http\Controllers\BulkPdfDownloadCon
     ->name('admin.download-bulk-pdfs')
     ->middleware('auth');
 
+// Bulk QR-Code print route
+Route::get('/admin/print-qr-codes', [App\Http\Controllers\BulkPdfDownloadController::class, 'printQrCodes'])
+    ->name('admin.print-qr-codes')
+    ->middleware('auth');
+
+// Bulk billing print route
+Route::get('/admin/print-billings', [App\Http\Controllers\BulkPdfDownloadController::class, 'printBillings'])
+    ->name('admin.print-billings')
+    ->middleware('auth');
+
 // QR-Code print route for solar plant billing
 Route::get('/admin/solar-plant-billing/{solarPlantBilling}/qr-code-print', [App\Http\Controllers\SolarPlantBillingController::class, 'printQrCode'])
     ->name('admin.solar-plant-billing.qr-code-print')

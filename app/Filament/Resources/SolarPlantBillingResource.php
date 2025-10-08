@@ -983,6 +983,198 @@ class SolarPlantBillingResource extends Resource
                             }
                         }),
 
+                    Tables\Actions\BulkAction::make('generate_qr_codes')
+                        ->label('QR-Codes drucken')
+                        ->icon('heroicon-o-qr-code')
+                        ->color('info')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            try {
+                                $epcQrCodeService = new \App\Services\EpcQrCodeService();
+                                $successCount = 0;
+                                $errorCount = 0;
+                                $errors = [];
+                                $billingIds = [];
+
+                                // Lade notwendige Beziehungen
+                                $records->load(['solarPlant', 'customer']);
+
+                                foreach ($records as $billing) {
+                                    try {
+                                        // Prüfe ob QR-Code generiert werden kann
+                                        if (!$epcQrCodeService->canGenerateQrCode($billing)) {
+                                            $errorCount++;
+                                            $errors[] = "Abrechnung {$billing->invoice_number}: " . $epcQrCodeService->getQrCodeErrorMessage($billing);
+                                            continue;
+                                        }
+
+                                        // Speichere Billing ID für späteren Abruf
+                                        $billingIds[] = $billing->id;
+                                        $successCount++;
+
+                                    } catch (\Exception $e) {
+                                        $errorCount++;
+                                        $errors[] = "Fehler bei Abrechnung {$billing->invoice_number}: " . $e->getMessage();
+                                    }
+                                }
+
+                                // Wenn QR-Codes erfolgreich generiert wurden, öffne Druckansicht
+                                if ($successCount > 0) {
+                                    // Speichere Billing IDs in Session für Druckseite
+                                    session([
+                                        'bulk_qr_billing_ids' => $billingIds,
+                                        'bulk_qr_success_count' => $successCount,
+                                        'bulk_qr_error_count' => $errorCount
+                                    ]);
+
+                                    // Erfolgsmeldung
+                                    $message = "{$successCount} QR-Code" . ($successCount !== 1 ? 's' : '') . " wurden erstellt und werden zum Drucken vorbereitet";
+                                    if ($errorCount > 0) {
+                                        $message .= " ({$errorCount} Fehler aufgetreten)";
+                                    }
+
+                                    $notification = Notification::make()
+                                        ->title('QR-Codes werden zum Drucken geöffnet')
+                                        ->body($message);
+
+                                    if ($errorCount === 0) {
+                                        $notification->success();
+                                    } else {
+                                        $notification->warning();
+                                    }
+
+                                    $notification->send();
+
+                                    // Redirect zur Druckseite
+                                    return redirect()->route('admin.print-qr-codes');
+
+                                } else {
+                                    // Nur Fehlermeldung wenn keine QR-Codes generiert wurden
+                                    $notification = Notification::make()
+                                        ->title('Keine QR-Codes generiert')
+                                        ->body('Es konnten keine QR-Codes erstellt werden. Siehe Fehlerdetails.');
+
+                                    if ($errorCount > 0) {
+                                        $notification->danger();
+                                    } else {
+                                        $notification->warning();
+                                    }
+
+                                    $notification->send();
+                                }
+
+                                // Bei Fehlern Details anzeigen
+                                if ($errorCount > 0 && count($errors) > 0) {
+                                    $errorDetails = implode("\n", array_slice($errors, 0, 5));
+                                    if (count($errors) > 5) {
+                                        $errorDetails .= "\n... und " . (count($errors) - 5) . " weitere Fehler";
+                                    }
+
+                                    Notification::make()
+                                        ->title('Fehlerdetails')
+                                        ->body($errorDetails)
+                                        ->danger()
+                                        ->send();
+                                }
+
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Fehler bei QR-Code-Generierung')
+                                    ->body('Ein unerwarteter Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('QR-Codes drucken')
+                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records) use (&$epcQrCodeService): string {
+                            $epcQrCodeService = new \App\Services\EpcQrCodeService();
+                            $count = $records->count();
+                            $validCount = 0;
+                            $invalidReasons = [];
+
+                            foreach ($records as $billing) {
+                                if ($epcQrCodeService->canGenerateQrCode($billing)) {
+                                    $validCount++;
+                                } else {
+                                    $invalidReasons[] = "• {$billing->invoice_number}: " . $epcQrCodeService->getQrCodeErrorMessage($billing);
+                                }
+                            }
+
+                            $message = "Sie haben {$count} Abrechnung(en) ausgewählt.\n\n";
+
+                            if ($validCount > 0) {
+                                $message .= "{$validCount} QR-Code(s) können generiert werden.\n";
+                            }
+
+                            if ($count - $validCount > 0) {
+                                $message .= "\n" . ($count - $validCount) . " Abrechnung(en) können nicht verarbeitet werden:\n";
+                                $message .= implode("\n", array_slice($invalidReasons, 0, 5));
+                                if (count($invalidReasons) > 5) {
+                                    $message .= "\n... und " . (count($invalidReasons) - 5) . " weitere";
+                                }
+                            }
+
+                            return $message;
+                        })
+                        ->modalSubmitActionLabel('QR-Codes generieren')
+                        ->modalIcon('heroicon-o-qr-code'),
+
+                    Tables\Actions\BulkAction::make('print_billings')
+                        ->label('Abrechnungen drucken')
+                        ->icon('heroicon-o-printer')
+                        ->color('success')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            try {
+                                $billingIds = [];
+
+                                // Sammle alle Billing IDs
+                                foreach ($records as $billing) {
+                                    $billingIds[] = $billing->id;
+                                }
+
+                                if (count($billingIds) > 0) {
+                                    // Speichere Billing IDs in Session für Druckseite
+                                    session([
+                                        'bulk_billing_ids' => $billingIds,
+                                        'bulk_billing_success_count' => count($billingIds),
+                                    ]);
+
+                                    // Erfolgsmeldung
+                                    $message = count($billingIds) . " Abrechnung(en) werden zum Drucken vorbereitet";
+
+                                    Notification::make()
+                                        ->title('Abrechnungen werden zum Drucken geöffnet')
+                                        ->body($message)
+                                        ->success()
+                                        ->send();
+
+                                    // Redirect zur Druckseite
+                                    return redirect()->route('admin.print-billings');
+                                } else {
+                                    Notification::make()
+                                        ->title('Keine Abrechnungen ausgewählt')
+                                        ->body('Bitte wählen Sie mindestens eine Abrechnung aus.')
+                                        ->warning()
+                                        ->send();
+                                }
+
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Fehler beim Drucken')
+                                    ->body('Ein unerwarteter Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Abrechnungen drucken')
+                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records): string {
+                            $count = $records->count();
+                            return "Sie haben {$count} Abrechnung(en) ausgewählt.\n\nDiese werden in einer Druckansicht geöffnet (eine Abrechnung pro Seite).";
+                        })
+                        ->modalSubmitActionLabel('Abrechnungen drucken')
+                        ->modalIcon('heroicon-o-printer'),
+
                     Tables\Actions\BulkAction::make('export_excel')
                         ->label('Excel Export')
                         ->icon('heroicon-o-document-arrow-down')

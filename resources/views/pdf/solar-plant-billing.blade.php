@@ -910,7 +910,7 @@
         @endphp
 
         @if($hasDetailedDescriptions)
-        <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
+        <div style="margin-top: 20px; margin-bottom: 100px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
             <h4 style="margin: 0 0 10px 0; color: #2563eb; font-size: 8pt;">Erklärung der Artikel</h4>
             @foreach($detailedArticles as $article)
             <div style="margin-bottom: 12px; padding-bottom: 12px; {{ !$loop->last ? 'border-bottom: 1px solid #e6f3ff;' : '' }}">
@@ -1088,7 +1088,7 @@
         @endphp
 
         @if($hasCostDetailedDescriptions)
-        <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
+        <div style="margin-top: 20px; margin-bottom: 100px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0;">
             <h4 style="margin: 0 0 10px 0; color: #2563eb; font-size: 8pt;">Erklärung der Kosten-Artikel</h4>
             @foreach($costDetailedArticles as $article)
             <div style="margin-bottom: 12px; padding-bottom: 12px; {{ !$loop->last ? 'border-bottom: 1px solid #ffe6e6;' : '' }}">
@@ -1110,7 +1110,7 @@
 
     <!-- Hinweise -->
     @if($billing->show_hints ?? true)
-    <div style="margin-top: 20px; font-size: 9pt; color: #666; page-break-inside: avoid;">
+    <div style="margin-top: 20px; margin-bottom: 100px; font-size: 9pt; color: #666; page-break-inside: avoid;">
         <p><strong>Wichtiger Hinweis:</strong></p>
         <p>Die Verrechnung der aktuellen Gutschriften und Kosten führt im aufgeführten Monat zu einer negativen Gutschrift, also zu einer <b>Rechnung</b>. Der daraus entstehende Rechnungsbetrag wird von unserem System automatisch mit der <b>nächsten</b> Abrechnung verrechnet.
 Den ausstehenden Rechnungsbetrag finden Sie auf Ihrer nächsten Abrechnung unter der entsprechenden Belegnummer in der Kostenaufstellung als separate Position aufgeführt.</p><p>Bitte führen Sie <b>keine eigenständige Überweisung</b> durch.</p>
@@ -1119,7 +1119,7 @@ Den ausstehenden Rechnungsbetrag finden Sie auf Ihrer nächsten Abrechnung unter
 
     <!-- Bemerkung -->
     @if($billing->notes)
-    <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0; page-break-inside: avoid;">
+    <div style="margin-top: 15px; margin-bottom: 100px; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #2563eb; border-radius: 0 5px 5px 0; page-break-inside: avoid;">
         <div style="font-size: 9pt; color: #374151; line-height: 1.4;">
             {!! nl2br(e($billing->notes)) !!}
         </div>
