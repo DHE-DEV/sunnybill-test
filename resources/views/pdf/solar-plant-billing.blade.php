@@ -732,16 +732,7 @@
         <!-- Bisherige Footer-Inhalte -->
         <div class="footer-content">
             <div class="footer-section">
-                @if($companySetting->bank_name)
-                <strong>Bankverbindung:</strong><br>
-                {{ $companySetting->bank_name }}<br>
-                @if($companySetting->iban)
-                IBAN: {{ $companySetting->formatted_iban }}<br>
-                @endif
-                @if($companySetting->bic)
-                BIC: {{ $companySetting->bic }}
-                @endif
-                @endif
+                &nbsp;
             </div>
             <div class="footer-section text-center">
                 @if($companySetting->tax_number)
@@ -1161,16 +1152,7 @@ Den ausstehenden Rechnungsbetrag finden Sie auf Ihrer nächsten Abrechnung unter
         <!-- Bisherige Footer-Inhalte -->
         <div class="footer-content">
             <div class="footer-section">
-                @if($companySetting->bank_name)
-                <strong>Bankverbindung:</strong><br>
-                {{ $companySetting->bank_name }}<br>
-                @if($companySetting->iban)
-                IBAN: {{ $companySetting->formatted_iban }}<br>
-                @endif
-                @if($companySetting->bic)
-                BIC: {{ $companySetting->bic }}
-                @endif
-                @endif
+                &nbsp;
             </div>
             <div class="footer-section text-center">
                 @if($companySetting->tax_number)
