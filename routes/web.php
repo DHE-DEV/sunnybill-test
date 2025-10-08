@@ -77,6 +77,11 @@ Route::get('/admin/print-billings', [App\Http\Controllers\BulkPdfDownloadControl
     ->name('admin.print-billings')
     ->middleware('auth');
 
+// CSV download route
+Route::get('/admin/download-csv', [App\Http\Controllers\BulkPdfDownloadController::class, 'downloadCsv'])
+    ->name('admin.download-csv')
+    ->middleware('auth');
+
 // QR-Code print route for solar plant billing
 Route::get('/admin/solar-plant-billing/{solarPlantBilling}/qr-code-print', [App\Http\Controllers\SolarPlantBillingController::class, 'printQrCode'])
     ->name('admin.solar-plant-billing.qr-code-print')

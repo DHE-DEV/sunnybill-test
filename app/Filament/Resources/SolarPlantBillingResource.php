@@ -1175,13 +1175,13 @@ class SolarPlantBillingResource extends Resource
                         ->modalSubmitActionLabel('Abrechnungen drucken')
                         ->modalIcon('heroicon-o-printer'),
 
-                    Tables\Actions\BulkAction::make('export_excel')
-                        ->label('Excel Export')
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('success')
                         ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
                             $selectedIds = $records->pluck('id')->toArray();
-                            
+
                             try {
                                 // Prüfe ob Datensätze vorhanden sind
                                 if (empty($selectedIds)) {
@@ -1195,7 +1195,8 @@ class SolarPlantBillingResource extends Resource
 
                                 // Stelle sicher, dass die Relationen geladen sind
                                 $billings = SolarPlantBilling::whereIn('id', $selectedIds)
-                                    ->with(['solarPlant', 'customer'])
+                                    ->with(['solarPlant.participations', 'customer'])
+                                    ->orderBy('created_at', 'desc')
                                     ->get();
 
                                 if ($billings->isEmpty()) {
@@ -1207,38 +1208,139 @@ class SolarPlantBillingResource extends Resource
                                     return;
                                 }
 
-                                $filename = 'solaranlagen-abrechnungen-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
-                                
-                                // Teste den Export
-                                $export = new SolarPlantBillingsExport($selectedIds);
-                                
-                                return Excel::download($export, $filename);
-                                
+                                // Erstelle CSV-Daten direkt (schnell, ohne Library)
+                                $csv = [];
+
+                                // Header
+                                $csv[] = [
+                                    'Anlagen-Nr.', 'Anlagenname', 'Anlagen-Standort', 'Anlagen-kWp',
+                                    'Kunde', 'Kundentyp', 'Abrechnungsmonat', 'Abrechnungsjahr',
+                                    'Rechnungsnummer', 'Produzierte Energie (kWh)', 'Beteiligung (%)',
+                                    'Beteiligung (kWp)', 'Kosten (Brutto)', 'Kosten (Netto)',
+                                    'Gutschriften (Brutto)', 'Gutschriften (Netto)', 'MwSt.-Betrag',
+                                    'Gesamtbetrag (Brutto)', 'Anzahl Kostenpositionen', 'Anzahl Gutschriftspositionen',
+                                    'Status', 'Bemerkung', 'Hinweistext anzeigen', 'Erstellt am'
+                                ];
+
+                                // Daten
+                                $monthNames = [
+                                    1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
+                                    5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
+                                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'
+                                ];
+
+                                foreach ($billings as $billing) {
+                                    $solarPlant = $billing->solarPlant;
+                                    $customer = $billing->customer;
+
+                                    // Beteiligung
+                                    $currentPercentage = $billing->participation_percentage ?? 0;
+                                    $currentKwp = null;
+                                    if ($solarPlant && $customer && $solarPlant->participations) {
+                                        $participation = $solarPlant->participations->where('customer_id', $customer->id)->first();
+                                        if ($participation) {
+                                            $currentPercentage = $participation->percentage ?? $currentPercentage;
+                                            $currentKwp = $participation->participation_kwp;
+                                        }
+                                    }
+
+                                    $customerName = $customer ? (($customer->customer_type === 'business' && $customer->company_name) ? $customer->company_name : $customer->name) : 'Unbekannt';
+                                    $customerType = $customer ? ($customer->customer_type === 'business' ? 'Unternehmen' : 'Privatperson') : 'Unbekannt';
+                                    $monthName = $monthNames[$billing->billing_month] ?? $billing->billing_month;
+
+                                    $statusOptions = SolarPlantBilling::getStatusOptions();
+                                    $status = $statusOptions[$billing->status] ?? $billing->status;
+
+                                    $csv[] = [
+                                        $solarPlant->plant_number ?? '',
+                                        $solarPlant->name ?? '',
+                                        $solarPlant->location ?? '',
+                                        $solarPlant->total_kwp ?? '',
+                                        $customerName,
+                                        $customerType,
+                                        $monthName,
+                                        $billing->billing_year ?? '',
+                                        $billing->invoice_number ?? '',
+                                        $billing->produced_energy_kwh ?? '',
+                                        $currentPercentage,
+                                        $currentKwp ?? '',
+                                        $billing->total_costs ?? 0,
+                                        $billing->total_costs_net ?? 0,
+                                        $billing->total_credits ?? 0,
+                                        $billing->total_credits_net ?? 0,
+                                        $billing->total_vat_amount ?? 0,
+                                        $billing->net_amount ?? 0,
+                                        is_array($billing->cost_breakdown) ? count($billing->cost_breakdown) : 0,
+                                        is_array($billing->credit_breakdown) ? count($billing->credit_breakdown) : 0,
+                                        $status,
+                                        $billing->notes ?? '',
+                                        $billing->show_hints ? 'Ja' : 'Nein',
+                                        $billing->created_at ? $billing->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                // Speichere CSV
+                                $filename = 'solaranlagen-abrechnungen-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+
+                                // Stelle sicher, dass das Verzeichnis existiert
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+
+                                // Erstelle CSV-String mit UTF-8 BOM für Excel
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF"); // UTF-8 BOM
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';'); // Semikolon für Excel
+                                }
+                                rewind($output);
+                                $csvContent = stream_get_contents($output);
+                                fclose($output);
+
+                                \Storage::disk('public')->put($tempPath, $csvContent);
+
+                                // Speichere Download-Info in Session
+                                session([
+                                    'csv_download_path' => $tempPath,
+                                    'csv_download_filename' => $filename,
+                                ]);
+
+                                // Erfolgsmeldung mit Download-Link
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+
                             } catch (\Throwable $e) {
-                                // Logge den vollständigen Fehler
-                                \Log::error('Excel Export Error', [
+                                \Log::error('CSV Export Error', [
                                     'error' => $e->getMessage(),
                                     'trace' => $e->getTraceAsString(),
                                     'selectedIds' => $selectedIds ?? [],
                                 ]);
 
                                 Notification::make()
-                                    ->title('Fehler beim Excel-Export')
-                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage() . ' (Details im Log)')
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
                                     ->danger()
                                     ->duration(10000)
                                     ->send();
-                                    
-                                return null;
                             }
                         })
                         ->requiresConfirmation()
-                        ->modalHeading('Excel Export')
+                        ->modalHeading('CSV Export')
                         ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records): string {
                             $count = $records->count();
-                            return "Möchten Sie die {$count} ausgewählten Abrechnungen als Excel-Datei exportieren?";
+                            return "Möchten Sie die {$count} ausgewählten Abrechnungen als CSV-Datei exportieren?\n\nDie CSV-Datei kann in Excel geöffnet werden.";
                         })
-                        ->modalSubmitActionLabel('Excel exportieren')
+                        ->modalSubmitActionLabel('CSV exportieren')
                         ->modalIcon('heroicon-o-document-arrow-down'),
                     
                     Tables\Actions\BulkAction::make('generate_pdfs')

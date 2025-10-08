@@ -113,4 +113,22 @@ class BulkPdfDownloadController extends Controller
 
         return view('print-billings', compact('pdfContents', 'successCount'));
     }
+
+    public function downloadCsv(Request $request)
+    {
+        $tempPath = session('csv_download_path');
+        $filename = session('csv_download_filename', 'export.csv');
+
+        // Clear session data
+        session()->forget(['csv_download_path', 'csv_download_filename']);
+
+        if (!$tempPath || !Storage::disk('public')->exists($tempPath)) {
+            abort(404, 'CSV-Datei nicht gefunden');
+        }
+
+        $fullPath = Storage::disk('public')->path($tempPath);
+
+        // Download und dann Datei löschen
+        return response()->download($fullPath, $filename)->deleteFileAfterSend(true);
+    }
 }

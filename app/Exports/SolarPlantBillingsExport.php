@@ -29,7 +29,10 @@ class SolarPlantBillingsExport implements FromQuery, WithHeadings, WithMapping, 
     public function query()
     {
         $query = SolarPlantBilling::query()
-            ->with(['solarPlant', 'customer'])
+            ->with([
+                'solarPlant.participations',
+                'customer'
+            ])
             ->orderBy('created_at', 'desc');
 
         if (!empty($this->selectedIds)) {
@@ -76,16 +79,15 @@ class SolarPlantBillingsExport implements FromQuery, WithHeadings, WithMapping, 
             $solarPlant = $billing->solarPlant;
             $customer = $billing->customer;
             
-            // Hole aktuelle Beteiligung aus der participations Tabelle (sicher)
+            // Hole aktuelle Beteiligung aus den bereits geladenen participations (sicher)
             $currentPercentage = $billing->participation_percentage ?? 0;
             $currentKwp = null;
-            
+
             try {
-                if ($solarPlant && $customer) {
-                    $participation = $solarPlant->participations()
-                        ->where('customer_id', $customer->id)
-                        ->first();
-                    
+                if ($solarPlant && $customer && $solarPlant->participations) {
+                    // Nutze bereits geladene Relation statt neuer Query
+                    $participation = $solarPlant->participations->where('customer_id', $customer->id)->first();
+
                     if ($participation) {
                         $currentPercentage = $participation->percentage ?? $billing->participation_percentage ?? 0;
                         $currentKwp = $participation->participation_kwp ?? null;
