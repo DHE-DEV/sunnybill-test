@@ -11,7 +11,9 @@
       "Bash(git log:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(php artisan tinker:*)"
+      "Bash(php artisan tinker:*)",
+      "Bash(php artisan:*)",
+      "Bash(php -l:*)"
     ],
     "deny": [],
     "ask": []
