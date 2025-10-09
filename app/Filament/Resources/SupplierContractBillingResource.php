@@ -946,6 +946,12 @@ class SupplierContractBillingResource extends Resource
                                     return '';
                                 };
 
+                                // Helper function to format amounts (German format)
+                                $formatAmount = function($amount) {
+                                    if ($amount === null || $amount === '') return '';
+                                    return number_format((float)$amount, 2, ',', '');
+                                };
+
                                 foreach ($billings as $billing) {
                                     $contract = $billing->supplierContract;
                                     $supplier = $contract?->supplier;
@@ -990,13 +996,13 @@ class SupplierContractBillingResource extends Resource
                                         $billing->billing_month ?? '',
                                         $formatDate($billing->billing_date),
                                         $formatDate($billing->due_date),
-                                        $billing->net_amount ?? 0,
-                                        $billing->vat_rate ?? 0,
-                                        $billing->total_amount ?? 0,
+                                        $formatAmount($billing->net_amount),
+                                        $formatAmount($billing->vat_rate),
+                                        $formatAmount($billing->total_amount),
                                         $billing->currency ?? 'EUR',
                                         $status,
                                         $allocationsCount,
-                                        number_format($allocatedPercentage, 2, ',', '.'),
+                                        number_format($allocatedPercentage, 2, ',', ''),
                                         $billing->notes ?? '',
                                         $formatDate($billing->created_at, 'd.m.Y H:i'),
                                     ];
