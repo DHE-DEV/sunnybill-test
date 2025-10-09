@@ -447,6 +447,22 @@ class SupplierContractResource extends Resource
                                     'Aktiv', 'Anzahl Notizen', 'Anzahl Dokumente', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $contract) {
                                     $csv[] = [
                                         $contract->contract_number ?? '',
@@ -464,8 +480,8 @@ class SupplierContractResource extends Resource
                                         $contract->external_contract_number ?? '',
                                         $contract->malo_id ?? '',
                                         $contract->ep_id ?? '',
-                                        $contract->start_date ? $contract->start_date->format('d.m.Y') : '',
-                                        $contract->end_date ? $contract->end_date->format('d.m.Y') : '',
+                                        $formatDate($contract->start_date),
+                                        $formatDate($contract->end_date),
                                         $contract->formatted_contract_value ?? '',
                                         $contract->currency ?? 'EUR',
                                         $contract->default_vat_rate ?? '',
@@ -473,7 +489,7 @@ class SupplierContractResource extends Resource
                                         $contract->is_active ? 'Aktiv' : 'Inaktiv',
                                         $contract->contractNotes()->count(),
                                         $contract->documents()->count(),
-                                        $contract->created_at ? $contract->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($contract->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

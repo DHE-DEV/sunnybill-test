@@ -286,6 +286,22 @@ class ProjectResource extends Resource
                                     'Projektleiter', 'Aktiv', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $project) {
                                     $csv[] = [
                                         $project->project_number ?? '',
@@ -315,9 +331,9 @@ class ProjectResource extends Resource
                                             default => $project->priority
                                         },
                                         $project->progress_percentage ?? '0',
-                                        $project->start_date ? $project->start_date->format('d.m.Y') : '',
-                                        $project->planned_end_date ? $project->planned_end_date->format('d.m.Y') : '',
-                                        $project->actual_end_date ? $project->actual_end_date->format('d.m.Y') : '',
+                                        $formatDate($project->start_date),
+                                        $formatDate($project->planned_end_date),
+                                        $formatDate($project->actual_end_date),
                                         $project->budget ? number_format($project->budget, 2, ',', '.') : '',
                                         $project->actual_costs ? number_format($project->actual_costs, 2, ',', '.') : '',
                                         $project->customer?->name ?? '',
@@ -325,7 +341,7 @@ class ProjectResource extends Resource
                                         $project->solarPlant?->name ?? '',
                                         $project->projectManager?->name ?? '',
                                         $project->is_active ? 'Aktiv' : 'Inaktiv',
-                                        $project->created_at ? $project->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($project->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

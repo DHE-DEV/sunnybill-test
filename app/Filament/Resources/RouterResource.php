@@ -52,6 +52,11 @@ class RouterResource extends Resource
                                             ->label('Seriennummer')
                                             ->maxLength(255)
                                             ->placeholder('z.B. ABC123DEF456'),
+                                        Forms\Components\TextInput::make('lan_mac_address')
+                                            ->label('LAN MAC Adresse')
+                                            ->maxLength(255)
+                                            ->placeholder('z.B. 00:1A:2B:3C:4D:5E')
+                                            ->helperText('MAC-Adresse des LAN-Ports'),
                                         Forms\Components\TextInput::make('ip_address')
                                             ->label('IP-Adresse')
                                             ->maxLength(45)
@@ -184,6 +189,29 @@ class RouterResource extends Resource
                                             ]),
                                     ]),
                             ]),
+                        Forms\Components\Tabs\Tab::make('Logindaten')
+                            ->icon('heroicon-o-key')
+                            ->schema([
+                                Forms\Components\Section::make('Router-Zugangsdaten')
+                                    ->description('Benutzername und Passwort für den Zugriff auf die Router-Weboberfläche')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('login_username')
+                                                    ->label('Benutzername')
+                                                    ->maxLength(255)
+                                                    ->placeholder('z.B. admin')
+                                                    ->helperText('Login-Benutzername für die Router-Weboberfläche'),
+                                                Forms\Components\TextInput::make('login_password')
+                                                    ->label('Passwort')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->maxLength(255)
+                                                    ->placeholder('Router-Passwort')
+                                                    ->helperText('Passwort wird verschlüsselt gespeichert'),
+                                            ]),
+                                    ]),
+                            ]),
                         Forms\Components\Tabs\Tab::make('Status')
                             ->icon('heroicon-o-signal')
                             ->schema([
@@ -199,8 +227,8 @@ class RouterResource extends Resource
                                             ->disabled()
                                             ->helperText('Status wird automatisch basierend auf der letzten Aktivität berechnet'),
                                     ]),
-                                Forms\Components\Textarea::make('notes')
-                                    ->label('Notizen')
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Notizen/Beschreibung')
                                     ->rows(4)
                                     ->placeholder('Zusätzliche Notizen zum Router...')
                                     ->columnSpanFull(),
@@ -364,6 +392,22 @@ class RouterResource extends Resource
                                     'Letzter Neustart', 'Aktiv', 'Notizen', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $router) {
                                     $csv[] = [
                                         $router->name ?? '',
@@ -384,11 +428,11 @@ class RouterResource extends Resource
                                         $router->longitude ?? '',
                                         $router->webhook_port ?? '',
                                         $router->total_webhooks ?? '0',
-                                        $router->last_seen_at ? $router->last_seen_at->format('d.m.Y H:i:s') : '',
-                                        $router->last_restart_at ? $router->last_restart_at->format('d.m.Y H:i:s') : '',
+                                        $formatDate($router->last_seen_at, 'd.m.Y H:i:s'),
+                                        $formatDate($router->last_restart_at, 'd.m.Y H:i:s'),
                                         $router->is_active ? 'Aktiv' : 'Inaktiv',
                                         $router->notes ?? '',
-                                        $router->created_at ? $router->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($router->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

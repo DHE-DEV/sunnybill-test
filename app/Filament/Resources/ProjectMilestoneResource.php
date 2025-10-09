@@ -282,6 +282,22 @@ class ProjectMilestoneResource extends Resource
                                     'Beschreibung', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $milestone) {
                                     $csv[] = [
                                         $milestone->project?->name ?? '',
@@ -304,14 +320,14 @@ class ProjectMilestoneResource extends Resource
                                             'cancelled' => 'Abgebrochen',
                                             default => $milestone->status
                                         },
-                                        $milestone->planned_date ? $milestone->planned_date->format('d.m.Y') : '',
-                                        $milestone->actual_date ? $milestone->actual_date->format('d.m.Y') : '',
+                                        $formatDate($milestone->planned_date),
+                                        $formatDate($milestone->actual_date),
                                         $milestone->completion_percentage ?? '0',
                                         $milestone->responsibleUser?->name ?? '',
                                         $milestone->is_critical_path ? 'Ja' : 'Nein',
                                         $milestone->sort_order ?? '0',
                                         $milestone->description ?? '',
-                                        $milestone->created_at ? $milestone->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($milestone->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

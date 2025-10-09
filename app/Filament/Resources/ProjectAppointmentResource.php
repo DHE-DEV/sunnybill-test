@@ -252,6 +252,22 @@ class ProjectAppointmentResource extends Resource
                                     'Erstellt von', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $appointment) {
                                     $csv[] = [
                                         $appointment->project?->name ?? '',
@@ -272,14 +288,14 @@ class ProjectAppointmentResource extends Resource
                                             'completed' => 'Abgeschlossen',
                                             default => $appointment->status
                                         },
-                                        $appointment->start_datetime ? $appointment->start_datetime->format('d.m.Y H:i') : '',
-                                        $appointment->end_datetime ? $appointment->end_datetime->format('d.m.Y H:i') : '',
+                                        $formatDate($appointment->start_datetime, 'd.m.Y H:i'),
+                                        $formatDate($appointment->end_datetime, 'd.m.Y H:i'),
                                         $appointment->location ?? '',
                                         $appointment->is_recurring ? 'Ja' : 'Nein',
                                         $appointment->reminder_minutes ?? '',
                                         $appointment->description ?? '',
                                         $appointment->creator?->name ?? '',
-                                        $appointment->created_at ? $appointment->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($appointment->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

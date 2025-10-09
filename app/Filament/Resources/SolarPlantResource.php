@@ -843,6 +843,22 @@ class SolarPlantResource extends Resource
                                     $totalParticipation = $plant->participations()->sum('percentage');
                                     $participationsCount = $plant->participations()->count();
 
+                                    // Helper function to format dates safely
+                                    $formatDate = function($date, $format = 'd.m.Y') {
+                                        if (!$date) return '';
+                                        if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                            return $date->format($format);
+                                        }
+                                        if (is_string($date)) {
+                                            try {
+                                                return \Carbon\Carbon::parse($date)->format($format);
+                                            } catch (\Exception $e) {
+                                                return $date;
+                                            }
+                                        }
+                                        return '';
+                                    };
+
                                     $csv[] = [
                                         $plant->plant_number ?? '',
                                         $plant->app_code ?? '',
@@ -850,15 +866,15 @@ class SolarPlantResource extends Resource
                                         $plant->location ?? '',
                                         $plant->plot_number ?? '',
                                         $plant->mastr_number_unit ?? '',
-                                        $plant->mastr_registration_date_unit ? $plant->mastr_registration_date_unit->format('d.m.Y') : '',
+                                        $formatDate($plant->mastr_registration_date_unit),
                                         $plant->mastr_number_eeg_plant ?? '',
-                                        $plant->commissioning_date_eeg_plant ? $plant->commissioning_date_eeg_plant->format('d.m.Y') : '',
+                                        $formatDate($plant->commissioning_date_eeg_plant),
                                         $plant->malo_id ?? '',
                                         $plant->melo_id ?? '',
                                         $plant->vnb_process_number ?? '',
-                                        $plant->commissioning_date_unit ? $plant->commissioning_date_unit->format('d.m.Y') : '',
-                                        $plant->unit_commissioning_date ? $plant->unit_commissioning_date->format('d.m.Y') : '',
-                                        $plant->pv_soll_planning_date ? $plant->pv_soll_planning_date->format('d.m.Y') : '',
+                                        $formatDate($plant->commissioning_date_unit),
+                                        $formatDate($plant->unit_commissioning_date),
+                                        $formatDate($plant->pv_soll_planning_date),
                                         $plant->pv_soll_project_number ?? '',
                                         $plant->latitude ?? '',
                                         $plant->longitude ?? '',
@@ -872,10 +888,10 @@ class SolarPlantResource extends Resource
                                         $plant->annual_operating_costs ?? '',
                                         $plant->feed_in_tariff_per_kwh ?? '',
                                         $plant->electricity_price_per_kwh ?? '',
-                                        $plant->planned_installation_date ? $plant->planned_installation_date->format('d.m.Y') : '',
-                                        $plant->installation_date ? $plant->installation_date->format('d.m.Y') : '',
-                                        $plant->planned_commissioning_date ? $plant->planned_commissioning_date->format('d.m.Y') : '',
-                                        $plant->commissioning_date ? $plant->commissioning_date->format('d.m.Y') : '',
+                                        $formatDate($plant->planned_installation_date),
+                                        $formatDate($plant->installation_date),
+                                        $formatDate($plant->planned_commissioning_date),
+                                        $formatDate($plant->commissioning_date),
                                         $statusName,
                                         $plant->billing ? 'Ja' : 'Nein',
                                         $plant->is_active ? 'Ja' : 'Nein',
@@ -884,8 +900,8 @@ class SolarPlantResource extends Resource
                                         $plant->description ?? '',
                                         $plant->notes ?? '',
                                         $plant->fusion_solar_id ?? '',
-                                        $plant->last_sync_at ? $plant->last_sync_at->format('d.m.Y H:i') : '',
-                                        $plant->created_at ? $plant->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($plant->last_sync_at, 'd.m.Y H:i'),
+                                        $formatDate($plant->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

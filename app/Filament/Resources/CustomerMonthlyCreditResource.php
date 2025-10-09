@@ -226,9 +226,25 @@ class CustomerMonthlyCreditResource extends Resource
                                     'Berechnet am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $credit) {
                                     $csv[] = [
-                                        \Carbon\Carbon::parse($credit->month)->format('m/Y'),
+                                        $formatDate($credit->month, 'm/Y'),
                                         $credit->customer?->name ?? '',
                                         $credit->customer?->customer_number ?? '',
                                         $credit->solarPlant?->name ?? '',
@@ -237,7 +253,7 @@ class CustomerMonthlyCreditResource extends Resource
                                         number_format($credit->savings_amount, 2, ',', '.'),
                                         number_format($credit->feed_in_revenue, 2, ',', '.'),
                                         number_format($credit->total_credit, 2, ',', '.'),
-                                        $credit->created_at ? $credit->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($credit->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

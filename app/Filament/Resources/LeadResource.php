@@ -506,6 +506,22 @@ class LeadResource extends Resource
                                     'Notizen', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $lead) {
                                     $csv[] = [
                                         $lead->customer_number ?? '',
@@ -531,9 +547,9 @@ class LeadResource extends Resource
                                         $lead->country ?? '',
                                         $lead->country_code ?? '',
                                         $lead->is_active ? 'Aktiv' : 'Inaktiv',
-                                        $lead->deactivated_at ? $lead->deactivated_at->format('d.m.Y H:i') : '',
+                                        $formatDate($lead->deactivated_at, 'd.m.Y H:i'),
                                         $lead->notes ?? '',
-                                        $lead->created_at ? $lead->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($lead->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

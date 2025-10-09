@@ -355,6 +355,22 @@ class SupplierResource extends Resource
                                     'Anzahl Mitarbeiter', 'Aktiv', 'Notizen', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $supplier) {
                                     $csv[] = [
                                         $supplier->supplier_number ?? '',
@@ -380,11 +396,11 @@ class SupplierResource extends Resource
                                         $supplier->tax_number ?? '',
                                         $supplier->vat_id ?? '',
                                         $supplier->lexoffice_id ?? '',
-                                        $supplier->lexoffice_synced_at ? $supplier->lexoffice_synced_at->format('d.m.Y H:i') : '',
+                                        $formatDate($supplier->lexoffice_synced_at, 'd.m.Y H:i'),
                                         $supplier->employees()->count(),
                                         $supplier->is_active ? 'Aktiv' : 'Inaktiv',
                                         $supplier->notes ?? '',
-                                        $supplier->created_at ? $supplier->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($supplier->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

@@ -294,6 +294,22 @@ class CostResource extends Resource
                                     'Bezahlt am', 'Beschreibung', 'Notizen', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $cost) {
                                     $costableInfo = '';
                                     if ($cost->costable_type === \App\Models\Customer::class) {
@@ -303,7 +319,7 @@ class CostResource extends Resource
                                     }
 
                                     $csv[] = [
-                                        $cost->date ? $cost->date->format('d.m.Y') : '',
+                                        $formatDate($cost->date),
                                         $cost->title ?? '',
                                         $cost->category?->name ?? '',
                                         number_format($cost->amount ?? 0, 2, ',', '.'),
@@ -318,10 +334,10 @@ class CostResource extends Resource
                                         $cost->solarPlant?->name ?? '',
                                         $cost->project?->name ?? '',
                                         $cost->reference_number ?? '',
-                                        $cost->paid_at ? $cost->paid_at->format('d.m.Y') : '',
+                                        $formatDate($cost->paid_at),
                                         $cost->description ?? '',
                                         $cost->notes ?? '',
-                                        $cost->created_at ? $cost->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($cost->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

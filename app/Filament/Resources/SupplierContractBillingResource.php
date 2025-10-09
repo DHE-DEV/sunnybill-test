@@ -930,6 +930,22 @@ class SupplierContractBillingResource extends Resource
                                 $billingTypeOptions = SupplierContractBilling::getBillingTypeOptions();
                                 $statusOptions = SupplierContractBilling::getStatusOptions();
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($billings as $billing) {
                                     $contract = $billing->supplierContract;
                                     $supplier = $contract?->supplier;
@@ -972,8 +988,8 @@ class SupplierContractBillingResource extends Resource
                                         $billingPeriod,
                                         $billing->billing_year ?? '',
                                         $billing->billing_month ?? '',
-                                        $billing->billing_date ? $billing->billing_date->format('d.m.Y') : '',
-                                        $billing->due_date ? $billing->due_date->format('d.m.Y') : '',
+                                        $formatDate($billing->billing_date),
+                                        $formatDate($billing->due_date),
                                         $billing->net_amount ?? 0,
                                         $billing->vat_rate ?? 0,
                                         $billing->total_amount ?? 0,
@@ -982,7 +998,7 @@ class SupplierContractBillingResource extends Resource
                                         $allocationsCount,
                                         number_format($allocatedPercentage, 2, ',', '.'),
                                         $billing->notes ?? '',
-                                        $billing->created_at ? $billing->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($billing->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

@@ -507,6 +507,22 @@ class InvoiceResource extends Resource
                                     'Stornierungsdatum', 'Stornierungsgrund', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $invoice) {
                                     $csv[] = [
                                         $invoice->invoice_number ?? '',
@@ -521,12 +537,12 @@ class InvoiceResource extends Resource
                                         },
                                         number_format($invoice->total ?? 0, 2, ',', '.'),
                                         $invoice->items()->count(),
-                                        $invoice->due_date ? $invoice->due_date->format('d.m.Y') : '',
+                                        $formatDate($invoice->due_date),
                                         $invoice->lexoffice_id ?? '',
                                         $invoice->lexoffice_id ? 'Ja' : 'Nein',
-                                        $invoice->cancellation_date ? $invoice->cancellation_date->format('d.m.Y') : '',
+                                        $formatDate($invoice->cancellation_date),
                                         $invoice->cancellation_reason ?? '',
-                                        $invoice->created_at ? $invoice->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($invoice->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 

@@ -14,8 +14,11 @@ class Router extends Model
         'name',
         'model',
         'serial_number',
+        'lan_mac_address',
         'location',
         'description',
+        'login_username',
+        'login_password',
         'is_active',
         'connection_status',
         'last_seen_at',
@@ -46,6 +49,7 @@ class Router extends Model
         'signal_strength' => 'integer',
         'signal_bars' => 'integer',
         'webhook_port' => 'integer',
+        'login_password' => 'encrypted',
     ];
 
     protected $attributes = [

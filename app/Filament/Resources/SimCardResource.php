@@ -402,6 +402,22 @@ class SimCardResource extends Resource
                                     'Vertragsende', 'Letzte Aktivität', 'Aktiv', 'Gesperrt', 'Erstellt am'
                                 ];
 
+                                // Helper function to format dates safely
+                                $formatDate = function($date, $format = 'd.m.Y') {
+                                    if (!$date) return '';
+                                    if ($date instanceof \Carbon\Carbon || $date instanceof \DateTime) {
+                                        return $date->format($format);
+                                    }
+                                    if (is_string($date)) {
+                                        try {
+                                            return \Carbon\Carbon::parse($date)->format($format);
+                                        } catch (\Exception $e) {
+                                            return $date;
+                                        }
+                                    }
+                                    return '';
+                                };
+
                                 foreach ($records as $sim) {
                                     $csv[] = [
                                         $sim->iccid ?? '',
@@ -429,12 +445,12 @@ class SimCardResource extends Resource
                                         $sim->data_limit_mb ?? '',
                                         $sim->data_used_mb ?? '0',
                                         $sim->signal_strength ?? '',
-                                        $sim->contract_start ? $sim->contract_start->format('d.m.Y') : '',
-                                        $sim->contract_end ? $sim->contract_end->format('d.m.Y') : '',
-                                        $sim->last_activity ? $sim->last_activity->format('d.m.Y H:i:s') : '',
+                                        $formatDate($sim->contract_start),
+                                        $formatDate($sim->contract_end),
+                                        $formatDate($sim->last_activity, 'd.m.Y H:i:s'),
                                         $sim->is_active ? 'Aktiv' : 'Inaktiv',
                                         $sim->is_blocked ? 'Ja' : 'Nein',
-                                        $sim->created_at ? $sim->created_at->format('d.m.Y H:i') : '',
+                                        $formatDate($sim->created_at, 'd.m.Y H:i'),
                                     ];
                                 }
 
