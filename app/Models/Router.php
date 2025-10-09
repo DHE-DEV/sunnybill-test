@@ -14,6 +14,7 @@ class Router extends Model
         'name',
         'model',
         'serial_number',
+        'imei',
         'lan_mac_address',
         'location',
         'description',

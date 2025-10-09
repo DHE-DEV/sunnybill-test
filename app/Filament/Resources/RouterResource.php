@@ -52,6 +52,11 @@ class RouterResource extends Resource
                                             ->label('Seriennummer')
                                             ->maxLength(255)
                                             ->placeholder('z.B. ABC123DEF456'),
+                                        Forms\Components\TextInput::make('imei')
+                                            ->label('IMEI')
+                                            ->maxLength(255)
+                                            ->placeholder('z.B. 123456789012345')
+                                            ->helperText('International Mobile Equipment Identity (15-stellige Nummer)'),
                                         Forms\Components\TextInput::make('lan_mac_address')
                                             ->label('LAN MAC Adresse')
                                             ->maxLength(255)
@@ -309,6 +314,12 @@ class RouterResource extends Resource
                     ->searchable()
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('imei')
+                    ->label('IMEI')
+                    ->placeholder('-')
+                    ->searchable()
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('total_webhooks')
                     ->label('Webhooks')
                     ->numeric()
@@ -386,7 +397,7 @@ class RouterResource extends Resource
                             try {
                                 $csv = [];
                                 $csv[] = [
-                                    'Name', 'Modell', 'Seriennummer', 'IP-Adresse', 'Standort', 'Status',
+                                    'Name', 'Modell', 'Seriennummer', 'IMEI', 'IP-Adresse', 'Standort', 'Status',
                                     'Netzbetreiber', 'Netzwerk-Typ', 'Signalstärke (dBm)', 'Breitengrad',
                                     'Längengrad', 'Webhook-Port', 'Empfangene Webhooks', 'Zuletzt gesehen',
                                     'Letzter Neustart', 'Aktiv', 'Notizen', 'Erstellt am'
@@ -413,6 +424,7 @@ class RouterResource extends Resource
                                         $router->name ?? '',
                                         $router->model ?? '',
                                         $router->serial_number ?? '',
+                                        $router->imei ?? '',
                                         $router->ip_address ?? '',
                                         $router->location ?? '',
                                         match($router->connection_status) {
