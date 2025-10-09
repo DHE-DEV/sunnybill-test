@@ -463,6 +463,12 @@ class SupplierContractResource extends Resource
                                     return '';
                                 };
 
+                                // Helper function to format amounts (German format)
+                                $formatAmount = function($amount) {
+                                    if ($amount === null || $amount === '') return '';
+                                    return number_format((float)$amount, 2, ',', '');
+                                };
+
                                 foreach ($records as $contract) {
                                     $csv[] = [
                                         $contract->contract_number ?? '',
@@ -482,9 +488,9 @@ class SupplierContractResource extends Resource
                                         $contract->ep_id ?? '',
                                         $formatDate($contract->start_date),
                                         $formatDate($contract->end_date),
-                                        $contract->formatted_contract_value ?? '',
+                                        $formatAmount($contract->contract_value),
                                         $contract->currency ?? 'EUR',
-                                        $contract->default_vat_rate ?? '',
+                                        $formatAmount($contract->default_vat_rate),
                                         $contract->payment_terms ?? '',
                                         $contract->is_active ? 'Aktiv' : 'Inaktiv',
                                         $contract->contractNotes()->count(),

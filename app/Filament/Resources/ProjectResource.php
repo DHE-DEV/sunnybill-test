@@ -302,6 +302,12 @@ class ProjectResource extends Resource
                                     return '';
                                 };
 
+                                // Helper function to format amounts (German format)
+                                $formatAmount = function($amount) {
+                                    if ($amount === null || $amount === '') return '';
+                                    return number_format((float)$amount, 2, ',', '');
+                                };
+
                                 foreach ($records as $project) {
                                     $csv[] = [
                                         $project->project_number ?? '',
@@ -334,8 +340,8 @@ class ProjectResource extends Resource
                                         $formatDate($project->start_date),
                                         $formatDate($project->planned_end_date),
                                         $formatDate($project->actual_end_date),
-                                        $project->budget ? number_format($project->budget, 2, ',', '.') : '',
-                                        $project->actual_costs ? number_format($project->actual_costs, 2, ',', '.') : '',
+                                        $formatAmount($project->budget),
+                                        $formatAmount($project->actual_costs),
                                         $project->customer?->name ?? '',
                                         $project->supplier?->name ?? '',
                                         $project->solarPlant?->name ?? '',

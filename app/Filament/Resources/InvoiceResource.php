@@ -523,6 +523,12 @@ class InvoiceResource extends Resource
                                     return '';
                                 };
 
+                                // Helper function to format amounts (German format)
+                                $formatAmount = function($amount) {
+                                    if ($amount === null || $amount === '') return '';
+                                    return number_format((float)$amount, 2, ',', '');
+                                };
+
                                 foreach ($records as $invoice) {
                                     $csv[] = [
                                         $invoice->invoice_number ?? '',
@@ -535,7 +541,7 @@ class InvoiceResource extends Resource
                                             'canceled' => 'Storniert',
                                             default => $invoice->status
                                         },
-                                        number_format($invoice->total ?? 0, 2, ',', '.'),
+                                        $formatAmount($invoice->total),
                                         $invoice->items()->count(),
                                         $formatDate($invoice->due_date),
                                         $invoice->lexoffice_id ?? '',

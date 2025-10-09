@@ -859,6 +859,12 @@ class SolarPlantResource extends Resource
                                         return '';
                                     };
 
+                                    // Helper function to format amounts (German format)
+                                    $formatAmount = function($amount) {
+                                        if ($amount === null || $amount === '') return '';
+                                        return number_format((float)$amount, 2, ',', '');
+                                    };
+
                                     $csv[] = [
                                         $plant->plant_number ?? '',
                                         $plant->app_code ?? '',
@@ -884,10 +890,10 @@ class SolarPlantResource extends Resource
                                         $plant->battery_capacity_kwh ?? '',
                                         $plant->expected_annual_yield_kwh ?? '',
                                         $plant->degradation_rate ?? '',
-                                        $plant->total_investment ?? '',
-                                        $plant->annual_operating_costs ?? '',
-                                        $plant->feed_in_tariff_per_kwh ?? '',
-                                        $plant->electricity_price_per_kwh ?? '',
+                                        $formatAmount($plant->total_investment),
+                                        $formatAmount($plant->annual_operating_costs),
+                                        $formatAmount($plant->feed_in_tariff_per_kwh),
+                                        $formatAmount($plant->electricity_price_per_kwh),
                                         $formatDate($plant->planned_installation_date),
                                         $formatDate($plant->installation_date),
                                         $formatDate($plant->planned_commissioning_date),
