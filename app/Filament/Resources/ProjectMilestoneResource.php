@@ -269,6 +269,93 @@ class ProjectMilestoneResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Projekt', 'Titel', 'Typ', 'Status', 'Geplantes Datum', 'Tatsächliches Datum',
+                                    'Fertigstellung (%)', 'Verantwortlicher', 'Kritischer Pfad', 'Reihenfolge',
+                                    'Beschreibung', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $milestone) {
+                                    $csv[] = [
+                                        $milestone->project?->name ?? '',
+                                        $milestone->title ?? '',
+                                        match($milestone->type) {
+                                            'planning' => 'Planung',
+                                            'approval' => 'Genehmigung',
+                                            'implementation' => 'Umsetzung',
+                                            'testing' => 'Testing',
+                                            'delivery' => 'Lieferung',
+                                            'payment' => 'Zahlung',
+                                            'review' => 'Review',
+                                            default => $milestone->type
+                                        },
+                                        match($milestone->status) {
+                                            'pending' => 'Ausstehend',
+                                            'in_progress' => 'In Bearbeitung',
+                                            'completed' => 'Abgeschlossen',
+                                            'delayed' => 'Verzögert',
+                                            'cancelled' => 'Abgebrochen',
+                                            default => $milestone->status
+                                        },
+                                        $milestone->planned_date ? $milestone->planned_date->format('d.m.Y') : '',
+                                        $milestone->actual_date ? $milestone->actual_date->format('d.m.Y') : '',
+                                        $milestone->completion_percentage ?? '0',
+                                        $milestone->responsibleUser?->name ?? '',
+                                        $milestone->is_critical_path ? 'Ja' : 'Nein',
+                                        $milestone->sort_order ?? '0',
+                                        $milestone->description ?? '',
+                                        $milestone->created_at ? $milestone->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'projekt-meilensteine-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Meilensteine als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])

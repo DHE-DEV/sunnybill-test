@@ -494,12 +494,89 @@ class InvoiceResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Rechnungsnummer', 'Kundennummer', 'Kunde', 'Status', 'Gesamtsumme',
+                                    'Anzahl Positionen', 'Fälligkeitsdatum', 'Lexoffice-ID', 'Lexoffice synchronisiert',
+                                    'Stornierungsdatum', 'Stornierungsgrund', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $invoice) {
+                                    $csv[] = [
+                                        $invoice->invoice_number ?? '',
+                                        $invoice->customer?->customer_number ?? '',
+                                        $invoice->customer?->name ?? '',
+                                        match($invoice->status) {
+                                            'draft' => 'Entwurf',
+                                            'sent' => 'Versendet',
+                                            'paid' => 'Bezahlt',
+                                            'canceled' => 'Storniert',
+                                            default => $invoice->status
+                                        },
+                                        number_format($invoice->total ?? 0, 2, ',', '.'),
+                                        $invoice->items()->count(),
+                                        $invoice->due_date ? $invoice->due_date->format('d.m.Y') : '',
+                                        $invoice->lexoffice_id ?? '',
+                                        $invoice->lexoffice_id ? 'Ja' : 'Nein',
+                                        $invoice->cancellation_date ? $invoice->cancellation_date->format('d.m.Y') : '',
+                                        $invoice->cancellation_reason ?? '',
+                                        $invoice->created_at ? $invoice->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'rechnungen-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Rechnungen als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make()
                         ->action(function ($records) {
                             // Nur Entwürfe können gelöscht werden
                             $draftRecords = $records->filter(fn ($record) => $record->status === 'draft');
                             $draftRecords->each->delete();
-                            
+
                             $nonDraftCount = $records->count() - $draftRecords->count();
                             if ($nonDraftCount > 0) {
                                 Notification::make()

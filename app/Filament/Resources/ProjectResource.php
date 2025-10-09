@@ -272,6 +272,104 @@ class ProjectResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Projekt-Nr.', 'Projektname', 'Beschreibung', 'Typ', 'Status', 'Priorität',
+                                    'Fortschritt (%)', 'Startdatum', 'Geplantes Enddatum', 'Tatsächliches Enddatum',
+                                    'Budget', 'Tatsächliche Kosten', 'Kunde', 'Lieferant', 'Solaranlage',
+                                    'Projektleiter', 'Aktiv', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $project) {
+                                    $csv[] = [
+                                        $project->project_number ?? '',
+                                        $project->name ?? '',
+                                        $project->description ?? '',
+                                        match($project->type) {
+                                            'solar_plant' => 'Solaranlage',
+                                            'internal' => 'Intern',
+                                            'customer' => 'Kundenprojekt',
+                                            'development' => 'Entwicklung',
+                                            'maintenance' => 'Wartung',
+                                            default => $project->type
+                                        },
+                                        match($project->status) {
+                                            'planning' => 'Planung',
+                                            'active' => 'Aktiv',
+                                            'on_hold' => 'Pausiert',
+                                            'completed' => 'Abgeschlossen',
+                                            'cancelled' => 'Abgebrochen',
+                                            default => $project->status
+                                        },
+                                        match($project->priority) {
+                                            'low' => 'Niedrig',
+                                            'medium' => 'Mittel',
+                                            'high' => 'Hoch',
+                                            'urgent' => 'Dringend',
+                                            default => $project->priority
+                                        },
+                                        $project->progress_percentage ?? '0',
+                                        $project->start_date ? $project->start_date->format('d.m.Y') : '',
+                                        $project->planned_end_date ? $project->planned_end_date->format('d.m.Y') : '',
+                                        $project->actual_end_date ? $project->actual_end_date->format('d.m.Y') : '',
+                                        $project->budget ? number_format($project->budget, 2, ',', '.') : '',
+                                        $project->actual_costs ? number_format($project->actual_costs, 2, ',', '.') : '',
+                                        $project->customer?->name ?? '',
+                                        $project->supplier?->name ?? '',
+                                        $project->solarPlant?->name ?? '',
+                                        $project->projectManager?->name ?? '',
+                                        $project->is_active ? 'Aktiv' : 'Inaktiv',
+                                        $project->created_at ? $project->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'projekte-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Projekte als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),

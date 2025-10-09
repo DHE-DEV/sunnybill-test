@@ -492,6 +492,92 @@ class LeadResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Lead-Nummer', 'Name', 'Qualifizierung', 'Ansprechpartner', 'Position/Abteilung',
+                                    'E-Mail', 'Telefon', 'Website', 'Straße', 'Adresszusatz', 'PLZ', 'Stadt',
+                                    'Bundesland', 'Land', 'Ländercode', 'Status', 'Deaktiviert am',
+                                    'Notizen', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $lead) {
+                                    $csv[] = [
+                                        $lead->customer_number ?? '',
+                                        $lead->name ?? '',
+                                        match($lead->ranking) {
+                                            'A' => 'Heiß (A)',
+                                            'B' => 'Warm (B)',
+                                            'C' => 'Kalt (C)',
+                                            'D' => 'Unqualifiziert (D)',
+                                            'E' => 'Nicht interessiert (E)',
+                                            default => $lead->ranking ?? ''
+                                        },
+                                        $lead->contact_person ?? '',
+                                        $lead->department ?? '',
+                                        $lead->email ?? '',
+                                        $lead->phone ?? '',
+                                        $lead->website ?? '',
+                                        $lead->street ?? '',
+                                        $lead->address_line_2 ?? '',
+                                        $lead->postal_code ?? '',
+                                        $lead->city ?? '',
+                                        $lead->state ?? '',
+                                        $lead->country ?? '',
+                                        $lead->country_code ?? '',
+                                        $lead->is_active ? 'Aktiv' : 'Inaktiv',
+                                        $lead->deactivated_at ? $lead->deactivated_at->format('d.m.Y H:i') : '',
+                                        $lead->notes ?? '',
+                                        $lead->created_at ? $lead->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'leads-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Leads als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\BulkAction::make('convert_to_customer')
                         ->label('Zu Kunde konvertieren')
                         ->icon('heroicon-o-arrow-right')

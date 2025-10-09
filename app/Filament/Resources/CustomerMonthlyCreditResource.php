@@ -212,7 +212,76 @@ class CustomerMonthlyCreditResource extends Resource
                 ->button()
             ])
             ->bulkActions([
-                // Keine Bulk-Actions für automatisch berechnete Daten
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Monat', 'Kunde', 'Kundennummer', 'Solaranlage', 'Beteiligung (%)',
+                                    'Energieanteil (kWh)', 'Ersparnis', 'Einspeiseerlös', 'Gesamtgutschrift',
+                                    'Berechnet am'
+                                ];
+
+                                foreach ($records as $credit) {
+                                    $csv[] = [
+                                        \Carbon\Carbon::parse($credit->month)->format('m/Y'),
+                                        $credit->customer?->name ?? '',
+                                        $credit->customer?->customer_number ?? '',
+                                        $credit->solarPlant?->name ?? '',
+                                        number_format($credit->participation_percentage, 2, ',', '.'),
+                                        number_format($credit->energy_share_kwh, 2, ',', '.'),
+                                        number_format($credit->savings_amount, 2, ',', '.'),
+                                        number_format($credit->feed_in_revenue, 2, ',', '.'),
+                                        number_format($credit->total_credit, 2, ',', '.'),
+                                        $credit->created_at ? $credit->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'gutschriften-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Gutschriften als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+                ]),
             ])
             ->defaultSort('month', 'desc')
             ->emptyStateHeading('Keine Gutschriften')

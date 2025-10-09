@@ -239,6 +239,91 @@ class ProjectAppointmentResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Projekt', 'Titel', 'Typ', 'Status', 'Startzeit', 'Endzeit',
+                                    'Ort', 'Wiederkehrend', 'Erinnerung (Min.)', 'Beschreibung',
+                                    'Erstellt von', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $appointment) {
+                                    $csv[] = [
+                                        $appointment->project?->name ?? '',
+                                        $appointment->title ?? '',
+                                        match($appointment->type) {
+                                            'meeting' => 'Meeting',
+                                            'deadline' => 'Deadline',
+                                            'review' => 'Review',
+                                            'milestone_check' => 'Meilenstein-Check',
+                                            'inspection' => 'Inspektion',
+                                            'training' => 'Schulung',
+                                            default => $appointment->type
+                                        },
+                                        match($appointment->status) {
+                                            'scheduled' => 'Geplant',
+                                            'confirmed' => 'Bestätigt',
+                                            'cancelled' => 'Abgesagt',
+                                            'completed' => 'Abgeschlossen',
+                                            default => $appointment->status
+                                        },
+                                        $appointment->start_datetime ? $appointment->start_datetime->format('d.m.Y H:i') : '',
+                                        $appointment->end_datetime ? $appointment->end_datetime->format('d.m.Y H:i') : '',
+                                        $appointment->location ?? '',
+                                        $appointment->is_recurring ? 'Ja' : 'Nein',
+                                        $appointment->reminder_minutes ?? '',
+                                        $appointment->description ?? '',
+                                        $appointment->creator?->name ?? '',
+                                        $appointment->created_at ? $appointment->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'projekt-termine-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Termine als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])

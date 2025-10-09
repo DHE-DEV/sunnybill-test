@@ -781,8 +781,180 @@ class SolarPlantResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $selectedIds = $records->pluck('id')->toArray();
+
+                            try {
+                                // Prüfe ob Datensätze vorhanden sind
+                                if (empty($selectedIds)) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('Keine Datensätze ausgewählt')
+                                        ->body('Bitte wählen Sie mindestens eine Solaranlage aus.')
+                                        ->warning()
+                                        ->send();
+                                    return;
+                                }
+
+                                // Stelle sicher, dass die Relationen geladen sind
+                                $plants = SolarPlant::whereIn('id', $selectedIds)
+                                    ->with(['participations'])
+                                    ->orderBy('created_at', 'desc')
+                                    ->get();
+
+                                if ($plants->isEmpty()) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('Keine Solaranlagen gefunden')
+                                        ->body('Die ausgewählten Solaranlagen konnten nicht gefunden werden.')
+                                        ->warning()
+                                        ->send();
+                                    return;
+                                }
+
+                                // Erstelle CSV-Daten direkt (schnell, ohne Library)
+                                $csv = [];
+
+                                // Header
+                                $csv[] = [
+                                    'Anlagennummer', 'App-Code', 'Name', 'Standort', 'Flurstück',
+                                    'MaStR-Nr. Einheit', 'MaStR Registrierungsdatum Einheit',
+                                    'MaStR-Nr. EEG-Anlage', 'Inbetriebnahme EEG-Anlage', 'MaLo-ID',
+                                    'MeLo-ID', 'VNB-Vorgangsnummer', 'Datum Inbetriebsetzung',
+                                    'Inbetriebnahme Einheit', 'PV-Soll Planung Datum', 'PV-Soll Projektnummer',
+                                    'Breitengrad', 'Längengrad', 'Gesamtleistung (kWp)', 'Anzahl Module',
+                                    'Anzahl Wechselrichter', 'Batteriekapazität (kWh)', 'Erwarteter Jahresertrag (kWh)',
+                                    'Degradationsrate (%/Jahr)', 'Gesamtinvestition (€)', 'Jährliche Betriebskosten (€)',
+                                    'Einspeisevergütung (€/kWh)', 'Strompreis (€/kWh)', 'Geplante Installation',
+                                    'Tatsächliche Installation', 'Geplante Inbetriebnahme', 'Tatsächliche Inbetriebnahme',
+                                    'Status', 'Fakturierbar', 'Aktiv', 'Gesamtbeteiligung (%)', 'Anzahl Beteiligungen',
+                                    'Beschreibung', 'Notizen', 'FusionSolar ID', 'Letzter Sync', 'Erstellt am'
+                                ];
+
+                                // Daten
+                                foreach ($plants as $plant) {
+                                    // Status
+                                    $status = \App\Models\SolarPlantStatus::where('key', $plant->status)->first();
+                                    $statusName = $status ? $status->name : ($plant->status ?? '');
+
+                                    // Beteiligung
+                                    $totalParticipation = $plant->participations()->sum('percentage');
+                                    $participationsCount = $plant->participations()->count();
+
+                                    $csv[] = [
+                                        $plant->plant_number ?? '',
+                                        $plant->app_code ?? '',
+                                        $plant->name ?? '',
+                                        $plant->location ?? '',
+                                        $plant->plot_number ?? '',
+                                        $plant->mastr_number_unit ?? '',
+                                        $plant->mastr_registration_date_unit ? $plant->mastr_registration_date_unit->format('d.m.Y') : '',
+                                        $plant->mastr_number_eeg_plant ?? '',
+                                        $plant->commissioning_date_eeg_plant ? $plant->commissioning_date_eeg_plant->format('d.m.Y') : '',
+                                        $plant->malo_id ?? '',
+                                        $plant->melo_id ?? '',
+                                        $plant->vnb_process_number ?? '',
+                                        $plant->commissioning_date_unit ? $plant->commissioning_date_unit->format('d.m.Y') : '',
+                                        $plant->unit_commissioning_date ? $plant->unit_commissioning_date->format('d.m.Y') : '',
+                                        $plant->pv_soll_planning_date ? $plant->pv_soll_planning_date->format('d.m.Y') : '',
+                                        $plant->pv_soll_project_number ?? '',
+                                        $plant->latitude ?? '',
+                                        $plant->longitude ?? '',
+                                        $plant->total_capacity_kw ?? '',
+                                        $plant->panel_count ?? '',
+                                        $plant->inverter_count ?? '',
+                                        $plant->battery_capacity_kwh ?? '',
+                                        $plant->expected_annual_yield_kwh ?? '',
+                                        $plant->degradation_rate ?? '',
+                                        $plant->total_investment ?? '',
+                                        $plant->annual_operating_costs ?? '',
+                                        $plant->feed_in_tariff_per_kwh ?? '',
+                                        $plant->electricity_price_per_kwh ?? '',
+                                        $plant->planned_installation_date ? $plant->planned_installation_date->format('d.m.Y') : '',
+                                        $plant->installation_date ? $plant->installation_date->format('d.m.Y') : '',
+                                        $plant->planned_commissioning_date ? $plant->planned_commissioning_date->format('d.m.Y') : '',
+                                        $plant->commissioning_date ? $plant->commissioning_date->format('d.m.Y') : '',
+                                        $statusName,
+                                        $plant->billing ? 'Ja' : 'Nein',
+                                        $plant->is_active ? 'Ja' : 'Nein',
+                                        number_format($totalParticipation, 2, ',', '.'),
+                                        $participationsCount,
+                                        $plant->description ?? '',
+                                        $plant->notes ?? '',
+                                        $plant->fusion_solar_id ?? '',
+                                        $plant->last_sync_at ? $plant->last_sync_at->format('d.m.Y H:i') : '',
+                                        $plant->created_at ? $plant->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                // Speichere CSV
+                                $filename = 'solaranlagen-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+
+                                // Stelle sicher, dass das Verzeichnis existiert
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+
+                                // Erstelle CSV-String mit UTF-8 BOM für Excel
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF"); // UTF-8 BOM
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';'); // Semikolon für Excel
+                                }
+                                rewind($output);
+                                $csvContent = stream_get_contents($output);
+                                fclose($output);
+
+                                \Storage::disk('public')->put($tempPath, $csvContent);
+
+                                // Speichere Download-Info in Session
+                                session([
+                                    'csv_download_path' => $tempPath,
+                                    'csv_download_filename' => $filename,
+                                ]);
+
+                                // Erfolgsmeldung mit Download-Link
+                                \Filament\Notifications\Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+
+                            } catch (\Throwable $e) {
+                                \Log::error('CSV Export Error', [
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                    'selectedIds' => $selectedIds ?? [],
+                                ]);
+
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->duration(10000)
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records): string {
+                            $count = $records->count();
+                            return "Möchten Sie die {$count} ausgewählten Solaranlagen als CSV-Datei exportieren?\n\nDie CSV-Datei kann in Excel geöffnet werden.";
+                        })
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\ExportBulkAction::make()
-                        ->label('Ausgewählte exportieren')
+                        ->label('Excel Export')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->color('info')
                         ->exporter(\App\Filament\Exports\SolarPlantExporter::class)

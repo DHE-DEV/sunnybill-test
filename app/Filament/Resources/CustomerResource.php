@@ -1374,20 +1374,132 @@ class CustomerResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Kundennummer', 'Name', 'Firmenname', 'Kundentyp', 'Ranking', 'Score',
+                                    'Kontaktquelle', 'Ansprechpartner', 'Abteilung', 'E-Mail', 'Telefon', 'Fax', 'Website',
+                                    'Straße', 'Adresszusatz', 'PLZ', 'Stadt', 'Bundesland', 'Land', 'Ländercode',
+                                    'Steuernummer', 'USt-ID', 'Zahlungsbedingungen', 'Zahlungsziel (Tage)', 'Zahlungsart',
+                                    'Kontoinhaber', 'Bankname', 'IBAN', 'BIC', 'Lexoffice-ID', 'Lexoffice synchronisiert',
+                                    'Status', 'Deaktiviert am', 'Anzahl Rechnungen', 'Anzahl Solar-Beteiligungen',
+                                    'Gesamtbeteiligung kWp', 'Notizen', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $customer) {
+                                    $csv[] = [
+                                        $customer->customer_number ?? '',
+                                        $customer->name ?? '',
+                                        $customer->company_name ?? '',
+                                        match($customer->customer_type) {
+                                            'business' => 'Firma',
+                                            'private' => 'Privat',
+                                            'lead' => 'Lead',
+                                            default => $customer->customer_type
+                                        },
+                                        $customer->ranking ?? '',
+                                        $customer->formatted_customer_score ?? '',
+                                        $customer->contact_source ?? '',
+                                        $customer->contact_person ?? '',
+                                        $customer->department ?? '',
+                                        $customer->email ?? '',
+                                        $customer->phone ?? '',
+                                        $customer->fax ?? '',
+                                        $customer->website ?? '',
+                                        $customer->street ?? '',
+                                        $customer->address_line_2 ?? '',
+                                        $customer->postal_code ?? '',
+                                        $customer->city ?? '',
+                                        $customer->state ?? '',
+                                        $customer->country ?? '',
+                                        $customer->country_code ?? '',
+                                        $customer->tax_number ?? '',
+                                        $customer->vat_id ?? '',
+                                        $customer->payment_terms ?? '',
+                                        $customer->payment_days ?? '',
+                                        match($customer->payment_method) {
+                                            'transfer' => 'Überweisung (Einzeln)',
+                                            'sepa_bulk_transfer' => 'SEPA Sammelüberweisung',
+                                            'direct_debit' => 'Lastschrift (Einzeln)',
+                                            'sepa_direct_debit' => 'SEPA Sammellastschrift',
+                                            default => $customer->payment_method ?? ''
+                                        },
+                                        $customer->account_holder ?? '',
+                                        $customer->bank_name ?? '',
+                                        $customer->iban ?? '',
+                                        $customer->bic ?? '',
+                                        $customer->lexoffice_id ?? '',
+                                        $customer->lexoffice_synced_at ? $customer->lexoffice_synced_at->format('d.m.Y H:i') : '',
+                                        $customer->is_active ? 'Aktiv' : 'Inaktiv',
+                                        $customer->deactivated_at ? $customer->deactivated_at->format('d.m.Y H:i') : '',
+                                        $customer->invoices()->count(),
+                                        $customer->solarParticipations()->count(),
+                                        $customer->formatted_total_kwp_participation ?? '',
+                                        $customer->notes ?? '',
+                                        $customer->created_at ? $customer->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'kunden-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Kunden als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make()
                         ->before(function (Collection $records) {
                             $customersWithInvoices = $records->filter(fn (Customer $customer) => $customer->hasInvoices());
-                            
+
                             if ($customersWithInvoices->isNotEmpty()) {
                                 $customerNames = $customersWithInvoices->pluck('name')->join(', ');
                                 $totalInvoices = $customersWithInvoices->sum(fn (Customer $customer) => $customer->getInvoiceCount());
-                                
+
                                 Notification::make()
                                     ->title('Löschen nicht möglich')
                                     ->body("Die folgenden Kunden haben Rechnungen und können nicht gelöscht werden: {$customerNames} (Insgesamt {$totalInvoices} Rechnungen)")
                                     ->danger()
                                     ->send();
-                                
+
                                 // Verhindere das Löschen
                                 return false;
                             }
@@ -1395,12 +1507,12 @@ class CustomerResource extends Resource
                         ->modalHeading('Kunden löschen')
                         ->modalDescription(function (Collection $records) {
                             $customersWithInvoices = $records->filter(fn (Customer $customer) => $customer->hasInvoices());
-                            
+
                             if ($customersWithInvoices->isNotEmpty()) {
                                 $customerNames = $customersWithInvoices->pluck('name')->join(', ');
                                 return "Die folgenden Kunden haben Rechnungen und können nicht gelöscht werden: {$customerNames}";
                             }
-                            
+
                             return 'Sind Sie sicher, dass Sie die ausgewählten Kunden löschen möchten?';
                         }),
                 ]),

@@ -350,6 +350,89 @@ class RouterResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Name', 'Modell', 'Seriennummer', 'IP-Adresse', 'Standort', 'Status',
+                                    'Netzbetreiber', 'Netzwerk-Typ', 'Signalstärke (dBm)', 'Breitengrad',
+                                    'Längengrad', 'Webhook-Port', 'Empfangene Webhooks', 'Zuletzt gesehen',
+                                    'Letzter Neustart', 'Aktiv', 'Notizen', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $router) {
+                                    $csv[] = [
+                                        $router->name ?? '',
+                                        $router->model ?? '',
+                                        $router->serial_number ?? '',
+                                        $router->ip_address ?? '',
+                                        $router->location ?? '',
+                                        match($router->connection_status) {
+                                            'online' => 'Online',
+                                            'delayed' => 'Verzögert',
+                                            'offline' => 'Offline',
+                                            default => $router->connection_status
+                                        },
+                                        $router->operator ?? '',
+                                        $router->network_type ?? '',
+                                        $router->signal_strength ?? '',
+                                        $router->latitude ?? '',
+                                        $router->longitude ?? '',
+                                        $router->webhook_port ?? '',
+                                        $router->total_webhooks ?? '0',
+                                        $router->last_seen_at ? $router->last_seen_at->format('d.m.Y H:i:s') : '',
+                                        $router->last_restart_at ? $router->last_restart_at->format('d.m.Y H:i:s') : '',
+                                        $router->is_active ? 'Aktiv' : 'Inaktiv',
+                                        $router->notes ?? '',
+                                        $router->created_at ? $router->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'router-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Router als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])

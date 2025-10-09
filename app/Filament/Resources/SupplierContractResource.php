@@ -433,6 +433,91 @@ class SupplierContractResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Vertragsnummer', 'Titel', 'Lieferant', 'Status', 'Eigene Kundennr.',
+                                    'Externe Vertragsnr.', 'MaLo-ID', 'EP-ID', 'Startdatum', 'Enddatum',
+                                    'Vertragswert', 'Währung', 'Standard MwSt.', 'Zahlungsbedingungen',
+                                    'Aktiv', 'Anzahl Notizen', 'Anzahl Dokumente', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $contract) {
+                                    $csv[] = [
+                                        $contract->contract_number ?? '',
+                                        $contract->title ?? '',
+                                        $contract->supplier?->company_name ?? $contract->supplier?->name ?? '',
+                                        match($contract->status) {
+                                            'draft' => 'Entwurf',
+                                            'active' => 'Aktiv',
+                                            'expired' => 'Abgelaufen',
+                                            'terminated' => 'Gekündigt',
+                                            'completed' => 'Abgeschlossen',
+                                            default => $contract->status
+                                        },
+                                        $contract->creditor_number ?? '',
+                                        $contract->external_contract_number ?? '',
+                                        $contract->malo_id ?? '',
+                                        $contract->ep_id ?? '',
+                                        $contract->start_date ? $contract->start_date->format('d.m.Y') : '',
+                                        $contract->end_date ? $contract->end_date->format('d.m.Y') : '',
+                                        $contract->formatted_contract_value ?? '',
+                                        $contract->currency ?? 'EUR',
+                                        $contract->default_vat_rate ?? '',
+                                        $contract->payment_terms ?? '',
+                                        $contract->is_active ? 'Aktiv' : 'Inaktiv',
+                                        $contract->contractNotes()->count(),
+                                        $contract->documents()->count(),
+                                        $contract->created_at ? $contract->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'lieferanten-vertraege-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Verträge als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),

@@ -879,6 +879,177 @@ class SupplierContractBillingResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $selectedIds = $records->pluck('id')->toArray();
+
+                            try {
+                                // Prüfe ob Datensätze vorhanden sind
+                                if (empty($selectedIds)) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('Keine Datensätze ausgewählt')
+                                        ->body('Bitte wählen Sie mindestens einen Beleg aus.')
+                                        ->warning()
+                                        ->send();
+                                    return;
+                                }
+
+                                // Stelle sicher, dass die Relationen geladen sind
+                                $billings = SupplierContractBilling::whereIn('id', $selectedIds)
+                                    ->with(['supplierContract.supplier', 'supplierContract.solarPlants', 'allocations'])
+                                    ->orderBy('created_at', 'desc')
+                                    ->get();
+
+                                if ($billings->isEmpty()) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('Keine Belege gefunden')
+                                        ->body('Die ausgewählten Belege konnten nicht gefunden werden.')
+                                        ->warning()
+                                        ->send();
+                                    return;
+                                }
+
+                                // Erstelle CSV-Daten direkt (schnell, ohne Library)
+                                $csv = [];
+
+                                // Header
+                                $csv[] = [
+                                    'Belegnummer', 'Solaranlage', 'Lieferant', 'Lieferantennummer',
+                                    'Vertragsnummer', 'Titel', 'Beschreibung', 'Belegtyp',
+                                    'Anbieter-Rechnungsnummer', 'Abrechnungsperiode', 'Abrechnungsjahr',
+                                    'Abrechnungsmonat', 'Belegdatum', 'Fälligkeitsdatum', 'Betrag Netto',
+                                    'MwSt. (%)', 'Gesamtbetrag', 'Währung', 'Status', 'Anzahl Aufteilungen',
+                                    'Verteilte Prozentsätze (%)', 'Notizen', 'Erstellt am'
+                                ];
+
+                                // Daten
+                                $monthNames = SupplierContractBilling::getMonthOptions();
+                                $billingTypeOptions = SupplierContractBilling::getBillingTypeOptions();
+                                $statusOptions = SupplierContractBilling::getStatusOptions();
+
+                                foreach ($billings as $billing) {
+                                    $contract = $billing->supplierContract;
+                                    $supplier = $contract?->supplier;
+                                    $solarPlant = $contract?->solarPlants()->first();
+
+                                    // Solaranlage
+                                    $solarPlantName = $solarPlant ? $solarPlant->name : 'Keine Zuordnung';
+
+                                    // Lieferant
+                                    $supplierName = $supplier ? ($supplier->company_name ?? $supplier->name ?? 'Unbekannt') : 'Kein Lieferant';
+                                    $supplierNumber = $supplier && !empty($supplier->supplier_number) ? (string) $supplier->supplier_number : '';
+
+                                    // Vertragsnummer
+                                    $contractNumber = $contract?->contract_number ?? '';
+
+                                    // Abrechnungsperiode
+                                    $monthName = isset($billing->billing_month) ? ($monthNames[$billing->billing_month] ?? $billing->billing_month) : '';
+                                    $billingPeriod = $billing->billing_period ?? '';
+
+                                    // Belegtyp
+                                    $billingType = $billingTypeOptions[$billing->billing_type] ?? $billing->billing_type;
+
+                                    // Status
+                                    $status = $statusOptions[$billing->status] ?? $billing->status;
+
+                                    // Aufteilungen
+                                    $allocationsCount = $billing->allocations()->count();
+                                    $allocatedPercentage = $billing->allocations()->sum('percentage');
+
+                                    $csv[] = [
+                                        $billing->billing_number ?? '',
+                                        $solarPlantName,
+                                        $supplierName,
+                                        $supplierNumber,
+                                        $contractNumber,
+                                        $billing->title ?? '',
+                                        $billing->description ?? '',
+                                        $billingType,
+                                        $billing->supplier_invoice_number ?? '',
+                                        $billingPeriod,
+                                        $billing->billing_year ?? '',
+                                        $billing->billing_month ?? '',
+                                        $billing->billing_date ? $billing->billing_date->format('d.m.Y') : '',
+                                        $billing->due_date ? $billing->due_date->format('d.m.Y') : '',
+                                        $billing->net_amount ?? 0,
+                                        $billing->vat_rate ?? 0,
+                                        $billing->total_amount ?? 0,
+                                        $billing->currency ?? 'EUR',
+                                        $status,
+                                        $allocationsCount,
+                                        number_format($allocatedPercentage, 2, ',', '.'),
+                                        $billing->notes ?? '',
+                                        $billing->created_at ? $billing->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                // Speichere CSV
+                                $filename = 'lieferanten-belege-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+
+                                // Stelle sicher, dass das Verzeichnis existiert
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+
+                                // Erstelle CSV-String mit UTF-8 BOM für Excel
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF"); // UTF-8 BOM
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';'); // Semikolon für Excel
+                                }
+                                rewind($output);
+                                $csvContent = stream_get_contents($output);
+                                fclose($output);
+
+                                \Storage::disk('public')->put($tempPath, $csvContent);
+
+                                // Speichere Download-Info in Session
+                                session([
+                                    'csv_download_path' => $tempPath,
+                                    'csv_download_filename' => $filename,
+                                ]);
+
+                                // Erfolgsmeldung mit Download-Link
+                                \Filament\Notifications\Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+
+                            } catch (\Throwable $e) {
+                                \Log::error('CSV Export Error', [
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                    'selectedIds' => $selectedIds ?? [],
+                                ]);
+
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->duration(10000)
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records): string {
+                            $count = $records->count();
+                            return "Möchten Sie die {$count} ausgewählten Belege als CSV-Datei exportieren?\n\nDie CSV-Datei kann in Excel geöffnet werden.";
+                        })
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Ausgewählte löschen'),
                     Tables\Actions\ForceDeleteBulkAction::make()

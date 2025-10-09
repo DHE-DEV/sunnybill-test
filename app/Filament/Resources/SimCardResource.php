@@ -388,6 +388,97 @@ class SimCardResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'ICCID', 'Telefonnummer (MSISDN)', 'IMSI', 'Anbieter', 'Tarif', 'Status',
+                                    'Vertragsart', 'Zugewiesen an', 'Router', 'Standort', 'Monatl. Kosten',
+                                    'Datenlimit (MB)', 'Verbrauch (MB)', 'Signalstärke', 'Vertragsbeginn',
+                                    'Vertragsende', 'Letzte Aktivität', 'Aktiv', 'Gesperrt', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $sim) {
+                                    $csv[] = [
+                                        $sim->iccid ?? '',
+                                        $sim->msisdn ?? '',
+                                        $sim->imsi ?? '',
+                                        $sim->provider ?? '',
+                                        $sim->tariff ?? '',
+                                        match($sim->status) {
+                                            'active' => 'Aktiv',
+                                            'inactive' => 'Inaktiv',
+                                            'suspended' => 'Suspendiert',
+                                            'terminated' => 'Gekündigt',
+                                            default => $sim->status
+                                        },
+                                        match($sim->contract_type) {
+                                            'prepaid' => 'Prepaid',
+                                            'postpaid' => 'Vertrag',
+                                            'iot' => 'IoT/M2M',
+                                            default => $sim->contract_type
+                                        },
+                                        $sim->assigned_to ?? '',
+                                        $sim->router?->name ?? '',
+                                        $sim->location ?? '',
+                                        $sim->monthly_cost ? number_format($sim->monthly_cost, 2, ',', '.') : '',
+                                        $sim->data_limit_mb ?? '',
+                                        $sim->data_used_mb ?? '0',
+                                        $sim->signal_strength ?? '',
+                                        $sim->contract_start ? $sim->contract_start->format('d.m.Y') : '',
+                                        $sim->contract_end ? $sim->contract_end->format('d.m.Y') : '',
+                                        $sim->last_activity ? $sim->last_activity->format('d.m.Y H:i:s') : '',
+                                        $sim->is_active ? 'Aktiv' : 'Inaktiv',
+                                        $sim->is_blocked ? 'Ja' : 'Nein',
+                                        $sim->created_at ? $sim->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'sim-karten-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten SIM-Karten als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\BulkAction::make('reset_data_usage_bulk')
                         ->label('Datenverbrauch zurücksetzen')

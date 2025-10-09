@@ -341,6 +341,94 @@ class SupplierResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('CSV Export')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            try {
+                                $csv = [];
+                                $csv[] = [
+                                    'Lieferanten-Nr.', 'Firmenname', 'Lieferantentyp', 'Ranking', 'Eigene Kundennummer',
+                                    'Eigene Vertragsnummer', 'Ansprechpartner', 'E-Mail', 'Website', 'Adresse', 'PLZ',
+                                    'Stadt', 'Land', 'Steuernummer', 'USt-ID', 'Lexoffice-ID', 'Lexoffice synchronisiert',
+                                    'Anzahl Mitarbeiter', 'Aktiv', 'Notizen', 'Erstellt am'
+                                ];
+
+                                foreach ($records as $supplier) {
+                                    $csv[] = [
+                                        $supplier->supplier_number ?? '',
+                                        $supplier->company_name ?? '',
+                                        $supplier->supplierType?->name ?? '',
+                                        match($supplier->ranking) {
+                                            'A' => 'A Lieferant',
+                                            'B' => 'B Lieferant',
+                                            'C' => 'C Lieferant',
+                                            'D' => 'D Lieferant',
+                                            'E' => 'E Lieferant',
+                                            default => $supplier->ranking ?? ''
+                                        },
+                                        $supplier->creditor_number ?? '',
+                                        $supplier->contract_number ?? '',
+                                        $supplier->contact_person ?? '',
+                                        $supplier->email ?? '',
+                                        $supplier->website ?? '',
+                                        $supplier->address ?? '',
+                                        $supplier->postal_code ?? '',
+                                        $supplier->city ?? '',
+                                        $supplier->country ?? '',
+                                        $supplier->tax_number ?? '',
+                                        $supplier->vat_id ?? '',
+                                        $supplier->lexoffice_id ?? '',
+                                        $supplier->lexoffice_synced_at ? $supplier->lexoffice_synced_at->format('d.m.Y H:i') : '',
+                                        $supplier->employees()->count(),
+                                        $supplier->is_active ? 'Aktiv' : 'Inaktiv',
+                                        $supplier->notes ?? '',
+                                        $supplier->created_at ? $supplier->created_at->format('d.m.Y H:i') : '',
+                                    ];
+                                }
+
+                                $filename = 'lieferanten-' . now()->format('Y-m-d_H-i-s') . '.csv';
+                                $tempPath = 'temp/csv-exports/' . $filename;
+                                \Storage::disk('public')->makeDirectory('temp/csv-exports');
+                                $output = fopen('php://temp', 'r+');
+                                fputs($output, "\xEF\xBB\xBF");
+                                foreach ($csv as $row) {
+                                    fputcsv($output, $row, ';');
+                                }
+                                rewind($output);
+                                \Storage::disk('public')->put($tempPath, stream_get_contents($output));
+                                fclose($output);
+
+                                session(['csv_download_path' => $tempPath, 'csv_download_filename' => $filename]);
+
+                                Notification::make()
+                                    ->title('CSV-Export erfolgreich')
+                                    ->body('Klicken Sie auf den Button, um die Datei herunterzuladen.')
+                                    ->success()
+                                    ->actions([
+                                        \Filament\Notifications\Actions\Action::make('download')
+                                            ->label('Datei herunterladen')
+                                            ->url(route('admin.download-csv'))
+                                            ->openUrlInNewTab()
+                                            ->button()
+                                    ])
+                                    ->persistent()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Fehler beim CSV-Export')
+                                    ->body('Ein Fehler ist aufgetreten: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('CSV Export')
+                        ->modalDescription(fn (Collection $records) => "Möchten Sie die " . $records->count() . " ausgewählten Lieferanten als CSV-Datei exportieren?")
+                        ->modalSubmitActionLabel('CSV exportieren')
+                        ->modalIcon('heroicon-o-document-arrow-down'),
+
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
