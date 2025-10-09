@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('routers', function (Blueprint $table) {
+            $table->string('lan_mac_address')->nullable()->after('serial_number');
             $table->string('login_username')->nullable()->after('description');
             $table->text('login_password')->nullable()->after('login_username');
         });
@@ -23,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('routers', function (Blueprint $table) {
-            $table->dropColumn(['login_username', 'login_password']);
+            $table->dropColumn(['lan_mac_address', 'login_username', 'login_password']);
         });
     }
 };
