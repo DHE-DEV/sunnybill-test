@@ -182,23 +182,49 @@ class ViewSolarPlantBillingOverview extends ViewRecord
                             ->label('')
                             ->getStateUsing(function (SolarPlant $record) {
                                 $contracts = $record->activeSupplierContracts()->with('supplier')->get();
-                                
+
                                 if ($contracts->isEmpty()) {
                                     return 'Keine aktiven Verträge vorhanden.';
                                 }
-                                
+
                                 $html = '<div style="line-height: 1.6;">';
-                                
+
                                 foreach ($contracts as $contract) {
                                     $currentMonth = now();
+
+                                    // Prüfe ob Vertrag für aktuellen Monat gültig ist
+                                    $isValidForMonth = true;
+                                    $validityInfo = '';
+
+                                    if (!$contract->is_active) {
+                                        $isValidForMonth = false;
+                                        $validityInfo = ' <span style="color: #6c757d; font-size: 12px;">(Inaktiv)</span>';
+                                    } else {
+                                        if ($contract->start_date && $currentMonth->isBefore($contract->start_date->startOfMonth())) {
+                                            $isValidForMonth = false;
+                                            $validityInfo = ' <span style="color: #6c757d; font-size: 12px;">(Noch nicht gestartet)</span>';
+                                        }
+
+                                        if ($contract->end_date && $currentMonth->isAfter($contract->end_date->endOfMonth())) {
+                                            $isValidForMonth = false;
+                                            $validityInfo = ' <span style="color: #6c757d; font-size: 12px;">(Beendet)</span>';
+                                        }
+                                    }
+
                                     $billing = $contract->billings()
                                         ->where('billing_year', $currentMonth->year)
                                         ->where('billing_month', $currentMonth->month)
                                         ->first();
-                                    
-                                    $status = $billing ? '✅ Vorhanden' : '❌ Fehlt';
+
+                                    // Status basierend auf Gültigkeit und Abrechnung
+                                    if (!$isValidForMonth) {
+                                        $status = '⚪ Nicht relevant' . $validityInfo;
+                                    } else {
+                                        $status = $billing ? '✅ Vorhanden' : '❌ Fehlt';
+                                    }
+
                                     $contractUrl = '/admin/supplier-contracts/' . $contract->id;
-                                    
+
                                     $html .= '<div style="margin-bottom: 8px;">';
                                     $html .= '<a href="' . $contractUrl . '" style="color: #3b82f6; text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">';
                                     $html .= htmlspecialchars($contract->contract_number . ' - ' . $contract->title);
@@ -206,9 +232,9 @@ class ViewSolarPlantBillingOverview extends ViewRecord
                                     $html .= ' (' . htmlspecialchars($contract->supplier->company_name) . '): ' . $status;
                                     $html .= '</div>';
                                 }
-                                
+
                                 $html .= '</div>';
-                                
+
                                 return $html;
                             })
                             ->html(),
