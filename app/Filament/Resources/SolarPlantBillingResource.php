@@ -819,11 +819,23 @@ class SolarPlantBillingResource extends Resource
                         ->color('info')
                         ->form([
                             Forms\Components\TextInput::make('email_recipient')
-                                ->label('E-Mail-Empfänger')
+                                ->label('E-Mail-Empfänger (An)')
                                 ->email()
                                 ->required()
                                 ->placeholder('kunde@example.com')
                                 ->helperText('E-Mail-Adresse des Empfängers')
+                                ->columnSpanFull(),
+
+                            Forms\Components\TextInput::make('email_cc')
+                                ->label('CC (Kopie)')
+                                ->placeholder('email1@example.com, email2@example.com')
+                                ->helperText('Mehrere E-Mail-Adressen mit Komma trennen')
+                                ->columnSpanFull(),
+
+                            Forms\Components\TextInput::make('email_bcc')
+                                ->label('BCC (Blindkopie)')
+                                ->placeholder('email1@example.com, email2@example.com')
+                                ->helperText('Mehrere E-Mail-Adressen mit Komma trennen')
                                 ->columnSpanFull(),
 
                             Forms\Components\Textarea::make('email_message')
@@ -836,14 +848,16 @@ class SolarPlantBillingResource extends Resource
                         ->fillForm(function (SolarPlantBilling $record): array {
                             $customer = $record->customer;
                             $defaultEmail = '';
-                            
+
                             // Versuche E-Mail-Adresse aus Kundendaten zu ermitteln
                             if ($customer) {
                                 $defaultEmail = $customer->email ?? '';
                             }
-                            
+
                             return [
                                 'email_recipient' => $defaultEmail,
+                                'email_cc' => '',
+                                'email_bcc' => 't.kubitzek@jt-solarbau.de',
                                 'email_message' => '',
                             ];
                         })
@@ -852,22 +866,22 @@ class SolarPlantBillingResource extends Resource
                                 // PDF generieren
                                 $pdfService = new SolarPlantBillingPdfService();
                                 $pdfContent = $pdfService->generateBillingPdf($record);
-                                
+
                                 // Dateiname erstellen
                                 $customer = $record->customer;
                                 $solarPlant = $record->solarPlant;
-                                
+
                                 $plantName = preg_replace('/[^a-zA-Z0-9\-äöüÄÖÜß]/', '', str_replace(' ', '-', trim($solarPlant->name)));
                                 $plantName = preg_replace('/-+/', '-', $plantName);
                                 $plantName = trim($plantName, '-');
-                                
-                                $customerName = $customer->customer_type === 'business' && $customer->company_name 
-                                    ? $customer->company_name 
+
+                                $customerName = $customer->customer_type === 'business' && $customer->company_name
+                                    ? $customer->company_name
                                     : $customer->name;
                                 $customerName = preg_replace('/[^a-zA-Z0-9\-äöüÄÖÜß]/', '', str_replace(' ', '-', trim($customerName)));
                                 $customerName = preg_replace('/-+/', '-', $customerName);
                                 $customerName = trim($customerName, '-');
-                                
+
                                 $fileName = sprintf(
                                     'Abrechnung_%04d-%02d_%s_%s.pdf',
                                     $record->billing_year,
@@ -875,28 +889,64 @@ class SolarPlantBillingResource extends Resource
                                     $plantName,
                                     $customerName
                                 );
-                                
+
                                 // Temporäre Datei speichern
                                 $tempPath = 'temp/email/' . uniqid() . '_' . $fileName;
                                 \Storage::disk('public')->put($tempPath, $pdfContent);
                                 $fullPath = \Storage::disk('public')->path($tempPath);
-                                
+
+                                // Parse CC und BCC E-Mail-Adressen (Komma-getrennt)
+                                $ccEmails = [];
+                                if (!empty($data['email_cc'])) {
+                                    $ccEmails = array_map('trim', explode(',', $data['email_cc']));
+                                    $ccEmails = array_filter($ccEmails, function($email) {
+                                        return filter_var($email, FILTER_VALIDATE_EMAIL);
+                                    });
+                                }
+
+                                $bccEmails = [];
+                                if (!empty($data['email_bcc'])) {
+                                    $bccEmails = array_map('trim', explode(',', $data['email_bcc']));
+                                    $bccEmails = array_filter($bccEmails, function($email) {
+                                        return filter_var($email, FILTER_VALIDATE_EMAIL);
+                                    });
+                                }
+
                                 // E-Mail senden
                                 $customMessage = !empty($data['email_message']) ? $data['email_message'] : null;
-                                
-                                Mail::to($data['email_recipient'])->send(
-                                    new SingleBillingMail($record, $customMessage, $fullPath, $fileName)
-                                );
-                                
+
+                                $mail = Mail::to($data['email_recipient']);
+
+                                // CC hinzufügen
+                                if (!empty($ccEmails)) {
+                                    $mail->cc($ccEmails);
+                                }
+
+                                // BCC hinzufügen
+                                if (!empty($bccEmails)) {
+                                    $mail->bcc($bccEmails);
+                                }
+
+                                $mail->send(new SingleBillingMail($record, $customMessage, $fullPath, $fileName));
+
                                 // Temporäre Datei löschen
                                 \Storage::disk('public')->delete($tempPath);
-                                
+
+                                // Erfolgsmeldung mit CC/BCC Info
+                                $recipients = $data['email_recipient'];
+                                if (!empty($ccEmails)) {
+                                    $recipients .= ' (CC: ' . implode(', ', $ccEmails) . ')';
+                                }
+                                if (!empty($bccEmails)) {
+                                    $recipients .= ' (BCC: ' . implode(', ', $bccEmails) . ')';
+                                }
+
                                 Notification::make()
                                     ->title('E-Mail erfolgreich versendet')
-                                    ->body("Die Abrechnung wurde per E-Mail an {$data['email_recipient']} gesendet.")
+                                    ->body("Die Abrechnung wurde per E-Mail gesendet an: {$recipients}")
                                     ->success()
                                     ->send();
-                                    
+
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->title('Fehler beim E-Mail-Versand')
