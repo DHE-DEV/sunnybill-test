@@ -541,8 +541,8 @@
     <table class="positions-table">
         <thead>
             <tr>
-                <th>Pos.</th>
-                <th>Beschreibung</th>
+                <th style="width: 40px;">Pos.</th>
+                <th style="width: 250px;">Beschreibung</th>
                 <th class="number">Netto €</th>
                 <th class="number">USt. € (Satz)</th>
                 <th class="number">Brutto €</th>
