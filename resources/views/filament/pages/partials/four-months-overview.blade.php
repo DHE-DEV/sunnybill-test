@@ -134,15 +134,15 @@
                                         <div
                                             id="{{ $uniqueId }}"
                                             class="hidden"
-                                            style="position: absolute; top: 100%; left: 50%; transform: translateX(-50%); z-index: 1000; background-color: white; border: 1px solid #d1d5db; border-radius: 8px; padding: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); min-width: 300px; max-width: 400px; margin-top: 0.5rem;"
+                                            style="position: absolute; top: 100%; left: 0; z-index: 1000; background-color: white; border: 1px solid #d1d5db; border-radius: 8px; padding: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); min-width: 300px; max-width: 400px; margin-top: 0.5rem; text-align: left;"
                                         >
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                                <h4 style="font-weight: 600; font-size: 0.875rem; color: #111827;">
+                                            <div style="display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                                <h4 style="font-weight: 600; font-size: 0.875rem; color: #111827; flex: 1; min-width: 0;">
                                                     {{ $monthData['monthLabel'] }} - Verträge
                                                 </h4>
                                                 <button
                                                     onclick="document.getElementById('{{ $uniqueId }}').classList.add('hidden')"
-                                                    style="border: none; background: none; cursor: pointer; color: #6b7280; padding: 0;"
+                                                    style="border: none; background: none; cursor: pointer; color: #6b7280; padding: 0; flex-shrink: 0;"
                                                 >
                                                     <x-heroicon-o-x-mark style="width: 20px; height: 20px;" />
                                                 </button>
@@ -150,23 +150,35 @@
 
                                             @if ($missingCount > 0)
                                                 <div style="margin-bottom: 0.75rem;">
-                                                    <p style="font-weight: 500; font-size: 0.75rem; color: #ef4444; margin-bottom: 0.5rem;">
-                                                        Fehlende Abrechnungen ({{ $missingCount }}):
+                                                    <p style="font-weight: 500; font-size: 0.75rem; color: #ef4444; margin-bottom: 0.5rem; text-align: left;">
+                                                        Fehlende Abrechnungen ({{ $missingCount }})
                                                     </p>
-                                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                                        @foreach ($missingBillings as $contract)
-                                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background-color: #fef2f2; border-radius: 4px; font-size: 0.75rem;">
-                                                                <div style="flex: 1;">
-                                                                    <div style="font-weight: 500; color: #111827;">{{ $contract->title }}</div>
-                                                                    <div style="color: #6b7280;">{{ $contract->supplier ? $contract->supplier->display_name : 'Unbekannt' }}</div>
+                                                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                                        @foreach ($missingBillings as $missingContract)
+                                                            <div style="background-color: #fef2f2; border-radius: 4px; padding: 0.5rem;">
+                                                                <div style="display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                                                    <div style="flex: 1; min-width: 0;">
+                                                                        <div style="font-weight: 500; color: #111827; font-size: 0.75rem;">{{ $missingContract->title }}</div>
+                                                                        <div style="color: #6b7280; font-size: 0.625rem;">{{ $missingContract->supplier ? $missingContract->supplier->display_name : 'Unbekannt' }}</div>
+                                                                    </div>
+                                                                    <a href="/admin/supplier-contracts/{{ $missingContract->id }}?activeRelationManager=1"
+                                                                       target="_blank"
+                                                                       style="padding: 0.25rem 0.5rem; background-color: white; border: 1px solid #d1d5db; border-radius: 4px; text-decoration: none; color: #374151; font-size: 0.625rem; white-space: nowrap;"
+                                                                       onclick="event.stopPropagation();"
+                                                                    >
+                                                                        Öffnen
+                                                                    </a>
                                                                 </div>
-                                                                <a href="/admin/supplier-contracts/{{ $contract->id }}?activeRelationManager=1"
-                                                                   target="_blank"
-                                                                   style="padding: 0.25rem 0.5rem; background-color: white; border: 1px solid #d1d5db; border-radius: 4px; text-decoration: none; color: #374151; font-size: 0.625rem;"
-                                                                   onclick="event.stopPropagation();"
-                                                                >
-                                                                    Öffnen
-                                                                </a>
+
+                                                                <!-- Vertragsspezifische Notizen -->
+                                                                <div style="margin-top: 0.5rem;">
+                                                                    @livewire('billing-note-manager', [
+                                                                        'solarPlantId' => $plant->id,
+                                                                        'billingYear' => $year,
+                                                                        'billingMonth' => $monthNumber,
+                                                                        'supplierContractId' => $missingContract->id
+                                                                    ], key('notes-missing-' . $plant->id . '-' . $year . '-' . $monthNumber . '-' . $missingContract->id))
+                                                                </div>
                                                             </div>
                                                         @endforeach
                                                     </div>
@@ -175,36 +187,58 @@
 
                                             @if ($completedBillings > 0)
                                                 <div>
-                                                    <p style="font-weight: 500; font-size: 0.75rem; color: #22c55e; margin-bottom: 0.5rem;">
-                                                        Erfasste Abrechnungen ({{ $completedBillings }}):
+                                                    <p style="font-weight: 500; font-size: 0.75rem; color: #22c55e; margin-bottom: 0.5rem; text-align: left;">
+                                                        Erfasste Abrechnungen ({{ $completedBillings }})
                                                     </p>
-                                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                                        @foreach ($activeContracts as $contract)
+                                                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                                        @foreach ($activeContracts as $completedContract)
                                                             @php
-                                                                $billing = $contract->billings()
+                                                                $billing = $completedContract->billings()
                                                                     ->where('billing_year', $year)
                                                                     ->where('billing_month', $monthNumber)
                                                                     ->first();
                                                             @endphp
                                                             @if ($billing)
-                                                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background-color: #f0fdf4; border-radius: 4px; font-size: 0.75rem;">
-                                                                    <div style="flex: 1;">
-                                                                        <div style="font-weight: 500; color: #111827;">{{ $contract->title }}</div>
-                                                                        <div style="color: #6b7280;">{{ $contract->supplier ? $contract->supplier->display_name : 'Unbekannt' }}</div>
+                                                                <div style="background-color: #f0fdf4; border-radius: 4px; padding: 0.5rem;">
+                                                                    <div style="display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                                                        <div style="flex: 1; min-width: 0;">
+                                                                            <div style="font-weight: 500; color: #111827; font-size: 0.75rem;">{{ $completedContract->title }}</div>
+                                                                            <div style="color: #6b7280; font-size: 0.625rem;">{{ $completedContract->supplier ? $completedContract->supplier->display_name : 'Unbekannt' }}</div>
+                                                                        </div>
+                                                                        <a href="/admin/supplier-contract-billings/{{ $billing->id }}"
+                                                                           target="_blank"
+                                                                           style="padding: 0.25rem 0.5rem; background-color: white; border: 1px solid #d1d5db; border-radius: 4px; text-decoration: none; color: #374151; font-size: 0.625rem; white-space: nowrap;"
+                                                                           onclick="event.stopPropagation();"
+                                                                        >
+                                                                            Beleg
+                                                                        </a>
                                                                     </div>
-                                                                    <a href="/admin/supplier-contract-billings/{{ $billing->id }}"
-                                                                       target="_blank"
-                                                                       style="padding: 0.25rem 0.5rem; background-color: white; border: 1px solid #d1d5db; border-radius: 4px; text-decoration: none; color: #374151; font-size: 0.625rem;"
-                                                                       onclick="event.stopPropagation();"
-                                                                    >
-                                                                        Beleg
-                                                                    </a>
+
+                                                                    <!-- Vertragsspezifische Notizen -->
+                                                                    <div style="margin-top: 0.5rem;">
+                                                                        @livewire('billing-note-manager', [
+                                                                            'solarPlantId' => $plant->id,
+                                                                            'billingYear' => $year,
+                                                                            'billingMonth' => $monthNumber,
+                                                                            'supplierContractId' => $completedContract->id
+                                                                        ], key('notes-completed-' . $plant->id . '-' . $year . '-' . $monthNumber . '-' . $completedContract->id))
+                                                                    </div>
                                                                 </div>
                                                             @endif
                                                         @endforeach
                                                     </div>
                                                 </div>
                                             @endif
+
+                                            <!-- Notizen-Sektion -->
+                                            <div style="margin-top: 0.75rem;">
+                                                @livewire('billing-note-manager', [
+                                                    'solarPlantId' => $plant->id,
+                                                    'billingYear' => $year,
+                                                    'billingMonth' => $monthNumber,
+                                                    'supplierContractId' => null
+                                                ], key('notes-' . $plant->id . '-' . $year . '-' . $monthNumber))
+                                            </div>
                                         </div>
                                     @endif
                                 </td>

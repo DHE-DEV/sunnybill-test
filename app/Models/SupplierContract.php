@@ -177,6 +177,14 @@ class SupplierContract extends Model
     }
 
     /**
+     * Notizen zur Abrechnung
+     */
+    public function billingNotes(): HasMany
+    {
+        return $this->hasMany(BillingNote::class);
+    }
+
+    /**
      * Scope für aktive Verträge
      */
     public function scopeActive($query)

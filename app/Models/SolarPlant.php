@@ -301,6 +301,14 @@ class SolarPlant extends Model
     }
 
     /**
+     * Notizen zur Abrechnung
+     */
+    public function billingNotes(): HasMany
+    {
+        return $this->hasMany(BillingNote::class);
+    }
+
+    /**
      * Gesamtbeteiligung aller Kunden berechnen
      */
     public function getTotalParticipationAttribute(): float

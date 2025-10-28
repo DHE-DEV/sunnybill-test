@@ -345,6 +345,13 @@ class ListSolarPlantMonthlyOverview extends Page
                 $hasPlantBillings = SolarPlantMonthlyOverviewResource::hasPlantBillingsForMonth($plant, $month);
                 $plantBillingsCount = SolarPlantMonthlyOverviewResource::getPlantBillingsCountForMonth($plant, $month);
 
+                // Lade bestehende Notizen für diesen Monat
+                $notes = $plant->billingNotes()
+                    ->forMonth($year, $monthNumber)
+                    ->with(['creator', 'supplierContract'])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
                 $monthsData[] = [
                     'month' => $month,
                     'monthLabel' => $monthInfo['label'],
@@ -357,6 +364,7 @@ class ListSolarPlantMonthlyOverview extends Page
                     'plantBillingsCount' => $plantBillingsCount,
                     'year' => $year,
                     'monthNumber' => $monthNumber,
+                    'notes' => $notes,
                 ];
             }
 
