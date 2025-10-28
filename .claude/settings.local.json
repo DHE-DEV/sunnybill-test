@@ -13,7 +13,10 @@
       "Bash(git push:*)",
       "Bash(php artisan tinker:*)",
       "Bash(php artisan:*)",
-      "Bash(php -l:*)"
+      "Bash(php -l:*)",
+      "Bash(php test_monthly_overview_contract_validation.php:*)",
+      "Bash(php:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

@@ -351,8 +351,12 @@ class ListSolarPlantMonthlyOverview extends Page
                     'status' => $status,
                     'totalContracts' => $activeContracts->count(),
                     'missingCount' => $missingBillings->count(),
+                    'missingBillings' => $missingBillings,
+                    'activeContracts' => $activeContracts,
                     'hasPlantBillings' => $hasPlantBillings,
                     'plantBillingsCount' => $plantBillingsCount,
+                    'year' => $year,
+                    'monthNumber' => $monthNumber,
                 ];
             }
 
