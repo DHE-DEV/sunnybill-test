@@ -67,8 +67,11 @@ class EditSolarPlantBilling extends EditRecord
         // Entferne temporäres Feld
         unset($data['cancellation_reason_temp']);
 
-        // Berechne Nettobetrag
-        $data['net_amount'] = ($data['total_costs'] ?? 0) - ($data['total_credits'] ?? 0);
+        // Berechne Nettobetrag NUR wenn total_costs oder total_credits geändert wurden
+        // Verhindert, dass net_amount beim Statuswechsel überschrieben wird
+        if (isset($data['total_costs']) || isset($data['total_credits'])) {
+            $data['net_amount'] = ($data['total_costs'] ?? $this->record->total_costs ?? 0) - ($data['total_credits'] ?? $this->record->total_credits ?? 0);
+        }
 
         return $data;
     }
