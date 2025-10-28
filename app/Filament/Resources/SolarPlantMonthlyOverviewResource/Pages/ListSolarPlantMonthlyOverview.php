@@ -18,14 +18,27 @@ class ListSolarPlantMonthlyOverview extends Page
     protected static string $view = 'filament.pages.solar-plant-monthly-overview';
 
     public ?string $selectedMonth = null;
-    
+
     public ?string $statusFilter = 'all';
-    
+
     public ?string $plantBillingFilter = 'alle';
+
+    public ?string $viewMode = 'four_months'; // 'four_months' oder 'single_month'
 
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('showFourMonths')
+                ->label('4-Monats-Übersicht')
+                ->icon('heroicon-o-calendar-days')
+                ->color('primary')
+                ->visible(fn () => $this->viewMode === 'single_month')
+                ->action(function () {
+                    $this->viewMode = 'four_months';
+                    session(['solar_plant_monthly_overview.view_mode' => $this->viewMode]);
+                    $this->dispatch('$refresh');
+                }),
+
             Actions\Action::make('selectMonth')
                 ->label('Monat auswählen')
                 ->icon('heroicon-o-calendar')
@@ -50,8 +63,10 @@ class ListSolarPlantMonthlyOverview extends Page
                 ])
                 ->action(function (array $data) {
                     $this->selectedMonth = $data['month'];
+                    $this->viewMode = 'single_month';
                     // Speichere in der Session
                     session(['solar_plant_monthly_overview.selected_month' => $this->selectedMonth]);
+                    session(['solar_plant_monthly_overview.view_mode' => $this->viewMode]);
                     $this->dispatch('monthSelected', month: $this->selectedMonth);
                 }),
             
@@ -59,6 +74,7 @@ class ListSolarPlantMonthlyOverview extends Page
                 ->label('Status filtern')
                 ->icon('heroicon-o-funnel')
                 ->color('gray')
+                ->visible(fn () => $this->viewMode === 'single_month')
                 ->modalHeading('Nach Status filtern')
                 ->modalWidth(MaxWidth::Medium)
                 ->form([
@@ -81,11 +97,12 @@ class ListSolarPlantMonthlyOverview extends Page
                     session(['solar_plant_monthly_overview.status_filter' => $this->statusFilter]);
                     $this->dispatch('statusFilterChanged', status: $this->statusFilter);
                 }),
-            
+
             Actions\Action::make('filterPlantBilling')
                 ->label('Anlagen-Abrechnung filtern')
                 ->icon('heroicon-o-document-currency-dollar')
                 ->color('gray')
+                ->visible(fn () => $this->viewMode === 'single_month')
                 ->modalHeading('Nach Anlagen-Abrechnung filtern')
                 ->modalWidth(MaxWidth::Medium)
                 ->form([
@@ -123,12 +140,19 @@ class ListSolarPlantMonthlyOverview extends Page
         $this->selectedMonth = session('solar_plant_monthly_overview.selected_month', now()->format('Y-m'));
         $this->statusFilter = session('solar_plant_monthly_overview.status_filter', 'all');
         $this->plantBillingFilter = session('solar_plant_monthly_overview.plant_billing_filter', 'alle');
+        $this->viewMode = session('solar_plant_monthly_overview.view_mode', 'four_months');
     }
 
     protected function getViewData(): array
     {
+        // Wenn 4-Monats-Ansicht, sammle Daten für die letzten 4 Monate
+        if ($this->viewMode === 'four_months') {
+            return $this->getFourMonthsViewData();
+        }
+
+        // Einzelmonatsansicht
         $month = $this->selectedMonth ?? now()->format('Y-m');
-        
+
         // Hole alle Solaranlagen (nur die mit billing = true)
         $solarPlants = SolarPlant::whereNull('deleted_at')
             ->where('billing', true)
@@ -137,18 +161,45 @@ class ListSolarPlantMonthlyOverview extends Page
 
         $plantsData = [];
 
+        $year = (int) substr($month, 0, 4);
+        $monthNumber = (int) substr($month, 5, 2);
+        $monthDate = Carbon::create($year, $monthNumber, 1);
+
         foreach ($solarPlants as $plant) {
             $status = SolarPlantMonthlyOverviewResource::getBillingStatusForMonth($plant, $month);
             $missingBillings = SolarPlantMonthlyOverviewResource::getMissingBillingsForMonth($plant, $month);
-            $activeContracts = $plant->activeSupplierContracts()->with('supplier')->get()->unique('id');
-            
+
+            // Hole alle aktiven Verträge und filtere sie für den gewählten Monat
+            $allActiveContracts = $plant->activeSupplierContracts()->with('supplier')->get();
+            $uniqueContracts = $allActiveContracts->filter(function ($contract) {
+                return $contract->deleted_at === null;
+            })->unique('id');
+
+            // Filtere Verträge, die für diesen Monat gültig sind
+            $activeContracts = $uniqueContracts->filter(function ($contract) use ($monthDate) {
+                // Prüfe ob Vertrag aktiv ist
+                if (!$contract->is_active) {
+                    return false;
+                }
+
+                // Wenn start_date gesetzt ist, prüfe ob der Monat danach liegt
+                if ($contract->start_date && $monthDate->isBefore($contract->start_date->startOfMonth())) {
+                    return false;
+                }
+
+                // Wenn end_date gesetzt ist, prüfe ob der Monat davor liegt
+                if ($contract->end_date && $monthDate->isAfter($contract->end_date->endOfMonth())) {
+                    return false;
+                }
+
+                return true;
+            });
+
             // Prüfe Anlagen-Abrechnungen
             $hasPlantBillings = SolarPlantMonthlyOverviewResource::hasPlantBillingsForMonth($plant, $month);
             $plantBillingsCount = SolarPlantMonthlyOverviewResource::getPlantBillingsCountForMonth($plant, $month);
-            
+
             // Hole die erste Anlagen-Abrechnung für direkten Link
-            $year = (int) substr($month, 0, 4);
-            $monthNumber = (int) substr($month, 5, 2);
             $firstPlantBilling = $hasPlantBillings ? $plant->billings()
                 ->where('billing_year', $year)
                 ->where('billing_month', $monthNumber)
@@ -222,6 +273,7 @@ class ListSolarPlantMonthlyOverview extends Page
         });
 
         return [
+            'viewMode' => 'single_month',
             'selectedMonth' => $month,
             'monthLabel' => Carbon::createFromFormat('Y-m', $month)->locale('de')->translatedFormat('F Y'),
             'plantsData' => $plantsData,
@@ -231,12 +283,104 @@ class ListSolarPlantMonthlyOverview extends Page
         ];
     }
 
+    protected function getFourMonthsViewData(): array
+    {
+        // Die letzten 4 Monate generieren
+        $months = [];
+        $currentDate = now();
+
+        for ($i = 3; $i >= 0; $i--) {
+            $date = $currentDate->copy()->subMonths($i);
+            $months[] = [
+                'value' => $date->format('Y-m'),
+                'label' => $date->locale('de')->translatedFormat('F Y'),
+                'year' => (int) $date->format('Y'),
+                'month' => (int) $date->format('m'),
+            ];
+        }
+
+        // Hole alle Solaranlagen (nur die mit billing = true)
+        $solarPlants = SolarPlant::whereNull('deleted_at')
+            ->where('billing', true)
+            ->orderBy('plant_number')
+            ->get();
+
+        $plantsData = [];
+
+        foreach ($solarPlants as $plant) {
+            $monthsData = [];
+
+            foreach ($months as $monthInfo) {
+                $month = $monthInfo['value'];
+                $year = $monthInfo['year'];
+                $monthNumber = $monthInfo['month'];
+                $monthDate = Carbon::create($year, $monthNumber, 1);
+
+                $status = SolarPlantMonthlyOverviewResource::getBillingStatusForMonth($plant, $month);
+
+                // Hole alle aktiven Verträge und filtere sie für den gewählten Monat
+                $allActiveContracts = $plant->activeSupplierContracts()->with('supplier')->get();
+                $uniqueContracts = $allActiveContracts->filter(function ($contract) {
+                    return $contract->deleted_at === null;
+                })->unique('id');
+
+                // Filtere Verträge, die für diesen Monat gültig sind
+                $activeContracts = $uniqueContracts->filter(function ($contract) use ($monthDate) {
+                    if (!$contract->is_active) {
+                        return false;
+                    }
+
+                    if ($contract->start_date && $monthDate->isBefore($contract->start_date->startOfMonth())) {
+                        return false;
+                    }
+
+                    if ($contract->end_date && $monthDate->isAfter($contract->end_date->endOfMonth())) {
+                        return false;
+                    }
+
+                    return true;
+                });
+
+                $missingBillings = SolarPlantMonthlyOverviewResource::getMissingBillingsForMonth($plant, $month);
+                $hasPlantBillings = SolarPlantMonthlyOverviewResource::hasPlantBillingsForMonth($plant, $month);
+                $plantBillingsCount = SolarPlantMonthlyOverviewResource::getPlantBillingsCountForMonth($plant, $month);
+
+                $monthsData[] = [
+                    'month' => $month,
+                    'monthLabel' => $monthInfo['label'],
+                    'status' => $status,
+                    'totalContracts' => $activeContracts->count(),
+                    'missingCount' => $missingBillings->count(),
+                    'hasPlantBillings' => $hasPlantBillings,
+                    'plantBillingsCount' => $plantBillingsCount,
+                ];
+            }
+
+            $plantsData[] = [
+                'plant' => $plant,
+                'monthsData' => $monthsData,
+            ];
+        }
+
+        return [
+            'viewMode' => 'four_months',
+            'months' => $months,
+            'plantsData' => $plantsData,
+            'statusFilter' => $this->statusFilter,
+            'plantBillingFilter' => $this->plantBillingFilter,
+        ];
+    }
+
     public function getTitle(): string
     {
-        $monthLabel = $this->selectedMonth 
+        if ($this->viewMode === 'four_months') {
+            return "Monatliche Detailansicht - 4-Monats-Übersicht";
+        }
+
+        $monthLabel = $this->selectedMonth
             ? Carbon::createFromFormat('Y-m', $this->selectedMonth)->locale('de')->translatedFormat('F Y')
             : 'Aktueller Monat';
-            
+
         return "Monatliche Detailansicht - {$monthLabel}";
     }
 }

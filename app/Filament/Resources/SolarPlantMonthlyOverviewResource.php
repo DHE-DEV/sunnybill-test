@@ -66,27 +66,50 @@ class SolarPlantMonthlyOverviewResource extends Resource
     public static function getBillingStatusForMonth(SolarPlant $solarPlant, string $month): string
     {
         $activeContracts = $solarPlant->activeSupplierContracts()->with('supplier')->get();
-        
+
         // Filtere gelöschte Verträge und entferne Duplikate
         $uniqueContracts = $activeContracts->filter(function ($contract) {
             return $contract->deleted_at === null;
         })->unique('id');
-        
-        if ($uniqueContracts->isEmpty()) {
-            return 'Keine Verträge';
-        }
 
         $year = (int) substr($month, 0, 4);
         $monthNumber = (int) substr($month, 5, 2);
 
-        $contractsWithBilling = $uniqueContracts->filter(function ($contract) use ($year, $monthNumber) {
+        // Erstelle Carbon-Datum für den Monat (erster Tag des Monats)
+        $monthDate = Carbon::create($year, $monthNumber, 1);
+
+        // Filtere Verträge, die für diesen Monat gültig sind
+        $validContracts = $uniqueContracts->filter(function ($contract) use ($monthDate) {
+            // Prüfe ob Vertrag aktiv ist
+            if (!$contract->is_active) {
+                return false;
+            }
+
+            // Wenn start_date gesetzt ist, prüfe ob der Monat danach liegt
+            if ($contract->start_date && $monthDate->isBefore($contract->start_date->startOfMonth())) {
+                return false;
+            }
+
+            // Wenn end_date gesetzt ist, prüfe ob der Monat davor liegt
+            if ($contract->end_date && $monthDate->isAfter($contract->end_date->endOfMonth())) {
+                return false;
+            }
+
+            return true;
+        });
+
+        if ($validContracts->isEmpty()) {
+            return 'Keine Verträge';
+        }
+
+        $contractsWithBilling = $validContracts->filter(function ($contract) use ($year, $monthNumber) {
             return $contract->billings()
                 ->where('billing_year', $year)
                 ->where('billing_month', $monthNumber)
                 ->exists();
         });
 
-        return $contractsWithBilling->count() === $uniqueContracts->count() ? 'Vollständig' : 'Unvollständig';
+        return $contractsWithBilling->count() === $validContracts->count() ? 'Vollständig' : 'Unvollständig';
     }
 
     /**
@@ -126,12 +149,35 @@ class SolarPlantMonthlyOverviewResource extends Resource
         $year = (int) substr($month, 0, 4);
         $monthNumber = (int) substr($month, 5, 2);
 
+        // Erstelle Carbon-Datum für den Monat (erster Tag des Monats)
+        $monthDate = Carbon::create($year, $monthNumber, 1);
+
         // Filtere gelöschte Verträge und entferne Duplikate
         $uniqueContracts = $activeContracts->filter(function ($contract) {
             return $contract->deleted_at === null;
         })->unique('id');
 
-        return $uniqueContracts->filter(function ($contract) use ($year, $monthNumber) {
+        // Filtere Verträge, die für diesen Monat gültig sind
+        $validContracts = $uniqueContracts->filter(function ($contract) use ($monthDate) {
+            // Prüfe ob Vertrag aktiv ist
+            if (!$contract->is_active) {
+                return false;
+            }
+
+            // Wenn start_date gesetzt ist, prüfe ob der Monat danach liegt
+            if ($contract->start_date && $monthDate->isBefore($contract->start_date->startOfMonth())) {
+                return false;
+            }
+
+            // Wenn end_date gesetzt ist, prüfe ob der Monat davor liegt
+            if ($contract->end_date && $monthDate->isAfter($contract->end_date->endOfMonth())) {
+                return false;
+            }
+
+            return true;
+        });
+
+        return $validContracts->filter(function ($contract) use ($year, $monthNumber) {
             return !$contract->billings()
                 ->where('billing_year', $year)
                 ->where('billing_month', $monthNumber)

@@ -1,29 +1,36 @@
 <x-filament-panels::page>
     @php
         $data = $this->getViewData();
-        $selectedMonth = $data['selectedMonth'];
-        $monthLabel = $data['monthLabel'];
-        $plantsData = $data['plantsData'];
-        $allPlantsStats = $data['allPlantsStats'];
-        $statusFilter = $data['statusFilter'] ?? 'all';
-        $plantBillingFilter = $data['plantBillingFilter'] ?? 'alle';
-        $year = (int) substr($selectedMonth, 0, 4);
-        $monthNumber = (int) substr($selectedMonth, 5, 2);
-        
-        $statusFilterLabel = match($statusFilter) {
-            'incomplete' => 'Nur Unvollständige',
-            'complete' => 'Nur Vollständige', 
-            'no_contracts' => 'Nur ohne Verträge',
-            'few_contracts' => 'Nur mit weniger als 5 Verträgen',
-            default => 'Alle Anlagen'
-        };
-        
-        $plantBillingFilterLabel = match($plantBillingFilter) {
-            'mit_abrechnungen' => 'Nur mit Anlagen-Abrechnungen',
-            'ohne_abrechnungen' => 'Nur ohne Anlagen-Abrechnungen',
-            default => 'Alle Anlagen-Abrechnungen'
-        };
+        $viewMode = $data['viewMode'] ?? 'single_month';
     @endphp
+
+    @if ($viewMode === 'four_months')
+        @include('filament.pages.partials.four-months-overview', ['data' => $data])
+    @else
+        @php
+            $selectedMonth = $data['selectedMonth'];
+            $monthLabel = $data['monthLabel'];
+            $plantsData = $data['plantsData'];
+            $allPlantsStats = $data['allPlantsStats'];
+            $statusFilter = $data['statusFilter'] ?? 'all';
+            $plantBillingFilter = $data['plantBillingFilter'] ?? 'alle';
+            $year = (int) substr($selectedMonth, 0, 4);
+            $monthNumber = (int) substr($selectedMonth, 5, 2);
+
+            $statusFilterLabel = match($statusFilter) {
+                'incomplete' => 'Nur Unvollständige',
+                'complete' => 'Nur Vollständige',
+                'no_contracts' => 'Nur ohne Verträge',
+                'few_contracts' => 'Nur mit weniger als 5 Verträgen',
+                default => 'Alle Anlagen'
+            };
+
+            $plantBillingFilterLabel = match($plantBillingFilter) {
+                'mit_abrechnungen' => 'Nur mit Anlagen-Abrechnungen',
+                'ohne_abrechnungen' => 'Nur ohne Anlagen-Abrechnungen',
+                default => 'Alle Anlagen-Abrechnungen'
+            };
+        @endphp
 
     <div class="space-y-6">
         <!-- Header Information -->
@@ -413,4 +420,5 @@
             @endforelse
         </div>
     </div>
+    @endif
 </x-filament-panels::page>
