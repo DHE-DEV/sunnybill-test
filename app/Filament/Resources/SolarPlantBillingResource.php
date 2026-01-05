@@ -501,12 +501,11 @@ class SolarPlantBillingResource extends Resource
                     ->numeric(2)
                     ->alignRight()
                     ->getStateUsing(function (SolarPlantBilling $record): ?float {
-                        // Hole die aktuelle kWp-Beteiligung aus der participations Tabelle
-                        $participation = $record->solarPlant->participations()
-                            ->where('customer_id', $record->customer_id)
-                            ->first();
-                        
-                        return $participation ? $participation->participation_kwp : null;
+                        // Hole die aktuelle kWp-Beteiligung aus der bereits geladenen participations
+                        $participation = $record->solarPlant->participations
+                            ->firstWhere('customer_id', $record->customer_id);
+
+                        return $participation?->participation_kwp;
                     })
                     ->toggleable(),
 
@@ -516,12 +515,11 @@ class SolarPlantBillingResource extends Resource
                     ->numeric(2)
                     ->alignRight()
                     ->getStateUsing(function (SolarPlantBilling $record): ?float {
-                        // Hole die aktuelle Beteiligung aus der participations Tabelle
-                        $participation = $record->solarPlant->participations()
-                            ->where('customer_id', $record->customer_id)
-                            ->first();
-                        
-                        return $participation ? $participation->percentage : $record->participation_percentage;
+                        // Hole die aktuelle Beteiligung aus der bereits geladenen participations
+                        $participation = $record->solarPlant->participations
+                            ->firstWhere('customer_id', $record->customer_id);
+
+                        return $participation?->percentage ?? $record->participation_percentage;
                     }),
 
                 Tables\Columns\TextColumn::make('formatted_total_costs')
@@ -1728,6 +1726,7 @@ class SolarPlantBillingResource extends Resource
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(fn ($query) => $query->with(['solarPlant.participations', 'customer']))
             ->poll('10s')
             ->persistFiltersInSession()
             ->persistSortInSession()
