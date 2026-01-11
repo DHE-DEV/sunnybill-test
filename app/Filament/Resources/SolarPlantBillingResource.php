@@ -1134,6 +1134,13 @@ class SolarPlantBillingResource extends Resource
 
                                 foreach ($records as $billing) {
                                     try {
+                                        // QR-Code nur bei Gutschriften (net_amount < 0), nicht bei Rechnungen
+                                        if ($billing->net_amount >= 0) {
+                                            $errorCount++;
+                                            $errors[] = "Abrechnung {$billing->invoice_number}: Kein QR-Code für Rechnungen (nur für Gutschriften)";
+                                            continue;
+                                        }
+
                                         // Prüfe ob QR-Code generiert werden kann
                                         if (!$epcQrCodeService->canGenerateQrCode($billing)) {
                                             $errorCount++;
@@ -1227,7 +1234,10 @@ class SolarPlantBillingResource extends Resource
                             $invalidReasons = [];
 
                             foreach ($records as $billing) {
-                                if ($epcQrCodeService->canGenerateQrCode($billing)) {
+                                // QR-Code nur bei Gutschriften (net_amount < 0)
+                                if ($billing->net_amount >= 0) {
+                                    $invalidReasons[] = "• {$billing->invoice_number}: Kein QR-Code für Rechnungen (nur für Gutschriften)";
+                                } elseif ($epcQrCodeService->canGenerateQrCode($billing)) {
                                     $validCount++;
                                 } else {
                                     $invalidReasons[] = "• {$billing->invoice_number}: " . $epcQrCodeService->getQrCodeErrorMessage($billing);
@@ -1237,7 +1247,7 @@ class SolarPlantBillingResource extends Resource
                             $message = "Sie haben {$count} Abrechnung(en) ausgewählt.\n\n";
 
                             if ($validCount > 0) {
-                                $message .= "{$validCount} QR-Code(s) können generiert werden.\n";
+                                $message .= "{$validCount} QR-Code(s) können generiert werden (nur Gutschriften).\n";
                             }
 
                             if ($count - $validCount > 0) {

@@ -1299,8 +1299,8 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->columnSpan(2),
                             ])
                             ->visible(function ($record) {
-                                // Zeige gesamtes Grid für alle Beträge außer 0 an (auch Gutschriften)
-                                return $record->net_amount != 0;
+                                // Zeige QR-Code nur bei Gutschriften (net_amount < 0), nicht bei Rechnungen
+                                return $record->net_amount < 0;
                             }),
                     ])
                     ->compact()
@@ -1415,6 +1415,10 @@ class ViewSolarPlantBilling extends ViewRecord
                 ->icon('heroicon-o-qr-code')
                 ->color('info')
                 ->visible(function () {
+                    // Nur bei Gutschriften (net_amount < 0) anzeigen, nicht bei Rechnungen
+                    if ($this->record->net_amount >= 0) {
+                        return false;
+                    }
                     $qrService = new EpcQrCodeService();
                     return $qrService->canGenerateQrCode($this->record);
                 })
