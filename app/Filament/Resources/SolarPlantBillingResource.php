@@ -607,6 +607,34 @@ class SolarPlantBillingResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\TernaryFilter::make('latest_billing')
+                    ->label('Letzte Abrechnung')
+                    ->placeholder('Alle Abrechnungen')
+                    ->trueLabel('Nur letzte Abrechnung')
+                    ->falseLabel('Alle außer letzte')
+                    ->queries(
+                        true: fn ($query) => $query->where(function ($q) {
+                            // Finde die zuletzt erstellte Abrechnung anhand created_at
+                            $latest = SolarPlantBilling::orderByDesc('created_at')->first();
+                            if ($latest) {
+                                $q->where('solar_plant_id', $latest->solar_plant_id)
+                                  ->where('billing_year', $latest->billing_year)
+                                  ->where('billing_month', $latest->billing_month);
+                            }
+                        }),
+                        false: fn ($query) => $query->where(function ($q) {
+                            $latest = SolarPlantBilling::orderByDesc('created_at')->first();
+                            if ($latest) {
+                                $q->where(function ($sub) use ($latest) {
+                                    $sub->where('solar_plant_id', '!=', $latest->solar_plant_id)
+                                        ->orWhere('billing_year', '!=', $latest->billing_year)
+                                        ->orWhere('billing_month', '!=', $latest->billing_month);
+                                });
+                            }
+                        }),
+                        blank: fn ($query) => $query,
+                    ),
+
                 Tables\Filters\SelectFilter::make('solar_plant_id')
                     ->label('Solaranlage')
                     ->options(SolarPlant::orderBy('plant_number')->pluck('name', 'id'))
@@ -772,6 +800,64 @@ class SolarPlantBillingResource extends Resource
                                 ->send();
                         })
                         ->visible(fn (SolarPlantBilling $record): bool => $record->cancellation_date === null),
+                    Tables\Actions\Action::make('delete_billing')
+                        ->label('Löschen')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Abrechnung löschen')
+                        ->modalDescription(function (SolarPlantBilling $record): string {
+                            $count = SolarPlantBilling::where('solar_plant_id', $record->solar_plant_id)
+                                ->where('billing_year', $record->billing_year)
+                                ->where('billing_month', $record->billing_month)
+                                ->where('status', 'draft')
+                                ->count();
+                            $monthName = Carbon::createFromDate($record->billing_year, $record->billing_month, 1)
+                                ->locale('de')
+                                ->translatedFormat('F Y');
+                            $plantName = $record->solarPlant->name ?? 'Unbekannt';
+                            return "Möchten Sie wirklich alle {$count} Entwürfe für {$plantName} ({$monthName}) unwiderruflich löschen?";
+                        })
+                        ->modalSubmitActionLabel('Alle Entwürfe löschen')
+                        ->modalCancelActionLabel('Abbrechen')
+                        ->action(function (SolarPlantBilling $record): void {
+                            $count = SolarPlantBilling::where('solar_plant_id', $record->solar_plant_id)
+                                ->where('billing_year', $record->billing_year)
+                                ->where('billing_month', $record->billing_month)
+                                ->where('status', 'draft')
+                                ->delete();
+
+                            $monthName = Carbon::createFromDate($record->billing_year, $record->billing_month, 1)
+                                ->locale('de')
+                                ->translatedFormat('F Y');
+                            $plantName = $record->solarPlant->name ?? 'Unbekannt';
+
+                            Notification::make()
+                                ->title('Entwürfe gelöscht')
+                                ->body("{$count} Entwürfe für {$plantName} ({$monthName}) wurden erfolgreich gelöscht.")
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(function (SolarPlantBilling $record): bool {
+                            // Nur sichtbar wenn Status = draft
+                            if ($record->status !== 'draft') {
+                                return false;
+                            }
+
+                            // Prüfen ob es sich um die zuletzt erstellte Abrechnung handelt (anhand created_at)
+                            $latest = SolarPlantBilling::where('status', 'draft')
+                                ->orderByDesc('created_at')
+                                ->first();
+
+                            if (!$latest) {
+                                return false;
+                            }
+
+                            // Alle Entwürfe der gleichen Solaranlage/Jahr/Monat wie die zuletzt erstellte sind löschbar
+                            return $record->solar_plant_id === $latest->solar_plant_id
+                                && $record->billing_year === $latest->billing_year
+                                && $record->billing_month === $latest->billing_month;
+                        }),
                     Tables\Actions\Action::make('edit_notes')
                         ->label('Bemerkung')
                         ->icon('heroicon-o-pencil-square')
