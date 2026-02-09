@@ -587,8 +587,20 @@ class ViewSolarPlantBilling extends ViewRecord
                             ]),
                         Infolists\Components\Grid::make(3)
                             ->schema([
+                                Infolists\Components\TextEntry::make('current_month_amount')
+                                    ->label('Saldo aktueller Monat')
+                                    ->state(fn ($record) => '€ ' . number_format($record->net_amount - ($record->previous_month_outstanding ?? 0), 2, ',', '.'))
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color(fn ($record) => ($record->net_amount - ($record->previous_month_outstanding ?? 0)) >= 0 ? 'warning' : 'success'),
+                                Infolists\Components\TextEntry::make('previous_month_outstanding')
+                                    ->label('Verrechnung OP Vormonat')
+                                    ->formatStateUsing(fn ($state) => '€ ' . number_format($state ?? 0, 2, ',', '.'))
+                                    ->size('xl')
+                                    ->weight('bold')
+                                    ->color('gray'),
                                 Infolists\Components\TextEntry::make('net_amount')
-                                    ->label('Rechnungsbetrag')
+                                    ->label('Rechnungsbetrag Gesamt')
                                     ->formatStateUsing(fn ($state) => '€ ' . number_format($state, 2, ',', '.'))
                                     ->size('xl')
                                     ->weight('bold')
