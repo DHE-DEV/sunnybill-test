@@ -430,6 +430,16 @@ class SolarPlantBillingResource extends Resource
                                     ->default(0)
                                     ->disabled()
                                     ->dehydrated(false),
+
+                                Forms\Components\TextInput::make('previous_month_outstanding')
+                                    ->label('Verrechnung OP aus Vormonat')
+                                    ->prefix('€')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->visible(fn ($record) => $record && $record->previous_month_outstanding > 0),
                             ]),
                     ]),
 

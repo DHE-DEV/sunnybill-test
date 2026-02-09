@@ -54,6 +54,7 @@ class SolarPlantBilling extends Model
         'invoice_number',
         'cancellation_date',
         'cancellation_reason',
+        'previous_month_outstanding',
     ];
 
     protected $casts = [
@@ -71,6 +72,7 @@ class SolarPlantBilling extends Model
         'sent_at' => 'datetime',
         'paid_at' => 'datetime',
         'cancellation_date' => 'date',
+        'previous_month_outstanding' => 'decimal:2',
     ];
 
     /**
@@ -281,6 +283,38 @@ class SolarPlantBilling extends Model
     }
 
     /**
+     * Ermittelt den offenen Rechnungsbetrag (net_amount > 0) des Vormonats
+     * für einen bestimmten Kunden und eine Solaranlage
+     */
+    public static function getPreviousMonthOutstanding(
+        string $solarPlantId,
+        string $customerId,
+        int $year,
+        int $month
+    ): float {
+        // Berechne den Vormonat
+        $previousMonth = Carbon::createFromDate($year, $month, 1)->subMonth();
+        $prevYear = $previousMonth->year;
+        $prevMonth = $previousMonth->month;
+
+        // Suche die Abrechnung für diesen Kunden/Anlage/Vormonat
+        // Ignoriere stornierte Abrechnungen (status != 'cancelled')
+        $previousBilling = self::where('solar_plant_id', $solarPlantId)
+            ->where('customer_id', $customerId)
+            ->where('billing_year', $prevYear)
+            ->where('billing_month', $prevMonth)
+            ->where('status', '!=', 'cancelled')
+            ->first();
+
+        // Gib net_amount zurück wenn > 0, sonst 0
+        if ($previousBilling && $previousBilling->net_amount > 0) {
+            return (float) $previousBilling->net_amount;
+        }
+
+        return 0.0;
+    }
+
+    /**
      * Prüft ob alle Vertragsabrechnungen für eine Solaranlage und einen Monat vorhanden sind
      */
     public static function canCreateBillingForMonth(string $solarPlantId, int $year, int $month): bool
@@ -371,6 +405,17 @@ class SolarPlantBilling extends Model
             // Berechne Kosten und Gutschriften für diesen Kunden
             $costData = self::calculateCostsForCustomer($solarPlantId, $participation->customer_id, $year, $month, $participation->percentage);
 
+            // Ermittle den offenen Rechnungsbetrag aus dem Vormonat
+            $previousMonthOutstanding = self::getPreviousMonthOutstanding(
+                $solarPlantId,
+                $participation->customer_id,
+                $year,
+                $month
+            );
+
+            // Berechne net_amount inklusive Vormonats-OP
+            $netAmount = ($costData['total_costs'] - $costData['total_credits']) + $previousMonthOutstanding;
+
             // Erstelle die Abrechnung mit vorgenerierter Rechnungsnummer
             $billing = self::create([
                 'solar_plant_id' => $solarPlantId,
@@ -384,7 +429,8 @@ class SolarPlantBilling extends Model
                 'total_costs_net' => $costData['total_costs_net'],
                 'total_credits_net' => $costData['total_credits_net'],
                 'total_vat_amount' => $costData['total_vat_amount'],
-                'net_amount' => $costData['total_costs'] - $costData['total_credits'],
+                'net_amount' => $netAmount,
+                'previous_month_outstanding' => $previousMonthOutstanding,
                 'cost_breakdown' => $costData['cost_breakdown'],
                 'credit_breakdown' => $costData['credit_breakdown'],
                 'status' => 'draft',
