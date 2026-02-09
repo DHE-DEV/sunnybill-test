@@ -704,12 +704,12 @@
                 <td class="number"><strong>{{ number_format(abs($totalGross ?: ($billing->net_amount ?? 0)), 2, ',', '.') }} €</strong></td>
             </tr>
             @if($billing->previous_month_outstanding > 0)
-            <tr style="background: #fff8f8;">
+            <tr style="background: #ffffff;">
                 <td colspan="4"><strong>Verrechnung OP aus Vormonat</strong></td>
                 <td class="number"><strong>{{ number_format($billing->previous_month_outstanding, 2, ',', '.') }} €</strong></td>
             </tr>
-            <tr style="background: #2563eb; color: white;">
-                <td colspan="4"><strong>Gesamtbetrag</strong></td>
+            <tr style="background: #f0f8ff;">
+                <td colspan="4"><strong>Rechnungssumme Gesamt</strong></td>
                 <td class="number"><strong>{{ number_format(abs($totalGross ?: ($billing->net_amount - $billing->previous_month_outstanding ?? 0)) + $billing->previous_month_outstanding, 2, ',', '.') }} €</strong></td>
             </tr>
             @endif
