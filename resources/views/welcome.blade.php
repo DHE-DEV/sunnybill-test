@@ -1850,7 +1850,7 @@
                                 <span class="calc-slider-value" id="calc-plants-val">5</span>
                             </div>
                             <div class="calc-slider-meta">
-                                <span class="calc-unit-price">49,00 € pro Anlage / Monat</span>
+                                <span class="calc-unit-price">59,00 € pro Anlage / Monat</span>
                             </div>
                             <input type="range" class="calc-slider" id="calc-plants" min="1" max="200" value="5">
                         </div>
@@ -2127,7 +2127,7 @@
                     const b = parseInt(parts.value);
                     const u = parseInt(users.value);
 
-                    const costPlants = p * 49;
+                    const costPlants = p * 59;
                     const costParts = b * 4.9;
                     const costUsers = u * 49;
 
