@@ -1899,7 +1899,7 @@
                             <div class="calc-toggle" data-module="documents" data-price="299">
                                 <i class="calc-toggle-icon fas fa-folder-open"></i>
                                 <span class="calc-toggle-name">Dokumente</span>
-                                <span class="calc-toggle-price">299 € / Monat</span>
+                                <span class="calc-toggle-price">299 € / Monat · inkl. 1 GB</span>
                             </div>
                         </div>
 
@@ -1927,7 +1927,7 @@
                                     <span>199,00 €</span>
                                 </div>
                                 <div class="calc-result-row hidden" id="calc-row-documents">
-                                    <span>Dokumentenmanagement</span>
+                                    <span>Dokumentenmanagement (inkl. 1 GB Speicher)</span>
                                     <span>299,00 €</span>
                                 </div>
                             </div>
