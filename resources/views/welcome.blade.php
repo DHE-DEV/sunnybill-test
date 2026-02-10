@@ -1145,6 +1145,77 @@
                 margin-top: 2rem;
             }
 
+            .calc-billing-toggle {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 0;
+                margin-bottom: 2.5rem;
+                background: #f1f5f9;
+                border-radius: 50px;
+                padding: 4px;
+                max-width: 380px;
+                margin-left: auto;
+                margin-right: auto;
+                position: relative;
+            }
+
+            .calc-billing-btn {
+                flex: 1;
+                padding: 0.7rem 1.5rem;
+                border: none;
+                background: transparent;
+                font-family: 'Inter', sans-serif;
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: #64748b;
+                cursor: pointer;
+                border-radius: 50px;
+                transition: all 0.3s ease;
+                position: relative;
+                z-index: 1;
+                text-align: center;
+            }
+
+            .calc-billing-btn.active {
+                color: white;
+                background: linear-gradient(135deg, #f53003, #ff6b35);
+                box-shadow: 0 4px 15px rgba(245, 48, 3, 0.3);
+            }
+
+            .calc-billing-badge {
+                display: inline-block;
+                background: linear-gradient(135deg, #00ba88, #00d69b);
+                color: white;
+                font-size: 0.7rem;
+                font-weight: 700;
+                padding: 2px 8px;
+                border-radius: 20px;
+                margin-left: 6px;
+                vertical-align: middle;
+            }
+
+            .calc-billing-btn.active .calc-billing-badge {
+                background: rgba(255, 255, 255, 0.25);
+            }
+
+            .calc-savings-hint {
+                text-align: center;
+                margin-top: -1.5rem;
+                margin-bottom: 2rem;
+                font-size: 0.85rem;
+                color: #00ba88;
+                font-weight: 600;
+                opacity: 0;
+                transform: translateY(-5px);
+                transition: all 0.3s ease;
+            }
+
+            .calc-savings-hint.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
             @media (max-width: 768px) {
                 .calc-body {
                     padding: 2rem 1.5rem;
@@ -1160,6 +1231,10 @@
 
                 .calc-header h3 {
                     font-size: 1.4rem;
+                }
+
+                .calc-billing-toggle {
+                    max-width: 100%;
                 }
             }
 
@@ -1759,6 +1834,15 @@
                     </div>
                     <div class="calc-body">
 
+                        <!-- Billing Toggle: Monatlich / Jährlich -->
+                        <div class="calc-billing-toggle">
+                            <button class="calc-billing-btn active" data-billing="monthly">Monatlich</button>
+                            <button class="calc-billing-btn" data-billing="yearly">Jährlich <span class="calc-billing-badge">1 Monat gratis</span></button>
+                        </div>
+                        <div class="calc-savings-hint" id="calc-savings-hint">
+                            <i class="fas fa-tag"></i> Sie sparen 1 Monat — zahlen nur 11 statt 12 Monate!
+                        </div>
+
                         <!-- Slider: Solaranlagen -->
                         <div class="calc-slider-group">
                             <div class="calc-slider-label">
@@ -1766,7 +1850,7 @@
                                 <span class="calc-slider-value" id="calc-plants-val">5</span>
                             </div>
                             <div class="calc-slider-meta">
-                                <span class="calc-unit-price">99,00 € pro Anlage / Monat</span>
+                                <span class="calc-unit-price">49,00 € pro Anlage / Monat</span>
                             </div>
                             <input type="range" class="calc-slider" id="calc-plants" min="1" max="200" value="5">
                         </div>
@@ -1847,8 +1931,12 @@
                                     <span>299,00 €</span>
                                 </div>
                             </div>
+                            <div class="calc-result-row hidden" id="calc-row-savings" style="color: #00d69b;">
+                                <span><i class="fas fa-tag"></i> Jahresrabatt (1 Monat gratis)</span>
+                                <span id="calc-cost-savings">0,00 €</span>
+                            </div>
                             <div class="calc-result-total">
-                                <span>Gesamt monatlich (netto)</span>
+                                <span id="calc-total-label">Gesamt monatlich (netto)</span>
                                 <span>
                                     <span class="calc-total-price" id="calc-total">666,50</span>
                                     <span class="calc-total-suffix"> €</span>
@@ -2017,11 +2105,13 @@
                 const parts = document.getElementById('calc-parts');
                 const users = document.getElementById('calc-users');
                 const toggles = document.querySelectorAll('.calc-toggle');
+                const billingBtns = document.querySelectorAll('.calc-billing-btn');
 
                 if (!plants) return;
 
                 const modules = { tasks: false, projects: false, documents: false };
                 const modulePrices = { tasks: 99, projects: 199, documents: 299 };
+                let billingMode = 'monthly';
 
                 function formatEur(num) {
                     return num.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -2037,7 +2127,7 @@
                     const b = parseInt(parts.value);
                     const u = parseInt(users.value);
 
-                    const costPlants = p * 99;
+                    const costPlants = p * 49;
                     const costParts = b * 4.9;
                     const costUsers = u * 49;
 
@@ -2052,7 +2142,11 @@
                         }
                     });
 
-                    const total = costPlants + costParts + costUsers + moduleCost;
+                    const monthlyTotal = costPlants + costParts + costUsers + moduleCost;
+                    const isYearly = billingMode === 'yearly';
+                    const yearlyTotal = monthlyTotal * 11;
+                    const savingsRow = document.getElementById('calc-row-savings');
+                    const savingsHint = document.getElementById('calc-savings-hint');
 
                     document.getElementById('calc-plants-val').textContent = p;
                     document.getElementById('calc-parts-val').textContent = b;
@@ -2060,8 +2154,25 @@
                     document.getElementById('calc-cost-plants').textContent = formatEur(costPlants) + ' €';
                     document.getElementById('calc-cost-parts').textContent = formatEur(costParts) + ' €';
                     document.getElementById('calc-cost-users').textContent = formatEur(costUsers) + ' €';
-                    document.getElementById('calc-total').textContent = formatEur(total);
-                    document.getElementById('calc-yearly').textContent = formatEur(total * 12);
+
+                    if (isYearly) {
+                        document.getElementById('calc-total-label').textContent = 'Gesamt jährlich (netto)';
+                        document.getElementById('calc-total').textContent = formatEur(yearlyTotal);
+                        document.getElementById('calc-cost-savings').textContent = '- ' + formatEur(monthlyTotal) + ' €';
+                        savingsRow.classList.remove('hidden');
+                        savingsHint.classList.add('visible');
+                        document.querySelector('.calc-result-yearly').innerHTML =
+                            '<span>' + formatEur(yearlyTotal / 11) + '</span> € / Monat (netto) — <strong style="color:#00d69b;">Sie sparen ' + formatEur(monthlyTotal) + ' € / Jahr</strong>';
+                        document.querySelector('.calc-total-suffix').textContent = ' € / Jahr';
+                    } else {
+                        document.getElementById('calc-total-label').textContent = 'Gesamt monatlich (netto)';
+                        document.getElementById('calc-total').textContent = formatEur(monthlyTotal);
+                        savingsRow.classList.add('hidden');
+                        savingsHint.classList.remove('visible');
+                        document.querySelector('.calc-result-yearly').innerHTML =
+                            '<span>' + formatEur(monthlyTotal * 12) + '</span> € / Jahr (netto)';
+                        document.querySelector('.calc-total-suffix').textContent = ' €';
+                    }
 
                     [plants, parts, users].forEach(updateSliderBg);
                 }
@@ -2075,6 +2186,15 @@
                         const mod = this.dataset.module;
                         modules[mod] = !modules[mod];
                         this.classList.toggle('active');
+                        calculate();
+                    });
+                });
+
+                billingBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        billingBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        billingMode = this.dataset.billing;
                         calculate();
                     });
                 });
