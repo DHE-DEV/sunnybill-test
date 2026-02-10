@@ -886,6 +886,283 @@
                 font-weight: 500;
             }
 
+            /* Pricing Calculator Section */
+            .pricing-calculator {
+                padding: 8rem 2rem;
+                background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+                position: relative;
+            }
+
+            .calc-container {
+                max-width: 900px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 24px;
+                box-shadow: 0 25px 80px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+            }
+
+            .calc-header {
+                background: linear-gradient(135deg, #1a202c, #2d3748);
+                padding: 2.5rem 3rem;
+                color: white;
+                text-align: center;
+            }
+
+            .calc-header h3 {
+                font-size: 1.8rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                background: linear-gradient(135deg, #ffd700, #ffed4e);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .calc-header p {
+                opacity: 0.8;
+                font-size: 1rem;
+            }
+
+            .calc-body {
+                padding: 3rem;
+            }
+
+            .calc-slider-group {
+                margin-bottom: 2.5rem;
+            }
+
+            .calc-slider-label {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.75rem;
+            }
+
+            .calc-slider-label span {
+                font-size: 1rem;
+                font-weight: 600;
+                color: #1a202c;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .calc-slider-label span i {
+                color: #f53003;
+                font-size: 1.1rem;
+            }
+
+            .calc-slider-value {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: #f53003;
+                background: rgba(245, 48, 3, 0.08);
+                padding: 0.3rem 1rem;
+                border-radius: 20px;
+                min-width: 60px;
+                text-align: center;
+            }
+
+            .calc-slider-meta {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.5rem;
+            }
+
+            .calc-unit-price {
+                font-size: 0.85rem;
+                color: #718096;
+            }
+
+            .calc-slider {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 100%;
+                height: 8px;
+                border-radius: 4px;
+                background: linear-gradient(to right, #f53003 0%, #e2e8f0 0%);
+                outline: none;
+                transition: background 0.1s;
+            }
+
+            .calc-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #f53003, #ff6b35);
+                cursor: pointer;
+                box-shadow: 0 2px 10px rgba(245, 48, 3, 0.35);
+                border: 3px solid white;
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+
+            .calc-slider::-webkit-slider-thumb:hover {
+                transform: scale(1.15);
+                box-shadow: 0 4px 16px rgba(245, 48, 3, 0.5);
+            }
+
+            .calc-slider::-moz-range-thumb {
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #f53003, #ff6b35);
+                cursor: pointer;
+                box-shadow: 0 2px 10px rgba(245, 48, 3, 0.35);
+                border: 3px solid white;
+            }
+
+            .calc-toggles {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 1rem;
+                margin-bottom: 2.5rem;
+            }
+
+            .calc-toggle {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 1.25rem 1rem;
+                border-radius: 16px;
+                border: 2px solid #e2e8f0;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-align: center;
+                user-select: none;
+            }
+
+            .calc-toggle:hover {
+                border-color: #cbd5e0;
+                background: #f7fafc;
+            }
+
+            .calc-toggle.active {
+                border-color: #f53003;
+                background: rgba(245, 48, 3, 0.04);
+                box-shadow: 0 0 0 3px rgba(245, 48, 3, 0.1);
+            }
+
+            .calc-toggle-icon {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+                color: #a0aec0;
+                transition: color 0.3s;
+            }
+
+            .calc-toggle.active .calc-toggle-icon {
+                color: #f53003;
+            }
+
+            .calc-toggle-name {
+                font-weight: 600;
+                font-size: 0.9rem;
+                color: #1a202c;
+                margin-bottom: 0.25rem;
+            }
+
+            .calc-toggle-price {
+                font-size: 0.8rem;
+                color: #718096;
+            }
+
+            .calc-toggle.active .calc-toggle-price {
+                color: #f53003;
+                font-weight: 600;
+            }
+
+            .calc-divider {
+                height: 1px;
+                background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+                margin: 2rem 0;
+            }
+
+            .calc-result {
+                background: linear-gradient(135deg, #1a202c, #2d3748);
+                border-radius: 16px;
+                padding: 2rem;
+                color: white;
+            }
+
+            .calc-result-rows {
+                margin-bottom: 1.5rem;
+            }
+
+            .calc-result-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                font-size: 0.95rem;
+                opacity: 0.85;
+            }
+
+            .calc-result-row.hidden {
+                display: none;
+            }
+
+            .calc-result-total {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding-top: 1.25rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.15);
+            }
+
+            .calc-result-total span:first-child {
+                font-size: 1.1rem;
+                font-weight: 600;
+            }
+
+            .calc-total-price {
+                font-size: 2.5rem;
+                font-weight: 800;
+                background: linear-gradient(135deg, #ffd700, #ffed4e);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .calc-total-suffix {
+                font-size: 1rem;
+                font-weight: 400;
+                opacity: 0.7;
+            }
+
+            .calc-result-yearly {
+                text-align: right;
+                margin-top: 0.5rem;
+                font-size: 0.9rem;
+                opacity: 0.6;
+            }
+
+            .calc-cta {
+                text-align: center;
+                margin-top: 2rem;
+            }
+
+            @media (max-width: 768px) {
+                .calc-body {
+                    padding: 2rem 1.5rem;
+                }
+
+                .calc-toggles {
+                    grid-template-columns: 1fr;
+                }
+
+                .calc-total-price {
+                    font-size: 2rem;
+                }
+
+                .calc-header h3 {
+                    font-size: 1.4rem;
+                }
+            }
+
             /* Testimonials Section */
             .testimonials {
                 padding: 8rem 2rem;
@@ -1179,8 +1456,8 @@
                     <a href="{{ config('app.url') }}/admin" class="btn btn-primary">
                         Jetzt starten
                     </a>
-                    <a href="#features" class="btn btn-secondary">
-                        Mehr erfahren
+                    <a href="#preise" class="btn btn-secondary">
+                        Preise berechnen
                     </a>
                 </div>
             </div>
@@ -1469,6 +1746,129 @@
             </div>
         </section>
 
+        <!-- Pricing Calculator Section -->
+        <section id="preise" class="pricing-calculator">
+            <div class="container">
+                <h2 class="section-title scroll-animate">Preiskalkulator</h2>
+                <p class="section-subtitle scroll-animate">Stellen Sie Ihr individuelles Paket zusammen — Sie zahlen nur, was Sie nutzen</p>
+
+                <div class="calc-container scroll-animate">
+                    <div class="calc-header">
+                        <h3>Ihr monatlicher Preis</h3>
+                        <p>Bewegen Sie die Schieberegler und wählen Sie Ihre Module</p>
+                    </div>
+                    <div class="calc-body">
+
+                        <!-- Slider: Solaranlagen -->
+                        <div class="calc-slider-group">
+                            <div class="calc-slider-label">
+                                <span><i class="fas fa-solar-panel"></i> Solaranlagen</span>
+                                <span class="calc-slider-value" id="calc-plants-val">5</span>
+                            </div>
+                            <div class="calc-slider-meta">
+                                <span class="calc-unit-price">99,00 € pro Anlage / Monat</span>
+                            </div>
+                            <input type="range" class="calc-slider" id="calc-plants" min="1" max="200" value="5">
+                        </div>
+
+                        <!-- Slider: Beteiligungen -->
+                        <div class="calc-slider-group">
+                            <div class="calc-slider-label">
+                                <span><i class="fas fa-chart-pie"></i> Beteiligungen</span>
+                                <span class="calc-slider-value" id="calc-parts-val">15</span>
+                            </div>
+                            <div class="calc-slider-meta">
+                                <span class="calc-unit-price">4,90 € pro Beteiligung / Monat</span>
+                            </div>
+                            <input type="range" class="calc-slider" id="calc-parts" min="0" max="1000" value="15" step="5">
+                        </div>
+
+                        <!-- Slider: Benutzer -->
+                        <div class="calc-slider-group">
+                            <div class="calc-slider-label">
+                                <span><i class="fas fa-users"></i> Benutzer</span>
+                                <span class="calc-slider-value" id="calc-users-val">2</span>
+                            </div>
+                            <div class="calc-slider-meta">
+                                <span class="calc-unit-price">49,00 € pro Benutzer / Monat</span>
+                            </div>
+                            <input type="range" class="calc-slider" id="calc-users" min="1" max="50" value="2">
+                        </div>
+
+                        <div class="calc-divider"></div>
+
+                        <!-- Module Toggles -->
+                        <div class="calc-slider-label" style="margin-bottom: 1rem;">
+                            <span><i class="fas fa-puzzle-piece"></i> Optionale Module</span>
+                        </div>
+                        <div class="calc-toggles">
+                            <div class="calc-toggle" data-module="tasks" data-price="99">
+                                <i class="calc-toggle-icon fas fa-tasks"></i>
+                                <span class="calc-toggle-name">Aufgaben</span>
+                                <span class="calc-toggle-price">99 € / Monat</span>
+                            </div>
+                            <div class="calc-toggle" data-module="projects" data-price="199">
+                                <i class="calc-toggle-icon fas fa-project-diagram"></i>
+                                <span class="calc-toggle-name">Projekte</span>
+                                <span class="calc-toggle-price">199 € / Monat</span>
+                            </div>
+                            <div class="calc-toggle" data-module="documents" data-price="299">
+                                <i class="calc-toggle-icon fas fa-folder-open"></i>
+                                <span class="calc-toggle-name">Dokumente</span>
+                                <span class="calc-toggle-price">299 € / Monat</span>
+                            </div>
+                        </div>
+
+                        <!-- Result -->
+                        <div class="calc-result">
+                            <div class="calc-result-rows">
+                                <div class="calc-result-row" id="calc-row-plants">
+                                    <span>Solaranlagen</span>
+                                    <span id="calc-cost-plants">495,00 €</span>
+                                </div>
+                                <div class="calc-result-row" id="calc-row-parts">
+                                    <span>Beteiligungen</span>
+                                    <span id="calc-cost-parts">73,50 €</span>
+                                </div>
+                                <div class="calc-result-row" id="calc-row-users">
+                                    <span>Benutzer</span>
+                                    <span id="calc-cost-users">98,00 €</span>
+                                </div>
+                                <div class="calc-result-row hidden" id="calc-row-tasks">
+                                    <span>Aufgaben-Modul</span>
+                                    <span>99,00 €</span>
+                                </div>
+                                <div class="calc-result-row hidden" id="calc-row-projects">
+                                    <span>Projekt-Modul</span>
+                                    <span>199,00 €</span>
+                                </div>
+                                <div class="calc-result-row hidden" id="calc-row-documents">
+                                    <span>Dokumentenmanagement</span>
+                                    <span>299,00 €</span>
+                                </div>
+                            </div>
+                            <div class="calc-result-total">
+                                <span>Gesamt monatlich (netto)</span>
+                                <span>
+                                    <span class="calc-total-price" id="calc-total">666,50</span>
+                                    <span class="calc-total-suffix"> €</span>
+                                </span>
+                            </div>
+                            <div class="calc-result-yearly">
+                                <span id="calc-yearly">7.998,00</span> € / Jahr (netto)
+                            </div>
+                        </div>
+
+                        <div class="calc-cta">
+                            <a href="mailto:info@voltmaster.de?subject=Anfrage%20VoltMaster" class="btn btn-primary">
+                                Jetzt Angebot anfordern
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Testimonials Section -->
         <section class="testimonials">
             <div class="container">
@@ -1610,6 +2010,77 @@
             document.querySelectorAll('.scroll-animate').forEach(el => {
                 observer.observe(el);
             });
+
+            // Pricing Calculator
+            (function() {
+                const plants = document.getElementById('calc-plants');
+                const parts = document.getElementById('calc-parts');
+                const users = document.getElementById('calc-users');
+                const toggles = document.querySelectorAll('.calc-toggle');
+
+                if (!plants) return;
+
+                const modules = { tasks: false, projects: false, documents: false };
+                const modulePrices = { tasks: 99, projects: 199, documents: 299 };
+
+                function formatEur(num) {
+                    return num.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+
+                function updateSliderBg(slider) {
+                    const pct = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+                    slider.style.background = `linear-gradient(to right, #f53003 ${pct}%, #e2e8f0 ${pct}%)`;
+                }
+
+                function calculate() {
+                    const p = parseInt(plants.value);
+                    const b = parseInt(parts.value);
+                    const u = parseInt(users.value);
+
+                    const costPlants = p * 99;
+                    const costParts = b * 4.9;
+                    const costUsers = u * 49;
+
+                    let moduleCost = 0;
+                    Object.keys(modules).forEach(m => {
+                        const row = document.getElementById('calc-row-' + m);
+                        if (modules[m]) {
+                            moduleCost += modulePrices[m];
+                            row.classList.remove('hidden');
+                        } else {
+                            row.classList.add('hidden');
+                        }
+                    });
+
+                    const total = costPlants + costParts + costUsers + moduleCost;
+
+                    document.getElementById('calc-plants-val').textContent = p;
+                    document.getElementById('calc-parts-val').textContent = b;
+                    document.getElementById('calc-users-val').textContent = u;
+                    document.getElementById('calc-cost-plants').textContent = formatEur(costPlants) + ' €';
+                    document.getElementById('calc-cost-parts').textContent = formatEur(costParts) + ' €';
+                    document.getElementById('calc-cost-users').textContent = formatEur(costUsers) + ' €';
+                    document.getElementById('calc-total').textContent = formatEur(total);
+                    document.getElementById('calc-yearly').textContent = formatEur(total * 12);
+
+                    [plants, parts, users].forEach(updateSliderBg);
+                }
+
+                [plants, parts, users].forEach(slider => {
+                    slider.addEventListener('input', calculate);
+                });
+
+                toggles.forEach(toggle => {
+                    toggle.addEventListener('click', function() {
+                        const mod = this.dataset.module;
+                        modules[mod] = !modules[mod];
+                        this.classList.toggle('active');
+                        calculate();
+                    });
+                });
+
+                calculate();
+            })();
 
             // Cool Mouse Animation - Interactive Cursor with Particles
             class InteractiveCursor {
