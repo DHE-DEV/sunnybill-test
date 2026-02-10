@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>VoltMaster - Solarenergie Management</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1145,6 +1146,201 @@
                 margin-top: 2rem;
             }
 
+            /* Quote Request Modal */
+            .quote-modal-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 10000;
+                justify-content: center;
+                align-items: center;
+                backdrop-filter: blur(4px);
+            }
+
+            .quote-modal-overlay.active {
+                display: flex;
+            }
+
+            .quote-modal {
+                background: white;
+                border-radius: 20px;
+                width: 95%;
+                max-width: 640px;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+                position: relative;
+                animation: modalSlideIn 0.3s ease;
+            }
+
+            @keyframes modalSlideIn {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .quote-modal-header {
+                background: linear-gradient(135deg, #1a202c, #2d3748);
+                padding: 2rem 2.5rem;
+                border-radius: 20px 20px 0 0;
+                position: relative;
+            }
+
+            .quote-modal-header h3 {
+                color: #ffd700;
+                font-size: 1.4rem;
+                margin: 0 0 0.3rem;
+            }
+
+            .quote-modal-header p {
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 0.9rem;
+                margin: 0;
+            }
+
+            .quote-modal-close {
+                position: absolute;
+                top: 1.2rem;
+                right: 1.5rem;
+                background: rgba(255, 255, 255, 0.15);
+                border: none;
+                color: white;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                font-size: 1.2rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s;
+            }
+
+            .quote-modal-close:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+
+            .quote-modal-body {
+                padding: 2rem 2.5rem;
+            }
+
+            .quote-modal-summary {
+                background: #f8fafc;
+                border-radius: 12px;
+                padding: 1.2rem 1.5rem;
+                margin-bottom: 1.5rem;
+                border: 1px solid #e2e8f0;
+                font-size: 0.9rem;
+                color: #4a5568;
+                line-height: 1.7;
+            }
+
+            .quote-modal-summary strong {
+                color: #1a202c;
+            }
+
+            .quote-form-group {
+                margin-bottom: 1rem;
+            }
+
+            .quote-form-group label {
+                display: block;
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: #1a202c;
+                margin-bottom: 0.35rem;
+            }
+
+            .quote-form-group input {
+                width: 100%;
+                padding: 0.7rem 1rem;
+                border: 1.5px solid #e2e8f0;
+                border-radius: 10px;
+                font-size: 0.95rem;
+                font-family: 'Inter', sans-serif;
+                transition: border-color 0.2s;
+                outline: none;
+                box-sizing: border-box;
+            }
+
+            .quote-form-group input:focus {
+                border-color: #f53003;
+                box-shadow: 0 0 0 3px rgba(245, 48, 3, 0.1);
+            }
+
+            .quote-form-group input.error {
+                border-color: #e53e3e;
+            }
+
+            .quote-form-row {
+                display: grid;
+                grid-template-columns: 140px 1fr;
+                gap: 1rem;
+            }
+
+            .quote-form-submit {
+                width: 100%;
+                padding: 0.9rem;
+                background: linear-gradient(135deg, #f53003, #ff6b35);
+                color: white;
+                border: none;
+                border-radius: 50px;
+                font-size: 1.05rem;
+                font-weight: 600;
+                font-family: 'Inter', sans-serif;
+                cursor: pointer;
+                margin-top: 0.5rem;
+                transition: all 0.3s ease;
+                box-shadow: 0 8px 25px rgba(245, 48, 3, 0.3);
+            }
+
+            .quote-form-submit:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 35px rgba(245, 48, 3, 0.4);
+            }
+
+            .quote-form-submit:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            .quote-form-message {
+                text-align: center;
+                padding: 0.8rem;
+                border-radius: 10px;
+                margin-top: 1rem;
+                font-size: 0.9rem;
+                font-weight: 500;
+                display: none;
+            }
+
+            .quote-form-message.success {
+                display: block;
+                background: #f0fff4;
+                color: #22543d;
+                border: 1px solid #c6f6d5;
+            }
+
+            .quote-form-message.error {
+                display: block;
+                background: #fff5f5;
+                color: #742a2a;
+                border: 1px solid #fed7d7;
+            }
+
+            @media (max-width: 600px) {
+                .quote-form-row {
+                    grid-template-columns: 1fr;
+                }
+                .quote-modal-body {
+                    padding: 1.5rem;
+                }
+            }
+
             .calc-billing-toggle {
                 display: flex;
                 justify-content: center;
@@ -1948,9 +2144,9 @@
                         </div>
 
                         <div class="calc-cta">
-                            <a href="mailto:info@voltmaster.de?subject=Anfrage%20VoltMaster" class="btn btn-primary">
+                            <button type="button" class="btn btn-primary" id="open-quote-modal">
                                 Jetzt Angebot anfordern
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2047,6 +2243,7 @@
                         <p><a href="#features">KI-gestützte Abrechnung</a></p>
                         <p><a href="#features">Beteiligungsmanagement</a></p>
                         <p><a href="#features">Aufgaben & Dokumente</a></p>
+                        <p><a href="#preise">Preiskalkulator</a></p>
                     </div>
                     <div class="footer-section">
                         <h3>Unternehmen</h3>
@@ -2069,6 +2266,66 @@
                 </div>
             </div>
         </footer>
+
+        <!-- Quote Request Modal -->
+        <div class="quote-modal-overlay" id="quote-modal-overlay">
+            <div class="quote-modal">
+                <div class="quote-modal-header">
+                    <h3>Angebot anfordern</h3>
+                    <p>Ihre Konfiguration wird automatisch übernommen</p>
+                    <button class="quote-modal-close" id="quote-modal-close">&times;</button>
+                </div>
+                <div class="quote-modal-body">
+                    <div class="quote-modal-summary" id="quote-modal-summary"></div>
+                    <form id="quote-form">
+                        <div class="quote-form-group">
+                            <label for="qf-firma">Firmenname *</label>
+                            <input type="text" id="qf-firma" name="firma" required>
+                        </div>
+                        <div class="quote-form-group">
+                            <label for="qf-ansprechpartner">Ansprechpartner *</label>
+                            <input type="text" id="qf-ansprechpartner" name="ansprechpartner" required>
+                        </div>
+                        <div class="quote-form-group">
+                            <label for="qf-strasse">Straße + Hausnummer *</label>
+                            <input type="text" id="qf-strasse" name="strasse" required>
+                        </div>
+                        <div class="quote-form-row">
+                            <div class="quote-form-group">
+                                <label for="qf-plz">PLZ *</label>
+                                <input type="text" id="qf-plz" name="plz" required maxlength="10">
+                            </div>
+                            <div class="quote-form-group">
+                                <label for="qf-ort">Ort *</label>
+                                <input type="text" id="qf-ort" name="ort" required>
+                            </div>
+                        </div>
+                        <div class="quote-form-group">
+                            <label for="qf-telefon">Telefon *</label>
+                            <input type="tel" id="qf-telefon" name="telefon" required>
+                        </div>
+                        <div class="quote-form-group">
+                            <label for="qf-email">E-Mail *</label>
+                            <input type="email" id="qf-email" name="email" required>
+                        </div>
+
+                        <input type="hidden" id="qf-solaranlagen" name="solaranlagen">
+                        <input type="hidden" id="qf-beteiligungen" name="beteiligungen">
+                        <input type="hidden" id="qf-benutzer" name="benutzer">
+                        <input type="hidden" id="qf-modul-aufgaben" name="modul_aufgaben">
+                        <input type="hidden" id="qf-modul-projekte" name="modul_projekte">
+                        <input type="hidden" id="qf-modul-dokumente" name="modul_dokumente">
+                        <input type="hidden" id="qf-zahlungsweise" name="zahlungsweise">
+                        <input type="hidden" id="qf-gesamtpreis" name="gesamtpreis">
+
+                        <button type="submit" class="quote-form-submit" id="quote-form-submit">
+                            Anfrage absenden
+                        </button>
+                    </form>
+                    <div class="quote-form-message" id="quote-form-message"></div>
+                </div>
+            </div>
+        </div>
 
         <script>
             // Smooth scrolling for anchor links
@@ -2200,6 +2457,144 @@
                 });
 
                 calculate();
+            })();
+
+            // Quote Request Modal
+            (function() {
+                const overlay = document.getElementById('quote-modal-overlay');
+                const openBtn = document.getElementById('open-quote-modal');
+                const closeBtn = document.getElementById('quote-modal-close');
+                const form = document.getElementById('quote-form');
+                const msgEl = document.getElementById('quote-form-message');
+                const submitBtn = document.getElementById('quote-form-submit');
+                const summaryEl = document.getElementById('quote-modal-summary');
+
+                if (!openBtn || !overlay) return;
+
+                function getCalcData() {
+                    const plants = document.getElementById('calc-plants').value;
+                    const parts = document.getElementById('calc-parts').value;
+                    const users = document.getElementById('calc-users').value;
+                    const activeBtn = document.querySelector('.calc-billing-btn.active');
+                    const billing = activeBtn ? activeBtn.dataset.billing : 'monthly';
+
+                    const moduleTasks = document.querySelector('.calc-toggle[data-module="tasks"]').classList.contains('active');
+                    const moduleProjects = document.querySelector('.calc-toggle[data-module="projects"]').classList.contains('active');
+                    const moduleDocs = document.querySelector('.calc-toggle[data-module="documents"]').classList.contains('active');
+
+                    const totalEl = document.getElementById('calc-total');
+                    const suffixEl = document.querySelector('.calc-total-suffix');
+                    const total = (totalEl ? totalEl.textContent : '0') + (suffixEl ? suffixEl.textContent : ' €');
+
+                    return { plants, parts, users, billing, moduleTasks, moduleProjects, moduleDocs, total };
+                }
+
+                function populateModal() {
+                    const d = getCalcData();
+                    const modules = [];
+                    if (d.moduleTasks) modules.push('Aufgaben');
+                    if (d.moduleProjects) modules.push('Projekte');
+                    if (d.moduleDocs) modules.push('Dokumente');
+                    const billingLabel = d.billing === 'yearly' ? 'Jährlich' : 'Monatlich';
+
+                    summaryEl.innerHTML =
+                        '<strong>' + d.plants + '</strong> Solaranlagen · ' +
+                        '<strong>' + d.parts + '</strong> Beteiligungen · ' +
+                        '<strong>' + d.users + '</strong> Benutzer<br>' +
+                        'Module: <strong>' + (modules.length ? modules.join(', ') : 'keine') + '</strong><br>' +
+                        'Zahlungsweise: <strong>' + billingLabel + '</strong> · ' +
+                        'Gesamtpreis: <strong>' + d.total + '</strong>';
+
+                    document.getElementById('qf-solaranlagen').value = d.plants;
+                    document.getElementById('qf-beteiligungen').value = d.parts;
+                    document.getElementById('qf-benutzer').value = d.users;
+                    document.getElementById('qf-modul-aufgaben').value = d.moduleTasks ? '1' : '0';
+                    document.getElementById('qf-modul-projekte').value = d.moduleProjects ? '1' : '0';
+                    document.getElementById('qf-modul-dokumente').value = d.moduleDocs ? '1' : '0';
+                    document.getElementById('qf-zahlungsweise').value = d.billing;
+                    document.getElementById('qf-gesamtpreis').value = d.total;
+                }
+
+                function openModal() {
+                    populateModal();
+                    msgEl.className = 'quote-form-message';
+                    msgEl.textContent = '';
+                    overlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+
+                function closeModal() {
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+
+                openBtn.addEventListener('click', openModal);
+                closeBtn.addEventListener('click', closeModal);
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) closeModal();
+                });
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && overlay.classList.contains('active')) closeModal();
+                });
+
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    msgEl.className = 'quote-form-message';
+                    msgEl.textContent = '';
+
+                    const formData = new FormData(form);
+                    const body = {};
+                    formData.forEach(function(v, k) { body[k] = v; });
+
+                    // Convert booleans
+                    body.modul_aufgaben = body.modul_aufgaben === '1';
+                    body.modul_projekte = body.modul_projekte === '1';
+                    body.modul_dokumente = body.modul_dokumente === '1';
+                    body.solaranlagen = parseInt(body.solaranlagen);
+                    body.beteiligungen = parseInt(body.beteiligungen);
+                    body.benutzer = parseInt(body.benutzer);
+
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Wird gesendet...';
+
+                    fetch('/anfrage-senden', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify(body)
+                    })
+                    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+                    .then(function(result) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Anfrage absenden';
+                        if (result.ok && result.data.success) {
+                            msgEl.className = 'quote-form-message success';
+                            msgEl.textContent = result.data.message || 'Ihre Anfrage wurde erfolgreich gesendet!';
+                            form.reset();
+                            setTimeout(closeModal, 3000);
+                        } else {
+                            var errors = result.data.errors;
+                            var msg = 'Bitte überprüfen Sie Ihre Eingaben.';
+                            if (errors) {
+                                var firstKey = Object.keys(errors)[0];
+                                msg = errors[firstKey][0];
+                            } else if (result.data.message) {
+                                msg = result.data.message;
+                            }
+                            msgEl.className = 'quote-form-message error';
+                            msgEl.textContent = msg;
+                        }
+                    })
+                    .catch(function() {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Anfrage absenden';
+                        msgEl.className = 'quote-form-message error';
+                        msgEl.textContent = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
+                    });
+                });
             })();
 
             // Cool Mouse Animation - Interactive Cursor with Particles

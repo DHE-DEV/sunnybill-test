@@ -87,4 +87,8 @@ Route::get('/admin/solar-plant-billing/{solarPlantBilling}/qr-code-print', [App\
     ->name('admin.solar-plant-billing.qr-code-print')
     ->middleware('auth');
 
+// Angebotsanfrage vom Preiskalkulator
+Route::post('/anfrage-senden', [App\Http\Controllers\QuoteRequestController::class, 'send'])
+    ->name('anfrage.senden');
+
 // Remove conflicting route - let L5-Swagger handle its own routes
