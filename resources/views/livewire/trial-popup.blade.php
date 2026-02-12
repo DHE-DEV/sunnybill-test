@@ -1,6 +1,6 @@
+@if($showPopup)
 <div x-data="{
-    show: true,
-    countdown: 20,
+    countdown: @js($countdownSeconds),
     finished: false,
     interval: null,
     init() {
@@ -13,12 +13,8 @@
                 clearInterval(this.interval);
             }
         }, 1000);
-    },
-    close() {
-        this.show = false;
-        if (this.interval) clearInterval(this.interval);
     }
-}" x-show="show" x-cloak style="display: none;">
+}" x-cloak>
     {{-- Overlay --}}
     <div class="fixed inset-0" style="z-index: 999998; background-color: rgba(50, 50, 50, 0.92);">
     </div>
@@ -34,7 +30,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
                         </svg>
                         <div>
-                            <h2 class="text-lg font-bold text-white" style="margin: 0;">Testphase endet am 27.02.2026</h2>
+                            <h2 class="text-lg font-bold text-white" style="margin: 0;">Testphase endet am {{ $endDate }}</h2>
                         </div>
                     </div>
                 </div>
@@ -46,7 +42,7 @@
                             Sie nutzen unsere Software aktuell im Rahmen einer <strong>Testphase</strong>.
                         </p>
                         <p style="margin-bottom: 14px;">
-                            Bitte schließen Sie bis zum <strong>27.02.2026</strong> einen Nutzungsvertrag ab oder sichern Sie Ihre Daten.
+                            Bitte schließen Sie bis zum <strong>{{ $endDate }}</strong> einen Nutzungsvertrag ab oder sichern Sie Ihre Daten.
                         </p>
                         <p style="margin-bottom: 14px;">
                             Nach Ablauf der Frist wird Ihr Zugang <strong>automatisch deaktiviert</strong>.
@@ -67,9 +63,9 @@
                         {{-- Acknowledgment + Close button (shown after countdown) --}}
                         <div x-show="finished" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" style="padding: 16px; background-color: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
                             <p style="font-size: 14px; color: #166534; margin-bottom: 14px;">
-                                Ich habe den Hinweis gelesen und die Frist zum <strong>27.02.2026</strong> zur Kenntnis genommen.
+                                Ich habe den Hinweis gelesen und die Frist zum <strong>{{ $endDate }}</strong> zur Kenntnis genommen.
                             </p>
-                            <button @click="close()"
+                            <button wire:click="acknowledge"
                                     type="button"
                                     style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; background-color: #16a34a; color: #ffffff; font-size: 14px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.15s;"
                                     onmouseover="this.style.backgroundColor='#15803d'"
@@ -86,3 +82,4 @@
         </div>
     </div>
 </div>
+@endif

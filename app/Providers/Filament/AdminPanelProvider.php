@@ -45,6 +45,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\Dashboard::class,
                 \App\Filament\Pages\NotificationsPage::class,
                 \App\Filament\Pages\DigitalOceanSpacesBrowser::class,
+                \App\Filament\Pages\TrialExpired::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
@@ -63,6 +64,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\CheckTrialExpired::class,
             ])
             ->brandName('')
             ->brandLogo(function () {
@@ -116,7 +118,7 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => !request()->routeIs('filament.admin.auth.login')
                     ? view('layouts.filament-notifications')->render() .
                       \Blade::render('<livewire:news-popup />') .
-                      view('components.trial-countdown-popup')->render()
+                      \Blade::render('<livewire:trial-popup />')
                     : ''
             )
             ->renderHook(

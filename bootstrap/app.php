@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'require.password.change' => \App\Http\Middleware\RequirePasswordChange::class,
             'app_token' => \App\Http\Middleware\AppTokenAuth::class,
+            'check.trial.expired' => \App\Http\Middleware\CheckTrialExpired::class,
         ]);
         
         // Apply password change middleware to web routes
