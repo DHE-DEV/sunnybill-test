@@ -64,6 +64,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\LogAdminActivity::class,
                 \App\Http\Middleware\CheckTrialExpired::class,
             ])
             ->brandName('')
