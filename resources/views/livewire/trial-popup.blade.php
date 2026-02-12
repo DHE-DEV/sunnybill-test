@@ -1,3 +1,4 @@
+<div>
 @if($showPopup)
 <div x-data="{
     countdown: @js($countdownSeconds),
@@ -83,3 +84,4 @@
     </div>
 </div>
 @endif
+</div>
