@@ -715,10 +715,11 @@
             </tr>
             <tr style="background: #f0f8ff;">
                 <td colspan="4"><strong>Rechnungssumme Gesamt</strong></td>
-                <td class="number"><strong>{{ number_format(abs($totalGross ?: ($billing->net_amount < 0
-                    ? $billing->net_amount + ($billing->previous_month_outstanding ?? 0)
-                    : $billing->net_amount - ($billing->previous_month_outstanding ?? 0)
-                )) + $billing->previous_month_outstanding, 2, ',', '.') }} €</strong></td>
+                <td class="number"><strong>{{ number_format(
+                    $billing->net_amount < 0
+                        ? abs($totalGross ?: ($billing->net_amount - ($billing->previous_month_outstanding ?? 0))) - $billing->previous_month_outstanding
+                        : abs($totalGross ?: ($billing->net_amount - ($billing->previous_month_outstanding ?? 0))) + $billing->previous_month_outstanding,
+                    2, ',', '.') }} €</strong></td>
             </tr>
         </tbody>
     </table>

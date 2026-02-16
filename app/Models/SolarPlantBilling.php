@@ -414,14 +414,7 @@ class SolarPlantBilling extends Model
             );
 
             // Berechne net_amount inklusive Vormonats-OP
-            $baseAmount = $costData['total_costs'] - $costData['total_credits'];
-            if ($baseAmount < 0) {
-                // Gutschrift: Vormonats-OP abziehen (Gutschrift wird größer)
-                $netAmount = $baseAmount - $previousMonthOutstanding;
-            } else {
-                // Rechnung: Vormonats-OP aufrechnen (Rechnung wird größer)
-                $netAmount = $baseAmount + $previousMonthOutstanding;
-            }
+            $netAmount = ($costData['total_costs'] - $costData['total_credits']) + $previousMonthOutstanding;
 
             // Erstelle die Abrechnung mit vorgenerierter Rechnungsnummer
             $billing = self::create([
