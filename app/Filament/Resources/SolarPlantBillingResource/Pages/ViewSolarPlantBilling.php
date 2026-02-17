@@ -222,13 +222,13 @@ class ViewSolarPlantBilling extends ViewRecord
                                     ->state(function ($record) {
                                         $solarPlant = $record->solarPlant;
                                         $customer = $record->customer;
-                                        $participation = $solarPlant->participations()
+                                        $participation = $solarPlant?->participations()
                                             ->where('customer_id', $customer->id)
                                             ->first();
                                         $currentPercentage = $participation ? $participation->percentage : $record->participation_percentage;
                                         $currentParticipationKwp = $participation ? $participation->participation_kwp : null;
-                                        
-                                        return $currentParticipationKwp 
+
+                                        return $currentParticipationKwp
                                             ? number_format($currentParticipationKwp, 2, ',', '.') . ' kWp (' . number_format($currentPercentage, 2, ',', '.') . '%)'
                                             : number_format($currentPercentage, 2, ',', '.') . '%';
                                     })
@@ -244,11 +244,11 @@ class ViewSolarPlantBilling extends ViewRecord
                                         
                                         $solarPlant = $record->solarPlant;
                                         $customer = $record->customer;
-                                        $participation = $solarPlant->participations()
+                                        $participation = $solarPlant?->participations()
                                             ->where('customer_id', $customer->id)
                                             ->first();
                                         $currentPercentage = $participation ? $participation->percentage : $record->participation_percentage;
-                                        
+
                                         $totalEnergy = number_format($record->produced_energy_kwh, 3, ',', '.') . ' kWh';
                                         $customerShare = number_format(($record->produced_energy_kwh * $currentPercentage / 100), 3, ',', '.') . ' kWh';
                                         
@@ -894,13 +894,14 @@ class ViewSolarPlantBilling extends ViewRecord
                             ->state(function ($record) {
                                 $solarPlant = $record->solarPlant;
                                 $customer = $record->customer;
-                                $participation = $solarPlant->participations()
+                                $participation = $solarPlant?->participations()
                                     ->where('customer_id', $customer->id)
                                     ->first();
                                 $currentPercentage = $participation ? $participation->percentage : $record->participation_percentage;
+                                $plantName = $solarPlant?->name ?? 'Unbekannt';
 
                                 $hints = [];
-                                $hints[] = "• Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {$solarPlant->name}.";
+                                $hints[] = "• Diese Abrechnung zeigt Ihren Anteil an den Einnahmen und Kosten der Solaranlage {$plantName}.";
                                 $hints[] = "• Ihr aktueller Beteiligungsanteil beträgt " . number_format($currentPercentage, 2, ',', '.') . "%.";
                                 $hints[] = "• Die Abrechnung der Marktprämie erfolgt Umsatzsteuerfrei.";
                                 
