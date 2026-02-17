@@ -386,6 +386,13 @@
         @endif
     </div>
 
+    @if($billing->status === 'cancelled' && $billing->cancellation_reason)
+    <div style="background-color: #fed7aa; border: 1px solid #f97316; padding: 8px 12px; margin-top: 10px; font-size: 9pt;">
+        <strong style="color: #c2410c;">Stornierungsgrund:</strong>
+        <span style="color: #7c2d12;">{{ $billing->cancellation_reason }}</span>
+    </div>
+    @endif
+
     <!-- Rechnungsinfo -->
     <div class="billing-info">
         <table>
