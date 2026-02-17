@@ -512,8 +512,8 @@ class SolarPlantBillingResource extends Resource
                     ->alignRight()
                     ->getStateUsing(function (SolarPlantBilling $record): ?float {
                         // Hole die aktuelle kWp-Beteiligung aus der bereits geladenen participations
-                        $participation = $record->solarPlant->participations
-                            ->firstWhere('customer_id', $record->customer_id);
+                        $participation = $record->solarPlant?->participations
+                            ?->firstWhere('customer_id', $record->customer_id);
 
                         return $participation?->participation_kwp;
                     })
@@ -526,8 +526,8 @@ class SolarPlantBillingResource extends Resource
                     ->alignRight()
                     ->getStateUsing(function (SolarPlantBilling $record): ?float {
                         // Hole die aktuelle Beteiligung aus der bereits geladenen participations
-                        $participation = $record->solarPlant->participations
-                            ->firstWhere('customer_id', $record->customer_id);
+                        $participation = $record->solarPlant?->participations
+                            ?->firstWhere('customer_id', $record->customer_id);
 
                         return $participation?->percentage ?? $record->participation_percentage;
                     }),
@@ -825,7 +825,7 @@ class SolarPlantBillingResource extends Resource
                             $monthName = Carbon::createFromDate($record->billing_year, $record->billing_month, 1)
                                 ->locale('de')
                                 ->translatedFormat('F Y');
-                            $plantName = $record->solarPlant->name ?? 'Unbekannt';
+                            $plantName = $record->solarPlant?->name ?? 'Unbekannt';
                             return "Möchten Sie wirklich alle {$count} Entwürfe für {$plantName} ({$monthName}) unwiderruflich löschen?";
                         })
                         ->modalSubmitActionLabel('Alle Entwürfe löschen')
@@ -840,7 +840,7 @@ class SolarPlantBillingResource extends Resource
                             $monthName = Carbon::createFromDate($record->billing_year, $record->billing_month, 1)
                                 ->locale('de')
                                 ->translatedFormat('F Y');
-                            $plantName = $record->solarPlant->name ?? 'Unbekannt';
+                            $plantName = $record->solarPlant?->name ?? 'Unbekannt';
 
                             Notification::make()
                                 ->title('Entwürfe gelöscht')
