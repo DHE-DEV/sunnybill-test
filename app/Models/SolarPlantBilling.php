@@ -371,12 +371,13 @@ class SolarPlantBilling extends Model
         // Filtere Beteiligungen für die noch keine Abrechnung existiert
         $participationsToProcess = [];
         foreach ($participations as $participation) {
-            // Prüfe ob bereits eine Abrechnung für diesen Kunden und Monat existiert (auch gelöschte)
+            // Prüfe ob bereits eine aktive Abrechnung für diesen Kunden und Monat existiert (auch gelöschte)
             $existingBilling = self::withTrashed()
                 ->where('solar_plant_id', $solarPlantId)
                 ->where('customer_id', $participation->customer_id)
                 ->where('billing_year', $year)
                 ->where('billing_month', $month)
+                ->whereNot('status', 'cancelled')
                 ->first();
 
             if ($existingBilling) {
@@ -385,7 +386,7 @@ class SolarPlantBilling extends Model
                     $existingBilling->forceDelete();
                     $participationsToProcess[] = $participation;
                 } else {
-                    // Abrechnung existiert bereits und ist nicht gelöscht - überspringe
+                    // Aktive Abrechnung existiert bereits und ist nicht gelöscht - überspringe
                     continue;
                 }
             } else {
