@@ -113,7 +113,7 @@ class SolarPlantBillingPdfService
         $solarPlant = $billing->solarPlant;
 
         // Beteiligungsprozentsatz und kWp aus der aktuellen participation Tabelle holen
-        $participation = $solarPlant->participations()
+        $participation = $solarPlant?->participations()
             ->where('customer_id', $customer->id)
             ->first();
 
@@ -165,7 +165,7 @@ class SolarPlantBillingPdfService
         $solarPlant = $billing->solarPlant;
 
         // Solaranlagen-Namen bereinigen (Leerzeichen durch Bindestriche ersetzen)
-        $plantName = $this->sanitizeForFilename($solarPlant->name);
+        $plantName = $this->sanitizeForFilename($solarPlant?->name ?? 'Unbekannt');
 
         // Kundennamen bereinigen
         $customerName = $customer->customer_type === 'business' && $customer->company_name

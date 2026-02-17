@@ -455,8 +455,8 @@
 
     <!-- Anlageninfo -->
     <div class="plant-info">
-        <h3>Solaranlage: {{ $solarPlant->name }}</h3>
-        @if($solarPlant->total_capacity_kw)
+        <h3>Solaranlage: {{ $solarPlant?->name ?? 'Unbekannt' }}</h3>
+        @if($solarPlant?->total_capacity_kw)
             <div style="color: #2563eb; margin: -10px 0 10px 0;">
                 Technische Gesamtleistung der Anlage: {{ number_format($solarPlant->total_capacity_kw, 2, ',', '.') }} kWp
             </div>
@@ -464,7 +464,7 @@
         <div class="plant-details">
             <div>
                 <strong>Standort:</strong><br>
-                @if($solarPlant->location)
+                @if($solarPlant?->location)
                     @php
                         // Formatiere Standort als Straße<br>PLZ Ort
                         $location = trim($solarPlant->location);
@@ -495,7 +495,7 @@
                     {!! $formattedLocation !!}
                 @else
                     Kein Standort hinterlegt
-                    @if($solarPlant->total_capacity_kw)
+                    @if($solarPlant?->total_capacity_kw)
                         <br><span style="color: #2563eb; font-weight: bold;">({{ number_format($solarPlant->total_capacity_kw, 2, ',', '.') }} kWp)</span>
                     @endif
                 @endif
