@@ -386,13 +386,6 @@
         @endif
     </div>
 
-    @if($billing->status === 'cancelled' && $billing->cancellation_reason)
-    <div style="background-color: #fed7aa; border: 1px solid #f97316; padding: 8px 12px; margin-top: 10px; font-size: 9pt;">
-        <strong style="color: #c2410c;">Stornierungsgrund:</strong>
-        <span style="color: #7c2d12;">{{ $billing->cancellation_reason }}</span>
-    </div>
-    @endif
-
     <!-- Rechnungsinfo -->
     <div class="billing-info">
         <table>
@@ -1149,6 +1142,14 @@ Den ausstehenden Rechnungsbetrag finden Sie auf Ihrer nächsten Abrechnung separ
         <div style="font-size: 9pt; color: #374151; line-height: 1.4;">
             {!! nl2br(e($billing->notes)) !!}
         </div>
+    </div>
+    @endif
+
+    <!-- Stornierungsgrund -->
+    @if($billing->status === 'cancelled' && $billing->cancellation_reason)
+    <div style="margin-top: 20px; margin-bottom: 100px; background-color: #fed7aa; border: 1px solid #f97316; padding: 10px 14px; font-size: 9pt; page-break-inside: avoid;">
+        <strong style="color: #c2410c; display: block; margin-bottom: 4px;">Stornierungsgrund:</strong>
+        <span style="color: #7c2d12;">{!! nl2br(e($billing->cancellation_reason)) !!}</span>
     </div>
     @endif
 
