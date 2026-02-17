@@ -173,12 +173,20 @@ class SolarPlantBillingPdfService
             : $customer->name;
         $customerName = $this->sanitizeForFilename($customerName);
 
+        $statusSuffix = match ($billing->status) {
+            'cancelled' => '_STORNIERT',
+            'draft' => '_ENTWURF',
+            default => '',
+        };
+
         return sprintf(
-            '%04d-%02d_%s_%s.pdf',
+            '%04d-%02d_%s_%s_%s%s.pdf',
             $billing->billing_year,
             $billing->billing_month,
             $plantName,
-            $customerName
+            $customerName,
+            $billing->invoice_number,
+            $statusSuffix
         );
     }
 
