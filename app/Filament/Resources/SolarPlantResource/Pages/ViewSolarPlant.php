@@ -618,13 +618,13 @@ class ViewSolarPlant extends ViewRecord
                             ->schema([
                                 Infolists\Components\TextEntry::make('billings_count')
                                     ->label('Anzahl Abrechnungen')
-                                    ->state(fn ($record) => $record->billings()->count())
+                                    ->state(fn ($record) => $record->billings()->whereNot('status', 'cancelled')->count())
                                     ->badge()
                                     ->color('primary')
                                     ->size('xl'),
                                 Infolists\Components\TextEntry::make('total_billing_amount')
                                     ->label('Gesamtbetrag')
-                                    ->state(fn ($record) => '€ ' . number_format($record->billings()->sum('net_amount'), 2, ',', '.'))
+                                    ->state(fn ($record) => '€ ' . number_format($record->billings()->whereNot('status', 'cancelled')->sum('net_amount'), 2, ',', '.'))
                                     ->badge()
                                     ->color('success')
                                     ->size('xl'),
