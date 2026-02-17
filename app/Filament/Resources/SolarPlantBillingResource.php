@@ -797,10 +797,18 @@ class SolarPlantBillingResource extends Resource
                         ->modalDescription('Möchten Sie diese Abrechnung wirklich stornieren? Das Stornierungsdatum wird auf heute gesetzt.')
                         ->modalSubmitActionLabel('Stornieren')
                         ->modalCancelActionLabel('Abbrechen')
-                        ->action(function (SolarPlantBilling $record): void {
+                        ->form([
+                            Forms\Components\Textarea::make('cancellation_reason')
+                                ->label('Stornierungsgrund')
+                                ->placeholder('Optional: Grund für die Stornierung angeben...')
+                                ->maxLength(65535)
+                                ->rows(3),
+                        ])
+                        ->action(function (SolarPlantBilling $record, array $data): void {
                             $record->update([
                                 'cancellation_date' => now(),
                                 'status' => 'cancelled',
+                                'cancellation_reason' => $data['cancellation_reason'] ?? null,
                             ]);
 
                             Notification::make()
