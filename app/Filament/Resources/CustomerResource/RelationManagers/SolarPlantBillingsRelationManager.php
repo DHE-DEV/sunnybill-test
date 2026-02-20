@@ -81,9 +81,11 @@ class SolarPlantBillingsRelationManager extends RelationManager
                 $startDate = $earliestDate->copy();
             }
 
-            $endDate = $participation->end_date && $participation->end_date->lt($now)
+            // Nur bis zum Vormonat prüfen - der aktuelle Monat ist noch nicht abrechenbar
+            $lastCompletedMonth = $now->copy()->subMonth()->startOfMonth();
+            $endDate = $participation->end_date && $participation->end_date->lt($lastCompletedMonth)
                 ? $participation->end_date->copy()->startOfMonth()
-                : $now->copy()->startOfMonth();
+                : $lastCompletedMonth;
 
             $sixMonthsAgo = $now->copy()->subMonths(6)->startOfMonth();
 
