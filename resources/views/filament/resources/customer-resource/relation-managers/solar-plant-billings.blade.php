@@ -55,9 +55,9 @@
                                 <div class="grid gap-1.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                                     @foreach ($participation['recentMissingSupplierBillings'] as $monthLabel => $missingBillings)
                                         <div class="rounded border border-red-200 bg-red-50/50 px-1.5 py-1 dark:border-red-800/50 dark:bg-red-950/20">
-                                            <p class="text-[11px] font-semibold text-red-700 dark:text-red-400 mb-0.5">{{ $monthLabel }}</p>
+                                            <p class="text-xs font-semibold text-red-700 dark:text-red-400 mb-0.5">{{ $monthLabel }}</p>
                                             @foreach ($missingBillings as $billing)
-                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight truncate" title="{{ $billing['contractTitle'] }} ({{ $billing['supplierName'] }})">{{ $billing['contractTitle'] }}</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 leading-tight truncate" title="{{ $billing['contractTitle'] }} ({{ $billing['supplierName'] }})">{{ $billing['contractTitle'] }}</p>
                                             @endforeach
                                         </div>
                                     @endforeach
@@ -102,9 +102,9 @@
                                                 <div class="grid gap-1.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                                                     @foreach ($participation['olderMissingSupplierBillings'] as $monthLabel => $missingBillings)
                                                         <div class="rounded border border-red-200 bg-red-50/50 px-1.5 py-1 dark:border-red-800/50 dark:bg-red-950/20">
-                                                            <p class="text-[11px] font-semibold text-red-700 dark:text-red-400 mb-0.5">{{ $monthLabel }}</p>
+                                                            <p class="text-xs font-semibold text-red-700 dark:text-red-400 mb-0.5">{{ $monthLabel }}</p>
                                                             @foreach ($missingBillings as $billing)
-                                                                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight truncate" title="{{ $billing['contractTitle'] }} ({{ $billing['supplierName'] }})">{{ $billing['contractTitle'] }}</p>
+                                                                <p class="text-xs text-gray-500 dark:text-gray-400 leading-tight truncate" title="{{ $billing['contractTitle'] }} ({{ $billing['supplierName'] }})">{{ $billing['contractTitle'] }}</p>
                                                             @endforeach
                                                         </div>
                                                     @endforeach
