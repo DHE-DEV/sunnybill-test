@@ -37,7 +37,7 @@ class SolarPlantBillingsRelationManager extends RelationManager
         $customer = $this->getOwnerRecord();
         $now = now();
         $earliestDate = Carbon::create(2025, 1, 1);
-        $lastCompletedMonth = $now->copy()->subMonth()->startOfMonth();
+        $currentMonth = $now->copy()->startOfMonth();
         $sixMonthsAgo = $now->copy()->subMonths(6)->startOfMonth();
 
         $monthLabels = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
@@ -94,9 +94,9 @@ class SolarPlantBillingsRelationManager extends RelationManager
             }
 
             // End-Monat: Vormonat oder Beteiligungsende (was früher ist)
-            $endDate = $participation->end_date && $participation->end_date->lt($lastCompletedMonth)
+            $endDate = $participation->end_date && $participation->end_date->lt($currentMonth)
                 ? $participation->end_date->copy()->startOfMonth()
-                : $lastCompletedMonth->copy();
+                : $currentMonth->copy();
 
             // Wenn Start nach Ende liegt, fehlt nichts
             if ($startDate->gt($endDate)) {
