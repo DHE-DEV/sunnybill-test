@@ -298,7 +298,14 @@ class SolarPlantResource extends Resource
                                         Forms\Components\Toggle::make('billing')
                                             ->label('Fakturierbar')
                                             ->default(true)
+                                            ->live()
                                             ->helperText('Bestimmt, ob diese Solaranlage für die Abrechnung berücksichtigt wird'),
+                                        Forms\Components\DatePicker::make('billing_start_date')
+                                            ->label('Abrechnung ab')
+                                            ->helperText('Ab welchem Monat sollen Abrechnungen erwartet werden? Leer = ab Beteiligungsbeginn.')
+                                            ->visible(fn (Forms\Get $get) => $get('billing'))
+                                            ->native(false)
+                                            ->displayFormat('d.m.Y'),
                                     ]),
                                 Forms\Components\Textarea::make('notes')
                                     ->label('Notizen')

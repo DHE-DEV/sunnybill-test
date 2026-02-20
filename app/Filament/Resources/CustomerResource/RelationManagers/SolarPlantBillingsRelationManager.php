@@ -86,8 +86,12 @@ class SolarPlantBillingsRelationManager extends RelationManager
                 // Ab dem Monat NACH der letzten Abrechnung beginnen
                 $startDate = Carbon::create($latestBilling->billing_year, $latestBilling->billing_month, 1)->addMonth();
             } else {
-                // Keine Abrechnung vorhanden - ab Beteiligungsbeginn (frühestens Jan 2025)
+                // Keine Abrechnung vorhanden - ab billing_start_date der Anlage,
+                // Beteiligungsbeginn oder frühestens Jan 2025
                 $startDate = $participation->start_date->copy()->startOfMonth();
+                if ($solarPlant->billing_start_date && $solarPlant->billing_start_date->startOfMonth()->gt($startDate)) {
+                    $startDate = $solarPlant->billing_start_date->copy()->startOfMonth();
+                }
                 if ($startDate->lt($earliestDate)) {
                     $startDate = $earliestDate->copy();
                 }
