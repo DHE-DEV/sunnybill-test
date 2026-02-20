@@ -10,6 +10,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Models\SolarPlantBilling;
+use App\Models\SolarPlant;
+use Carbon\Carbon;
 
 class SolarPlantBillingsRelationManager extends RelationManager
 {
@@ -20,6 +22,147 @@ class SolarPlantBillingsRelationManager extends RelationManager
     protected static ?string $modelLabel = 'Abrechnung';
 
     protected static ?string $pluralModelLabel = 'Abrechnungen';
+
+    protected static string $view = 'filament.resources.customer-resource.relation-managers.solar-plant-billings';
+
+    protected function getViewData(): array
+    {
+        return [
+            'missingBillingsOverview' => $this->getMissingBillingsOverview(),
+        ];
+    }
+
+    protected function getMissingBillingsOverview(): array
+    {
+        $customer = $this->getOwnerRecord();
+        $now = now();
+        $earliestDate = Carbon::create(2025, 1, 1);
+
+        $monthLabels = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+        $fullMonthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+        // 1. Load active participations with billing-enabled solar plants
+        $participations = $customer->plantParticipations()
+            ->where('is_active', true)
+            ->whereHas('solarPlant', fn ($q) => $q->where('billing', true))
+            ->with('solarPlant')
+            ->get();
+
+        if ($participations->isEmpty()) {
+            return ['totalMissing' => 0, 'hasParticipations' => false, 'participations' => []];
+        }
+
+        // 2. Load all existing non-cancelled SolarPlantBillings for this customer
+        $existingBillings = SolarPlantBilling::where('customer_id', $customer->id)
+            ->where('status', '!=', 'cancelled')
+            ->get()
+            ->groupBy(fn ($b) => "{$b->solar_plant_id}_{$b->billing_year}_{$b->billing_month}");
+
+        // 3. Load supplier contracts with billings for all relevant solar plants
+        $solarPlantIds = $participations->pluck('solar_plant_id')->unique();
+        $solarPlantsData = SolarPlant::whereIn('id', $solarPlantIds)
+            ->with(['activeSupplierContracts' => fn ($q) => $q->with(['supplier', 'billings'])])
+            ->get()
+            ->keyBy('id');
+
+        $totalMissing = 0;
+        $participationData = [];
+
+        foreach ($participations as $participation) {
+            $solarPlant = $participation->solarPlant;
+            if (!$solarPlant) {
+                continue;
+            }
+
+            $startDate = $participation->start_date->copy()->startOfMonth();
+            if ($startDate->lt($earliestDate)) {
+                $startDate = $earliestDate->copy();
+            }
+
+            $endDate = $participation->end_date && $participation->end_date->lt($now)
+                ? $participation->end_date->copy()->startOfMonth()
+                : $now->copy()->startOfMonth();
+
+            $months = [];
+            $missingCount = 0;
+            $nextBillingLabel = null;
+            $missingSupplierBillingsByMonth = [];
+
+            $cursor = $endDate->copy();
+            while ($cursor->gte($startDate)) {
+                $year = $cursor->year;
+                $month = $cursor->month;
+                $key = "{$solarPlant->id}_{$year}_{$month}";
+                $exists = $existingBillings->has($key);
+
+                $monthData = [
+                    'year' => $year,
+                    'month' => $month,
+                    'label' => $monthLabels[$month - 1] . ' ' . substr((string) $year, 2),
+                    'exists' => $exists,
+                    'status' => null,
+                    'missingSupplierBillings' => [],
+                ];
+
+                if (!$exists) {
+                    $missingCount++;
+
+                    // Check supplier contract billings for this month
+                    $plantData = $solarPlantsData->get($solarPlant->id);
+                    $missingBillings = [];
+
+                    if ($plantData) {
+                        foreach ($plantData->activeSupplierContracts as $contract) {
+                            $hasBilling = $contract->billings
+                                ->where('billing_year', $year)
+                                ->where('billing_month', $month)
+                                ->isNotEmpty();
+
+                            if (!$hasBilling) {
+                                $missingBillings[] = [
+                                    'contractTitle' => $contract->title,
+                                    'supplierName' => $contract->supplier->company_name ?? $contract->supplier->name ?? 'Unbekannt',
+                                ];
+                            }
+                        }
+                    }
+
+                    $monthData['status'] = empty($missingBillings) ? 'ready' : 'blocked';
+                    $monthData['missingSupplierBillings'] = $missingBillings;
+
+                    if (!empty($missingBillings)) {
+                        $monthLabel = $monthLabels[$month - 1] . ' ' . substr((string) $year, 2);
+                        $missingSupplierBillingsByMonth[$monthLabel] = $missingBillings;
+                    }
+
+                    // Track the oldest missing month as next billing
+                    $nextBillingLabel = $fullMonthNames[$month - 1] . ' ' . $year;
+                }
+
+                $months[] = $monthData;
+                $cursor->subMonth();
+            }
+
+            if ($missingCount > 0) {
+                $totalMissing += $missingCount;
+                $participationData[] = [
+                    'plantNumber' => $solarPlant->plant_number,
+                    'plantName' => $solarPlant->name,
+                    'percentage' => number_format($participation->percentage, 2, ',', '.'),
+                    'missingCount' => $missingCount,
+                    'nextBillingLabel' => $nextBillingLabel,
+                    'months' => $months,
+                    'missingSupplierBillingsByMonth' => $missingSupplierBillingsByMonth,
+                ];
+            }
+        }
+
+        return [
+            'totalMissing' => $totalMissing,
+            'hasParticipations' => true,
+            'participations' => $participationData,
+        ];
+    }
 
     public function form(Form $form): Form
     {
