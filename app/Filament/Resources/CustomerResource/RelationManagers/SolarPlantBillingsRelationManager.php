@@ -83,10 +83,13 @@ class SolarPlantBillingsRelationManager extends RelationManager
                 ? $participation->end_date->copy()->startOfMonth()
                 : $now->copy()->startOfMonth();
 
+            $sixMonthsAgo = $now->copy()->subMonths(6)->startOfMonth();
+
             $months = [];
             $missingCount = 0;
             $nextBillingLabel = null;
-            $missingSupplierBillingsByMonth = [];
+            $recentMissingSupplierBillings = [];
+            $olderMissingSupplierBillings = [];
 
             $cursor = $endDate->copy();
             while ($cursor->gte($startDate)) {
@@ -132,7 +135,11 @@ class SolarPlantBillingsRelationManager extends RelationManager
 
                     if (!empty($missingBillings)) {
                         $monthLabel = $monthLabels[$month - 1] . ' ' . substr((string) $year, 2);
-                        $missingSupplierBillingsByMonth[$monthLabel] = $missingBillings;
+                        if ($cursor->gte($sixMonthsAgo)) {
+                            $recentMissingSupplierBillings[$monthLabel] = $missingBillings;
+                        } else {
+                            $olderMissingSupplierBillings[$monthLabel] = $missingBillings;
+                        }
                     }
 
                     // Track the oldest missing month as next billing
@@ -152,7 +159,8 @@ class SolarPlantBillingsRelationManager extends RelationManager
                     'missingCount' => $missingCount,
                     'nextBillingLabel' => $nextBillingLabel,
                     'months' => $months,
-                    'missingSupplierBillingsByMonth' => $missingSupplierBillingsByMonth,
+                    'recentMissingSupplierBillings' => $recentMissingSupplierBillings,
+                    'olderMissingSupplierBillings' => $olderMissingSupplierBillings,
                 ];
             }
         }
