@@ -710,7 +710,7 @@
     <table class="positions-table" style="margin-top: 0;">
         <tbody>
             <tr style="background: #ffffff;">
-                <td colspan="4"><strong>Abzüglich offener Posten aus Vormonat</strong></td>
+                <td colspan="4"><strong>{{ ($billing->total_costs - $billing->total_credits) >= 0 ? 'Zuzüglich' : 'Abzüglich' }} offener Posten aus Vormonat</strong></td>
                 <td class="number"><strong>{{ number_format($billing->previous_month_outstanding, 2, ',', '.') }} €</strong></td>
             </tr>
             <tr style="background: #f0f8ff;">
