@@ -53,10 +53,10 @@ class SolarPlantBillingsRelationManager extends RelationManager
         }
 
         // 2. Load all existing non-cancelled SolarPlantBillings for this customer
-        //    Stornierte Abrechnungen (status=cancelled ODER cancellation_date gesetzt) zählen nicht
+        //    Nur status='cancelled' wird ausgeschlossen - cancellation_date allein reicht nicht,
+        //    da eine erneute Abrechnung für denselben Monat existieren kann
         $existingBillings = SolarPlantBilling::where('customer_id', $customer->id)
             ->where('status', '!=', 'cancelled')
-            ->whereNull('cancellation_date')
             ->get()
             ->groupBy(fn ($b) => "{$b->solar_plant_id}_{$b->billing_year}_{$b->billing_month}");
 
