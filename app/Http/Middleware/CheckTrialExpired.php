@@ -20,15 +20,20 @@ class CheckTrialExpired
             return $next($request);
         }
 
-        $endDateString = config('trial.popup.end_date');
+        $isExpired = config('trial.expired', false);
 
-        if (!$endDateString) {
-            return $next($request);
+        if (!$isExpired) {
+            $endDateString = config('trial.popup.end_date');
+
+            if (!$endDateString) {
+                return $next($request);
+            }
+
+            $endDate = Carbon::createFromFormat('d.m.Y', $endDateString)->endOfDay();
+            $isExpired = now()->greaterThan($endDate);
         }
 
-        $endDate = Carbon::createFromFormat('d.m.Y', $endDateString)->endOfDay();
-
-        if (now()->greaterThan($endDate)) {
+        if ($isExpired) {
             if ($request->routeIs('filament.admin.pages.trial-expired')) {
                 return $next($request);
             }

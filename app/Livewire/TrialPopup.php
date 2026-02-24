@@ -19,6 +19,10 @@ class TrialPopup extends Component
             return;
         }
 
+        if (config('trial.expired', false)) {
+            return;
+        }
+
         if (!Auth::check()) {
             return;
         }
@@ -53,8 +57,18 @@ class TrialPopup extends Component
             'once_per_login' => !TrialPopupAcknowledgment::where('user_id', $userId)
                 ->where('displayed_at', '>=', Auth::user()->last_login_at)
                 ->exists(),
+            'every_n_actions' => $this->shouldShowForNthAction(),
             default => true,
         };
+    }
+
+    private function shouldShowForNthAction(): bool
+    {
+        $n = config('trial.popup.every_n_actions', 3);
+        $count = session()->get('trial_popup_action_count', 0) + 1;
+        session()->put('trial_popup_action_count', $count);
+
+        return $count % $n === 0;
     }
 
     private function logDisplay(): void

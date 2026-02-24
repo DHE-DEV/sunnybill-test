@@ -16,10 +16,12 @@ class TrialExpired extends Page
     protected static bool $shouldRegisterNavigation = false;
 
     public string $endDate = '';
+    public bool $manuallyExpired = false;
 
     public function mount(): void
     {
         $this->endDate = config('trial.popup.end_date', '27.02.2026');
+        $this->manuallyExpired = (bool) config('trial.expired', false);
     }
 
     public static function canAccess(): bool

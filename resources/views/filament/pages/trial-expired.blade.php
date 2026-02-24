@@ -15,12 +15,21 @@
                 {{-- Body --}}
                 <div style="padding: 28px 24px;">
                     <div style="font-size: 15px; line-height: 1.7; color: #374151;">
-                        <p style="margin-bottom: 16px;">
-                            Die Testphase ist am <strong>{{ $endDate }}</strong> abgelaufen.
-                        </p>
-                        <p style="margin-bottom: 16px;">
-                            Zur weiteren Nutzung der Software schließen Sie bitte einen <strong>Nutzungsvertrag</strong> ab.
-                        </p>
+                        @if($manuallyExpired)
+                            <p style="margin-bottom: 16px;">
+                                Die <strong>Testversion</strong> ist beendet.
+                            </p>
+                            <p style="margin-bottom: 16px;">
+                                Wenn Sie das Produkt weiter nutzen möchten, kontaktieren Sie bitte den <strong>Anbieter</strong>.
+                            </p>
+                        @else
+                            <p style="margin-bottom: 16px;">
+                                Die Testphase ist am <strong>{{ $endDate }}</strong> abgelaufen.
+                            </p>
+                            <p style="margin-bottom: 16px;">
+                                Zur weiteren Nutzung der Software schließen Sie bitte einen <strong>Nutzungsvertrag</strong> ab.
+                            </p>
+                        @endif
                         <p style="margin-bottom: 0;">
                             Bei Fragen kontaktieren Sie uns bitte.
                         </p>
