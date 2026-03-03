@@ -257,6 +257,21 @@ class ArticlesRelationManager extends RelationManager
                     ->date('d.m.Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('pivot.price_increase_percentage')
+                    ->label('Preiserhöhung %')
+                    ->numeric(2)
+                    ->suffix(' %')
+                    ->alignRight()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('pivot.price_increase_interval_months')
+                    ->label('Erhöhungsintervall')
+                    ->suffix(' Monate')
+                    ->alignRight()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('pivot.price_increase_start_date')
+                    ->label('Erste Erhöhung ab')
+                    ->date('d.m.Y')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('pivot.notes')
                     ->label('Kundenspezifische Notizen')
                     ->limit(40)
@@ -412,6 +427,27 @@ class ArticlesRelationManager extends RelationManager
                                     ->label('Gültig bis')
                                     ->afterOrEqual('valid_from'),
 
+                                Forms\Components\Fieldset::make('Automatische Preiserhöhung')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('price_increase_percentage')
+                                            ->label('Preiserhöhung')
+                                            ->numeric()
+                                            ->step(0.01)
+                                            ->minValue(0)
+                                            ->suffix('%')
+                                            ->placeholder('z.B. 2,5'),
+
+                                        Forms\Components\TextInput::make('price_increase_interval_months')
+                                            ->label('Intervall')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->suffix('Monate')
+                                            ->placeholder('z.B. 12'),
+
+                                        Forms\Components\DatePicker::make('price_increase_start_date')
+                                            ->label('Erste Erhöhung ab'),
+                                    ])->columns(3)->columnSpanFull(),
+
                                 Forms\Components\TextInput::make('quantity')
                                     ->label('Menge')
                                     ->numeric()
@@ -480,6 +516,9 @@ class ArticlesRelationManager extends RelationManager
                             'valid_to' => $data['valid_to'] ?? null,
                             'billing_type' => $data['billing_type'] ?? 'invoice',
                             'solar_plant_id' => $data['solar_plant_id'] ?? null,
+                            'price_increase_percentage' => $data['price_increase_percentage'] ?? null,
+                            'price_increase_interval_months' => $data['price_increase_interval_months'] ?? null,
+                            'price_increase_start_date' => $data['price_increase_start_date'] ?? null,
                         ];
 
                         $this->getOwnerRecord()->articles()->attach($article->id, $pivotData);
@@ -504,19 +543,22 @@ class ArticlesRelationManager extends RelationManager
                         ->modalWidth('4xl')
                         ->fillForm(function ($record): array {
                             return [
-                                'name' => $record->name,
-                                'description' => $record->description,
+                                'article_name' => $record->name,
+                                'article_description' => $record->description,
                                 'article_notes' => $record->notes,
-                                'type' => $record->type,
-                                'unit' => $record->unit,
-                                'price' => $record->price,
-                                'tax_rate_id' => $record->tax_rate_id,
-                                'decimal_places' => $record->decimal_places,
-                                'total_decimal_places' => $record->total_decimal_places,
+                                'article_type' => $record->type,
+                                'article_unit' => $record->unit,
+                                'article_price' => $record->price,
+                                'article_tax_rate_id' => $record->tax_rate_id,
+                                'article_decimal_places' => $record->decimal_places,
+                                'article_total_decimal_places' => $record->total_decimal_places,
                                 'solar_plant_id' => $record->pivot->solar_plant_id,
                                 'billing_type' => $record->pivot->billing_type,
                                 'valid_from' => $record->pivot->valid_from,
                                 'valid_to' => $record->pivot->valid_to,
+                                'price_increase_percentage' => $record->pivot->price_increase_percentage,
+                                'price_increase_interval_months' => $record->pivot->price_increase_interval_months,
+                                'price_increase_start_date' => $record->pivot->price_increase_start_date,
                                 'quantity' => $record->pivot->quantity,
                                 'unit_price_override' => $record->pivot->unit_price,
                                 'customer_notes' => $record->pivot->notes,
@@ -528,12 +570,12 @@ class ArticlesRelationManager extends RelationManager
                         ->form([
                             Forms\Components\Section::make('Artikeldaten')
                                 ->schema([
-                                    Forms\Components\TextInput::make('name')
+                                    Forms\Components\TextInput::make('article_name')
                                         ->label('Artikelname')
                                         ->disabled()
                                         ->columnSpanFull(),
 
-                                    Forms\Components\Textarea::make('description')
+                                    Forms\Components\Textarea::make('article_description')
                                         ->label('Beschreibung')
                                         ->disabled()
                                         ->columnSpanFull(),
@@ -543,7 +585,7 @@ class ArticlesRelationManager extends RelationManager
                                         ->disabled()
                                         ->columnSpanFull(),
 
-                                    Forms\Components\TextInput::make('type')
+                                    Forms\Components\TextInput::make('article_type')
                                         ->label('Artikeltyp')
                                         ->disabled()
                                         ->formatStateUsing(fn ($state) => match ($state) {
@@ -555,27 +597,27 @@ class ArticlesRelationManager extends RelationManager
                                             default => $state,
                                         }),
 
-                                    Forms\Components\TextInput::make('unit')
+                                    Forms\Components\TextInput::make('article_unit')
                                         ->label('Einheit')
                                         ->disabled(),
 
-                                    Forms\Components\TextInput::make('price')
+                                    Forms\Components\TextInput::make('article_price')
                                         ->label('Preis (Netto)')
                                         ->prefix('€')
                                         ->disabled(),
 
-                                    Forms\Components\Select::make('tax_rate_id')
+                                    Forms\Components\Select::make('article_tax_rate_id')
                                         ->label('Steuersatz')
                                         ->options(\App\Models\TaxRate::active()->get()->mapWithKeys(function ($taxRate) {
                                             return [$taxRate->id => $taxRate->name];
                                         }))
                                         ->disabled(),
 
-                                    Forms\Components\TextInput::make('decimal_places')
+                                    Forms\Components\TextInput::make('article_decimal_places')
                                         ->label('Nachkommastellen (Preis)')
                                         ->disabled(),
 
-                                    Forms\Components\TextInput::make('total_decimal_places')
+                                    Forms\Components\TextInput::make('article_total_decimal_places')
                                         ->label('Nachkommastellen (Gesamtpreis)')
                                         ->disabled(),
                                 ])->columns(2),
@@ -605,6 +647,25 @@ class ArticlesRelationManager extends RelationManager
                                     Forms\Components\DatePicker::make('valid_to')
                                         ->label('Gültig bis')
                                         ->disabled(),
+
+                                    Forms\Components\Fieldset::make('Automatische Preiserhöhung')
+                                        ->schema([
+                                            Forms\Components\TextInput::make('price_increase_percentage')
+                                                ->label('Preiserhöhung')
+                                                ->disabled()
+                                                ->suffix('%')
+                                                ->formatStateUsing(fn ($state) => $state ? number_format($state, 2, ',', '.') : '-'),
+
+                                            Forms\Components\TextInput::make('price_increase_interval_months')
+                                                ->label('Intervall')
+                                                ->disabled()
+                                                ->suffix('Monate')
+                                                ->formatStateUsing(fn ($state) => $state ?? '-'),
+
+                                            Forms\Components\DatePicker::make('price_increase_start_date')
+                                                ->label('Erste Erhöhung ab')
+                                                ->disabled(),
+                                        ])->columns(3)->columnSpanFull(),
 
                                     Forms\Components\TextInput::make('quantity')
                                         ->label('Menge')
@@ -647,19 +708,22 @@ class ArticlesRelationManager extends RelationManager
                         ->modalWidth('4xl')
                         ->fillForm(function ($record): array {
                             return [
-                                'name' => $record->name,
-                                'description' => $record->description,
+                                'article_name' => $record->name,
+                                'article_description' => $record->description,
                                 'article_notes' => $record->notes,
-                                'type' => $record->type,
-                                'unit' => $record->unit,
-                                'price' => $record->price,
-                                'tax_rate_id' => $record->tax_rate_id,
-                                'decimal_places' => $record->decimal_places,
-                                'total_decimal_places' => $record->total_decimal_places,
+                                'article_type' => $record->type,
+                                'article_unit' => $record->unit,
+                                'article_price' => $record->price,
+                                'article_tax_rate_id' => $record->tax_rate_id,
+                                'article_decimal_places' => $record->decimal_places,
+                                'article_total_decimal_places' => $record->total_decimal_places,
                                 'solar_plant_id' => $record->pivot->solar_plant_id,
                                 'billing_type' => $record->pivot->billing_type,
                                 'valid_from' => $record->pivot->valid_from,
                                 'valid_to' => $record->pivot->valid_to,
+                                'price_increase_percentage' => $record->pivot->price_increase_percentage,
+                                'price_increase_interval_months' => $record->pivot->price_increase_interval_months,
+                                'price_increase_start_date' => $record->pivot->price_increase_start_date,
                                 'quantity' => $record->pivot->quantity,
                                 'unit_price_override' => $record->pivot->unit_price,
                                 'customer_notes' => $record->pivot->notes,
@@ -670,13 +734,13 @@ class ArticlesRelationManager extends RelationManager
                         ->form([
                             Forms\Components\Section::make('Artikeldaten')
                                 ->schema([
-                                    Forms\Components\TextInput::make('name')
+                                    Forms\Components\TextInput::make('article_name')
                                         ->label('Artikelname')
                                         ->required()
                                         ->maxLength(255)
                                         ->columnSpanFull(),
 
-                                    Forms\Components\Textarea::make('description')
+                                    Forms\Components\Textarea::make('article_description')
                                         ->label('Beschreibung')
                                         ->rows(2)
                                         ->maxLength(1000)
@@ -689,7 +753,7 @@ class ArticlesRelationManager extends RelationManager
                                         ->helperText('Umfassende Informationen und Erklärungen für diesen Kundenartikel (max. 5000 Zeichen)')
                                         ->columnSpanFull(),
 
-                                    Forms\Components\Select::make('type')
+                                    Forms\Components\Select::make('article_type')
                                         ->label('Artikeltyp')
                                         ->options([
                                             'service' => 'Dienstleistung',
@@ -700,11 +764,11 @@ class ArticlesRelationManager extends RelationManager
                                         ])
                                         ->required(),
 
-                                    Forms\Components\TextInput::make('unit')
+                                    Forms\Components\TextInput::make('article_unit')
                                         ->label('Einheit')
                                         ->maxLength(50),
 
-                                    Forms\Components\TextInput::make('price')
+                                    Forms\Components\TextInput::make('article_price')
                                         ->label('Preis (Netto)')
                                         ->numeric()
                                         ->step(0.000001)
@@ -713,7 +777,7 @@ class ArticlesRelationManager extends RelationManager
                                         ->prefix('€')
                                         ->helperText('Bis zu 6 Nachkommastellen möglich'),
 
-                                    Forms\Components\Select::make('tax_rate_id')
+                                    Forms\Components\Select::make('article_tax_rate_id')
                                         ->label('Steuersatz')
                                         ->options(\App\Models\TaxRate::active()->get()->mapWithKeys(function ($taxRate) {
                                             return [$taxRate->id => $taxRate->name];
@@ -722,14 +786,14 @@ class ArticlesRelationManager extends RelationManager
                                         ->searchable()
                                         ->preload(),
 
-                                    Forms\Components\TextInput::make('decimal_places')
+                                    Forms\Components\TextInput::make('article_decimal_places')
                                         ->label('Nachkommastellen (Preis)')
                                         ->numeric()
                                         ->minValue(0)
                                         ->maxValue(6)
                                         ->helperText('Anzahl der Nachkommastellen für die Preisanzeige'),
 
-                                    Forms\Components\TextInput::make('total_decimal_places')
+                                    Forms\Components\TextInput::make('article_total_decimal_places')
                                         ->label('Nachkommastellen (Gesamtpreis)')
                                         ->numeric()
                                         ->minValue(0)
@@ -773,6 +837,27 @@ class ArticlesRelationManager extends RelationManager
                                         ->label('Gültig bis')
                                         ->afterOrEqual('valid_from'),
 
+                                    Forms\Components\Fieldset::make('Automatische Preiserhöhung')
+                                        ->schema([
+                                            Forms\Components\TextInput::make('price_increase_percentage')
+                                                ->label('Preiserhöhung')
+                                                ->numeric()
+                                                ->step(0.01)
+                                                ->minValue(0)
+                                                ->suffix('%')
+                                                ->placeholder('z.B. 2,5'),
+
+                                            Forms\Components\TextInput::make('price_increase_interval_months')
+                                                ->label('Intervall')
+                                                ->numeric()
+                                                ->minValue(1)
+                                                ->suffix('Monate')
+                                                ->placeholder('z.B. 12'),
+
+                                            Forms\Components\DatePicker::make('price_increase_start_date')
+                                                ->label('Erste Erhöhung ab'),
+                                        ])->columns(3)->columnSpanFull(),
+
                                     Forms\Components\TextInput::make('quantity')
                                         ->label('Menge')
                                         ->numeric()
@@ -813,19 +898,19 @@ class ArticlesRelationManager extends RelationManager
                                 ])->columns(2),
                         ])
                         ->using(function ($record, array $data): void {
-                            $taxRate = \App\Models\TaxRate::find($data['tax_rate_id']);
+                            $taxRate = \App\Models\TaxRate::find($data['article_tax_rate_id']);
 
                             $record->update([
-                                'name' => $data['name'],
-                                'description' => $data['description'],
+                                'name' => $data['article_name'],
+                                'description' => $data['article_description'],
                                 'notes' => $data['article_notes'] ?? null,
-                                'type' => $data['type'],
-                                'price' => $data['price'],
-                                'tax_rate_id' => $data['tax_rate_id'],
+                                'type' => $data['article_type'],
+                                'price' => $data['article_price'],
+                                'tax_rate_id' => $data['article_tax_rate_id'],
                                 'tax_rate' => $taxRate ? $taxRate->rate : 0.19,
-                                'unit' => $data['unit'],
-                                'decimal_places' => $data['decimal_places'],
-                                'total_decimal_places' => $data['total_decimal_places'],
+                                'unit' => $data['article_unit'],
+                                'decimal_places' => $data['article_decimal_places'],
+                                'total_decimal_places' => $data['article_total_decimal_places'],
                             ]);
 
                             $record->pivot->update([
@@ -838,6 +923,9 @@ class ArticlesRelationManager extends RelationManager
                                 'valid_to' => $data['valid_to'] ?? null,
                                 'billing_type' => $data['billing_type'] ?? 'invoice',
                                 'solar_plant_id' => $data['solar_plant_id'] ?? null,
+                                'price_increase_percentage' => $data['price_increase_percentage'] ?? null,
+                                'price_increase_interval_months' => $data['price_increase_interval_months'] ?? null,
+                                'price_increase_start_date' => $data['price_increase_start_date'] ?? null,
                             ]);
                         })
                         ->after(function ($record, $livewire) {
