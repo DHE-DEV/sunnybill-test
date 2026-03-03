@@ -800,6 +800,16 @@ class ContractsRelationManager extends RelationManager
                             'CHF' => 'Schweizer Franken (CHF)',
                         ])
                         ->default('EUR'),
+
+                    Forms\Components\TextInput::make('default_vat_rate')
+                        ->label('Standard MwSt.')
+                        ->numeric()
+                        ->step(0.01)
+                        ->suffix('%')
+                        ->minValue(0)
+                        ->maxValue(100)
+                        ->default(19.00)
+                        ->helperText('Standard-Mehrwertsteuersatz für Abrechnungen dieses Vertrags'),
                 ])->columns(2),
 
             Forms\Components\Section::make('Vertragserkennung')
@@ -820,6 +830,23 @@ class ContractsRelationManager extends RelationManager
                         ->maxLength(255)
                         ->placeholder('z.B. Erkennungsmerkmal 3'),
                 ])->columns(2),
+
+            Forms\Components\Section::make('Standard Texte')
+                ->description('Standardtexte werden bei der Belegerfassung automatisch in die betreffenden Felder übernommen. Sie können dort 1:1 übernommen oder für die betreffende Belegerfassung abgeändert werden.')
+                ->schema([
+                    Forms\Components\TextInput::make('default_title')
+                        ->label('Titel')
+                        ->maxLength(500)
+                        ->placeholder('z.B. Standard-Titel für Belege')
+                        ->helperText('Dieser Titel wird automatisch bei neuen Belegen vorausgefüllt'),
+                    Forms\Components\Textarea::make('default_description')
+                        ->label('Beschreibung')
+                        ->rows(4)
+                        ->maxLength(2000)
+                        ->placeholder('z.B. Standard-Beschreibung für Belege...')
+                        ->helperText('Diese Beschreibung wird automatisch bei neuen Belegen vorausgefüllt')
+                        ->columnSpanFull(),
+                ])->columns(1),
 
             Forms\Components\Section::make('Zusätzliche Informationen')
                 ->schema([

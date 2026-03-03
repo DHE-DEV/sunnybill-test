@@ -137,6 +137,22 @@ class ArticlesRelationManager extends RelationManager
                     ->searchable()
                     ->limit(40)
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('notes')
+                    ->label('Ausführliche Erklärung')
+                    ->limit(40)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Artikeltyp')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'service' => 'Dienstleistung',
+                        'product' => 'Produkt',
+                        'subscription' => 'Abonnement',
+                        'maintenance' => 'Wartung',
+                        'other' => 'Sonstiges',
+                        default => $state,
+                    })
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('pivot.quantity')
                     ->label('Menge')
                     ->numeric(2)
@@ -145,6 +161,12 @@ class ArticlesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('unit')
                     ->label('Einheit')
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Preis (Netto)')
+                    ->alignRight()
+                    ->money('EUR')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('formatted_unit_price')
                     ->label('Stückpreis')
                     ->alignRight()
@@ -204,6 +226,52 @@ class ArticlesRelationManager extends RelationManager
                         default => $state,
                     })
                     ->sortable(),
+                Tables\Columns\TextColumn::make('solar_plant_name')
+                    ->label('Solaranlage')
+                    ->getStateUsing(fn ($record) => $record->pivot->solar_plant_id
+                        ? \App\Models\SolarPlant::find($record->pivot->solar_plant_id)?->name
+                        : '-')
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('pivot.billing_type')
+                    ->label('Berechnungstyp')
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'invoice' => 'Rechnung',
+                        'credit' => 'Gutschrift',
+                        default => $state ?? '-',
+                    })
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'invoice' => 'success',
+                        'credit' => 'warning',
+                        default => 'gray',
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('pivot.valid_from')
+                    ->label('Gültig von')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('pivot.valid_to')
+                    ->label('Gültig bis')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('pivot.notes')
+                    ->label('Kundenspezifische Notizen')
+                    ->limit(40)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('decimal_places')
+                    ->label('Nachkommastellen (Preis)')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('total_decimal_places')
+                    ->label('Nachkommastellen (Gesamt)')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('taxRate.name')
+                    ->label('Steuersatz')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('pivot.created_at')
                     ->label('Hinzugefügt')
                     ->dateTime('d.m.Y H:i')
@@ -311,6 +379,39 @@ class ArticlesRelationManager extends RelationManager
                         Forms\Components\Section::make('Kundenverknüpfung')
                             ->description('Konfigurieren Sie, wie dieser Artikel mit dem Kunden verknüpft wird.')
                             ->schema([
+                                Forms\Components\Select::make('solar_plant_id')
+                                    ->label('Zuordnung Solaranlage')
+                                    ->searchable()
+                                    ->getSearchResultsUsing(fn (string $search): array =>
+                                        \App\Models\SolarPlant::where('name', 'like', "%{$search}%")
+                                            ->orderBy('name')
+                                            ->limit(50)
+                                            ->pluck('name', 'id')
+                                            ->toArray()
+                                    )
+                                    ->getOptionLabelUsing(fn ($value): ?string =>
+                                        \App\Models\SolarPlant::find($value)?->name
+                                    )
+                                    ->placeholder('Solaranlage suchen...')
+                                    ->columnSpanFull(),
+
+                                Forms\Components\Select::make('billing_type')
+                                    ->label('Berechnungstyp')
+                                    ->options([
+                                        'invoice' => 'Rechnung',
+                                        'credit' => 'Gutschrift',
+                                    ])
+                                    ->default('invoice')
+                                    ->required()
+                                    ->columnSpanFull(),
+
+                                Forms\Components\DatePicker::make('valid_from')
+                                    ->label('Gültig von'),
+
+                                Forms\Components\DatePicker::make('valid_to')
+                                    ->label('Gültig bis')
+                                    ->afterOrEqual('valid_from'),
+
                                 Forms\Components\TextInput::make('quantity')
                                     ->label('Menge')
                                     ->numeric()
@@ -320,7 +421,7 @@ class ArticlesRelationManager extends RelationManager
                                     ->default(1.00)
                                     ->suffix('Stk.')
                                     ->helperText('Anzahl der Artikel für diesen Kunden'),
-                                
+
                                 Forms\Components\TextInput::make('unit_price_override')
                                     ->label('Abweichender Stückpreis (optional)')
                                     ->numeric()
@@ -328,14 +429,14 @@ class ArticlesRelationManager extends RelationManager
                                     ->minValue(0)
                                     ->prefix('€')
                                     ->helperText('Leer lassen um den Standard-Artikelpreis zu verwenden. Bis zu 6 Nachkommastellen möglich.'),
-                                
+
                                 Forms\Components\Textarea::make('customer_notes')
                                     ->label('Kundenspezifische Notizen')
                                     ->rows(3)
                                     ->maxLength(1000)
                                     ->placeholder('Spezielle Notizen für diesen Artikel bei diesem Kunden...')
                                     ->columnSpanFull(),
-                                
+
                                 Forms\Components\Toggle::make('is_active')
                                     ->label('Aktiv')
                                     ->default(true)
@@ -375,8 +476,12 @@ class ArticlesRelationManager extends RelationManager
                             'notes' => $data['customer_notes'],
                             'is_active' => $data['is_active'],
                             'billing_requirement' => $data['billing_requirement'],
+                            'valid_from' => $data['valid_from'] ?? null,
+                            'valid_to' => $data['valid_to'] ?? null,
+                            'billing_type' => $data['billing_type'] ?? 'invoice',
+                            'solar_plant_id' => $data['solar_plant_id'] ?? null,
                         ];
-                        
+
                         $this->getOwnerRecord()->articles()->attach($article->id, $pivotData);
                         
                         Notification::make()
@@ -389,130 +494,7 @@ class ArticlesRelationManager extends RelationManager
                         $livewire->dispatch('refresh');
                     }),
                 
-                Tables\Actions\AttachAction::make()
-                    ->label('Artikel hinzufügen')
-                    ->icon('heroicon-o-plus')
-                    ->modalWidth('4xl')
-                    ->recordSelectOptionsQuery(function (Builder $query) {
-                        $ownerRecord = $this->getOwnerRecord();
-                        $attachedArticleIds = $ownerRecord->articles()->pluck('articles.id')->toArray();
-                        
-                        return $query->whereNotIn('id', $attachedArticleIds)->orderBy('name');
-                    })
-                    ->recordSelectSearchColumns(['name', 'description'])
-                    ->preloadRecordSelect()
-                    ->form([
-                        Forms\Components\Select::make('recordId')
-                            ->label('Artikel')
-                            ->options(function () {
-                                $ownerRecord = $this->getOwnerRecord();
-                                $attachedArticleIds = $ownerRecord->articles()->pluck('articles.id')->toArray();
-                                
-                                return Article::query()
-                                    ->whereNotIn('id', $attachedArticleIds)
-                                    ->orderBy('name')
-                                    ->get()
-                                    ->mapWithKeys(function ($article) {
-                                        return [$article->id => $article->name . ' (' . $article->formatted_price . ')'];
-                                    })
-                                    ->toArray();
-                            })
-                            ->searchable()
-                            ->required()
-                            ->preload()
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                if ($state) {
-                                    $article = Article::find($state);
-                                    if ($article) {
-                                        $set('unit_price', $article->price);
-                                    }
-                                }
-                            }),
-                        
-                        Forms\Components\Placeholder::make('article_info')
-                            ->label('Artikel-Info')
-                            ->content(function ($get) {
-                                $articleId = $get('recordId');
-                                if (!$articleId) return 'Kein Artikel ausgewählt';
-                                
-                                $article = Article::find($articleId);
-                                if (!$article) return 'Artikel nicht gefunden';
-                                
-                                return "Name: {$article->name}\n" .
-                                       "Beschreibung: " . ($article->description ?? 'Keine Beschreibung') . "\n" .
-                                       "Preis: {$article->formatted_price}\n" .
-                                       "Steuersatz: {$article->tax_rate_percent}";
-                            })
-                            ->visible(fn ($get) => $get('recordId')),
-
-                        Forms\Components\TextInput::make('quantity')
-                            ->label('Menge')
-                            ->numeric()
-                            ->step(0.01)
-                            ->minValue(0.01)
-                            ->required()
-                            ->default(1.00)
-                            ->suffix('Stk.')
-                            ->helperText('Anzahl der Artikel für diesen Kunden'),
-
-                        Forms\Components\TextInput::make('unit_price')
-                            ->label('Stückpreis')
-                            ->numeric()
-                            ->step(0.01)
-                            ->minValue(0)
-                            ->prefix('€')
-                            ->helperText('Leer lassen um den Standard-Artikelpreis zu verwenden')
-                            ->placeholder('Wird automatisch gesetzt'),
-
-                        Forms\Components\Textarea::make('customer_notes')
-                            ->label('Notizen')
-                            ->rows(2)
-                            ->maxLength(1000)
-                            ->placeholder('Zusätzliche Informationen zu diesem Artikel...'),
-
-                        Forms\Components\Textarea::make('notes')
-                            ->label('Ausführliche Erklärung')
-                            ->rows(4)
-                            ->maxLength(5000)
-                            ->placeholder('Zusätzliche Details und Erklärungen zum Artikel...')
-                            ->helperText('Umfassende Informationen und Erklärungen für diesen Kundenartikel (max. 5000 Zeichen)')
-                            ->columnSpanFull(),
-
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Aktiv')
-                            ->default(true)
-                            ->helperText('Nur aktive Artikel werden bei Berechnungen berücksichtigt.'),
-                        Forms\Components\Radio::make('billing_requirement')
-                            ->label('Anforderung bei Abrechnung')
-                            ->options([
-                                'optional' => 'Optional',
-                                'mandatory' => 'Pflichtartikel',
-                            ])
-                            ->default('optional')
-                            ->required(),
-                    ])
-                    ->mutateFormDataUsing(function (array $data): array {
-                        if (empty($data['unit_price']) && !empty($data['recordId'])) {
-                            $article = Article::find($data['recordId']);
-                            if ($article) {
-                                $data['unit_price'] = $article->price;
-                            }
-                        }
-                        
-                        $data['quantity'] = $data['quantity'] ?? 1.00;
-                        $data['is_active'] = $data['is_active'] ?? true;
-                        $data['billing_requirement'] = $data['billing_requirement'] ?? 'optional';
-                        
-                        return $data;
-                    })
-                    ->after(function ($record, $livewire) {
-                        Notification::make()
-                            ->title('Artikel hinzugefügt')
-                            ->body('Der Artikel wurde erfolgreich zum Kunden hinzugefügt.')
-                            ->success()
-                            ->send();
-                    }),
+                // AttachAction ausgeblendet
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -524,61 +506,134 @@ class ArticlesRelationManager extends RelationManager
                             return [
                                 'name' => $record->name,
                                 'description' => $record->description,
-                                'formatted_price' => $record->formatted_price,
-                                'tax_rate_percent' => $record->tax_rate_percent,
+                                'article_notes' => $record->notes,
+                                'type' => $record->type,
                                 'unit' => $record->unit,
+                                'price' => $record->price,
+                                'tax_rate_id' => $record->tax_rate_id,
+                                'decimal_places' => $record->decimal_places,
+                                'total_decimal_places' => $record->total_decimal_places,
+                                'solar_plant_id' => $record->pivot->solar_plant_id,
+                                'billing_type' => $record->pivot->billing_type,
+                                'valid_from' => $record->pivot->valid_from,
+                                'valid_to' => $record->pivot->valid_to,
                                 'quantity' => $record->pivot->quantity,
-                                'unit_price' => $record->pivot->unit_price,
-                                'notes' => $record->pivot->notes,
+                                'unit_price_override' => $record->pivot->unit_price,
+                                'customer_notes' => $record->pivot->notes,
                                 'is_active' => $record->pivot->is_active,
                                 'billing_requirement' => $record->pivot->billing_requirement,
                                 'created_at' => $record->pivot->created_at,
                             ];
                         })
                         ->form([
-                            Forms\Components\Section::make('Artikel-Details')
+                            Forms\Components\Section::make('Artikeldaten')
                                 ->schema([
                                     Forms\Components\TextInput::make('name')
                                         ->label('Artikelname')
                                         ->disabled()
                                         ->columnSpanFull(),
+
                                     Forms\Components\Textarea::make('description')
                                         ->label('Beschreibung')
                                         ->disabled()
                                         ->columnSpanFull(),
-                                    Forms\Components\TextInput::make('quantity')
-                                        ->label('Menge')
+
+                                    Forms\Components\Textarea::make('article_notes')
+                                        ->label('Ausführliche Erklärung')
                                         ->disabled()
-                                        ->formatStateUsing(fn ($state) => number_format($state, 2)),
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\TextInput::make('type')
+                                        ->label('Artikeltyp')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => match ($state) {
+                                            'service' => 'Dienstleistung',
+                                            'product' => 'Produkt',
+                                            'subscription' => 'Abonnement',
+                                            'maintenance' => 'Wartung',
+                                            'other' => 'Sonstiges',
+                                            default => $state,
+                                        }),
+
                                     Forms\Components\TextInput::make('unit')
                                         ->label('Einheit')
                                         ->disabled(),
-                                    Forms\Components\TextInput::make('formatted_price')
-                                        ->label('Preis netto')
+
+                                    Forms\Components\TextInput::make('price')
+                                        ->label('Preis (Netto)')
+                                        ->prefix('€')
                                         ->disabled(),
-                                    Forms\Components\TextInput::make('tax_rate_percent')
-                                        ->label('zzgl. Steuer')
+
+                                    Forms\Components\Select::make('tax_rate_id')
+                                        ->label('Steuersatz')
+                                        ->options(\App\Models\TaxRate::active()->get()->mapWithKeys(function ($taxRate) {
+                                            return [$taxRate->id => $taxRate->name];
+                                        }))
                                         ->disabled(),
-                                    Forms\Components\TextInput::make('unit_price')
+
+                                    Forms\Components\TextInput::make('decimal_places')
+                                        ->label('Nachkommastellen (Preis)')
+                                        ->disabled(),
+
+                                    Forms\Components\TextInput::make('total_decimal_places')
+                                        ->label('Nachkommastellen (Gesamtpreis)')
+                                        ->disabled(),
+                                ])->columns(2),
+
+                            Forms\Components\Section::make('Kundenverknüpfung')
+                                ->schema([
+                                    Forms\Components\TextInput::make('solar_plant_id')
+                                        ->label('Zuordnung Solaranlage')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => $state ? \App\Models\SolarPlant::find($state)?->name : '-')
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\TextInput::make('billing_type')
+                                        ->label('Berechnungstyp')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => match ($state) {
+                                            'invoice' => 'Rechnung',
+                                            'credit' => 'Gutschrift',
+                                            default => $state ?? '-',
+                                        })
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\DatePicker::make('valid_from')
+                                        ->label('Gültig von')
+                                        ->disabled(),
+
+                                    Forms\Components\DatePicker::make('valid_to')
+                                        ->label('Gültig bis')
+                                        ->disabled(),
+
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->label('Menge')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.')),
+
+                                    Forms\Components\TextInput::make('unit_price_override')
                                         ->label('Stückpreis')
                                         ->disabled()
-                                        ->formatStateUsing(fn ($state) => number_format($state, 2, ',', '.') . ' €')
-                                        ->hiddenOn('view'),
-                                    Forms\Components\Textarea::make('notes')
-                                        ->label('Notizen')
+                                        ->formatStateUsing(fn ($state) => $state ? number_format($state, 2, ',', '.') . ' €' : '-'),
+
+                                    Forms\Components\Textarea::make('customer_notes')
+                                        ->label('Kundenspezifische Notizen')
                                         ->disabled()
                                         ->columnSpanFull(),
+
                                     Forms\Components\Toggle::make('is_active')
                                         ->label('Aktiv')
                                         ->disabled(),
+
                                     Forms\Components\TextInput::make('billing_requirement')
-                                        ->label('Abrechnungsanforderung')
+                                        ->label('Anforderung bei Abrechnung')
+                                        ->disabled()
                                         ->formatStateUsing(fn ($state) => match ($state) {
                                             'optional' => 'Optional',
-                                            'mandatory' => 'Pflicht',
+                                            'mandatory' => 'Pflichtartikel',
                                             default => $state,
-                                        })
-                                        ->disabled(),
+                                        }),
+
                                     Forms\Components\TextInput::make('created_at')
                                         ->label('Hinzugefügt am')
                                         ->disabled()
@@ -593,56 +648,196 @@ class ArticlesRelationManager extends RelationManager
                         ->fillForm(function ($record): array {
                             return [
                                 'name' => $record->name,
+                                'description' => $record->description,
+                                'article_notes' => $record->notes,
+                                'type' => $record->type,
+                                'unit' => $record->unit,
+                                'price' => $record->price,
+                                'tax_rate_id' => $record->tax_rate_id,
+                                'decimal_places' => $record->decimal_places,
+                                'total_decimal_places' => $record->total_decimal_places,
+                                'solar_plant_id' => $record->pivot->solar_plant_id,
+                                'billing_type' => $record->pivot->billing_type,
+                                'valid_from' => $record->pivot->valid_from,
+                                'valid_to' => $record->pivot->valid_to,
                                 'quantity' => $record->pivot->quantity,
-                                'unit_price' => $record->pivot->unit_price,
-                                'notes' => $record->pivot->notes,
+                                'unit_price_override' => $record->pivot->unit_price,
+                                'customer_notes' => $record->pivot->notes,
                                 'is_active' => $record->pivot->is_active,
                                 'billing_requirement' => $record->pivot->billing_requirement,
                             ];
                         })
                         ->form([
-                            Forms\Components\Section::make('Artikel bearbeiten')
+                            Forms\Components\Section::make('Artikeldaten')
                                 ->schema([
                                     Forms\Components\TextInput::make('name')
                                         ->label('Artikelname')
-                                        ->disabled(),
+                                        ->required()
+                                        ->maxLength(255)
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Textarea::make('description')
+                                        ->label('Beschreibung')
+                                        ->rows(2)
+                                        ->maxLength(1000)
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Textarea::make('article_notes')
+                                        ->label('Ausführliche Erklärung')
+                                        ->rows(4)
+                                        ->maxLength(5000)
+                                        ->helperText('Umfassende Informationen und Erklärungen für diesen Kundenartikel (max. 5000 Zeichen)')
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Select::make('type')
+                                        ->label('Artikeltyp')
+                                        ->options([
+                                            'service' => 'Dienstleistung',
+                                            'product' => 'Produkt',
+                                            'subscription' => 'Abonnement',
+                                            'maintenance' => 'Wartung',
+                                            'other' => 'Sonstiges',
+                                        ])
+                                        ->required(),
+
+                                    Forms\Components\TextInput::make('unit')
+                                        ->label('Einheit')
+                                        ->maxLength(50),
+
+                                    Forms\Components\TextInput::make('price')
+                                        ->label('Preis (Netto)')
+                                        ->numeric()
+                                        ->step(0.000001)
+                                        ->minValue(0)
+                                        ->required()
+                                        ->prefix('€')
+                                        ->helperText('Bis zu 6 Nachkommastellen möglich'),
+
+                                    Forms\Components\Select::make('tax_rate_id')
+                                        ->label('Steuersatz')
+                                        ->options(\App\Models\TaxRate::active()->get()->mapWithKeys(function ($taxRate) {
+                                            return [$taxRate->id => $taxRate->name];
+                                        }))
+                                        ->required()
+                                        ->searchable()
+                                        ->preload(),
+
+                                    Forms\Components\TextInput::make('decimal_places')
+                                        ->label('Nachkommastellen (Preis)')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->maxValue(6)
+                                        ->helperText('Anzahl der Nachkommastellen für die Preisanzeige'),
+
+                                    Forms\Components\TextInput::make('total_decimal_places')
+                                        ->label('Nachkommastellen (Gesamtpreis)')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->maxValue(6)
+                                        ->helperText('Anzahl der Nachkommastellen für Gesamtpreise'),
+                                ])->columns(2),
+
+                            Forms\Components\Section::make('Kundenverknüpfung')
+                                ->description('Konfigurieren Sie, wie dieser Artikel mit dem Kunden verknüpft wird.')
+                                ->schema([
+                                    Forms\Components\Select::make('solar_plant_id')
+                                        ->label('Zuordnung Solaranlage')
+                                        ->searchable()
+                                        ->getSearchResultsUsing(fn (string $search): array =>
+                                            \App\Models\SolarPlant::where('name', 'like', "%{$search}%")
+                                                ->orderBy('name')
+                                                ->limit(50)
+                                                ->pluck('name', 'id')
+                                                ->toArray()
+                                        )
+                                        ->getOptionLabelUsing(fn ($value): ?string =>
+                                            \App\Models\SolarPlant::find($value)?->name
+                                        )
+                                        ->placeholder('Solaranlage suchen...')
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Select::make('billing_type')
+                                        ->label('Berechnungstyp')
+                                        ->options([
+                                            'invoice' => 'Rechnung',
+                                            'credit' => 'Gutschrift',
+                                        ])
+                                        ->default('invoice')
+                                        ->required()
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\DatePicker::make('valid_from')
+                                        ->label('Gültig von'),
+
+                                    Forms\Components\DatePicker::make('valid_to')
+                                        ->label('Gültig bis')
+                                        ->afterOrEqual('valid_from'),
+
                                     Forms\Components\TextInput::make('quantity')
                                         ->label('Menge')
                                         ->numeric()
                                         ->step(0.01)
                                         ->minValue(0.01)
                                         ->required()
-                                        ->suffix('Stk.'),
-                                    Forms\Components\TextInput::make('unit_price')
-                                        ->label('Stückpreis')
+                                        ->suffix('Stk.')
+                                        ->helperText('Anzahl der Artikel für diesen Kunden'),
+
+                                    Forms\Components\TextInput::make('unit_price_override')
+                                        ->label('Abweichender Stückpreis (optional)')
                                         ->numeric()
                                         ->step(0.000001)
                                         ->minValue(0)
-                                        ->required()
-                                        ->prefix('€'),
-                                    Forms\Components\Textarea::make('notes')
-                                        ->label('Notizen')
+                                        ->prefix('€')
+                                        ->helperText('Leer lassen um den Standard-Artikelpreis zu verwenden. Bis zu 6 Nachkommastellen möglich.'),
+
+                                    Forms\Components\Textarea::make('customer_notes')
+                                        ->label('Kundenspezifische Notizen')
                                         ->rows(3)
-                                        ->maxLength(1000),
+                                        ->maxLength(1000)
+                                        ->placeholder('Spezielle Notizen für diesen Artikel bei diesem Kunden...')
+                                        ->columnSpanFull(),
+
                                     Forms\Components\Toggle::make('is_active')
                                         ->label('Aktiv')
-                                        ->required(),
+                                        ->default(true)
+                                        ->helperText('Nur aktive Artikel werden bei Berechnungen berücksichtigt.'),
+
                                     Forms\Components\Radio::make('billing_requirement')
                                         ->label('Anforderung bei Abrechnung')
                                         ->options([
                                             'optional' => 'Optional',
                                             'mandatory' => 'Pflichtartikel',
                                         ])
-                                        ->required(),
+                                        ->required()
+                                        ->helperText('Festlegen, ob dieser Artikel bei der Abrechnung für diesen Kunden obligatorisch ist.'),
                                 ])->columns(2),
                         ])
                         ->using(function ($record, array $data): void {
+                            $taxRate = \App\Models\TaxRate::find($data['tax_rate_id']);
+
+                            $record->update([
+                                'name' => $data['name'],
+                                'description' => $data['description'],
+                                'notes' => $data['article_notes'] ?? null,
+                                'type' => $data['type'],
+                                'price' => $data['price'],
+                                'tax_rate_id' => $data['tax_rate_id'],
+                                'tax_rate' => $taxRate ? $taxRate->rate : 0.19,
+                                'unit' => $data['unit'],
+                                'decimal_places' => $data['decimal_places'],
+                                'total_decimal_places' => $data['total_decimal_places'],
+                            ]);
+
                             $record->pivot->update([
                                 'quantity' => $data['quantity'],
-                                'unit_price' => $data['unit_price'],
-                                'notes' => $data['notes'],
+                                'unit_price' => $data['unit_price_override'] ?? $record->pivot->unit_price,
+                                'notes' => $data['customer_notes'],
                                 'is_active' => $data['is_active'],
                                 'billing_requirement' => $data['billing_requirement'],
+                                'valid_from' => $data['valid_from'] ?? null,
+                                'valid_to' => $data['valid_to'] ?? null,
+                                'billing_type' => $data['billing_type'] ?? 'invoice',
+                                'solar_plant_id' => $data['solar_plant_id'] ?? null,
                             ]);
                         })
                         ->after(function ($record, $livewire) {
