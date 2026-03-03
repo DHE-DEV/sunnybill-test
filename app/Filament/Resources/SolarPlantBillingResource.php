@@ -1029,7 +1029,26 @@ class SolarPlantBillingResource extends Resource
                                     $mail->bcc($bccEmails);
                                 }
 
-                                $mail->send(new SingleBillingMail($record, $customMessage, $fullPath, $fileName));
+                                // Retry-Logik bei SMTP Rate-Limiting (450 4.7.0)
+                                $maxRetries = 3;
+                                $lastException = null;
+                                for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+                                    try {
+                                        $mail->send(new SingleBillingMail($record, $customMessage, $fullPath, $fileName));
+                                        $lastException = null;
+                                        break;
+                                    } catch (\Exception $retryException) {
+                                        $lastException = $retryException;
+                                        if ($attempt < $maxRetries && str_contains($retryException->getMessage(), 'rate limit')) {
+                                            sleep(30 * $attempt);
+                                        } else {
+                                            break;
+                                        }
+                                    }
+                                }
+                                if ($lastException) {
+                                    throw $lastException;
+                                }
 
                                 // Temporäre Datei löschen
                                 \Storage::disk('public')->delete($tempPath);
@@ -1727,14 +1746,25 @@ class SolarPlantBillingResource extends Resource
                                                 $bulkPdfMail = new \App\Mail\BulkPdfMail($pdfFiles, $totalCount);
                                                 
                                                 foreach ($emailAddresses as $email) {
-                                                    try {
-                                                        \Mail::to($email)->send($bulkPdfMail);
-                                                    } catch (\Exception $mailError) {
-                                                        \Log::error('Email sending failed', [
-                                                            'email' => $email,
-                                                            'error' => $mailError->getMessage()
-                                                        ]);
-                                                        $errors[] = "E-Mail an {$email} konnte nicht gesendet werden: " . $mailError->getMessage();
+                                                    $sent = false;
+                                                    for ($attempt = 1; $attempt <= 3; $attempt++) {
+                                                        try {
+                                                            \Mail::to($email)->send($bulkPdfMail);
+                                                            $sent = true;
+                                                            break;
+                                                        } catch (\Exception $mailError) {
+                                                            if ($attempt < 3 && str_contains($mailError->getMessage(), 'rate limit')) {
+                                                                sleep(30 * $attempt);
+                                                            } else {
+                                                                \Log::error('Email sending failed', [
+                                                                    'email' => $email,
+                                                                    'error' => $mailError->getMessage(),
+                                                                    'attempt' => $attempt,
+                                                                ]);
+                                                                $errors[] = "E-Mail an {$email} konnte nicht gesendet werden: " . $mailError->getMessage();
+                                                                break;
+                                                            }
+                                                        }
                                                     }
                                                 }
                                                 
