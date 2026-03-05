@@ -429,6 +429,11 @@ class ArticlesRelationManager extends RelationManager
 
                                 Forms\Components\Fieldset::make('Automatische Preiserhöhung')
                                     ->schema([
+                                        Forms\Components\Placeholder::make('price_increase_notice')
+                                            ->label('')
+                                            ->content('Diese Funktion ist nicht aktiv. Sie können die Einstellungen bereits speichern. Sie werden jedoch nicht weiter verarbeitet. Eine automatische Preiserhöhung findet nicht statt. Diese Funktion wurde vom Kunden ausdrücklich nicht gewünscht.')
+                                            ->columnSpanFull(),
+
                                         Forms\Components\TextInput::make('price_increase_percentage')
                                             ->label('Preiserhöhung')
                                             ->numeric()
@@ -650,6 +655,11 @@ class ArticlesRelationManager extends RelationManager
 
                                     Forms\Components\Fieldset::make('Automatische Preiserhöhung')
                                         ->schema([
+                                            Forms\Components\Placeholder::make('price_increase_notice')
+                                                ->label('')
+                                                ->content('Diese Funktion ist nicht aktiv. Sie können die Einstellungen bereits speichern. Sie werden jedoch nicht weiter verarbeitet. Eine automatische Preiserhöhung findet nicht statt. Diese Funktion wurde vom Kunden ausdrücklich nicht gewünscht.')
+                                                ->columnSpanFull(),
+
                                             Forms\Components\TextInput::make('price_increase_percentage')
                                                 ->label('Preiserhöhung')
                                                 ->disabled()
@@ -839,6 +849,11 @@ class ArticlesRelationManager extends RelationManager
 
                                     Forms\Components\Fieldset::make('Automatische Preiserhöhung')
                                         ->schema([
+                                            Forms\Components\Placeholder::make('price_increase_notice')
+                                                ->label('')
+                                                ->content('Diese Funktion ist nicht aktiv. Sie können die Einstellungen bereits speichern. Sie werden jedoch nicht weiter verarbeitet. Eine automatische Preiserhöhung findet nicht statt. Diese Funktion wurde vom Kunden ausdrücklich nicht gewünscht.')
+                                                ->columnSpanFull(),
+
                                             Forms\Components\TextInput::make('price_increase_percentage')
                                                 ->label('Preiserhöhung')
                                                 ->numeric()
