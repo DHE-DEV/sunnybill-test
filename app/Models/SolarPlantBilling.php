@@ -732,7 +732,102 @@ class SolarPlantBilling extends Model
             }
             } // ✅ Schließe die foreach($billings as $billing) Schleife
         } // ✅ Schließe die foreach($activeContracts as $contract) Schleife
-#exit;
+
+        // Pflicht-Kundenartikel verarbeiten, die dieser Solaranlage zugeordnet sind
+        $customer = Customer::find($customerId);
+        if ($customer) {
+            $billingDate = Carbon::create($year, $month, 1);
+            $billingMonthStart = $billingDate->copy()->startOfMonth();
+            $billingMonthEnd = $billingDate->copy()->endOfMonth();
+
+            $customerArticles = $customer->articles()
+                ->wherePivot('solar_plant_id', $solarPlantId)
+                ->wherePivot('billing_requirement', 'mandatory')
+                ->wherePivot('is_active', true)
+                ->where(function ($query) use ($billingMonthEnd) {
+                    $query->whereNull('customer_article.valid_from')
+                        ->orWhere('customer_article.valid_from', '<=', $billingMonthEnd);
+                })
+                ->where(function ($query) use ($billingMonthStart) {
+                    $query->whereNull('customer_article.valid_to')
+                        ->orWhere('customer_article.valid_to', '>=', $billingMonthStart);
+                })
+                ->get();
+
+            foreach ($customerArticles as $article) {
+                $pivot = $article->pivot;
+
+                // Effektiven Einzelpreis bestimmen (Kundenpreis oder Artikelpreis)
+                $unitPrice = $pivot->unit_price ?? $article->price;
+
+                // Automatische Preiserhöhung anwenden
+                if ($pivot->price_increase_percentage && $pivot->price_increase_interval_months && $pivot->price_increase_start_date) {
+                    $increaseStart = Carbon::parse($pivot->price_increase_start_date);
+                    if ($billingDate->gte($increaseStart)) {
+                        $monthsDiff = $increaseStart->diffInMonths($billingDate);
+                        $intervals = intdiv((int) $monthsDiff, (int) $pivot->price_increase_interval_months);
+                        if ($intervals > 0) {
+                            $factor = pow(1 + ($pivot->price_increase_percentage / 100), $intervals);
+                            $unitPrice = $unitPrice * $factor;
+                        }
+                    }
+                }
+
+                $quantity = $pivot->quantity ?? 1;
+                $netTotal = $unitPrice * $quantity;
+                $taxRate = $article->getCurrentTaxRate();
+                $taxAmount = $netTotal * $taxRate;
+                $grossTotal = $netTotal + $taxAmount;
+
+                $billingType = $pivot->billing_type ?? 'invoice';
+
+                $articleDetail = [
+                    'article_id' => $article->id,
+                    'article_name' => $article->name,
+                    'quantity' => $quantity,
+                    'unit' => $article->unit ?? 'Stk.',
+                    'unit_price' => $unitPrice,
+                    'total_price_net' => $netTotal,
+                    'tax_rate' => $taxRate,
+                    'tax_amount' => $taxAmount,
+                    'total_price_gross' => $grossTotal,
+                    'description' => $article->description,
+                    'detailed_description' => $article->detailed_description ?? '',
+                ];
+
+                $breakdownEntry = [
+                    'contract_id' => null,
+                    'contract_title' => 'Kundenartikel',
+                    'contract_number' => null,
+                    'supplier_id' => null,
+                    'supplier_name' => null,
+                    'contract_billing_id' => null,
+                    'billing_number' => null,
+                    'billing_description' => $article->name,
+                    'total_amount' => $grossTotal,
+                    'solar_plant_percentage' => 100,
+                    'customer_percentage' => $percentage,
+                    'customer_share' => $grossTotal,
+                    'customer_share_net' => $netTotal,
+                    'customer_share_vat' => $taxAmount,
+                    'vat_rate' => $taxRate,
+                    'articles' => [$articleDetail],
+                ];
+
+                if ($billingType === 'credit') {
+                    $totalCredits += $grossTotal;
+                    $totalCreditsNet += $netTotal;
+                    $totalVatAmount -= $taxAmount;
+                    $creditBreakdown[] = $breakdownEntry;
+                } else {
+                    $totalCosts += $grossTotal;
+                    $totalCostsNet += $netTotal;
+                    $totalVatAmount += $taxAmount;
+                    $costBreakdown[] = $breakdownEntry;
+                }
+            }
+        }
+
         return [
             'total_costs' => $totalCosts,
             'total_credits' => $totalCredits,
