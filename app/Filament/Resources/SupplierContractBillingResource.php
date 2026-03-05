@@ -55,6 +55,7 @@ class SupplierContractBillingResource extends Resource
                             ->preload()
                             ->reactive()
                             ->dehydrated(false)
+                            ->default(fn () => request()->query('solar_plant_id'))
                             ->helperText('Wählen Sie eine Solaranlage, um die verfügbaren Verträge zu filtern')
                             ->afterStateUpdated(function (callable $set) {
                                 // Reset contract selection when solar plant changes
@@ -96,6 +97,7 @@ class SupplierContractBillingResource extends Resource
                             ->searchable()
                             ->required()
                             ->reactive()
+                            ->default(fn () => request()->query('supplier_contract_id'))
                             ->placeholder('Wählen Sie eine Solaranlage für gefilterte Verträge')
                             ->helperText('Verfügbare Verträge (gefiltert nach ausgewählter Solaranlage)')
                             ->afterStateUpdated(function (callable $get, callable $set, $state) {
@@ -127,12 +129,26 @@ class SupplierContractBillingResource extends Resource
                             ->label('Titel')
                             ->required()
                             ->maxLength(255)
+                            ->default(function () {
+                                if ($contractId = request()->query('supplier_contract_id')) {
+                                    $contract = \App\Models\SupplierContract::find($contractId);
+                                    return $contract?->default_title;
+                                }
+                                return null;
+                            })
                             ->columnSpanFull(),
 
                         // Zeile 4
                         Forms\Components\Textarea::make('description')
                             ->label('Beschreibung')
                             ->rows(3)
+                            ->default(function () {
+                                if ($contractId = request()->query('supplier_contract_id')) {
+                                    $contract = \App\Models\SupplierContract::find($contractId);
+                                    return $contract?->default_description;
+                                }
+                                return null;
+                            })
                             ->columnSpanFull(),
 
                         // Zeile 5
@@ -160,8 +176,10 @@ class SupplierContractBillingResource extends Resource
                                 return $years;
                             })
                             ->default(function () {
-                                $lastMonth = now()->subMonth();
-                                return $lastMonth->year;
+                                if ($year = request()->query('billing_year')) {
+                                    return (int) $year;
+                                }
+                                return now()->subMonth()->year;
                             })
                             ->searchable(),
 
@@ -169,8 +187,10 @@ class SupplierContractBillingResource extends Resource
                             ->label('Abrechnungsmonat')
                             ->options(SupplierContractBilling::getMonthOptions())
                             ->default(function () {
-                                $lastMonth = now()->subMonth();
-                                return $lastMonth->month;
+                                if ($month = request()->query('billing_month')) {
+                                    return (int) $month;
+                                }
+                                return now()->subMonth()->month;
                             })
                             ->searchable(),
 
@@ -219,7 +239,15 @@ class SupplierContractBillingResource extends Resource
                             ->suffix('%')
                             ->minValue(0)
                             ->maxValue(100)
-                            ->default(19.00)
+                            ->default(function () {
+                                if ($contractId = request()->query('supplier_contract_id')) {
+                                    $contract = \App\Models\SupplierContract::find($contractId);
+                                    if ($contract && !is_null($contract->default_vat_rate)) {
+                                        return $contract->default_vat_rate;
+                                    }
+                                }
+                                return 19.00;
+                            })
                             ->reactive()
                             ->afterStateUpdated(function (callable $get, callable $set, $state) {
                                 // Berechne Gesamtbetrag wenn Nettobetrag und MwSt. vorhanden sind

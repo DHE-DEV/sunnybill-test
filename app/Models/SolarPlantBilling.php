@@ -27,6 +27,21 @@ class SolarPlantBilling extends Model
                 $billing->invoice_number = static::generateInvoiceNumber();
             }
         });
+
+        // Monatskopf bei jeder Änderung aktualisieren
+        $updateMonthly = function ($billing) {
+            if ($billing->solar_plant_id && $billing->billing_year && $billing->billing_month) {
+                SolarPlantMonthlyBilling::createOrUpdateFromBillings(
+                    $billing->solar_plant_id,
+                    $billing->billing_year,
+                    $billing->billing_month
+                );
+            }
+        };
+
+        static::saved($updateMonthly);
+        static::deleted($updateMonthly);
+        static::restored($updateMonthly);
     }
 
     protected $fillable = [
@@ -440,6 +455,11 @@ class SolarPlantBilling extends Model
             ]);
 
             $createdBillings[] = $billing;
+        }
+
+        // Monatskopf erstellen/aktualisieren
+        if (!empty($createdBillings)) {
+            SolarPlantMonthlyBilling::createOrUpdateFromBillings($solarPlantId, $year, $month);
         }
 
         return $createdBillings;

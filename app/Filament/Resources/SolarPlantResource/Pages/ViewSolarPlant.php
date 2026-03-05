@@ -721,6 +721,32 @@ class ViewSolarPlant extends ViewRecord
                     ->collapsed($savedState['contracts'] ?? true)
                     ->extraAttributes(['data-section-id' => 'contracts']),
 
+                Infolists\Components\Section::make('Abrechnungen')
+                    ->id('billings')
+                    ->icon('heroicon-o-document-currency-euro')
+                    ->heading(fn ($record) => 'Abrechnungen')
+                    ->description('Monatliche Abrechnungen der Solaranlage ' . $this->record->name . ' – inkl. fehlender Monate.')
+                    ->visible(function () {
+                        $allowedEmails = env('BILLING_SECTION_ALLOWED_EMAILS', '');
+                        if (empty($allowedEmails)) {
+                            return false;
+                        }
+                        $emails = array_map('trim', explode(',', $allowedEmails));
+                        return in_array(auth()->user()?->email, $emails);
+                    })
+                    ->extraAttributes([
+                        'class' => 'billings-section-gray',
+                        'style' => 'background-color: #f9fafb !important; border-radius: 8px !important; padding: 16px !important; margin: 8px 0 !important; border: 1px solid #e5e7eb !important;'
+                    ])
+                    ->schema([
+                        \Filament\Infolists\Components\Livewire::make(\App\Livewire\BillingsMonthlyTable::class, ['solarPlant' => $this->record])
+                            ->key('billings-monthly-table'),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->collapsed($savedState['billings'] ?? true)
+                    ->extraAttributes(['data-section-id' => 'billings']),
+
                 Infolists\Components\Section::make('Dokumente')
                     ->id('documents')
                     ->icon('heroicon-o-folder')
@@ -1222,6 +1248,30 @@ class ViewSolarPlant extends ViewRecord
             /* Alternative selector falls der erste nicht funktioniert */
             .contracts-section-gray,
             .contracts-section-gray > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            /* Abrechnungen Section Styling */
+            [data-section-id="billings"] {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 8px 0 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            [data-section-id="billings"] > div {
+                background-color: #f9fafb !important;
+                border-radius: 8px !important;
+            }
+
+            /* Alternative selector falls der erste nicht funktioniert */
+            .billings-section-gray,
+            .billings-section-gray > div {
                 background-color: #f9fafb !important;
                 border-radius: 8px !important;
                 padding: 16px !important;

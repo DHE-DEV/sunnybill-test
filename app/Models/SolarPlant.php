@@ -293,6 +293,14 @@ class SolarPlant extends Model
     }
 
     /**
+     * Beziehung zu Monatsabrechnungen (Kopfdatensätze)
+     */
+    public function monthlyBillings(): HasMany
+    {
+        return $this->hasMany(SolarPlantMonthlyBilling::class);
+    }
+
+    /**
      * Beziehung zu Artikeln über Pivot-Tabelle
      */
     public function articles(): BelongsToMany
