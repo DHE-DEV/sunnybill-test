@@ -727,7 +727,7 @@ class ViewSolarPlant extends ViewRecord
                     ->heading(fn ($record) => 'Abrechnungen')
                     ->description('Monatliche Abrechnungen der Solaranlage ' . $this->record->name . ' – inkl. fehlender Monate.')
                     ->visible(function () {
-                        $allowedEmails = env('BILLING_SECTION_ALLOWED_EMAILS', '');
+                        $allowedEmails = config('app.billing_section_allowed_emails', '');
                         if (empty($allowedEmails)) {
                             return false;
                         }

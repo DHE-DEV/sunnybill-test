@@ -182,4 +182,16 @@ return [
 
     'save_filter' => env('SAVE_FILTER', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Billing Section Allowed Emails
+    |--------------------------------------------------------------------------
+    |
+    | Kommaseparierte E-Mail-Adressen der Benutzer, die den Abrechnungs-Abschnitt
+    | auf der Solaranlagen-Detailseite sehen dürfen.
+    |
+    */
+
+    'billing_section_allowed_emails' => env('BILLING_SECTION_ALLOWED_EMAILS', ''),
+
 ];
