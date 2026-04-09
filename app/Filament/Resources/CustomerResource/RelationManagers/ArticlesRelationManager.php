@@ -864,8 +864,9 @@ class ArticlesRelationManager extends RelationManager
                                         ->searchable()
                                         ->preload()
                                         ->options(fn (): array =>
-                                            \App\Models\Supplier::orderBy('name')
-                                                ->pluck('name', 'id')
+                                            \App\Models\Supplier::active()
+                                                ->orderBy('company_name')
+                                                ->pluck('company_name', 'id')
                                                 ->toArray()
                                         )
                                         ->placeholder('Lieferant suchen...')
