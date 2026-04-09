@@ -294,15 +294,23 @@ class ViewSolarPlantBilling extends ViewRecord
                                             $html .= '<div class="text-sm text-gray-600 mt-1">';
                                             
                                             // Lieferanten-Link
-                                            $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
-                                            $html .= 'Lieferant: <a href="' . $supplierUrl . '" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 hover:underline">' . $supplierName . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
-                                            
-                                            // Abrechnungs-Link  
-                                            $billingUrl = route('filament.admin.resources.supplier-contract-billings.view', $item['contract_billing_id']);
-                                            $html .= ' | Abrechnungsnr.: <a href="' . $billingUrl . '" target="_blank" class="text-orange-600 font-medium hover:text-orange-800 hover:underline">' . $billingNumber . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
-                                            
+                                            if (!empty($item['supplier_id'])) {
+                                                $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
+                                                $html .= 'Lieferant: <a href="' . $supplierUrl . '" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 hover:underline">' . $supplierName . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
+                                            } else {
+                                                $html .= 'Lieferant: ' . $supplierName;
+                                            }
+
+                                            // Abrechnungs-Link
+                                            if (!empty($item['contract_billing_id'])) {
+                                                $billingUrl = route('filament.admin.resources.supplier-contract-billings.view', $item['contract_billing_id']);
+                                                $html .= ' | Abrechnungsnr.: <a href="' . $billingUrl . '" target="_blank" class="text-orange-600 font-medium hover:text-orange-800 hover:underline">' . $billingNumber . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
+                                            } elseif ($billingNumber !== 'N/A') {
+                                                $html .= ' | Abrechnungsnr.: ' . $billingNumber;
+                                            }
+
                                             $html .= '</div>';
-                                            
+
                                             // Artikel-Details anzeigen
                                             if (isset($item['articles']) && !empty($item['articles'])) {
                                                 $html .= '<div class="mt-2 p-2 bg-gray-50 rounded border">';
@@ -421,15 +429,23 @@ class ViewSolarPlantBilling extends ViewRecord
                                             $html .= '<div class="text-sm text-gray-600 mt-1">';
                                             
                                             // Lieferanten-Link
-                                            $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
-                                            $html .= 'Lieferant: <a href="' . $supplierUrl . '" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 hover:underline">' . $supplierName . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
-                                            
-                                            // Abrechnungs-Link  
-                                            $billingUrl = route('filament.admin.resources.supplier-contract-billings.view', $item['contract_billing_id']);
-                                            $html .= ' | Abrechnungsnr.: <a href="' . $billingUrl . '" target="_blank" class="text-orange-600 font-medium hover:text-orange-800 hover:underline">' . $billingNumber . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
-                                            
+                                            if (!empty($item['supplier_id'])) {
+                                                $supplierUrl = route('filament.admin.resources.suppliers.view', $item['supplier_id']);
+                                                $html .= 'Lieferant: <a href="' . $supplierUrl . '" target="_blank" class="text-blue-600 font-medium hover:text-blue-800 hover:underline">' . $supplierName . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
+                                            } else {
+                                                $html .= 'Lieferant: ' . $supplierName;
+                                            }
+
+                                            // Abrechnungs-Link
+                                            if (!empty($item['contract_billing_id'])) {
+                                                $billingUrl = route('filament.admin.resources.supplier-contract-billings.view', $item['contract_billing_id']);
+                                                $html .= ' | Abrechnungsnr.: <a href="' . $billingUrl . '" target="_blank" class="text-orange-600 font-medium hover:text-orange-800 hover:underline">' . $billingNumber . ' <svg class="inline-block w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path></svg></a>';
+                                            } elseif ($billingNumber !== 'N/A') {
+                                                $html .= ' | Abrechnungsnr.: ' . $billingNumber;
+                                            }
+
                                             $html .= '</div>';
-                                            
+
                                             // Artikel-Details anzeigen
                                             if (isset($item['articles']) && !empty($item['articles'])) {
                                                 $html .= '<div class="mt-2 p-2 bg-gray-50 rounded border">';

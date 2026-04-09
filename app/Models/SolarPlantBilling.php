@@ -815,12 +815,14 @@ class SolarPlantBilling extends Model
                     'detailed_description' => $article->detailed_description ?? '',
                 ];
 
+                $supplier = $pivot->supplier_id ? \App\Models\Supplier::find($pivot->supplier_id) : null;
+
                 $breakdownEntry = [
                     'contract_id' => null,
                     'contract_title' => 'Kundenartikel',
                     'contract_number' => null,
-                    'supplier_id' => null,
-                    'supplier_name' => null,
+                    'supplier_id' => $supplier?->id,
+                    'supplier_name' => $supplier?->name,
                     'contract_billing_id' => null,
                     'billing_number' => null,
                     'billing_description' => $article->name,

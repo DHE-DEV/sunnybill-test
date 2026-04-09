@@ -233,6 +233,13 @@ class ArticlesRelationManager extends RelationManager
                         : '-')
                     ->limit(30)
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('supplier_name')
+                    ->label('Lieferant')
+                    ->getStateUsing(fn ($record) => $record->pivot->supplier_id
+                        ? \App\Models\Supplier::find($record->pivot->supplier_id)?->name
+                        : '-')
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('pivot.billing_type')
                     ->label('Berechnungstyp')
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
@@ -410,6 +417,22 @@ class ArticlesRelationManager extends RelationManager
                                     ->placeholder('Solaranlage suchen...')
                                     ->columnSpanFull(),
 
+                                Forms\Components\Select::make('supplier_id')
+                                    ->label('Zuordnung Lieferant')
+                                    ->searchable()
+                                    ->getSearchResultsUsing(fn (string $search): array =>
+                                        \App\Models\Supplier::where('name', 'like', "%{$search}%")
+                                            ->orderBy('name')
+                                            ->limit(50)
+                                            ->pluck('name', 'id')
+                                            ->toArray()
+                                    )
+                                    ->getOptionLabelUsing(fn ($value): ?string =>
+                                        \App\Models\Supplier::find($value)?->name
+                                    )
+                                    ->placeholder('Lieferant suchen...')
+                                    ->columnSpanFull(),
+
                                 Forms\Components\Select::make('billing_type')
                                     ->label('Berechnungstyp')
                                     ->options([
@@ -521,6 +544,7 @@ class ArticlesRelationManager extends RelationManager
                             'valid_to' => $data['valid_to'] ?? null,
                             'billing_type' => $data['billing_type'] ?? 'invoice',
                             'solar_plant_id' => $data['solar_plant_id'] ?? null,
+                            'supplier_id' => $data['supplier_id'] ?? null,
                             'price_increase_percentage' => $data['price_increase_percentage'] ?? null,
                             'price_increase_interval_months' => $data['price_increase_interval_months'] ?? null,
                             'price_increase_start_date' => $data['price_increase_start_date'] ?? null,
@@ -558,6 +582,7 @@ class ArticlesRelationManager extends RelationManager
                                 'article_decimal_places' => $record->decimal_places,
                                 'article_total_decimal_places' => $record->total_decimal_places,
                                 'solar_plant_id' => $record->pivot->solar_plant_id,
+                                'supplier_id' => $record->pivot->supplier_id,
                                 'billing_type' => $record->pivot->billing_type,
                                 'valid_from' => $record->pivot->valid_from,
                                 'valid_to' => $record->pivot->valid_to,
@@ -633,6 +658,12 @@ class ArticlesRelationManager extends RelationManager
                                         ->label('Zuordnung Solaranlage')
                                         ->disabled()
                                         ->formatStateUsing(fn ($state) => $state ? \App\Models\SolarPlant::find($state)?->name : '-')
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\TextInput::make('supplier_id')
+                                        ->label('Zuordnung Lieferant')
+                                        ->disabled()
+                                        ->formatStateUsing(fn ($state) => $state ? \App\Models\Supplier::find($state)?->name : '-')
                                         ->columnSpanFull(),
 
                                     Forms\Components\TextInput::make('billing_type')
@@ -728,6 +759,7 @@ class ArticlesRelationManager extends RelationManager
                                 'article_decimal_places' => $record->decimal_places,
                                 'article_total_decimal_places' => $record->total_decimal_places,
                                 'solar_plant_id' => $record->pivot->solar_plant_id,
+                                'supplier_id' => $record->pivot->supplier_id,
                                 'billing_type' => $record->pivot->billing_type,
                                 'valid_from' => $record->pivot->valid_from,
                                 'valid_to' => $record->pivot->valid_to,
@@ -828,6 +860,22 @@ class ArticlesRelationManager extends RelationManager
                                             \App\Models\SolarPlant::find($value)?->name
                                         )
                                         ->placeholder('Solaranlage suchen...')
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Select::make('supplier_id')
+                                        ->label('Zuordnung Lieferant')
+                                        ->searchable()
+                                        ->getSearchResultsUsing(fn (string $search): array =>
+                                            \App\Models\Supplier::where('name', 'like', "%{$search}%")
+                                                ->orderBy('name')
+                                                ->limit(50)
+                                                ->pluck('name', 'id')
+                                                ->toArray()
+                                        )
+                                        ->getOptionLabelUsing(fn ($value): ?string =>
+                                            \App\Models\Supplier::find($value)?->name
+                                        )
+                                        ->placeholder('Lieferant suchen...')
                                         ->columnSpanFull(),
 
                                     Forms\Components\Select::make('billing_type')
@@ -938,6 +986,7 @@ class ArticlesRelationManager extends RelationManager
                                 'valid_to' => $data['valid_to'] ?? null,
                                 'billing_type' => $data['billing_type'] ?? 'invoice',
                                 'solar_plant_id' => $data['solar_plant_id'] ?? null,
+                                'supplier_id' => $data['supplier_id'] ?? null,
                                 'price_increase_percentage' => $data['price_increase_percentage'] ?? null,
                                 'price_increase_interval_months' => $data['price_increase_interval_months'] ?? null,
                                 'price_increase_start_date' => $data['price_increase_start_date'] ?? null,

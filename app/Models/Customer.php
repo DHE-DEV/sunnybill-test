@@ -240,7 +240,7 @@ class Customer extends Model
     public function articles(): BelongsToMany
     {
         return $this->belongsToMany(Article::class, 'customer_article')
-            ->withPivot('quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement', 'valid_from', 'valid_to', 'billing_type', 'solar_plant_id', 'price_increase_percentage', 'price_increase_interval_months', 'price_increase_start_date')
+            ->withPivot('quantity', 'unit_price', 'notes', 'is_active', 'billing_requirement', 'valid_from', 'valid_to', 'billing_type', 'solar_plant_id', 'supplier_id', 'price_increase_percentage', 'price_increase_interval_months', 'price_increase_start_date')
             ->withTimestamps();
     }
 
