@@ -421,16 +421,6 @@ class ArticlesRelationManager extends RelationManager
                                     ->label('Zuordnung Lieferant')
                                     ->searchable()
                                     ->preload()
-                                    ->getSearchResultsUsing(fn (string $search): array =>
-                                        \App\Models\Supplier::where('name', 'like', "%{$search}%")
-                                            ->orderBy('name')
-                                            ->limit(50)
-                                            ->pluck('name', 'id')
-                                            ->toArray()
-                                    )
-                                    ->getOptionLabelUsing(fn ($value): ?string =>
-                                        \App\Models\Supplier::find($value)?->name
-                                    )
                                     ->options(fn (): array =>
                                         \App\Models\Supplier::whereNotNull('name')
                                             ->orderBy('name')
