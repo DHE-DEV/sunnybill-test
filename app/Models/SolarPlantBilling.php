@@ -819,7 +819,7 @@ class SolarPlantBilling extends Model
 
                 $breakdownEntry = [
                     'contract_id' => null,
-                    'contract_title' => 'Kundenartikel',
+                    'contract_title' => $article->name,
                     'contract_number' => null,
                     'supplier_id' => $supplier?->id,
                     'supplier_name' => $supplier?->company_name,
