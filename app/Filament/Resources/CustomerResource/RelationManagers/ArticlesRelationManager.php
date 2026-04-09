@@ -420,6 +420,7 @@ class ArticlesRelationManager extends RelationManager
                                 Forms\Components\Select::make('supplier_id')
                                     ->label('Zuordnung Lieferant')
                                     ->searchable()
+                                    ->preload()
                                     ->getSearchResultsUsing(fn (string $search): array =>
                                         \App\Models\Supplier::where('name', 'like', "%{$search}%")
                                             ->orderBy('name')
@@ -429,6 +430,11 @@ class ArticlesRelationManager extends RelationManager
                                     )
                                     ->getOptionLabelUsing(fn ($value): ?string =>
                                         \App\Models\Supplier::find($value)?->name
+                                    )
+                                    ->options(fn (): array =>
+                                        \App\Models\Supplier::orderBy('name')
+                                            ->pluck('name', 'id')
+                                            ->toArray()
                                     )
                                     ->placeholder('Lieferant suchen...')
                                     ->columnSpanFull(),
@@ -865,15 +871,11 @@ class ArticlesRelationManager extends RelationManager
                                     Forms\Components\Select::make('supplier_id')
                                         ->label('Zuordnung Lieferant')
                                         ->searchable()
-                                        ->getSearchResultsUsing(fn (string $search): array =>
-                                            \App\Models\Supplier::where('name', 'like', "%{$search}%")
-                                                ->orderBy('name')
-                                                ->limit(50)
+                                        ->preload()
+                                        ->options(fn (): array =>
+                                            \App\Models\Supplier::orderBy('name')
                                                 ->pluck('name', 'id')
                                                 ->toArray()
-                                        )
-                                        ->getOptionLabelUsing(fn ($value): ?string =>
-                                            \App\Models\Supplier::find($value)?->name
                                         )
                                         ->placeholder('Lieferant suchen...')
                                         ->columnSpanFull(),
