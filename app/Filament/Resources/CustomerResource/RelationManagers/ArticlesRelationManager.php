@@ -432,7 +432,8 @@ class ArticlesRelationManager extends RelationManager
                                         \App\Models\Supplier::find($value)?->name
                                     )
                                     ->options(fn (): array =>
-                                        \App\Models\Supplier::orderBy('name')
+                                        \App\Models\Supplier::whereNotNull('name')
+                                            ->orderBy('name')
                                             ->pluck('name', 'id')
                                             ->toArray()
                                     )
