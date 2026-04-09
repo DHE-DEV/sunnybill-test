@@ -822,7 +822,7 @@ class SolarPlantBilling extends Model
                     'contract_title' => 'Kundenartikel',
                     'contract_number' => null,
                     'supplier_id' => $supplier?->id,
-                    'supplier_name' => $supplier?->name,
+                    'supplier_name' => $supplier?->company_name,
                     'contract_billing_id' => null,
                     'billing_number' => null,
                     'billing_description' => $article->name,

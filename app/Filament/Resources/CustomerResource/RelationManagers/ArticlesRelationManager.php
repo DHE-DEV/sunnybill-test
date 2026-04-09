@@ -236,7 +236,7 @@ class ArticlesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('supplier_name')
                     ->label('Lieferant')
                     ->getStateUsing(fn ($record) => $record->pivot->supplier_id
-                        ? \App\Models\Supplier::find($record->pivot->supplier_id)?->name
+                        ? \App\Models\Supplier::find($record->pivot->supplier_id)?->company_name
                         : '-')
                     ->limit(30)
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -422,9 +422,9 @@ class ArticlesRelationManager extends RelationManager
                                     ->searchable()
                                     ->preload()
                                     ->options(fn (): array =>
-                                        \App\Models\Supplier::whereNotNull('name')
-                                            ->orderBy('name')
-                                            ->pluck('name', 'id')
+                                        \App\Models\Supplier::active()
+                                            ->orderBy('company_name')
+                                            ->pluck('company_name', 'id')
                                             ->toArray()
                                     )
                                     ->placeholder('Lieferant suchen...')
@@ -660,7 +660,7 @@ class ArticlesRelationManager extends RelationManager
                                     Forms\Components\TextInput::make('supplier_id')
                                         ->label('Zuordnung Lieferant')
                                         ->disabled()
-                                        ->formatStateUsing(fn ($state) => $state ? \App\Models\Supplier::find($state)?->name : '-')
+                                        ->formatStateUsing(fn ($state) => $state ? \App\Models\Supplier::find($state)?->company_name : '-')
                                         ->columnSpanFull(),
 
                                     Forms\Components\TextInput::make('billing_type')
