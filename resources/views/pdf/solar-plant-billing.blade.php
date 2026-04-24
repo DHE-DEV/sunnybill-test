@@ -694,14 +694,14 @@
 
             <tr style="background: #f0f8ff;">
                 <td colspan="4"><strong>
-                    @if($billing->net_amount < 0)
+                    @if($billing->total_costs < $billing->total_credits)
                         Guthaben
                     @else
                         Rechnungssumme
                     @endif
                     </strong>
                 </td>
-                <td class="number"><strong>{{ number_format(abs($totalGross ?: ($billing->net_amount ?? 0)), 2, ',', '.') }} €</strong></td>
+                <td class="number"><strong>{{ number_format(abs($totalGross ?: ($billing->total_costs - $billing->total_credits)), 2, ',', '.') }} €</strong></td>
             </tr>
         </tbody>
     </table>
@@ -715,11 +715,7 @@
             </tr>
             <tr style="background: #f0f8ff;">
                 <td colspan="4"><strong>{{ $billing->net_amount < 0 ? 'Guthaben Gesamt' : 'Rechnungsbetrag Gesamt' }}</strong></td>
-                <td class="number"><strong>{{ number_format(
-                    $billing->net_amount < 0
-                        ? abs($totalGross ?: ($billing->net_amount - ($billing->previous_month_outstanding ?? 0))) - $billing->previous_month_outstanding
-                        : abs($totalGross ?: ($billing->net_amount - ($billing->previous_month_outstanding ?? 0))) + $billing->previous_month_outstanding,
-                    2, ',', '.') }} €</strong></td>
+                <td class="number"><strong>{{ number_format(abs($billing->net_amount), 2, ',', '.') }} €</strong></td>
             </tr>
         </tbody>
     </table>
